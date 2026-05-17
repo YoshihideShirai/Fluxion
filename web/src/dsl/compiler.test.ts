@@ -259,6 +259,50 @@ play TransformMatchingTex(a, b) duration=1s easing=easeInOut`);
   );
 });
 
+test("copies math token styles after all node options are applied", () => {
+  const documentData = compileTextDsl(
+    `math equation "x+y" expandTokens=true size=42 fill="#bae6fd" renderer=katex`,
+  );
+
+  const equation = documentData.nodes.find((node) => node.id === "equation");
+  equalJson(
+    equation?.children.map((child) => [
+      child.latex,
+      child.geometry.fontSize,
+      child.style.fill,
+      child.renderer,
+    ]),
+    [
+      ["x", 42, "#bae6fd", "katex"],
+      ["+", 42, "#bae6fd", "katex"],
+      ["y", 42, "#bae6fd", "katex"],
+    ],
+  );
+});
+
+test("does not auto-create a root group when a descendant is shown by TransformMatchingTex", () => {
+  const documentData = compileTextDsl(`math equation "r" expandTokens=true
+math equation2 "R" expandTokens=true
+group hero equation
+group heroNext equation2
+play Write(hero) duration=0.5s
+play TransformMatchingTex(equation, equation2) duration=0.5s`);
+
+  assert.equal(
+    documentData.timeline.some(
+      (op) => op.op === "create" && op.node.id === "heroNext",
+    ),
+    false,
+  );
+  equalJson(
+    documentData.timeline
+      .filter((op) => op.op === "create")
+      .filter((op) => op.t === 0)
+      .map((op) => op.node.id),
+    ["hero"],
+  );
+});
+
 test("expands ReplacementTransform into simultaneous FadeOut and FadeIn", () => {
   const documentData = compileTextDsl(`circle from at 0,0 opacity=0.75
 rect to at 100,0 opacity=0.5

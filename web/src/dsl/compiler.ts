@@ -149,7 +149,7 @@ export function compileTextDsl(source: string): FluxionDocument {
   for (const id of state.rootIds) {
     const node = state.nodes.get(id);
     if (!node) continue;
-    if (!state.shown.has(node.id)) {
+    if (!isShownOrHasShownDescendant(node, state.shown)) {
       autoCreates.push({ t: 0, op: "create", node: structuredClone(node) });
       state.shown.add(node.id);
     }
@@ -177,6 +177,14 @@ export function compileTextDsl(source: string): FluxionDocument {
       : {}),
     timeline: state.timeline,
   };
+}
+
+function isShownOrHasShownDescendant(
+  node: SceneNode,
+  shown: Set<string>,
+): boolean {
+  if (shown.has(node.id)) return true;
+  return node.children.some((child) => isShownOrHasShownDescendant(child, shown));
 }
 
 function parseScene(
@@ -1124,6 +1132,7 @@ function expandMathTokens(node: SceneNode, lineNumber: number): void {
     node.latex,
     Number(node.geometry.fontSize ?? 36),
     node.renderer ?? "katex",
+    node.style,
   );
 }
 
@@ -1138,6 +1147,7 @@ function latexToTokenNodes(
   latex: string,
   fontSize: number,
   renderer: string,
+  style: Style,
 ): SceneNode[] {
   const tokens = tokenizeLatex(latex);
   let cursor =
@@ -1148,6 +1158,7 @@ function latexToTokenNodes(
     const child = createBaseNode(`${parentId}:tex:${index}`, "math");
     child.latex = token;
     child.renderer = renderer;
+    child.style = { ...style };
     child.geometry.fontSize = fontSize;
     child.geometry.w = width;
     child.transform.x = cursor + width / 2;

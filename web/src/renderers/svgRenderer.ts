@@ -79,7 +79,11 @@ export class SvgRenderer {
       el.setAttribute("dominant-baseline", "middle");
       return el;
     }
-    if (node.type === "math") return this.createMathElement(node);
+    if (node.type === "math") {
+      if ((node.children ?? []).length > 0)
+        return document.createElementNS(SVG_NS, "g");
+      return this.createMathElement(node);
+    }
     return document.createElementNS(SVG_NS, "g");
   }
 
