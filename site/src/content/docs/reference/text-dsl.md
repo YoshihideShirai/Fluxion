@@ -1,5 +1,5 @@
 ---
-title: Text DSL
+title: Text DSL reference
 description: Fluxion Text DSL の現在の syntax reference。
 ---
 

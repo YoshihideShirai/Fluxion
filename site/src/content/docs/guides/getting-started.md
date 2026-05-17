@@ -1,9 +1,9 @@
 ---
-title: Quickstart
+title: Getting Started
 description: Fluxion をローカルで生成・ビルド・プレビューする最短手順。
 ---
 
-Quickstart は **Start Here** の 2 番目のページです。Python DSL example から `.fluxion.json` を生成し、Web Runtime / Playground で preview するまでを最短で確認します。
+Getting Started は **Start Here** の 2 番目のページです。Python DSL example から `.fluxion.json` を生成し、Web Runtime / Playground で preview するまでを最短で確認します。
 
 ## 1. Example scene を生成する
 
@@ -37,7 +37,7 @@ python -m http.server 8000
 
 - Playground の UI は [Playground tour](./playground/) で確認する。
 - Python から scene を書く場合は [Python DSL](./python-dsl/) を読む。
-- Browser 上で text から書く場合は [Text DSL](../reference/text-dsl/) を読む。
+- Browser 上で text から書く場合は [Text DSL reference](../reference/text-dsl/) を読む。
 - Runtime が読む IR は [Fluxion JSON / Scene Graph](../reference/ir/) と [Timeline](../reference/timeline/) で確認する。
 
 ## GitHub Pages site をローカルでビルドする

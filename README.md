@@ -84,9 +84,29 @@ Canonical documentation lives under [`site/src/content/docs/`](site/src/content/
 - **Overview**: start with [`site/src/content/docs/overview.md`](site/src/content/docs/overview.md) for the concept, pipeline, and high-level architecture.
 - **Getting Started**: follow [`site/src/content/docs/guides/getting-started.md`](site/src/content/docs/guides/getting-started.md) for local Python, web runtime, and site-build workflows.
 - **Architecture**: use [`site/src/content/docs/concepts/architecture.md`](site/src/content/docs/concepts/architecture.md) for the Scene Graph / Timeline IR architecture.
-- **MVP Scope**: use [`site/src/content/docs/concepts/mvp.md`](site/src/content/docs/concepts/mvp.md) for current MVP boundaries.
-- **Text DSL**: use [`site/src/content/docs/reference/text-dsl.md`](site/src/content/docs/reference/text-dsl.md) for the current syntax and examples.
+- **Roadmap / MVP Scope**: use [`site/src/content/docs/concepts/mvp.md`](site/src/content/docs/concepts/mvp.md) for current MVP boundaries and roadmap candidates.
+- **Text DSL reference**: use [`site/src/content/docs/reference/text-dsl.md`](site/src/content/docs/reference/text-dsl.md) for the current syntax and examples.
 - **Runtime**: use [`site/src/content/docs/reference/runtime.md`](site/src/content/docs/reference/runtime.md) for SVG playback and timeline semantics.
+
+### Documentation languages
+
+Fluxion maintains Japanese and English documentation at parity. Japanese (`site/src/content/docs/`, excluding `en/`) is the default locale for the published site, but English (`site/src/content/docs/en/`) is a first-class documentation set and should stay equivalent in page coverage and intent.
+
+Current page coverage is intentionally mirrored between the two locales:
+
+- `overview.md` / `en/overview.md`
+- `guides/getting-started.md` / `en/guides/getting-started.md`
+- `guides/playground.md` / `en/guides/playground.md`
+- `guides/python-dsl.md` / `en/guides/python-dsl.md`
+- `guides/examples.md` / `en/guides/examples.md`
+- `reference/text-dsl.md` / `en/reference/text-dsl.md`
+- `reference/runtime.md` / `en/reference/runtime.md`
+- `reference/ir.md` / `en/reference/ir.md`
+- `reference/timeline.md` / `en/reference/timeline.md`
+- `concepts/architecture.md` / `en/concepts/architecture.md`
+- `concepts/mvp.md` / `en/concepts/mvp.md`
+
+When adding or materially changing a Japanese page, add or update the matching English page in the same change unless the PR explicitly documents a temporary exception. Keep Starlight sidebar labels in `site/astro.config.mjs` synchronized with each page's frontmatter `title` in both locales.
 
 ### Documentation update rule
 

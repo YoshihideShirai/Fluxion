@@ -1,5 +1,5 @@
 ---
-title: MVP Scope / Roadmap
+title: Roadmap / MVP Scope
 description: Fluxion MVP に含まれる DSL、IR、Runtime、Text DSL compiler の範囲。
 ---
 
