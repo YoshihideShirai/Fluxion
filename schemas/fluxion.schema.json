@@ -10,7 +10,7 @@
     "height": { "type": "integer", "minimum": 1 },
     "fps": { "type": "integer", "minimum": 1 },
     "duration": { "type": "number", "minimum": 0 },
-    "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+    "nodes": { "type": "array", "description": "Top-level scene nodes. Every node id in this array and in any nested children array must be unique across the entire document because timeline operations resolve ids globally.", "items": { "$ref": "#/$defs/node" } },
     "timeline": { "type": "array", "items": { "$ref": "#/$defs/timelineOperation" } }
   },
   "$defs": {
@@ -37,12 +37,12 @@
       "type": "object",
       "required": ["id", "type", "transform", "style", "geometry", "children"],
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1, "description": "Unique node id. The id must be unique across the entire document, including children nested under group nodes, so timeline operations can target any node unambiguously." },
         "type": { "enum": ["group", "circle", "rect", "line", "path", "text", "math"] },
         "transform": { "$ref": "#/$defs/transform" },
         "style": { "$ref": "#/$defs/style" },
         "geometry": { "type": "object" },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+        "children": { "type": "array", "description": "Nested child nodes, typically used by group nodes. Child ids share the same global namespace as top-level node ids.", "items": { "$ref": "#/$defs/node" } },
         "text": { "type": "string" },
         "latex": { "type": "string", "description": "LaTeX source passed to the selected math renderer." },
         "renderer": { "enum": ["katex", "mathjax"] }
