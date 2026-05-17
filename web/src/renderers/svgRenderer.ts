@@ -48,6 +48,11 @@ export class SvgRenderer {
       for (const key of ["x1", "y1", "x2", "y2"] as const) el.setAttribute(key, String(node.geometry[key]));
       return el;
     }
+    if (node.type === "path") {
+      const el = document.createElementNS(SVG_NS, "path");
+      el.setAttribute("d", String(node.geometry.d ?? ""));
+      return el;
+    }
     if (node.type === "text" || node.type === "math") {
       const el = document.createElementNS(SVG_NS, "text");
       el.textContent = node.text ?? node.latex ?? "";

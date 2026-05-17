@@ -75,6 +75,18 @@ class PythonDslTest(unittest.TestCase):
         self.assertEqual([op["t"] for op in other_ops], [1.0, 1.0])
         self.assertEqual(data["duration"], 2.0)
 
+    def test_path_primitive_exports_svg_path_geometry(self):
+        from fluxion import Path
+
+        scene = Scene()
+        path = Path(id="curve", d="M 0 0 C 20 40 40 40 60 0", style={"stroke": "#38bdf8", "fill": "none"})
+        scene.add(path)
+        data = scene.to_dict()
+
+        self.assertEqual(data["nodes"][0]["type"], "path")
+        self.assertEqual(data["nodes"][0]["geometry"], {"d": "M 0 0 C 20 40 40 40 60 0"})
+        self.assertEqual(data["nodes"][0]["style"]["stroke"], "#38bdf8")
+
     def test_export_json_writes_file(self):
         scene = Demo()
         scene.construct()

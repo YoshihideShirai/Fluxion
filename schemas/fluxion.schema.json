@@ -46,6 +46,19 @@
         "text": { "type": "string" },
         "latex": { "type": "string" },
         "renderer": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "path" } }, "required": ["type"] },
+          "then": { "properties": { "geometry": { "$ref": "#/$defs/pathGeometry" } } }
+        }
+      ]
+    },
+    "pathGeometry": {
+      "type": "object",
+      "required": ["d"],
+      "properties": {
+        "d": { "type": "string" }
       }
     },
     "timelineOperation": {

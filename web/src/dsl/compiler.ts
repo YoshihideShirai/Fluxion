@@ -73,7 +73,7 @@ export function compileTextDsl(source: string): FluxionDocument {
       return;
     }
 
-    if (keyword === "circle" || keyword === "rect" || keyword === "line" || keyword === "text") {
+    if (keyword === "circle" || keyword === "rect" || keyword === "line" || keyword === "path" || keyword === "text") {
       parseNode(tokens, state, lineNumber);
       return;
     }
@@ -207,6 +207,7 @@ function defaultGeometry(type: NodeType): Record<string, number | string> {
   if (type === "circle") return { r: 40 };
   if (type === "rect") return { w: 100, h: 80 };
   if (type === "line") return { x1: 0, y1: 0, x2: 100, y2: 0 };
+  if (type === "path") return { d: "" };
   if (type === "text") return { fontSize: 32 };
   return {};
 }
@@ -247,13 +248,18 @@ function applyNodeOption(node: SceneNode, key: string, value: string, lineNumber
     return;
   }
 
+  if (key === "d") {
+    node.geometry.d = value;
+    return;
+  }
+
   throw new DslCompileError(`Unknown node option '${key}'.`, lineNumber);
 }
 
 function propertyPath(property: string): string {
   if (["x", "y", "scale", "rotation", "opacity"].includes(property)) return `transform.${property}`;
   if (["fill", "stroke", "strokeWidth"].includes(property)) return `style.${property}`;
-  if (["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2"].includes(property)) return `geometry.${property}`;
+  if (["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d"].includes(property)) return `geometry.${property}`;
   if (property === "text") return "text";
   return property;
 }
@@ -351,7 +357,7 @@ function tokenize(line: string, lineNumber: number): string[] {
 }
 
 function isNodeType(value: string | undefined): value is NodeType {
-  return value === "circle" || value === "rect" || value === "line" || value === "text";
+  return value === "circle" || value === "rect" || value === "line" || value === "path" || value === "text";
 }
 
 function unescapeToken(token: string): string {
