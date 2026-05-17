@@ -53,7 +53,8 @@
         { "$ref": "#/$defs/createOperation" },
         { "$ref": "#/$defs/deleteOperation" },
         { "$ref": "#/$defs/setOperation" },
-        { "$ref": "#/$defs/animateOperation" }
+        { "$ref": "#/$defs/animateOperation" },
+        { "$ref": "#/$defs/effectOperation" }
       ]
     },
     "baseOperation": {
@@ -94,6 +95,22 @@
             "path": { "type": "string" },
             "from": true,
             "to": true,
+            "duration": { "type": "number", "minimum": 0 },
+            "easing": { "enum": ["linear", "smooth", "easeInOut", "easeIn", "easeOut"] }
+          }
+        }
+      ]
+    },
+    "effectOperation": {
+      "allOf": [
+        { "$ref": "#/$defs/baseOperation" },
+        {
+          "type": "object",
+          "required": ["id", "effect", "duration", "easing"],
+          "properties": {
+            "op": { "const": "effect" },
+            "id": { "type": "string" },
+            "effect": { "enum": ["fadeIn", "fadeOut", "create", "write"] },
             "duration": { "type": "number", "minimum": 0 },
             "easing": { "enum": ["linear", "smooth", "easeInOut", "easeIn", "easeOut"] }
           }

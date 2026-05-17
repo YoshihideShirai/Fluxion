@@ -60,7 +60,15 @@ export interface AnimateOperation extends BaseOperation {
   easing: EasingName;
 }
 
-export type TimelineOperation = CreateOperation | DeleteOperation | SetOperation | AnimateOperation;
+export interface EffectOperation extends BaseOperation {
+  op: "effect";
+  id: string;
+  effect: "fadeIn" | "fadeOut" | "create" | "write" | string;
+  duration: number;
+  easing: EasingName;
+}
+
+export type TimelineOperation = CreateOperation | DeleteOperation | SetOperation | AnimateOperation | EffectOperation;
 
 export interface FluxionDocument {
   version: "0.1";
