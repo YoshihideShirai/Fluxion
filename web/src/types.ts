@@ -8,7 +8,7 @@ export interface Transform {
   opacity: number;
 }
 
-export type InterpolatableGeometryValue = number | string | number[];
+export type InterpolatableGeometryValue = number | string | number[] | boolean;
 
 export interface Style {
   fill?: string;

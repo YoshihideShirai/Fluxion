@@ -228,6 +228,15 @@ function parseNode(
   const assignments = readNodeArguments(rest, lineNumber);
   for (const [key, value] of assignments)
     applyNodeOption(node, key, value, lineNumber);
+  if (
+    type === "math" &&
+    assignments.some(
+      ([key, value]) =>
+        key === "expandTokens" && parseBoolean(value, lineNumber),
+    )
+  ) {
+    expandMathTokens(node, lineNumber);
+  }
 
   state.nodes.set(id, node);
   state.rootIds.add(id);
@@ -409,6 +418,21 @@ function emitPlayCall(
     return;
   }
 
+  if (call.name === "TransformMatchingTex") {
+    ensureNoPlayOptions(call, lineNumber);
+    const ids = expectPlayIdArgs(call, 2, lineNumber);
+    pushTransformMatchingTex(
+      state,
+      start,
+      ids[0]!,
+      ids[1]!,
+      duration,
+      easing,
+      lineNumber,
+    );
+    return;
+  }
+
   if (call.name === "AnimationGroup") {
     const childCalls = expectPlayCallArgs(call, lineNumber);
     const lagRatio = readLagRatio(call, lineNumber);
@@ -450,6 +474,124 @@ function emitPlayCall(
     `Unknown play primitive '${call.name}'.`,
     lineNumber,
   );
+}
+
+function pushTransformMatchingTex(
+  state: CompileState,
+  start: number,
+  fromId: string,
+  toId: string,
+  duration: number,
+  easing: string,
+  lineNumber: number,
+): void {
+  const fromNode = requireNode(state, fromId, lineNumber);
+  const toNode = requireNode(state, toId, lineNumber);
+  const fromTokens = texTokenChildren(fromNode);
+  const toTokens = texTokenChildren(toNode);
+  if (fromTokens.length === 0 || toTokens.length === 0)
+    throw new DslCompileError(
+      "TransformMatchingTex requires math nodes declared with expandTokens=true.",
+      lineNumber,
+    );
+
+  const available = new Map<string, SceneNode[]>();
+  for (const child of toTokens) {
+    if (!child.latex) continue;
+    const matches = available.get(child.latex) ?? [];
+    matches.push(child);
+    available.set(child.latex, matches);
+  }
+
+  const matchedTo = new Set<string>();
+  for (const child of fromTokens) {
+    const matches = child.latex ? available.get(child.latex) : undefined;
+    const match = matches?.shift();
+    if (match) {
+      matchedTo.add(match.id);
+      state.timeline.push({
+        t: start,
+        op: "effect",
+        id: child.id,
+        effect: "transform",
+        duration,
+        easing,
+      });
+      pushTransformAnimations(state, start, child, match, duration, easing);
+    } else {
+      pushFadeOutNode(state, start, child, duration, easing);
+    }
+  }
+
+  for (const child of toTokens) {
+    if (!matchedTo.has(child.id))
+      pushFadeInNode(state, start, child, duration, easing);
+  }
+
+  state.shown.add(toId);
+}
+
+function texTokenChildren(node: SceneNode): SceneNode[] {
+  return node.children.filter(
+    (child) => child.type === "math" && typeof child.latex === "string",
+  );
+}
+
+function pushFadeInNode(
+  state: CompileState,
+  start: number,
+  node: SceneNode,
+  duration: number,
+  easing: string,
+): void {
+  const createNode = hiddenClone(node);
+  state.timeline.push({ t: start, op: "create", node: createNode });
+  state.timeline.push({
+    t: start,
+    op: "effect",
+    id: node.id,
+    effect: "fadeIn",
+    duration,
+    easing,
+  });
+  state.timeline.push({
+    t: start,
+    op: "animate",
+    id: node.id,
+    path: "transform.opacity",
+    from: 0,
+    to: node.transform.opacity,
+    duration,
+    easing,
+  });
+}
+
+function pushFadeOutNode(
+  state: CompileState,
+  start: number,
+  node: SceneNode,
+  duration: number,
+  easing: string,
+): void {
+  state.timeline.push({
+    t: start,
+    op: "effect",
+    id: node.id,
+    effect: "fadeOut",
+    duration,
+    easing,
+  });
+  state.timeline.push({
+    t: start,
+    op: "animate",
+    id: node.id,
+    path: "transform.opacity",
+    from: node.transform.opacity,
+    to: 0,
+    duration,
+    easing,
+  });
+  state.timeline.push({ t: start + duration, op: "delete", id: node.id });
 }
 
 function pushFadeIn(
@@ -863,6 +1005,63 @@ function pushTransformAnimations(
   }
 }
 
+const LATEX_TOKEN_PATTERN = /\\[a-zA-Z]+\*?|\\.|[_^]|[{}]|\s+|[^\\\s_^{}]/gu;
+
+function expandMathTokens(node: SceneNode, lineNumber: number): void {
+  if (node.type !== "math")
+    throw new DslCompileError(
+      "expandTokens is only supported for math nodes.",
+      lineNumber,
+    );
+  if (node.latex === undefined)
+    throw new DslCompileError(
+      "Expected math LaTeX before expandTokens.",
+      lineNumber,
+    );
+  node.children = latexToTokenNodes(
+    node.id,
+    node.latex,
+    Number(node.geometry.fontSize ?? 36),
+    node.renderer ?? "katex",
+  );
+}
+
+function tokenizeLatex(latex: string): string[] {
+  return [...latex.matchAll(LATEX_TOKEN_PATTERN)]
+    .map((match) => match[0])
+    .filter((token) => !/^\s+$/u.test(token));
+}
+
+function latexToTokenNodes(
+  parentId: string,
+  latex: string,
+  fontSize: number,
+  renderer: string,
+): SceneNode[] {
+  const tokens = tokenizeLatex(latex);
+  let cursor =
+    -tokens.reduce((sum, token) => sum + tokenWidth(token, fontSize), 0) /
+    2;
+  return tokens.map((token, index) => {
+    const width = tokenWidth(token, fontSize);
+    const child = createBaseNode(`${parentId}:tex:${index}`, "math");
+    child.latex = token;
+    child.renderer = renderer;
+    child.geometry.fontSize = fontSize;
+    child.geometry.w = width;
+    child.transform.x = cursor + width / 2;
+    cursor += width;
+    return child;
+  });
+}
+
+function tokenWidth(token: string, fontSize: number): number {
+  if (token.startsWith("\\") && token.length > 2) return fontSize * 0.9;
+  if (token === "^" || token === "_" || token === "{" || token === "}")
+    return fontSize * 0.35;
+  return Math.max(fontSize * 0.45, token.length * fontSize * 0.55);
+}
+
 function createBaseNode(id: string, type: NodeType): SceneNode {
   return {
     id,
@@ -923,6 +1122,13 @@ function applyNodeOption(
 
   if (key === "strokeWidth") {
     node.style.strokeWidth = parseNumber(value, lineNumber);
+    return;
+  }
+
+  if (key === "expandTokens") {
+    node.geometry.expandTokens = parseBoolean(value, lineNumber);
+    if (node.geometry.expandTokens) expandMathTokens(node, lineNumber);
+    else node.children = [];
     return;
   }
 
@@ -1031,6 +1237,12 @@ function parseEasing(raw: string, lineNumber: number): string {
     return raw;
   }
   throw new DslCompileError(`Unknown easing '${raw}'.`, lineNumber);
+}
+
+function parseBoolean(raw: string, lineNumber: number): boolean {
+  if (raw === "true") return true;
+  if (raw === "false") return false;
+  throw new DslCompileError(`Expected boolean, got '${raw}'.`, lineNumber);
 }
 
 function parseNumber(raw: string | undefined, lineNumber: number): number {

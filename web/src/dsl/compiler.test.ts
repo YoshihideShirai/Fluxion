@@ -188,6 +188,60 @@ at 5s:
   assert.equal(setOperation.value, "#38bdf8");
 });
 
+test("expands math tokens and TransformMatchingTex matches by token text", () => {
+  const documentData = compileTextDsl(`math a "a+b" expandTokens=true at 100,100
+math b "bca" expandTokens=true at 200,100
+
+play TransformMatchingTex(a, b) duration=1s easing=easeInOut`);
+
+  const source = documentData.nodes.find((node) => node.id === "a");
+  equalJson(source?.children.map((child) => child.latex), ["a", "+", "b"]);
+
+  equalJson(
+    documentData.timeline
+      .filter((op) => op.op === "effect")
+      .map((op) => [op.id, op.effect, op.t, op.duration, op.easing]),
+    [
+      ["a:tex:0", "transform", 0, 1, "easeInOut"],
+      ["a:tex:1", "fadeOut", 0, 1, "easeInOut"],
+      ["a:tex:2", "transform", 0, 1, "easeInOut"],
+      ["b:tex:1", "fadeIn", 0, 1, "easeInOut"],
+    ],
+  );
+
+  assert.equal(
+    documentData.timeline.some(
+      (op) =>
+        op.op === "animate" &&
+        op.id === "a:tex:0" &&
+        op.path === "transform.x",
+    ),
+    true,
+  );
+  assert.equal(
+    documentData.timeline.some(
+      (op) =>
+        op.op === "animate" &&
+        op.id === "a:tex:1" &&
+        op.path === "transform.opacity" &&
+        op.to === 0,
+    ),
+    true,
+  );
+  assert.equal(
+    documentData.timeline.some(
+      (op) => op.op === "create" && op.node.id === "b:tex:1",
+    ),
+    true,
+  );
+  equalJson(
+    documentData.timeline
+      .filter((op) => op.op === "delete")
+      .map((op) => [op.id, op.t]),
+    [["a:tex:1", 1]],
+  );
+});
+
 test("expands ReplacementTransform into simultaneous FadeOut and FadeIn", () => {
   const documentData = compileTextDsl(`circle from at 0,0 opacity=0.75
 rect to at 100,0 opacity=0.5

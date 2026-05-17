@@ -65,6 +65,7 @@ at 0s:
 play FadeIn(title) duration=1s
 wait 0.5s
 play Transform(c1, c2) duration=1.5s easing=easeInOut
+play TransformMatchingTex(eq1, eq2) duration=1s
 ```
 
 ## Lexical rules
@@ -101,7 +102,7 @@ rect box w=120 h=80 at 640,360 fill="#f97316"
 line axis x1=-50 y1=0 x2=50 y2=0 at 640,520 stroke="#e2e8f0" strokeWidth=2
 path curve d="M 0 0 C 40 80 80 80 120 0" at 640,420 fill="none" stroke="#38bdf8"
 text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"
-math equation "e^{i\\pi}+1=0" at 640,200 size=36
+math equation "e^{i\\pi}+1=0" at 640,200 size=36 expandTokens=true
 group intro title equation
 ```
 
@@ -126,6 +127,7 @@ Common options:
 - `opacity`
 - `fill`, `stroke`, `strokeWidth`
 - `size` / `fontSize`
+- `math` only: `renderer=katex|mathjax`, `expandTokens=true|false`
 
 ### timeline blocks
 
@@ -156,6 +158,7 @@ wait 0.5s
 play AnimationGroup(FadeIn(a), FadeIn(b), lagRatio=0.2) duration=1s
 play Succession(Create(a), Transform(a, b)) duration=2s
 play Transform(c1, c2) duration=1.5s easing=easeInOut
+play TransformMatchingTex(eq1, eq2) duration=1s
 ```
 
 `play` provides Manim-like primitives and accepts nested calls for parallel or sequential composition. `wait` advances the current cursor time.
@@ -175,9 +178,24 @@ Supported primitives include:
 - `Create(id)`: creates the node and emits `effect=create`.
 - `Write(id)`: creates the node and emits `effect=write`.
 - `Transform(source, target)`: animates the source node toward transform/style/geometry properties from the target node.
+- `TransformMatchingTex(source, target)`: matches expanded `math` token children by identical token text. Matched tokens expand to `Transform`, source-only tokens expand to `FadeOut`, and target-only tokens expand to `FadeIn`.
 - `ReplacementTransform(from, to)`: expands into a simultaneous `FadeOut(from)` and `FadeIn(to)`.
 - `AnimationGroup(<animations...>, lagRatio=0)`: expands child animations in parallel. `lagRatio` offsets child starts by a ratio of child duration, and the group is normalized to fit the outer `duration`.
 - `Succession(<animations...>)`: expands child animations from left to right. Each child receives an equal share of the outer `duration`.
+
+### TransformMatchingTex and token matching
+
+`TransformMatchingTex(source, target)` only supports `math` nodes declared with `expandTokens=true` on both sides.
+
+```text
+math eq1 "a+b" expandTokens=true at 320,180
+math eq2 "bca" expandTokens=true at 640,180
+play TransformMatchingTex(eq1, eq2) duration=1s
+```
+
+Tokenization splits LaTeX into commands such as `\pi` or `\frac`, escaped single-character symbols, `^` / `_`, braces, and ordinary characters. Whitespace is ignored. Matching uses exact `latex` token-string equality. Source tokens are processed in source order and consume the first unused destination token with the same string, so duplicate tokens match in stable occurrence order.
+
+Unsupported tokens are handled explicitly: source-only tokens fade out and are deleted at the end of the duration; target-only tokens are created at hidden opacity and fade in; matched tokens transform from the source token id toward the destination token state. The current token child positions are approximate semantic anchors, not precise glyph layout for complex TeX.
 
 ## Safety model
 
