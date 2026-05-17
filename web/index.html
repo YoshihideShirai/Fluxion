@@ -293,6 +293,8 @@ animate c1.scale from 1 to 1.4 start=1.5s duration=1.5s easing=easeInOut</textar
       const scrubber = document.querySelector("#scrubber");
       const timeReadout = document.querySelector("#time-readout");
       const jsonOutput = document.querySelector("#json-output");
+      const sourceFromUrl = new URLSearchParams(window.location.search).get("dsl");
+      if (sourceFromUrl) input.value = sourceFromUrl;
       let documentData = compileTextDsl(input.value);
       let player = mountFluxionDocument(stage, documentData);
       let compileTimer = 0;
