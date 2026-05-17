@@ -48,7 +48,7 @@ Operations with the same timestamp and operation type keep source array order.
 ## Animation values
 
 - Numeric values are interpolated with the requested easing.
-- Unknown easing names fall back to linear runtime behavior. Text DSL v0.1 rejects unknown easing names before runtime.
+- Unknown easing names fall back to linear runtime behavior. Text DSL rejects unknown easing names before runtime.
 - Animations with `duration <= 0` immediately apply the final value.
 - Non-numeric values, including colors and strings, are held at `from` until completion and switch to `to` at the end.
 

@@ -1,11 +1,11 @@
 ---
 title: Text DSL
-description: Fluxion Text DSL v0.2 の syntax reference。
+description: Fluxion Text DSL の現在の syntax reference。
 ---
 
-Fluxion Text DSL v0.2 は、ブラウザ上で短い宣言的なアニメーション記述を `.fluxion.json` に変換するための最小仕様です。Python DSL とは別の入力フロントエンドですが、出力先は同じ Fluxion IR です。
+Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション記述を `.fluxion.json` に変換するための現在の最小仕様です。Python DSL とは別の入力フロントエンドですが、出力先は同じ Fluxion IR です。
 
-v0.2 の目的は「図形や math/path/group を置き、表示タイミングを決め、単純なプロパティ animation と Manim 風 animation primitive を再生する」ことに絞ります。任意コード実行、条件分岐、ループ、外部 include は扱いません。
+現在の Text DSL の目的は「図形や math/path/group を置き、表示タイミングを決め、単純なプロパティ animation と Manim 風 animation primitive を再生する」ことに絞ります。任意コード実行、条件分岐、ループ、外部 include は扱いません。
 
 
 ## Command quick reference
@@ -81,7 +81,7 @@ play Transform(c1, c2) duration=1.5s easing=easeInOut
 - quoted string は `"` で囲みます。`\"` で quote を escape できます。
 - token は whitespace で区切ります。quoted string 内の whitespace は保持します。
 - time は `1`, `1.5`, `1s`, `1.5s` を受け付け、単位は seconds として扱います。
-- color は文字列として扱います。v0.2 では CSS color validation はしません。
+- color は文字列として扱います。現在は CSS color validation はしません。
 
 ## Statements
 
@@ -170,7 +170,7 @@ at 1.5s:
   animate c1.opacity from 1 to 0.5 duration=0.5s
 ```
 
-`at <time>:` は、indented statements の default start time を設定します。v0.2 では block 内で `show`, `hide`, `set`, `wait`, `play`, `animate` を使えます。
+`at <time>:` は、indented statements の default start time を設定します。現在は block 内で `show`, `hide`, `set`, `wait`, `play`, `animate` を使えます。
 
 Indentation は block 判定にだけ使います。空白数の厳密な意味はありません。
 
@@ -328,7 +328,7 @@ Supported property aliases:
 - `r`, `w`, `h`, `fontSize`, `x1`, `y1`, `x2`, `y2`, `d` -> `geometry.*`
 - `text` -> `text`
 
-v0.2 の runtime は numeric interpolation を主対象にします。string value の animation は IR としては出力できますが、滑らかな補間は保証しません。
+現在の runtime は numeric interpolation を主対象にします。string value の animation は IR としては出力できますが、滑らかな補間は保証しません。
 Runtime では non-numeric value は animation 完了時に `to` value へ切り替わります。
 
 ## Error Reporting
@@ -347,9 +347,9 @@ Compiler は `DslCompileError` を投げます。message は `Line <line>, colum
 - malformed `play`, `set`, or `wait` syntax
 - unclosed quoted string
 
-## Out Of Scope For v0.2
+## Out Of Scope For Current Text DSL
 
-以下は v0.2 では仕様外です。
+以下は現在の Text DSL では仕様外です。
 
 - nested blocks
 - loops, conditionals, variables

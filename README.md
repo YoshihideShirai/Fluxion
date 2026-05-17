@@ -7,7 +7,7 @@ Fluxion is an editable animation IR toolkit for authoring Manim-like scenes in P
 ### GitHub Pages / playground
 
 - Open the GitHub Pages site for the hosted docs and playground.
-- Use the playground to edit Text DSL v0.2 in the browser, compile it to `.fluxion.json`, preview it with playback controls and scrubbing, and inspect the generated JSON.
+- Use the playground to edit Text DSL in the browser, compile it to `.fluxion.json`, preview it with playback controls and scrubbing, and inspect the generated JSON.
 - The Pages build is produced from `site/` and bundles the latest `web/` runtime assets into `playground/`.
 
 ### Local Python example and web runtime
@@ -20,20 +20,20 @@ cd web && npm run build
 cd .. && python -m http.server 8000
 ```
 
-Then open `http://localhost:8000/web/` to edit Text DSL v0.2, compile it locally, load the generated Python example JSON, play/seek/reset the SVG preview, and inspect the emitted `.fluxion.json`.
+Then open `http://localhost:8000/web/` to edit Text DSL, compile it locally, load the generated Python example JSON, play/seek/reset the SVG preview, and inspect the emitted `.fluxion.json`.
 
 ## What you can do
 
 - **Author with the Python DSL**: write Manim-like Python scenes using `python/fluxion/`, then export deterministic `.fluxion.json` IR for the runtime.
-- **Author with Text DSL v0.2**: write compact browser-safe animation text for simple shapes, text, math, groups, camera settings, value trackers, timeline operations, and Manim-style animation primitives.
+- **Author with Text DSL**: write compact browser-safe animation text for simple shapes, text, math, groups, camera settings, value trackers, timeline operations, and Manim-style animation primitives.
 - **Preview in the browser playground**: compile Text DSL directly in the browser, render the resulting scene graph with the SVG runtime, scrub the timeline, and copy the generated JSON.
 - **Use `.fluxion.json` as the shared IR**: both Python DSL and Text DSL compile to the same editable scene graph/timeline document, and the web runtime consumes that IR without running authoring code.
 
-## Text DSL v0.2 example
+## Text DSL example
 
 ```text
 scene width=1280 height=720 fps=60
-camera x=0 y=0 zoom=1
+camera at 0,0 scale=1
 
 value phase = 0
 text title "Fluxion MVP" at 640,110 size=32 fill="#e2e8f0"
@@ -58,7 +58,7 @@ play Transform(c1, box) duration=1s easing=easeInOut
 hide c1 at 3.5s
 ```
 
-Text DSL v0.2 supports `scene`, `circle`, `rect`, `line`, `path`, `text`, `math`, `group`, `camera`, `value`, `set`, `show`, `hide`, `wait`, `play`, and `animate` statements. It compiles in the browser and never runs arbitrary Python or JavaScript from the input; expressions are parsed as a small allowlisted arithmetic language. See the [canonical Text DSL v0.2 reference](site/src/content/docs/reference/text-dsl.md) for the full syntax, defaults, animation primitives, and out-of-scope features.
+Text DSL currently supports scene metadata, simple shapes, paths, text/math nodes, groups, camera settings, value trackers, timeline operations, and Manim-style animation primitives through `scene`, `circle`, `rect`, `line`, `path`, `text`, `math`, `group`, `camera`, `value`, `set`, `show`, `hide`, `wait`, `play`, and `animate` statements. It compiles in the browser and never runs arbitrary Python or JavaScript from the input; expressions are parsed as a small allowlisted arithmetic language. See the [canonical Text DSL reference](site/src/content/docs/reference/text-dsl.md) for the full syntax, defaults, current support boundaries, and future out-of-scope features.
 
 ## Python DSL example
 
@@ -85,7 +85,7 @@ Canonical documentation lives under [`site/src/content/docs/`](site/src/content/
 - **Getting Started**: follow [`site/src/content/docs/guides/getting-started.md`](site/src/content/docs/guides/getting-started.md) for local Python, web runtime, and site-build workflows.
 - **Architecture**: use [`site/src/content/docs/concepts/architecture.md`](site/src/content/docs/concepts/architecture.md) for the Scene Graph / Timeline IR architecture.
 - **MVP Scope**: use [`site/src/content/docs/concepts/mvp.md`](site/src/content/docs/concepts/mvp.md) for current MVP boundaries.
-- **Text DSL**: use [`site/src/content/docs/reference/text-dsl.md`](site/src/content/docs/reference/text-dsl.md) for the current v0.2 syntax and examples.
+- **Text DSL**: use [`site/src/content/docs/reference/text-dsl.md`](site/src/content/docs/reference/text-dsl.md) for the current syntax and examples.
 - **Runtime**: use [`site/src/content/docs/reference/runtime.md`](site/src/content/docs/reference/runtime.md) for SVG playback and timeline semantics.
 
 ### Documentation update rule
@@ -95,7 +95,7 @@ When changing documentation, update the canonical file in `site/src/content/docs
 ## Project status
 
 - **MVP**: the Python DSL, `.fluxion.json` schema, Text DSL compiler, SVG runtime, example scene, and tests are intended to demonstrate the end-to-end authoring-to-preview pipeline.
-- **Experimental**: Text DSL v0.2, math/path/group behavior, value trackers, expression-driven properties, Manim-style `play` primitives, and playground UX may change as the IR evolves.
+- **Experimental**: Text DSL math/path/group behavior, value trackers, expression-driven properties, Manim-style `play` primitives, and playground UX may change as the IR evolves.
 - **Stable enough for examples**: deterministic runtime playback, timeline seeking, JSON inspection, and the simple Python example are expected to remain usable for demos and regression tests.
 - **Not production-stable yet**: the IR is not a finalized interchange standard, compatibility guarantees are limited, and rendered output is SVG-focused rather than a full video renderer.
 

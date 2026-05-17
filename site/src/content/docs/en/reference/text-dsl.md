@@ -1,11 +1,11 @@
 ---
 title: Text DSL
-description: Syntax reference for Fluxion Text DSL v0.2.
+description: Current syntax reference for Fluxion Text DSL.
 ---
 
-Fluxion Text DSL v0.2 is a small declarative language that compiles browser-written animation descriptions into `.fluxion.json`. It is a separate frontend from the Python DSL, but both produce the same Fluxion IR.
+Fluxion Text DSL is the current small declarative language that compiles browser-written animation descriptions into `.fluxion.json`. It is a separate frontend from the Python DSL, but both produce the same Fluxion IR.
 
-The v0.2 scope is intentionally small: place shapes, math, paths, and groups; define visibility timing; and play simple property animations and Manim-like animation primitives. It does not support arbitrary code execution, conditionals, loops, or external includes.
+The current Text DSL scope is intentionally small: place shapes, math, paths, and groups; define visibility timing; and play simple property animations and Manim-like animation primitives. It does not support arbitrary code execution, conditionals, loops, or external includes.
 
 
 ## Command quick reference
@@ -82,7 +82,7 @@ play TransformMatchingTex(eq1, eq2) duration=1s
 - Quoted strings use `"`; escape a quote with `\"`.
 - Tokens are separated by whitespace; whitespace inside quoted strings is preserved.
 - Times accept `1`, `1.5`, `1s`, and `1.5s`; the unit is seconds.
-- Colors are treated as strings. v0.2 does not validate CSS color syntax.
+- Colors are treated as strings. The current compiler does not validate CSS color syntax.
 
 ## Statements
 
