@@ -3,10 +3,18 @@ import type { SvgRenderer } from "../renderers/svgRenderer.js";
 import { SceneGraph } from "./sceneGraph.js";
 import { applyTimelineAt } from "./timeline.js";
 
+interface PlayOptions {
+  from?: number;
+  loop?: boolean;
+  onTick?: (seconds: number) => void;
+  onStop?: () => void;
+}
+
 export class Player {
   private readonly document: VanimDocument;
   private readonly renderer: SvgRenderer;
   private readonly duration: number;
+  private currentTime = 0;
   private startedAt = 0;
   private animationFrame: number | null = null;
 
@@ -16,18 +24,37 @@ export class Player {
     this.duration = documentData.duration ?? Math.max(0, ...documentData.timeline.map((op) => op.t + ("duration" in op ? op.duration : 0)));
   }
 
+  get durationSeconds(): number {
+    return this.duration;
+  }
+
+  get currentSeconds(): number {
+    return this.currentTime;
+  }
+
   seek(seconds: number): void {
-    const graph = new SceneGraph(this.document.nodes);
-    applyTimelineAt(graph, this.document.timeline, seconds);
+    this.currentTime = clamp(seconds, 0, this.duration);
+    const graph = new SceneGraph(hasCreateOperations(this.document) ? [] : this.document.nodes);
+    applyTimelineAt(graph, this.document.timeline, this.currentTime);
     this.renderer.render(graph.all());
   }
 
-  play(): void {
+  play(options: PlayOptions = {}): void {
     this.stop();
-    this.startedAt = performance.now();
+    const from = clamp(options.from ?? this.currentTime, 0, this.duration);
+    this.startedAt = performance.now() - from * 1000;
     const tick = (): void => {
-      const seconds = ((performance.now() - this.startedAt) / 1000) % Math.max(this.duration, 0.001);
+      let seconds = (performance.now() - this.startedAt) / 1000;
+      if (options.loop) seconds %= Math.max(this.duration, 0.001);
+      else if (seconds >= this.duration) {
+        this.seek(this.duration);
+        options.onTick?.(this.duration);
+        this.stop();
+        options.onStop?.();
+        return;
+      }
       this.seek(seconds);
+      options.onTick?.(this.currentTime);
       this.animationFrame = requestAnimationFrame(tick);
     };
     tick();
@@ -37,4 +64,13 @@ export class Player {
     if (this.animationFrame !== null) cancelAnimationFrame(this.animationFrame);
     this.animationFrame = null;
   }
+}
+
+function clamp(value: number, min: number, max: number): number {
+  if (max <= min) return min;
+  return Math.min(max, Math.max(min, value));
+}
+
+function hasCreateOperations(documentData: VanimDocument): boolean {
+  return documentData.timeline.some((op) => op.op === "create");
 }

@@ -322,8 +322,8 @@ MVP では以下だけを必須とする。
 | `delete` | Node を削除 |
 | `set` | Node の property を即時変更 |
 | `animate` | property を時間補間 |
-| `group` | Node を group に追加 |
-| `ungroup` | group を解除 |
+
+`group` / `ungroup` は後段で検討する。MVP の schema と runtime は `create`, `delete`, `set`, `animate` を扱う。
 
 ---
 
@@ -404,6 +404,18 @@ MVP では実装容易性を優先し、以下の順で検討する。
 - DOM inspection がしやすい
 - テキスト / 数式との統合が簡単
 - デバッグしやすい
+
+### 9.3 MVP Runtime Semantics
+
+MVP Runtime は seek ごとに Scene Graph を再構築し、指定時刻までの Timeline IR を適用する。
+
+- `create` operation を含む document は空の graph から開始する
+- `create` operation を含まない document は `nodes` を初期 graph として扱う
+- 同じ時刻の operation は `create` → `set` → `animate` → `delete` の順に適用する
+- `duration <= 0` の animation は即時に final value を適用する
+- 非数値 value は補間せず、完了時に `to` value へ切り替える
+
+ブラウザ editor は Text DSL を live compile し、Preview, Play / Stop / Reset, scrubber, generated JSON preview を提供する。
 
 ---
 
