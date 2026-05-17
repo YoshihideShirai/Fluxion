@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fluxion.local/schemas/vanim.schema.json",
+  "title": "Fluxion Vanim Document",
+  "type": "object",
+  "required": ["version", "width", "height", "fps", "nodes", "timeline"],
+  "properties": {
+    "version": { "const": "0.1" },
+    "width": { "type": "integer", "minimum": 1 },
+    "height": { "type": "integer", "minimum": 1 },
+    "fps": { "type": "integer", "minimum": 1 },
+    "duration": { "type": "number", "minimum": 0 },
+    "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+    "timeline": { "type": "array", "items": { "$ref": "#/$defs/timelineOperation" } }
+  },
+  "$defs": {
+    "transform": {
+      "type": "object",
+      "required": ["x", "y", "scale", "rotation", "opacity"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "scale": { "type": "number" },
+        "rotation": { "type": "number" },
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "style": {
+      "type": "object",
+      "properties": {
+        "fill": { "type": "string" },
+        "stroke": { "type": "string" },
+        "strokeWidth": { "type": "number", "minimum": 0 }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "type", "transform", "style", "geometry", "children"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["group", "circle", "rect", "line", "path", "text", "math"] },
+        "transform": { "$ref": "#/$defs/transform" },
+        "style": { "$ref": "#/$defs/style" },
+        "geometry": { "type": "object" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+        "text": { "type": "string" },
+        "latex": { "type": "string" },
+        "renderer": { "type": "string" }
+      }
+    },
+    "timelineOperation": {
+      "oneOf": [
+        { "$ref": "#/$defs/createOperation" },
+        { "$ref": "#/$defs/deleteOperation" },
+        { "$ref": "#/$defs/setOperation" },
+        { "$ref": "#/$defs/animateOperation" }
+      ]
+    },
+    "baseOperation": {
+      "type": "object",
+      "required": ["t", "op"],
+      "properties": {
+        "t": { "type": "number", "minimum": 0 },
+        "op": { "type": "string" }
+      }
+    },
+    "createOperation": {
+      "allOf": [
+        { "$ref": "#/$defs/baseOperation" },
+        { "type": "object", "required": ["node"], "properties": { "op": { "const": "create" }, "node": { "$ref": "#/$defs/node" } } }
+      ]
+    },
+    "deleteOperation": {
+      "allOf": [
+        { "$ref": "#/$defs/baseOperation" },
+        { "type": "object", "required": ["id"], "properties": { "op": { "const": "delete" }, "id": { "type": "string" } } }
+      ]
+    },
+    "setOperation": {
+      "allOf": [
+        { "$ref": "#/$defs/baseOperation" },
+        { "type": "object", "required": ["id", "path", "value"], "properties": { "op": { "const": "set" }, "id": { "type": "string" }, "path": { "type": "string" }, "value": true } }
+      ]
+    },
+    "animateOperation": {
+      "allOf": [
+        { "$ref": "#/$defs/baseOperation" },
+        {
+          "type": "object",
+          "required": ["id", "path", "from", "to", "duration", "easing"],
+          "properties": {
+            "op": { "const": "animate" },
+            "id": { "type": "string" },
+            "path": { "type": "string" },
+            "from": true,
+            "to": true,
+            "duration": { "type": "number", "minimum": 0 },
+            "easing": { "enum": ["linear", "smooth", "easeInOut", "easeIn", "easeOut"] }
+          }
+        }
+      ]
+    }
+  }
+}
