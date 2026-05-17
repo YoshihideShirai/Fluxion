@@ -51,6 +51,7 @@ Supported options:
 circle c1 r=40 at 220,360 fill="#38bdf8"
 rect box w=120 h=80 at 640,360 fill="#f97316"
 line axis x1=-50 y1=0 x2=50 y2=0 at 640,520 stroke="#e2e8f0" strokeWidth=2
+path curve d="M 0 0 C 40 80 80 80 120 0" at 640,420 fill="none" stroke="#38bdf8"
 text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"
 ```
 
@@ -59,6 +60,7 @@ Supported node types:
 - `circle <id>`
 - `rect <id>`
 - `line <id>`
+- `path <id> d="<svg-path-data>"`
 - `text <id> "<text>"`
 
 `id` は document 内で一意である必要があります。
@@ -79,6 +81,7 @@ Geometry options:
 - `circle`: `r`
 - `rect`: `w`, `h`
 - `line`: `x1`, `y1`, `x2`, `y2`
+- `path`: `d` (SVG path data string)
 - `text`: `size` or `fontSize`
 
 Default values:
@@ -88,6 +91,7 @@ Default values:
 - circle: `r=40`
 - rect: `w=100`, `h=80`
 - line: `x1=0`, `y1=0`, `x2=100`, `y2=0`
+- path: `d=""`
 - text: `fontSize=32`
 
 ### at block
@@ -146,7 +150,7 @@ Supported property aliases:
 
 - `x`, `y`, `scale`, `rotation`, `opacity` -> `transform.*`
 - `fill`, `stroke`, `strokeWidth` -> `style.*`
-- `r`, `w`, `h`, `fontSize`, `x1`, `y1`, `x2`, `y2` -> `geometry.*`
+- `r`, `w`, `h`, `fontSize`, `x1`, `y1`, `x2`, `y2`, `d` -> `geometry.*`
 - `text` -> `text`
 
 v0.1 の runtime は numeric interpolation を主対象にします。string value の animation は IR としては出力できますが、滑らかな補間は保証しません。
@@ -173,7 +177,7 @@ Compiler は `DslCompileError` を投げます。message は `Line <line>, colum
 
 - `delete` / `hide` statement
 - `set` statement
-- `group`, `path`, `math`
+- `group`, `math`
 - nested blocks
 - loops, conditionals, variables
 - `include`, `theme`, `component`

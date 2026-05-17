@@ -12,7 +12,7 @@ from .animation import (
 )
 from .export import export_scene
 from .mobject import Mobject
-from .primitives import Circle, Group, Line, Math, Rectangle, Text
+from .primitives import Circle, Group, Line, Math, Path, Rectangle, Text
 from .scene import Scene
 
 __all__ = [
@@ -31,6 +31,7 @@ __all__ = [
     "Line",
     "Math",
     "Mobject",
+    "Path",
     "Rectangle",
     "Scene",
     "Text",

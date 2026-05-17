@@ -75,6 +75,23 @@ at 1s:
   );
 });
 
+test("compiles path nodes with SVG d geometry", () => {
+  const documentData = compileTextDsl(`path curve d="M 0 0 C 20 40 40 40 60 0" at 100,120 fill="none" stroke="#38bdf8" strokeWidth=4`);
+
+  const path = documentData.nodes[0];
+  assert.equal(path?.type, "path");
+  assert.equal(path?.geometry.d, "M 0 0 C 20 40 40 40 60 0");
+  assert.equal(path?.transform.x, 100);
+  assert.equal(path?.transform.y, 120);
+  assert.equal(path?.style.fill, "none");
+  assert.equal(path?.style.stroke, "#38bdf8");
+  assert.equal(path?.style.strokeWidth, 4);
+  equalJson(
+    documentData.timeline.map((op) => (op.op === "create" ? [op.node.id, op.node.geometry.d] : [])),
+    [["curve", "M 0 0 C 20 40 40 40 60 0"]],
+  );
+});
+
 test("auto-creates unshown nodes in source order", () => {
   const documentData = compileTextDsl(`circle first
 circle second
