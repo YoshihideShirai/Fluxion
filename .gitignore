@@ -7,3 +7,7 @@ npm-debug.log*
 .DS_Store
 
 web/dist/
+
+site/dist/
+site/.astro/
+site/public/playground/

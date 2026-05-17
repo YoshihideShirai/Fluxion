@@ -1,0 +1,20 @@
+{
+  "name": "@fluxion/site",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "sync:playground": "node scripts/sync-playground.mjs",
+    "build": "npm run sync:playground && astro check && astro build",
+    "dev": "npm run sync:playground && astro dev",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.39.2",
+    "astro": "^6.3.3",
+    "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9"
+  }
+}

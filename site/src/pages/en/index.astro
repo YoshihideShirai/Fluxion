@@ -1,0 +1,172 @@
+---
+const base = import.meta.env.BASE_URL;
+const docsUrl = `${base}en/overview/`;
+const playgroundUrl = `${base}playground/`;
+const textDslUrl = `${base}en/reference/text-dsl/`;
+const japaneseUrl = base;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fluxion - Editable animation IR</title>
+    <meta
+      name="description"
+      content="Fluxion generates editable scene graph and timeline IR from Python and Text DSLs, then renders it in a browser SVG runtime."
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #020617;
+        --panel: rgba(15, 23, 42, 0.82);
+        --panel-strong: #0f172a;
+        --border: rgba(148, 163, 184, 0.24);
+        --text: #f8fafc;
+        --muted: #cbd5e1;
+        --subtle: #94a3b8;
+        --accent: #38bdf8;
+        --accent-strong: #0ea5e9;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(56, 189, 248, 0.2), transparent 32rem),
+          radial-gradient(circle at 85% 20%, rgba(14, 165, 233, 0.14), transparent 24rem),
+          var(--bg);
+        color: var(--text);
+      }
+      a { color: inherit; }
+      .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+      nav { display: flex; align-items: center; justify-content: space-between; padding: 24px 0; color: var(--muted); }
+      .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; color: var(--text); text-decoration: none; }
+      .logo {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--accent), #1d4ed8);
+        color: #020617;
+        font-weight: 900;
+      }
+      .links { display: flex; gap: 18px; font-size: 14px; align-items: center; }
+      .language-link { border: 1px solid var(--border); border-radius: 999px; padding: 6px 10px; }
+      .links a { color: var(--muted); text-decoration: none; }
+      .links a:hover { color: var(--text); }
+      .hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr); gap: 42px; align-items: center; padding: 72px 0 56px; }
+      .eyebrow { color: var(--accent); font-size: 13px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; }
+      h1 { margin: 0; max-width: 760px; font-size: clamp(42px, 7vw, 78px); line-height: 0.95; letter-spacing: -0.06em; }
+      .lead { max-width: 660px; color: var(--muted); font-size: 19px; line-height: 1.75; }
+      .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 46px;
+        padding: 0 18px;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #082f49;
+        font-weight: 800;
+        text-decoration: none;
+      }
+      .button.secondary { background: transparent; border-color: var(--border); color: var(--text); }
+      .terminal, .card, .flow {
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        background: var(--panel);
+        box-shadow: 0 28px 80px rgba(2, 6, 23, 0.36);
+      }
+      .terminal { overflow: hidden; }
+      .terminal-header { display: flex; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--border); background: rgba(15, 23, 42, 0.82); }
+      .dot { width: 10px; height: 10px; border-radius: 50%; background: #f87171; }
+      .dot:nth-child(2) { background: #facc15; }
+      .dot:nth-child(3) { background: #4ade80; }
+      pre { margin: 0; padding: 18px; overflow: auto; color: #e2e8f0; font: 14px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 22px 0 80px; }
+      .card { padding: 22px; }
+      .card h2 { margin: 0 0 10px; font-size: 20px; }
+      .card p { margin: 0; color: var(--muted); line-height: 1.7; }
+      .flow { margin: 8px 0 64px; padding: 22px; color: var(--muted); }
+      .flow code { color: var(--accent); }
+      footer { padding: 30px 0 44px; color: var(--subtle); border-top: 1px solid var(--border); }
+      @media (max-width: 860px) {
+        .hero, .grid { grid-template-columns: 1fr; }
+        .hero { padding-top: 40px; }
+        .links { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <nav aria-label="Primary navigation">
+        <a class="brand" href={base}><span class="logo">F</span><span>Fluxion</span></a>
+        <div class="links">
+          <a href={docsUrl}>Docs</a>
+          <a href={textDslUrl}>Text DSL</a>
+          <a href={playgroundUrl}>Playground</a>
+          <a class="language-link" href={japaneseUrl} hreflang="ja">日本語</a>
+        </div>
+      </nav>
+
+      <main>
+        <section class="hero">
+          <div>
+            <p class="eyebrow">Editable animation IR</p>
+            <h1>Generate editable Scene Graph Timelines, not rendered video frames.</h1>
+            <p class="lead">
+              Fluxion is an experimental animation authoring toolkit that generates <code>.fluxion.json</code>
+              from a Manim-like Python DSL and browser Text DSL, then plays it with an SVG Runtime.
+            </p>
+            <div class="actions">
+              <a class="button" href={playgroundUrl}>Open Playground</a>
+              <a class="button secondary" href={docsUrl}>Read Docs</a>
+            </div>
+          </div>
+          <div class="terminal" aria-label="Fluxion Text DSL example">
+            <div class="terminal-header"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+            <pre><code>scene width=1280 height=720 fps=60
+text title "Fluxion MVP" at 640,110 size=32 fill="#e2e8f0"
+circle c1 r=48 at 220,360 fill="#38bdf8"
+
+at 0s:
+  show title
+  show c1
+
+animate c1.x from 220 to 640 duration=1.5s easing=easeInOut</code></pre>
+          </div>
+        </section>
+
+        <section class="flow" aria-label="Fluxion pipeline">
+          <strong>Pipeline:</strong>
+          <code>Python DSL / Text DSL</code> → <code>Scene Graph IR</code> → <code>Timeline IR</code> → <code>Browser SVG Runtime</code>
+        </section>
+
+        <section class="grid" aria-label="Fluxion highlights">
+          <article class="card">
+            <h2>Python and Text DSL</h2>
+            <p>Generate the same Fluxion IR from a Manim-like API and a compact Mermaid/PlantUML-like declarative syntax.</p>
+          </article>
+          <article class="card">
+            <h2>Safe browser compiler</h2>
+            <p>The Text DSL compiles to `.fluxion.json` in the browser without running arbitrary Python code.</p>
+          </article>
+          <article class="card">
+            <h2>SVG Runtime</h2>
+            <p>Preview animations in a runtime that applies timeline operations deterministically and supports play, seek, scrub, and reset.</p>
+          </article>
+        </section>
+      </main>
+
+      <footer>
+        Fluxion is an MVP for generating editable animation IR instead of rendered video frames.
+      </footer>
+    </div>
+  </body>
+</html>
