@@ -173,7 +173,7 @@
           "properties": {
             "op": { "const": "effect" },
             "id": { "type": "string" },
-            "effect": { "enum": ["fadeIn", "fadeOut", "create", "write"] },
+            "effect": { "enum": ["fadeIn", "fadeOut", "create", "write", "transform"] },
             "duration": { "type": "number", "minimum": 0 },
             "easing": { "enum": ["linear", "smooth", "easeInOut", "easeIn", "easeOut"] }
           }

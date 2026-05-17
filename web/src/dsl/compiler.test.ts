@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { compileTextDsl, DslCompileError } from "./compiler.js";
+import type { AnimateOperation } from "../types.js";
 
 function mustFail(source: string): DslCompileError {
   try {
@@ -63,11 +64,15 @@ at 1s:
   assert.equal(title?.geometry.fontSize, 28);
 
   equalJson(
-    documentData.timeline.filter((op) => op.op === "create").map((op) => op.node.id),
+    documentData.timeline
+      .filter((op) => op.op === "create")
+      .map((op) => op.node.id),
     ["box", "axis", "title", "c1"],
   );
   equalJson(
-    documentData.timeline.filter((op) => op.op === "animate").map((op) => [op.id, op.path, op.t, op.duration, op.easing]),
+    documentData.timeline
+      .filter((op) => op.op === "animate")
+      .map((op) => [op.id, op.path, op.t, op.duration, op.easing]),
     [
       ["c1", "transform.x", 0, 1.5, "easeInOut"],
       ["box", "transform.opacity", 1, 0.5, "smooth"],
@@ -76,7 +81,9 @@ at 1s:
 });
 
 test("compiles path nodes with SVG d geometry", () => {
-  const documentData = compileTextDsl(`path curve d="M 0 0 C 20 40 40 40 60 0" at 100,120 fill="none" stroke="#38bdf8" strokeWidth=4`);
+  const documentData = compileTextDsl(
+    `path curve d="M 0 0 C 20 40 40 40 60 0" at 100,120 fill="none" stroke="#38bdf8" strokeWidth=4`,
+  );
 
   const path = documentData.nodes[0];
   assert.equal(path?.type, "path");
@@ -87,14 +94,17 @@ test("compiles path nodes with SVG d geometry", () => {
   assert.equal(path?.style.stroke, "#38bdf8");
   assert.equal(path?.style.strokeWidth, 4);
   equalJson(
-    documentData.timeline.map((op) => (op.op === "create" ? [op.node.id, op.node.geometry.d] : [])),
+    documentData.timeline.map((op) =>
+      op.op === "create" ? [op.node.id, op.node.geometry.d] : [],
+    ),
     [["curve", "M 0 0 C 20 40 40 40 60 0"]],
   );
 });
 
-
 test("compiles math nodes with renderer and font size", () => {
-  const documentData = compileTextDsl(`math equation "e^{i\\pi}+1=0" at 320,180 size=42 renderer=mathjax fill="#f8fafc"`);
+  const documentData = compileTextDsl(
+    `math equation "e^{i\\pi}+1=0" at 320,180 size=42 renderer=mathjax fill="#f8fafc"`,
+  );
 
   const equation = documentData.nodes[0];
   assert.equal(equation?.type, "math");
@@ -104,6 +114,107 @@ test("compiles math nodes with renderer and font size", () => {
   assert.equal(equation?.transform.x, 320);
   assert.equal(equation?.transform.y, 180);
   assert.equal(equation?.style.fill, "#f8fafc");
+});
+
+test("compiles v0.2 play, wait, hide, and set statements", () => {
+  const documentData = compileTextDsl(`text title "Intro" at 100,80 opacity=1
+circle a r=20 at 0,0 fill="#000"
+rect b w=40 h=40 at 100,50 fill="#fff"
+
+play FadeIn(title) duration=1s easing=linear
+wait 0.5s
+play Transform(a, b) duration=2s
+set title.fill to "#38bdf8"
+hide title
+at 5s:
+  play FadeOut(a) duration=0.5s`);
+
+  equalJson(
+    documentData.timeline.map((op) => [
+      op.t,
+      op.op,
+      "id" in op ? op.id : op.op === "create" ? op.node.id : "",
+    ]),
+    [
+      [0, "create", "a"],
+      [0, "create", "title"],
+      [0, "effect", "title"],
+      [0, "animate", "title"],
+      [1.5, "effect", "a"],
+      [1.5, "animate", "a"],
+      [1.5, "animate", "a"],
+      [1.5, "animate", "a"],
+      [1.5, "animate", "a"],
+      [1.5, "animate", "a"],
+      [1.5, "animate", "a"],
+      [3.5, "set", "title"],
+      [3.5, "delete", "title"],
+      [5, "effect", "a"],
+      [5, "animate", "a"],
+      [5.5, "delete", "a"],
+    ],
+  );
+
+  const fadeInCreate = documentData.timeline.find(
+    (op) => op.op === "create" && op.node.id === "title",
+  );
+  assert.equal(fadeInCreate?.op, "create");
+  if (fadeInCreate?.op !== "create")
+    throw new Error("Expected FadeIn create operation.");
+  assert.equal(fadeInCreate.node.transform.opacity, 0);
+
+  const transformAnimations = documentData.timeline.filter(
+    (op): op is AnimateOperation => op.op === "animate" && op.id === "a",
+  );
+  assert.equal(
+    transformAnimations.some(
+      (op) => op.path === "transform.x" && op.to === 100,
+    ),
+    true,
+  );
+  assert.equal(
+    transformAnimations.some((op) => op.path === "transform.y" && op.to === 50),
+    true,
+  );
+  assert.equal(
+    transformAnimations.some((op) => op.path === "geometry.w" && op.to === 40),
+    true,
+  );
+
+  const setOperation = documentData.timeline.find((op) => op.op === "set");
+  assert.equal(setOperation?.op, "set");
+  if (setOperation?.op !== "set") throw new Error("Expected set operation.");
+  assert.equal(setOperation.path, "style.fill");
+  assert.equal(setOperation.value, "#38bdf8");
+});
+
+test("compiles group roots with math and path children", () => {
+  const documentData = compileTextDsl(`path curve d="M 0 0 L 10 10"
+math eq "x^2" renderer=katex size=24
+group diagram curve eq at 320,180
+play Create(diagram) duration=0.25s`);
+
+  equalJson(
+    documentData.nodes.map((node) => node.id),
+    ["diagram"],
+  );
+  const group = documentData.nodes[0];
+  assert.equal(group?.type, "group");
+  equalJson(
+    group?.children.map((child) => [child.id, child.type]),
+    [
+      ["curve", "path"],
+      ["eq", "math"],
+    ],
+  );
+  assert.equal(group?.transform.x, 320);
+  assert.equal(group?.transform.y, 180);
+  equalJson(
+    documentData.timeline.map((op) =>
+      op.op === "create" ? op.node.id : op.op === "effect" ? op.id : "",
+    ),
+    ["diagram", "diagram"],
+  );
 });
 
 test("auto-creates unshown nodes in source order", () => {
@@ -118,7 +229,9 @@ circle third`);
 });
 
 test("keeps comments outside quoted strings and unescapes quoted text", () => {
-  const documentData = compileTextDsl(`text label "A \\"quoted\\" # value" at 10,20 fill="#fff" # trailing comment`);
+  const documentData = compileTextDsl(
+    `text label "A \\"quoted\\" # value" at 10,20 fill="#fff" # trailing comment`,
+  );
 
   const label = documentData.nodes[0];
   assert.equal(label?.text, 'A "quoted" # value');
@@ -126,13 +239,31 @@ test("keeps comments outside quoted strings and unescapes quoted text", () => {
 });
 
 test("reports representative compile errors with line and column details", () => {
-  messageMatches("circle c1\ncircle c1", /Line 2, column 1: Duplicate node id 'c1'\./);
+  messageMatches(
+    "circle c1\ncircle c1",
+    /Line 2, column 1: Duplicate node id 'c1'\./,
+  );
   messageMatches("show missing", /Line 1, column 1: Unknown node 'missing'\./);
-  messageMatches("circle c1 unknown=1", /Line 1, column 1: Unknown node option 'unknown'\./);
-  messageMatches("circle c1 r=nope", /Line 1, column 1: Expected number, got 'nope'\./);
-  messageMatches('text title "Fluxion', /Line 1, column 19: Unclosed quoted string\./);
+  messageMatches(
+    "circle c1 unknown=1",
+    /Line 1, column 1: Unknown node option 'unknown'\./,
+  );
+  messageMatches(
+    "circle c1 r=nope",
+    /Line 1, column 1: Expected number, got 'nope'\./,
+  );
+  messageMatches(
+    'text title "Fluxion',
+    /Line 1, column 19: Unclosed quoted string\./,
+  );
   messageMatches("wat c1", /Line 1, column 1: Unknown statement 'wat'\./);
-  messageMatches("circle c1\nanimate c1.x from 0 to 1 duration=1s easing=bouncy", /Line 2, column 1: Unknown easing 'bouncy'\./);
+  messageMatches(
+    "circle c1\nanimate c1.x from 0 to 1 duration=1s easing=bouncy",
+    /Line 2, column 1: Unknown easing 'bouncy'\./,
+  );
   messageMatches("at 1s", /Line 1, column 1: Expected ':' after at block\./);
-  messageMatches("circle c1\nanimate c1.x from 0 duration=1s", /Line 2, column 1: Expected animate syntax/);
+  messageMatches(
+    "circle c1\nanimate c1.x from 0 duration=1s",
+    /Line 2, column 1: Expected animate syntax/,
+  );
 });
