@@ -12,35 +12,77 @@ export interface TextDslCommandExample {
 }
 
 export const heroTextDslExample = `scene width=1280 height=720 fps=60
-text title "Fluxion MVP" at 640,110 size=32 fill="#e2e8f0"
-circle c1 r=48 at 220,360 fill="#38bdf8"
+camera at 0,0 scale=1
+value theta = 0
+
+path orbit d="M -300 0 C -170 -135 170 -135 300 0 C 170 135 -170 135 -300 0" at 640,390 fill="none" stroke="#38bdf8" strokeWidth=4 opacity=0.55
+text title "Fluxion Motion Lab" at 640,118 size=42 fill="#e2e8f0"
+math equation "x^2+y^2=r^2" at 640,200 size=38 fill="#bae6fd" renderer=katex
+circle dot r=38 at 340,390 fill="#38bdf8" stroke="#0f172a" strokeWidth=5
+rect target w=190 h=104 at 960,390 fill="#f97316" stroke="#fed7aa" strokeWidth=4
 
 at 0s:
-  show title
-  show c1
+  hide target
+  play AnimationGroup(Write(title), FadeIn(equation), FadeIn(orbit), FadeIn(dot), lagRatio=0.16) duration=1.4s easing=easeOut
 
-animate c1.x from 220 to 640 duration=1.5s easing=easeInOut`;
+animate theta from 0 to 6.283 duration=2.4s easing=linear
+set dot.x to expr="640 + 300 * cos(theta)"
+set dot.y to expr="390 + 120 * sin(theta)"
+animate camera.x from 0 to -24 duration=2.4s easing=easeInOut
+play Transform(dot, target) duration=1s easing=easeInOut`;
 
 export const commandDemoSource = `scene width=1280 height=720 fps=60
+camera at 0,0 scale=1
 
-text title "DSL command demo" at 640,90 size=36 fill="#e2e8f0"
-math eq "f(x)=x^2" at 640,155 size=34 fill="#bae6fd"
-circle dot r=34 at 260,420 fill="#38bdf8" stroke="#0f172a" strokeWidth=4
-rect target w=120 h=88 at 820,420 fill="#f97316" opacity=0.85
-line axis x1=-320 y1=0 x2=320 y2=0 at 640,540 stroke="#94a3b8" strokeWidth=3
-group intro title eq
+value theta = 0
+value pulse = 0
+
+rect backdrop w=1280 h=720 at 640,360 fill="#020617"
+path orbit d="M -360 0 C -210 -180 210 -180 360 0 C 210 180 -210 180 -360 0" at 640,390 fill="none" stroke="#1e3a8a" strokeWidth=5 opacity=0.5
+line axis x1=-460 y1=0 x2=460 y2=0 at 640,390 stroke="#475569" strokeWidth=2 opacity=0.65
+text title "Fluxion command demo" at 640,92 size=42 fill="#e2e8f0"
+text subtitle "Text DSL → scene graph → timeline playback" at 640,146 size=23 fill="#94a3b8"
+math equation "x^2+y^2=r^2" at 640,222 size=38 fill="#bae6fd" renderer=katex expandTokens=true
+math equation2 "x^2+y^2=R^2" at 640,222 size=38 fill="#fef3c7" renderer=katex expandTokens=true
+circle dot r=34 at 280,390 fill="#38bdf8" stroke="#0f172a" strokeWidth=5
+circle halo r=56 at 280,390 fill="#38bdf8" stroke="#7dd3fc" strokeWidth=2 opacity=0.18
+rect card w=230 h=112 at 1000,390 fill="#f97316" stroke="#fed7aa" strokeWidth=4 opacity=0.9
+text cardLabel "morph target" at 1000,390 size=26 fill="#111827"
+path spark d="M 0 -52 L 14 -14 L 52 0 L 14 14 L 0 52 L -14 14 L -52 0 L -14 -14 Z" at 640,510 fill="#facc15" stroke="#fef08a" strokeWidth=3 opacity=0
+text caption "Values, expressions, camera moves, groups, and math-token transforms in one scene." at 640,646 size=22 fill="#cbd5e1" opacity=0
+
+group cardGroup card cardLabel
+group hero title subtitle equation
+group heroNext title subtitle equation2
 
 at 0s:
+  show backdrop
   show axis
-  hide target
-  play Write(intro) duration=1s
-  play FadeIn(dot) duration=0.8s
+  play AnimationGroup(FadeIn(orbit), Write(hero), FadeIn(dot), FadeIn(halo), lagRatio=0.18) duration=1.6s easing=easeOut
 
-wait 0.4s
-set dot.fill to "#22c55e"
-animate dot.x from 260 to 820 duration=1.4s easing=easeInOut
-play Transform(dot, target) duration=1.2s easing=easeOut
-play FadeOut(intro) duration=0.8s`;
+wait 0.2s
+animate theta from 0 to 6.283 duration=2.8s easing=linear
+animate pulse from 0 to 6.283 duration=2.8s easing=linear
+set dot.x to expr="640 + 360 * cos(theta)"
+set dot.y to expr="390 + 135 * sin(theta)"
+set halo.x to expr="640 + 360 * cos(theta)"
+set halo.y to expr="390 + 135 * sin(theta)"
+set halo.scale to expr="1.0 + 0.22 * sin(pulse)"
+animate camera.x from 0 to -28 duration=2.8s easing=easeInOut
+animate camera.y from 0 to 18 duration=2.8s easing=easeInOut
+
+wait 0.2s
+play TransformMatchingTex(equation, equation2) duration=1.2s easing=easeInOut
+play FadeIn(cardGroup) duration=0.6s easing=easeOut
+play Transform(dot, card) duration=1.25s easing=easeInOut
+animate halo.opacity from 0.18 to 0 start=5.8s duration=0.8s easing=easeOut
+
+at 6.2s:
+  play FadeIn(spark) duration=0.4s easing=easeOut
+  animate spark.rotation from 0 to 180 duration=1s easing=linear
+  animate spark.scale from 0.8 to 1.45 duration=1s easing=easeOut
+  animate spark.opacity from 1 to 0.35 duration=1s easing=easeOut
+  play FadeIn(caption) duration=0.8s easing=easeOut`;
 
 export const textDslCommandExamples: TextDslCommandExample[] = [
   {
