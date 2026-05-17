@@ -13,10 +13,15 @@ The v0.2 scope is intentionally small: place shapes, math, paths, and groups; de
 | Command | Purpose | Minimal example |
 |---|---|---|
 | `scene` | Canvas size and fps | `scene width=1280 height=720 fps=60` |
-| `circle`, `rect`, `line`, `path` | Shape node declarations | `circle dot r=34 at 260,420 fill="#38bdf8"` |
-| `text`, `math`, `group` | Labels, equations, and grouped nodes | `group intro title eq` |
+| `circle` | Circle node declaration | `circle dot r=34 at 260,420 fill="#38bdf8"` |
+| `rect` | Rectangle node declaration | `rect target w=120 h=88 at 820,420 fill="#f97316"` |
+| `line` | Line node declaration | `line axis x1=-50 y1=0 x2=50 y2=0 at 640,520 stroke="#e2e8f0"` |
+| `path` | Path node declaration | `path curve d="M 0 0 C 40 80 80 80 120 0" at 640,420 fill="none" stroke="#38bdf8"` |
+| `text` | Text label node declaration | `text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"` |
+| `math` | Math equation node declaration | `math equation "e^{i\pi}+1=0" at 640,200 size=36 renderer=katex` |
+| `group` | Grouped node declaration | `group intro title equation` |
 | `at` | Start an indented block at a fixed time | `at 0s:` |
-| `show`, `hide` | Create or delete a node on the timeline | `show dot` |
+| `show / hide` | Create or delete a node on the timeline | `show dot` |
 | `value` | Declare a scalar tracker | `value theta = 0` |
 | `set` | Apply an immediate property value or dependent expression | `set dot.x to expr="320 + 100 * cos(theta)"` |
 | `animate` | Interpolate one property or scalar tracker | `animate theta from 0 to 6.28 duration=2s` |

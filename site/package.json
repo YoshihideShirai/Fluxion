@@ -5,9 +5,10 @@
   "private": true,
   "scripts": {
     "sync:playground": "node scripts/sync-playground.mjs",
-    "build": "npm run sync:playground && astro check && astro build",
+    "build": "npm run sync:playground && npm run check:text-dsl-reference && astro check && astro build",
     "dev": "npm run sync:playground && astro dev",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "check:text-dsl-reference": "node scripts/check-text-dsl-reference.mjs"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.39.2",

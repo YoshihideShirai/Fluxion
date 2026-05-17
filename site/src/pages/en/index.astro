@@ -1,4 +1,11 @@
 ---
+import Hero from '../../components/Hero.astro';
+import CommandExamples from '../../components/CommandExamples.astro';
+import Pipeline from '../../components/Pipeline.astro';
+import FeatureGrid from '../../components/FeatureGrid.astro';
+import CTA from '../../components/CTA.astro';
+import '../../styles/landing.css';
+
 const baseUrl = import.meta.env.BASE_URL.endsWith('/')
   ? import.meta.env.BASE_URL
   : `${import.meta.env.BASE_URL}/`;
@@ -6,23 +13,20 @@ const docsUrl = `${baseUrl}en/overview/`;
 const playgroundUrl = `${baseUrl}playground/`;
 const textDslUrl = `${baseUrl}en/reference/text-dsl/`;
 const japaneseUrl = baseUrl;
-const commandExamples = [
-  { command: 'scene', description: 'Configure canvas size and fps.', source: 'scene width=960 height=540 fps=30\ntext label "960x540 / 30fps" at 480,270 size=42 fill="#e2e8f0"' },
-  { command: 'circle', description: 'Draw a circle with radius and color.', source: 'scene width=640 height=360 fps=60\ncircle dot r=58 at 320,180 fill="#38bdf8" stroke="#0f172a" strokeWidth=6' },
-  { command: 'rect', description: 'Draw a rectangle with width, height, and opacity.', source: 'scene width=640 height=360 fps=60\nrect card w=220 h=120 at 320,180 fill="#f97316" opacity=0.85' },
-  { command: 'line', description: 'Draw a line segment with endpoints.', source: 'scene width=640 height=360 fps=60\nline axis x1=-220 y1=0 x2=220 y2=0 at 320,180 stroke="#e2e8f0" strokeWidth=8' },
-  { command: 'path', description: 'Draw curves or custom shapes with SVG path data.', source: 'scene width=640 height=360 fps=60\npath curve d="M 80 220 C 180 60 460 60 560 220" fill="none" stroke="#38bdf8" strokeWidth=8' },
-  { command: 'text', description: 'Place text with size and color.', source: 'scene width=640 height=360 fps=60\ntext title "Hello Text DSL" at 320,180 size=42 fill="#e2e8f0"' },
-  { command: 'math', description: 'Place a LaTeX string as a math node.', source: 'scene width=640 height=360 fps=60\nmath formula "e^{i\\\\pi}+1=0" at 320,180 size=44 fill="#bae6fd" renderer=katex' },
-  { command: 'group', description: 'Group multiple nodes for display and animation.', source: 'scene width=640 height=360 fps=60\ntext label "Grouped" at 320,130 size=34 fill="#e2e8f0"\ncircle dot r=36 at 320,220 fill="#38bdf8"\ngroup badge label dot\nplay FadeIn(badge) duration=1s' },
-  { command: 'at', description: 'Start indented commands at a fixed time.', source: 'scene width=640 height=360 fps=60\ncircle early r=36 at 240,180 fill="#38bdf8"\ncircle late r=36 at 400,180 fill="#f97316" opacity=0\nat 1s:\n  set late.opacity to 1' },
-  { command: 'show / hide', description: 'Create or delete a node on the timeline.', source: 'scene width=640 height=360 fps=60\ncircle blink r=54 at 320,180 fill="#22c55e"\nat 0s:\n  show blink\nat 1s:\n  hide blink' },
-  { command: 'set', description: 'Apply an immediate value to a property.', source: 'scene width=640 height=360 fps=60\ncircle dot r=54 at 320,180 fill="#38bdf8"\nat 1s:\n  set dot.fill to "#22c55e"' },
-  { command: 'animate', description: 'Interpolate a property with from / to / duration.', source: 'scene width=640 height=360 fps=60\ncircle dot r=42 at 160,180 fill="#38bdf8"\nanimate dot.x from 160 to 480 duration=1.5s easing=easeInOut' },
-  { command: 'play', description: 'Run primitives such as FadeIn and Transform.', source: 'scene width=640 height=360 fps=60\ncircle dot r=42 at 180,180 fill="#38bdf8"\nrect target w=110 h=90 at 460,180 fill="#f97316"\nat 0s:\n  hide target\nplay FadeIn(dot) duration=0.7s\nplay Transform(dot, target) duration=1s easing=easeOut' },
-  { command: 'wait', description: 'Advance current time before the next animation.', source: 'scene width=640 height=360 fps=60\ncircle dot r=42 at 160,180 fill="#38bdf8"\nplay FadeIn(dot) duration=0.7s\nwait 0.8s\nanimate dot.x from 160 to 480 duration=1s easing=easeInOut' },
+const features = [
+  {
+    title: 'Python and Text DSL',
+    body: 'Generate the same Fluxion IR from a Manim-like API and a compact Mermaid/PlantUML-like declarative syntax.',
+  },
+  {
+    title: 'Safe browser compiler',
+    body: 'The Text DSL compiles to `.fluxion.json` in the browser without running arbitrary Python code.',
+  },
+  {
+    title: 'SVG Runtime',
+    body: 'Preview animations in a runtime that applies timeline operations deterministically and supports play, seek, scrub, and reset.',
+  },
 ];
-const createPlaygroundUrl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent(source)}`;
 ---
 
 <!doctype html>
@@ -33,117 +37,8 @@ const createPlaygroundUrl = (source: string) => `${playgroundUrl}?dsl=${encodeUR
     <title>Fluxion - Editable animation IR</title>
     <meta
       name="description"
-      content="Fluxion generates editable scene graph and timeline IR from Python and Text DSLs, then renders it in a browser SVG runtime."
+      content="Fluxion generates editable Scene Graph / Timeline IR from Python DSL and Text DSL, then plays it in a browser SVG Runtime."
     />
-    <style>
-      :root {
-        color-scheme: dark;
-        --bg: #020617;
-        --panel: rgba(15, 23, 42, 0.82);
-        --panel-strong: #0f172a;
-        --border: rgba(148, 163, 184, 0.24);
-        --text: #f8fafc;
-        --muted: #cbd5e1;
-        --subtle: #94a3b8;
-        --accent: #38bdf8;
-        --accent-strong: #0ea5e9;
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background:
-          radial-gradient(circle at top left, rgba(56, 189, 248, 0.2), transparent 32rem),
-          radial-gradient(circle at 85% 20%, rgba(14, 165, 233, 0.14), transparent 24rem),
-          var(--bg);
-        color: var(--text);
-      }
-      a { color: inherit; }
-      .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
-      nav { display: flex; align-items: center; justify-content: space-between; padding: 24px 0; color: var(--muted); }
-      .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; color: var(--text); text-decoration: none; }
-      .logo {
-        display: grid;
-        width: 34px;
-        height: 34px;
-        place-items: center;
-        border-radius: 10px;
-        background: linear-gradient(135deg, var(--accent), #1d4ed8);
-        color: #020617;
-        font-weight: 900;
-      }
-      .links { display: flex; gap: 18px; font-size: 14px; align-items: center; }
-      .language-link { border: 1px solid var(--border); border-radius: 999px; padding: 6px 10px; }
-      .links a { color: var(--muted); text-decoration: none; }
-      .links a:hover { color: var(--text); }
-      .hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr); gap: 42px; align-items: center; padding: 72px 0 56px; }
-      .eyebrow { color: var(--accent); font-size: 13px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; }
-      h1 { margin: 0; max-width: 760px; font-size: clamp(42px, 7vw, 78px); line-height: 0.95; letter-spacing: -0.06em; }
-      .lead { max-width: 660px; color: var(--muted); font-size: 19px; line-height: 1.75; }
-      .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-      .button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 46px;
-        padding: 0 18px;
-        border: 1px solid transparent;
-        border-radius: 999px;
-        background: var(--accent);
-        color: #082f49;
-        font-weight: 800;
-        text-decoration: none;
-      }
-      .button.secondary { background: transparent; border-color: var(--border); color: var(--text); }
-      .terminal, .card, .flow {
-        border: 1px solid var(--border);
-        border-radius: 22px;
-        background: var(--panel);
-        box-shadow: 0 28px 80px rgba(2, 6, 23, 0.36);
-      }
-      .terminal { overflow: hidden; }
-      .terminal-header { display: flex; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--border); background: rgba(15, 23, 42, 0.82); }
-      .dot { width: 10px; height: 10px; border-radius: 50%; background: #f87171; }
-      .dot:nth-child(2) { background: #facc15; }
-      .dot:nth-child(3) { background: #4ade80; }
-      pre { margin: 0; padding: 18px; overflow: auto; color: #e2e8f0; font: 14px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-      .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 22px 0 80px; }
-      .card { padding: 22px; }
-      .card h2 { margin: 0 0 10px; font-size: 20px; }
-      .card p { margin: 0; color: var(--muted); line-height: 1.7; }
-      .flow { margin: 8px 0 64px; padding: 22px; color: var(--muted); }
-      .flow code { color: var(--accent); }
-
-      .dsl-guide { padding: 10px 0 72px; }
-      .section-heading { max-width: 760px; margin-bottom: 22px; }
-      .section-heading h2 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 42px); letter-spacing: -0.04em; }
-      .section-heading p { margin: 0; color: var(--muted); line-height: 1.75; }
-      .command-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
-      .command-card { display: flex; flex-direction: column; gap: 10px; border: 1px solid var(--border); border-radius: 18px; padding: 16px; background: rgba(15, 23, 42, 0.62); }
-      .command-card code { display: inline-block; margin-bottom: 8px; color: var(--accent); font-weight: 800; }
-      .command-card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
-      .command-card pre { flex: 1; min-height: 154px; padding: 12px; border-radius: 12px; background: #020617; font-size: 12px; line-height: 1.45; }
-      .command-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
-      .mini-button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 999px; padding: 8px 11px; background: var(--accent); color: #082f49; font-weight: 800; font-size: 13px; text-decoration: none; cursor: pointer; }
-      .mini-button.secondary { background: transparent; border-color: var(--border); color: var(--text); }
-      .inline-runner { margin: 22px 0 0; border: 1px solid var(--border); border-radius: 22px; padding: 18px; background: rgba(15, 23, 42, 0.72); }
-      .runner-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; color: var(--muted); }
-      .runner-workspace { display: grid; grid-template-columns: minmax(260px, 0.9fr) minmax(280px, 1.1fr); gap: 14px; align-items: stretch; }
-      .runner-source { min-height: 260px; width: 100%; resize: vertical; border: 1px solid var(--border); border-radius: 14px; padding: 12px; background: #020617; color: #e2e8f0; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-      .runner-stage { aspect-ratio: 16 / 9; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: #0f172a; }
-      .demo-panel { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr); gap: 16px; align-items: stretch; }
-      .demo-note { border: 1px solid var(--border); border-radius: 22px; padding: 22px; background: rgba(15, 23, 42, 0.62); color: var(--muted); line-height: 1.75; }
-      .demo-note h3 { margin: 0 0 10px; color: var(--text); }
-      .demo-note ol { margin: 12px 0 0; padding-left: 22px; }
-      .demo-note a { color: var(--accent); font-weight: 800; }
-      footer { padding: 30px 0 44px; color: var(--subtle); border-top: 1px solid var(--border); }
-      @media (max-width: 860px) {
-        .hero, .grid, .command-grid, .demo-panel, .runner-workspace { grid-template-columns: 1fr; }
-        .hero { padding-top: 40px; }
-        .links { display: none; }
-      }
-    </style>
   </head>
   <body>
     <div class="shell">
@@ -158,181 +53,60 @@ const createPlaygroundUrl = (source: string) => `${playgroundUrl}?dsl=${encodeUR
       </nav>
 
       <main>
-        <section class="hero">
-          <div>
-            <p class="eyebrow">Editable animation IR</p>
-            <h1>Generate editable Scene Graph Timelines, not rendered video frames.</h1>
-            <p class="lead">
-              Fluxion is an experimental animation authoring toolkit that generates <code>.fluxion.json</code>
-              from a Manim-like Python DSL and browser Text DSL, then plays it with an SVG Runtime.
-            </p>
-            <div class="actions">
-              <a class="button" href={playgroundUrl}>Open Playground</a>
-              <a class="button secondary" href={docsUrl}>Read Docs</a>
-            </div>
-          </div>
-          <div class="terminal" aria-label="Fluxion Text DSL example">
-            <div class="terminal-header"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-            <pre><code>scene width=1280 height=720 fps=60
-text title "Fluxion MVP" at 640,110 size=32 fill="#e2e8f0"
-circle c1 r=48 at 220,360 fill="#38bdf8"
+        <Hero
+          eyebrow="Editable animation IR"
+          title="Generate editable Scene Graph Timelines, not rendered video frames."
+          lead={'Fluxion is an experimental animation authoring toolkit that generates <code>.fluxion.json</code> from a Manim-like Python DSL and browser Text DSL, then plays it with an SVG Runtime.'}
+          primaryHref={playgroundUrl}
+          primaryLabel="Open Playground"
+          secondaryHref={docsUrl}
+          secondaryLabel="Read Docs"
+        />
 
-at 0s:
-  show title
-  show c1
+        <CommandExamples
+          locale="en"
+          playgroundUrl={playgroundUrl}
+          textDslUrl={textDslUrl}
+          eyebrow="Text DSL commands"
+          heading="DSL commands you can try on GitHub Pages"
+          intro={'Text DSL builds a Scene Graph and Timeline with one command per line. Use each card’s sample code with “Run here” to preview the command inline, or open the same sample in the Playground.'}
+          runLabel="Run here"
+          openLabel="Open in Playground"
+          runnerTitle="Inline preview"
+          runnerStatus="Choose a command sample to run."
+          demoNote={{
+            title: 'What the demo shows',
+            items: [
+              '<code>scene</code> and node declarations define the viewport, labels, equation, and shapes.',
+              'The <code>at</code> block pins the starting time, then runs <code>show</code> and <code>play</code> in sequence.',
+              '<code>set</code> and <code>animate</code> change the circle color and x position before <code>Transform</code> morphs it toward the rectangle.',
+            ],
+            playgroundLabel: 'Try the demo in Playground',
+            referenceLabel: 'Read the full Text DSL reference',
+          }}
+        />
 
-animate c1.x from 220 to 640 duration=1.5s easing=easeInOut</code></pre>
-          </div>
-        </section>
+        <Pipeline
+          ariaLabel="Fluxion pipeline"
+          label="Pipeline:"
+          steps={['Python DSL / Text DSL', 'Scene Graph IR', 'Timeline IR', 'Browser SVG Runtime']}
+        />
 
+        <FeatureGrid ariaLabel="Fluxion highlights" features={features} />
 
-        <section class="dsl-guide" aria-labelledby="dsl-guide-title">
-          <div class="section-heading">
-            <p class="eyebrow">Text DSL commands</p>
-            <h2 id="dsl-guide-title">DSL commands you can try on GitHub Pages</h2>
-            <p>
-              Text DSL builds a Scene Graph and Timeline with one command per line. Use each card’s sample code with “Run here”
-              to preview the command inline, or open the same sample in the Playground.
-            </p>
-          </div>
-
-          <div class="command-grid" aria-label="Text DSL command summary">
-            {commandExamples.map((example) => (
-              <article class="command-card">
-                <code>{example.command}</code>
-                <p>{example.description}</p>
-                <pre><code>{example.source}</code></pre>
-                <div class="command-actions">
-                  <button class="mini-button run-command-demo" type="button" data-source={example.source}>Run here</button>
-                  <a class="mini-button secondary" href={createPlaygroundUrl(example.source)}>Open in Playground</a>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          <div class="inline-runner" aria-live="polite">
-            <div class="runner-toolbar">
-              <strong>Inline preview</strong>
-              <span id="command-runner-status">Choose a command sample to run.</span>
-            </div>
-            <div class="runner-workspace">
-              <textarea id="command-runner-source" class="runner-source" spellcheck="false" readonly></textarea>
-              <div id="command-runner-stage" class="runner-stage"></div>
-            </div>
-            <div class="command-actions">
-              <button id="command-runner-play" class="mini-button" type="button">Play</button>
-              <button id="command-runner-reset" class="mini-button secondary" type="button">Reset</button>
-            </div>
-          </div>
-
-          <div class="demo-panel">
-            <div class="terminal" aria-label="Fluxion Text DSL demo">
-              <div class="terminal-header"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-              <pre><code>scene width=1280 height=720 fps=60
-
-text title "DSL command demo" at 640,90 size=36 fill="#e2e8f0"
-math eq "f(x)=x^2" at 640,155 size=34 fill="#bae6fd"
-circle dot r=34 at 260,420 fill="#38bdf8" stroke="#0f172a" strokeWidth=4
-rect target w=120 h=88 at 820,420 fill="#f97316" opacity=0.85
-line axis x1=-320 y1=0 x2=320 y2=0 at 640,540 stroke="#94a3b8" strokeWidth=3
-group intro title eq
-
-at 0s:
-  show axis
-  hide target
-  play Write(intro) duration=1s
-  play FadeIn(dot) duration=0.8s
-
-wait 0.4s
-set dot.fill to "#22c55e"
-animate dot.x from 260 to 820 duration=1.4s easing=easeInOut
-play Transform(dot, target) duration=1.2s easing=easeOut
-play FadeOut(intro) duration=0.8s</code></pre>
-            </div>
-            <div class="demo-note">
-              <h3>What the demo shows</h3>
-              <ol>
-                <li><code>scene</code> and node declarations define the viewport, labels, equation, and shapes.</li>
-                <li>The <code>at</code> block pins the starting time, then runs <code>show</code> and <code>play</code> in sequence.</li>
-                <li><code>set</code> and <code>animate</code> change the circle color and x position before <code>Transform</code> morphs it toward the rectangle.</li>
-              </ol>
-              <p><a href={playgroundUrl}>Try the demo in Playground</a> / <a href={textDslUrl}>Read the full Text DSL reference</a></p>
-            </div>
-          </div>
-        </section>
-
-        <section class="flow" aria-label="Fluxion pipeline">
-          <strong>Pipeline:</strong>
-          <code>Python DSL / Text DSL</code> → <code>Scene Graph IR</code> → <code>Timeline IR</code> → <code>Browser SVG Runtime</code>
-        </section>
-
-        <section class="grid" aria-label="Fluxion highlights">
-          <article class="card">
-            <h2>Python and Text DSL</h2>
-            <p>Generate the same Fluxion IR from a Manim-like API and a compact Mermaid/PlantUML-like declarative syntax.</p>
-          </article>
-          <article class="card">
-            <h2>Safe browser compiler</h2>
-            <p>The Text DSL compiles to `.fluxion.json` in the browser without running arbitrary Python code.</p>
-          </article>
-          <article class="card">
-            <h2>SVG Runtime</h2>
-            <p>Preview animations in a runtime that applies timeline operations deterministically and supports play, seek, scrub, and reset.</p>
-          </article>
-        </section>
+        <CTA
+          title="Try Text DSL in your browser first."
+          body="Edit DSL without installing anything, then inspect the generated Scene Graph / Timeline IR and SVG preview."
+          primaryHref={playgroundUrl}
+          primaryLabel="Open Playground"
+          secondaryHref={textDslUrl}
+          secondaryLabel="Text DSL reference"
+        />
       </main>
 
       <footer>
         Fluxion is an MVP for generating editable animation IR instead of rendered video frames.
       </footer>
     </div>
-
-    <script is:inline define:vars={{ baseUrl }}>
-      async function initCommandRunner() {
-        const stage = document.querySelector('#command-runner-stage');
-        const source = document.querySelector('#command-runner-source');
-        const status = document.querySelector('#command-runner-status');
-        const play = document.querySelector('#command-runner-play');
-        const reset = document.querySelector('#command-runner-reset');
-        const buttons = [...document.querySelectorAll('.run-command-demo')];
-        if (!stage || !source || !status || buttons.length === 0) return;
-
-        let player;
-        try {
-          const runtime = await import(`${baseUrl}playground/dist/index.js`);
-          const compiler = await import(`${baseUrl}playground/dist/dsl/compiler.js`);
-
-          const runSource = (dslSource) => {
-            source.value = dslSource;
-            try {
-              player?.stop();
-              const documentData = compiler.compileTextDsl(dslSource);
-              player = runtime.mountFluxionDocument(stage, documentData);
-              status.textContent = `Compiled ${documentData.nodes.length} nodes / ${documentData.timeline.length} ops / ${documentData.duration.toFixed(2)}s`;
-            } catch (error) {
-              status.textContent = error instanceof Error ? error.message : String(error);
-            }
-          };
-
-          buttons.forEach((button) => {
-            button.addEventListener('click', () => runSource(button.dataset.source ?? ''));
-          });
-          play?.addEventListener('click', () => {
-            if (!player) return;
-            player.play({ from: player.currentSeconds >= player.durationSeconds ? 0 : player.currentSeconds });
-          });
-          reset?.addEventListener('click', () => {
-            if (!player) return;
-            player.stop();
-            player.seek(0);
-          });
-          runSource(buttons[0].dataset.source ?? '');
-        } catch (error) {
-          status.textContent = error instanceof Error ? error.message : String(error);
-        }
-      }
-
-      void initCommandRunner();
-    </script>
   </body>
 </html>

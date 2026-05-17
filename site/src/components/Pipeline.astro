@@ -1,0 +1,19 @@
+---
+interface Props {
+  label: string;
+  ariaLabel: string;
+  steps: string[];
+}
+
+const { label, ariaLabel, steps } = Astro.props;
+---
+
+<section class="flow" aria-label={ariaLabel}>
+  <strong>{label}</strong>
+  {steps.map((step, index) => (
+    <>
+      {index > 0 && <span aria-hidden="true"> → </span>}
+      <code>{step}</code>
+    </>
+  ))}
+</section>

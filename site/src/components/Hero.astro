@@ -1,0 +1,31 @@
+---
+import { heroTextDslExample } from '../data/landingExamples';
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  lead: string;
+  primaryHref: string;
+  primaryLabel: string;
+  secondaryHref: string;
+  secondaryLabel: string;
+}
+
+const { eyebrow, title, lead, primaryHref, primaryLabel, secondaryHref, secondaryLabel } = Astro.props;
+---
+
+<section class="hero">
+  <div>
+    <p class="eyebrow">{eyebrow}</p>
+    <h1>{title}</h1>
+    <p class="lead" set:html={lead} />
+    <div class="actions">
+      <a class="button" href={primaryHref}>{primaryLabel}</a>
+      <a class="button secondary" href={secondaryHref}>{secondaryLabel}</a>
+    </div>
+  </div>
+  <div class="terminal" aria-label="Fluxion Text DSL example">
+    <div class="terminal-header"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    <pre><code>{heroTextDslExample}</code></pre>
+  </div>
+</section>
