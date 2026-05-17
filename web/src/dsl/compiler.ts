@@ -332,61 +332,44 @@ function parsePlay(
     else throw new DslCompileError(`Unknown play option '${key}'.`, lineNumber);
   }
 
-  const start = statementTime(state);
+  emitPlayCall(state, call, statementTime(state), duration, easing, lineNumber);
+  advanceStatementTime(state, duration);
+}
+
+function emitPlayCall(
+  state: CompileState,
+  call: PlayCall,
+  start: number,
+  duration: number,
+  easing: string,
+  lineNumber: number,
+): void {
   if (call.name === "FadeIn") {
+    ensureNoPlayOptions(call, lineNumber);
     const id = expectPlayArg(call, 1, lineNumber);
-    const node = hiddenClone(requireNode(state, id, lineNumber));
-    state.timeline.push({ t: start, op: "create", node });
-    state.timeline.push({
-      t: start,
-      op: "effect",
-      id,
-      effect: "fadeIn",
-      duration,
-      easing,
-    });
-    state.timeline.push({
-      t: start,
-      op: "animate",
-      id,
-      path: "transform.opacity",
-      from: 0,
-      to: requireNode(state, id, lineNumber).transform.opacity,
-      duration,
-      easing,
-    });
-    state.shown.add(id);
-    advanceStatementTime(state, duration);
+    pushFadeIn(state, start, id, duration, easing, lineNumber);
     return;
   }
 
   if (call.name === "FadeOut") {
+    ensureNoPlayOptions(call, lineNumber);
     const id = expectPlayArg(call, 1, lineNumber);
-    const node = requireNode(state, id, lineNumber);
-    state.timeline.push({
-      t: start,
-      op: "effect",
-      id,
-      effect: "fadeOut",
-      duration,
-      easing,
-    });
-    state.timeline.push({
-      t: start,
-      op: "animate",
-      id,
-      path: "transform.opacity",
-      from: node.transform.opacity,
-      to: 0,
-      duration,
-      easing,
-    });
-    state.timeline.push({ t: start + duration, op: "delete", id });
-    advanceStatementTime(state, duration);
+    pushFadeOut(state, start, id, duration, easing, lineNumber);
+    return;
+  }
+
+  if (call.name === "ReplacementTransform") {
+    ensureNoPlayOptions(call, lineNumber);
+    const ids = expectPlayIdArgs(call, 2, lineNumber);
+    const fromId = ids[0]!;
+    const toId = ids[1]!;
+    pushFadeOut(state, start, fromId, duration, easing, lineNumber);
+    pushFadeIn(state, start, toId, duration, easing, lineNumber);
     return;
   }
 
   if (call.name === "Create" || call.name === "Write") {
+    ensureNoPlayOptions(call, lineNumber);
     const id = expectPlayArg(call, 1, lineNumber);
     const node = requireNode(state, id, lineNumber);
     state.timeline.push({
@@ -403,14 +386,14 @@ function parsePlay(
       easing,
     });
     state.shown.add(id);
-    advanceStatementTime(state, duration);
     return;
   }
 
   if (call.name === "Transform") {
-    const [fromId, toId] = call.args;
-    if (!fromId || !toId || call.args.length !== 2)
-      throw new DslCompileError("Expected Transform(from, to).", lineNumber);
+    ensureNoPlayOptions(call, lineNumber);
+    const ids = expectPlayIdArgs(call, 2, lineNumber);
+    const fromId = ids[0]!;
+    const toId = ids[1]!;
     const fromNode = requireNode(state, fromId, lineNumber);
     const toNode = requireNode(state, toId, lineNumber);
     state.timeline.push({
@@ -423,7 +406,43 @@ function parsePlay(
     });
     pushTransformAnimations(state, start, fromNode, toNode, duration, easing);
     state.shown.add(toId);
-    advanceStatementTime(state, duration);
+    return;
+  }
+
+  if (call.name === "AnimationGroup") {
+    const childCalls = expectPlayCallArgs(call, lineNumber);
+    const lagRatio = readLagRatio(call, lineNumber);
+    const childDuration =
+      childCalls.length === 0
+        ? 0
+        : duration / (1 + Math.max(0, childCalls.length - 1) * lagRatio);
+    childCalls.forEach((childCall, index) => {
+      emitPlayCall(
+        state,
+        childCall,
+        start + childDuration * lagRatio * index,
+        childDuration,
+        easing,
+        lineNumber,
+      );
+    });
+    return;
+  }
+
+  if (call.name === "Succession") {
+    ensureNoPlayOptions(call, lineNumber);
+    const childCalls = expectPlayCallArgs(call, lineNumber);
+    const childDuration = duration / childCalls.length;
+    childCalls.forEach((childCall, index) => {
+      emitPlayCall(
+        state,
+        childCall,
+        start + childDuration * index,
+        childDuration,
+        easing,
+        lineNumber,
+      );
+    });
     return;
   }
 
@@ -431,6 +450,67 @@ function parsePlay(
     `Unknown play primitive '${call.name}'.`,
     lineNumber,
   );
+}
+
+function pushFadeIn(
+  state: CompileState,
+  start: number,
+  id: string,
+  duration: number,
+  easing: string,
+  lineNumber: number,
+): void {
+  const node = hiddenClone(requireNode(state, id, lineNumber));
+  state.timeline.push({ t: start, op: "create", node });
+  state.timeline.push({
+    t: start,
+    op: "effect",
+    id,
+    effect: "fadeIn",
+    duration,
+    easing,
+  });
+  state.timeline.push({
+    t: start,
+    op: "animate",
+    id,
+    path: "transform.opacity",
+    from: 0,
+    to: requireNode(state, id, lineNumber).transform.opacity,
+    duration,
+    easing,
+  });
+  state.shown.add(id);
+}
+
+function pushFadeOut(
+  state: CompileState,
+  start: number,
+  id: string,
+  duration: number,
+  easing: string,
+  lineNumber: number,
+): void {
+  const node = requireNode(state, id, lineNumber);
+  state.timeline.push({
+    t: start,
+    op: "effect",
+    id,
+    effect: "fadeOut",
+    duration,
+    easing,
+  });
+  state.timeline.push({
+    t: start,
+    op: "animate",
+    id,
+    path: "transform.opacity",
+    from: node.transform.opacity,
+    to: 0,
+    duration,
+    easing,
+  });
+  state.timeline.push({ t: start + duration, op: "delete", id });
 }
 
 function parseAnimate(
@@ -497,9 +577,12 @@ function parseAnimate(
   });
 }
 
+type PlayArgument = string | PlayCall;
+
 interface PlayCall {
   name: string;
-  args: string[];
+  args: PlayArgument[];
+  options: Map<string, string>;
 }
 
 function readPlayCall(
@@ -508,12 +591,27 @@ function readPlayCall(
 ): [PlayCall, string[]] {
   const callTokens: string[] = [];
   let index = 1;
+  let depth = 0;
+  let sawOpenParen = false;
   while (index < tokens.length) {
     const token = tokens[index]!;
     callTokens.push(token);
+    for (const char of token) {
+      if (char === "(") {
+        depth += 1;
+        sawOpenParen = true;
+      } else if (char === ")") {
+        depth -= 1;
+        if (depth < 0)
+          throw new DslCompileError("Unexpected ')' in play call.", lineNumber);
+      }
+    }
     index += 1;
-    if (token.endsWith(")")) break;
+    if (sawOpenParen && depth === 0) break;
   }
+
+  if (!sawOpenParen || depth !== 0)
+    throw new DslCompileError("Unclosed play call.", lineNumber);
 
   return [parsePlayCall(callTokens.join(" "), lineNumber), tokens.slice(index)];
 }
@@ -524,19 +622,94 @@ function parsePlayCall(raw: string | undefined, lineNumber: number): PlayCall {
       "Expected animation primitive after play.",
       lineNumber,
     );
-  const match = /^(\w+)\((.*)\)$/u.exec(raw);
-  if (!match)
+  const openParen = raw.indexOf("(");
+  if (openParen <= 0 || !raw.endsWith(")"))
     throw new DslCompileError(
       "Expected play syntax like FadeIn(id).",
       lineNumber,
     );
-  const args =
-    match[2]!.trim() === ""
-      ? []
-      : match[2]!.split(",").map((arg) => arg.trim());
-  if (args.some((arg) => arg === ""))
+  const name = raw.slice(0, openParen).trim();
+  if (!/^\w+$/u.test(name))
+    throw new DslCompileError(
+      "Expected play syntax like FadeIn(id).",
+      lineNumber,
+    );
+
+  const args: PlayArgument[] = [];
+  const options = new Map<string, string>();
+  const inner = raw.slice(openParen + 1, -1).trim();
+  if (inner !== "") {
+    for (const part of splitTopLevelArgs(inner, lineNumber)) {
+      const assignment = splitTopLevelAssignment(part);
+      if (assignment) {
+        const [key, value] = assignment;
+        if (options.has(key))
+          throw new DslCompileError(
+            `Duplicate play option '${key}'.`,
+            lineNumber,
+          );
+        options.set(key, value);
+      } else if (isPlayCallText(part)) {
+        args.push(parsePlayCall(part, lineNumber));
+      } else {
+        args.push(part);
+      }
+    }
+  }
+
+  return { name, args, options };
+}
+
+function splitTopLevelArgs(raw: string, lineNumber: number): string[] {
+  const args: string[] = [];
+  let current = "";
+  let depth = 0;
+  for (const char of raw) {
+    if (char === "(") depth += 1;
+    else if (char === ")") {
+      depth -= 1;
+      if (depth < 0)
+        throw new DslCompileError("Unexpected ')' in play call.", lineNumber);
+    }
+
+    if (char === "," && depth === 0) {
+      const arg = current.trim();
+      if (!arg)
+        throw new DslCompileError(
+          "Expected non-empty play argument.",
+          lineNumber,
+        );
+      args.push(arg);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  if (depth !== 0) throw new DslCompileError("Unclosed play call.", lineNumber);
+  const finalArg = current.trim();
+  if (!finalArg)
     throw new DslCompileError("Expected non-empty play argument.", lineNumber);
-  return { name: match[1]!, args };
+  args.push(finalArg);
+  return args;
+}
+
+function splitTopLevelAssignment(raw: string): [string, string] | null {
+  let depth = 0;
+  for (let index = 0; index < raw.length; index += 1) {
+    const char = raw[index];
+    if (char === "(") depth += 1;
+    else if (char === ")") depth -= 1;
+    else if (char === "=" && depth === 0) {
+      const key = raw.slice(0, index).trim();
+      const value = raw.slice(index + 1).trim();
+      if (key && value) return [key, value];
+    }
+  }
+  return null;
+}
+
+function isPlayCallText(raw: string): boolean {
+  return /^\w+\s*\(/u.test(raw) && raw.endsWith(")");
 }
 
 function expectPlayArg(
@@ -544,9 +717,72 @@ function expectPlayArg(
   count: number,
   lineNumber: number,
 ): string {
-  if (call.args.length !== count || !call.args[0])
-    throw new DslCompileError(`Expected ${call.name}(id).`, lineNumber);
-  return call.args[0];
+  return expectPlayIdArgs(call, count, lineNumber)[0]!;
+}
+
+function expectPlayIdArgs(
+  call: PlayCall,
+  count: number,
+  lineNumber: number,
+): string[] {
+  if (
+    call.args.length !== count ||
+    call.args.some((arg) => typeof arg !== "string")
+  )
+    throw new DslCompileError(
+      `Expected ${call.name}(${expectedIdList(count)}).`,
+      lineNumber,
+    );
+  return call.args as string[];
+}
+
+function expectedIdList(count: number): string {
+  if (count === 1) return "id";
+  return Array.from({ length: count }, (_, index) =>
+    index === 0 ? "from" : index === 1 ? "to" : `id${index + 1}`,
+  ).join(", ");
+}
+
+function expectPlayCallArgs(call: PlayCall, lineNumber: number): PlayCall[] {
+  if (call.args.length === 0)
+    throw new DslCompileError(
+      `Expected ${call.name}(<animation>, ...).`,
+      lineNumber,
+    );
+  if (call.args.some((arg) => typeof arg === "string"))
+    throw new DslCompileError(
+      `Expected ${call.name} arguments to be animation calls.`,
+      lineNumber,
+    );
+  return call.args as PlayCall[];
+}
+
+function ensureNoPlayOptions(call: PlayCall, lineNumber: number): void {
+  if (call.options.size > 0) {
+    const [key] = call.options.keys();
+    throw new DslCompileError(
+      `Unknown ${call.name} option '${key ?? ""}'.`,
+      lineNumber,
+    );
+  }
+}
+
+function readLagRatio(call: PlayCall, lineNumber: number): number {
+  let lagRatio = 0;
+  for (const [key, value] of call.options) {
+    if (key === "lagRatio") lagRatio = parseNumber(value, lineNumber);
+    else
+      throw new DslCompileError(
+        `Unknown ${call.name} option '${key}'.`,
+        lineNumber,
+      );
+  }
+  if (lagRatio < 0)
+    throw new DslCompileError(
+      "Expected lagRatio to be non-negative.",
+      lineNumber,
+    );
+  return lagRatio;
 }
 
 function requireNode(
