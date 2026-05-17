@@ -3,6 +3,8 @@
 Fluxion is an MVP for generating editable animation IR instead of rendered video frames.
 It provides a Manim-like Python DSL that exports `.vanim.json`, plus a browser SVG runtime that loads and plays the generated scene graph timeline.
 
+The architecture also leaves room for a Mermaid / PlantUML-like text DSL: short browser-editable source can compile to the same `.vanim.json` IR and play in the existing web runtime.
+
 ## Quick start
 
 ```bash
@@ -30,6 +32,7 @@ class Demo(Scene):
 
 - `python/fluxion/`: Python DSL and JSON exporter
 - `web/src/`: TypeScript SVG runtime, scene graph, timeline player, diff helper
+- future `web/src/dsl/`: browser parser/compiler for text DSL input
 - `schemas/vanim.schema.json`: MVP JSON schema
 - `examples/`: runnable example scene and generated `.vanim.json`
 - `tests/`: Python DSL tests
