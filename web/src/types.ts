@@ -62,7 +62,7 @@ export interface AnimateOperation extends BaseOperation {
 
 export type TimelineOperation = CreateOperation | DeleteOperation | SetOperation | AnimateOperation;
 
-export interface VanimDocument {
+export interface FluxionDocument {
   version: "0.1";
   width: number;
   height: number;

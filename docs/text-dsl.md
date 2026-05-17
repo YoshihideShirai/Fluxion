@@ -1,6 +1,6 @@
 # Fluxion Text DSL v0.1
 
-Fluxion Text DSL v0.1 は、ブラウザ上で短い宣言的なアニメーション記述を `.vanim.json` に変換するための最小仕様です。Python DSL とは別の入力フロントエンドですが、出力先は同じ Vanim IR です。
+Fluxion Text DSL v0.1 は、ブラウザ上で短い宣言的なアニメーション記述を `.fluxion.json` に変換するための最小仕様です。Python DSL とは別の入力フロントエンドですが、出力先は同じ Fluxion IR です。
 
 v0.1 の目的は「図形を置き、表示タイミングを決め、単純なプロパティ animation を再生する」ことに絞ります。任意コード実行、条件分岐、ループ、外部 include は扱いません。
 

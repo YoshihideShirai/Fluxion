@@ -1,4 +1,4 @@
-import type { VanimDocument } from "../types.js";
+import type { FluxionDocument } from "../types.js";
 import type { SvgRenderer } from "../renderers/svgRenderer.js";
 import { SceneGraph } from "./sceneGraph.js";
 import { applyTimelineAt } from "./timeline.js";
@@ -11,14 +11,14 @@ interface PlayOptions {
 }
 
 export class Player {
-  private readonly document: VanimDocument;
+  private readonly document: FluxionDocument;
   private readonly renderer: SvgRenderer;
   private readonly duration: number;
   private currentTime = 0;
   private startedAt = 0;
   private animationFrame: number | null = null;
 
-  constructor(documentData: VanimDocument, renderer: SvgRenderer) {
+  constructor(documentData: FluxionDocument, renderer: SvgRenderer) {
     this.document = documentData;
     this.renderer = renderer;
     this.duration = documentData.duration ?? Math.max(0, ...documentData.timeline.map((op) => op.t + ("duration" in op ? op.duration : 0)));
@@ -71,6 +71,6 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function hasCreateOperations(documentData: VanimDocument): boolean {
+function hasCreateOperations(documentData: FluxionDocument): boolean {
   return documentData.timeline.some((op) => op.op === "create");
 }

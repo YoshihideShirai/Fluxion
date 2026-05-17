@@ -1,18 +1,18 @@
 # Fluxion Web Runtime
 
-Fluxion Web Runtime は `.vanim.json` を読み込み、Scene Graph と Timeline IR を SVG に描画して再生します。Python DSL と Text DSL は描画を担当せず、Runtime が timeline の適用、easing、seek、playback を担当します。
+Fluxion Web Runtime は `.fluxion.json` を読み込み、Scene Graph と Timeline IR を SVG に描画して再生します。Python DSL と Text DSL は描画を担当せず、Runtime が timeline の適用、easing、seek、playback を担当します。
 
 ## Browser Workflow
 
 `web/index.html` は Text DSL の小さな編集環境です。
 
-- Text DSL を編集すると、Live compile が有効な場合は短い debounce 後に自動で `.vanim.json` へ変換します。
+- Text DSL を編集すると、Live compile が有効な場合は短い debounce 後に自動で `.fluxion.json` へ変換します。
 - **Compile** は現在の Text DSL を明示的に変換します。
-- **Load JSON Example** は `examples/simple_circle.vanim.json` を直接読み込みます。
+- **Load JSON Example** は `examples/simple_circle.fluxion.json` を直接読み込みます。
 - **Play**, **Stop**, **Reset** で playback を操作します。
 - Scrubber で任意時刻へ seek できます。
 - Time readout は current time と duration を表示します。
-- **Generated .vanim.json** で compiler の出力を確認できます。
+- **Generated .fluxion.json** で compiler の出力を確認できます。
 
 ## Player Semantics
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://fluxion.local/schemas/vanim.schema.json",
-  "title": "Fluxion Vanim Document",
+  "$id": "https://fluxion.local/schemas/fluxion.schema.json",
+  "title": "Fluxion Document",
   "type": "object",
   "required": ["version", "width", "height", "fps", "nodes", "timeline"],
   "properties": {

@@ -93,7 +93,7 @@ animate c1.scale from 1 to 1.4 start=1.5s duration=1.5s easing=easeInOut</textar
             <span id="status" aria-live="polite"></span>
           </div>
           <details>
-            <summary>Generated .vanim.json</summary>
+            <summary>Generated .fluxion.json</summary>
             <pre id="json-output"></pre>
           </details>
         </section>
@@ -179,7 +179,7 @@ animate c1.scale from 1 to 1.4 start=1.5s duration=1.5s easing=easeInOut</textar
         try {
           player.stop();
           isPlaying = false;
-          player = await mountFluxion(stage, "../examples/simple_circle.vanim.json");
+          player = await mountFluxion(stage, "../examples/simple_circle.fluxion.json");
           documentData = null;
           updateTransport(0);
           updateJsonOutput(null);

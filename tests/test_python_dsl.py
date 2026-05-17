@@ -31,7 +31,7 @@ class PythonDslTest(unittest.TestCase):
         scene = Demo()
         scene.construct()
         with tempfile.TemporaryDirectory() as tmp:
-            path = scene.export_json(Path(tmp) / "demo.vanim.json")
+            path = scene.export_json(Path(tmp) / "demo.fluxion.json")
             self.assertTrue(path.exists())
             self.assertEqual(json.loads(path.read_text())["fps"], 60)
 

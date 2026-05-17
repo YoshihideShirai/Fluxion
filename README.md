@@ -1,7 +1,7 @@
 # Fluxion
 
 Fluxion is an MVP for generating editable animation IR instead of rendered video frames.
-It provides a Manim-like Python DSL that exports `.vanim.json`, a browser Text DSL compiler, and an SVG runtime that loads and plays the generated scene graph timeline.
+It provides a Manim-like Python DSL that exports `.fluxion.json`, a browser Text DSL compiler, and an SVG runtime that loads and plays the generated scene graph timeline.
 
 ## Quick start
 
@@ -51,8 +51,8 @@ The browser runtime applies timeline operations deterministically, supports seek
 - `python/fluxion/`: Python DSL and JSON exporter
 - `web/src/`: TypeScript SVG runtime, scene graph, timeline player, diff helper
 - `web/src/dsl/`: browser parser/compiler for text DSL input
-- `schemas/vanim.schema.json`: MVP JSON schema
-- `examples/`: runnable example scene and generated `.vanim.json`
+- `schemas/fluxion.schema.json`: MVP JSON schema
+- `examples/`: runnable example scene and generated `.fluxion.json`
 - `tests/`: Python DSL tests
 
 ## Checks

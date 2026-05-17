@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { SceneGraph } from "./sceneGraph.js";
 import { applyTimelineAt } from "./timeline.js";
 import { Player } from "./player.js";
-import type { SceneNode, TimelineOperation, VanimDocument } from "../types.js";
+import type { SceneNode, TimelineOperation, FluxionDocument } from "../types.js";
 
 const node: SceneNode = {
   id: "c1",
@@ -77,7 +77,7 @@ test("switches non-numeric animations at completion", () => {
 test("player starts from an empty graph when documents contain create operations", () => {
   let rendered: SceneNode[] = [];
   const renderer = { render: (nodes: SceneNode[]) => (rendered = nodes) };
-  const documentData: VanimDocument = {
+  const documentData: FluxionDocument = {
     version: "0.1",
     width: 1280,
     height: 720,
