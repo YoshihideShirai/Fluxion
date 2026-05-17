@@ -5,7 +5,7 @@ export class DslCompileError extends Error {
   readonly column: number;
 
   constructor(message: string, line: number, column = 1) {
-    super(`${line}:${column} ${message}`);
+    super(`Line ${line}, column ${column}: ${message}`);
     this.name = "DslCompileError";
     this.line = line;
     this.column = column;
@@ -58,7 +58,7 @@ export function compileTextDsl(source: string): VanimDocument {
     }
 
     if (keyword === "at") {
-      if (!line.endsWith(":")) throw new DslCompileError("Expected ':' after at block.", lineNumber);
+      if (!line.endsWith(":")) throw new DslCompileError("Expected ':' after at block.", lineNumber, columnOf(withoutComment, "at"));
       state.blockTime = parseSeconds(tokens[1], lineNumber);
       return;
     }
@@ -78,16 +78,18 @@ export function compileTextDsl(source: string): VanimDocument {
       return;
     }
 
-    throw new DslCompileError(`Unknown statement '${keyword}'.`, lineNumber);
+    throw new DslCompileError(`Unknown statement '${keyword}'.`, lineNumber, columnOf(withoutComment, keyword));
   });
 
+  const autoCreates: TimelineOperation[] = [];
   for (const node of state.nodes.values()) {
     if (!state.shown.has(node.id)) {
-      state.timeline.unshift({ t: 0, op: "create", node: structuredClone(node) });
+      autoCreates.push({ t: 0, op: "create", node: structuredClone(node) });
       state.shown.add(node.id);
     }
   }
 
+  state.timeline = [...autoCreates, ...state.timeline];
   state.timeline.sort((a, b) => a.t - b.t);
   const duration = Math.max(0, ...state.timeline.map((op) => op.t + ("duration" in op ? op.duration : 0)));
 
@@ -170,7 +172,7 @@ function parseAnimate(tokens: string[], state: CompileState, lineNumber: number,
   for (const [key, value] of readAssignments(tokens.slice(toIndex + 2), lineNumber)) {
     if (key === "start") start = parseSeconds(value, lineNumber);
     else if (key === "duration") duration = parseSeconds(value, lineNumber);
-    else if (key === "easing") easing = value;
+    else if (key === "easing") easing = parseEasing(value, lineNumber);
     else throw new DslCompileError(`Unknown animation option '${key}'.`, lineNumber);
   }
 
@@ -297,6 +299,13 @@ function parseSeconds(raw: string | undefined, lineNumber: number): number {
   return parseNumber(value, lineNumber);
 }
 
+function parseEasing(raw: string, lineNumber: number): string {
+  if (raw === "linear" || raw === "smooth" || raw === "easeInOut" || raw === "easeIn" || raw === "easeOut") {
+    return raw;
+  }
+  throw new DslCompileError(`Unknown easing '${raw}'.`, lineNumber);
+}
+
 function parseNumber(raw: string | undefined, lineNumber: number): number {
   const value = Number(raw);
   if (raw === undefined || raw === "" || Number.isNaN(value)) {
@@ -336,7 +345,7 @@ function tokenize(line: string, lineNumber: number): string[] {
     current += char;
   }
 
-  if (quoted) throw new DslCompileError("Unclosed quoted string.", lineNumber);
+  if (quoted) throw new DslCompileError("Unclosed quoted string.", lineNumber, line.length);
   if (current) tokens.push(unescapeToken(current));
   return tokens;
 }
@@ -347,4 +356,9 @@ function isNodeType(value: string | undefined): value is NodeType {
 
 function unescapeToken(token: string): string {
   return token.replace(/\\"/g, '"');
+}
+
+function columnOf(line: string, token: string): number {
+  const index = line.indexOf(token);
+  return index === -1 ? 1 : index + 1;
 }
