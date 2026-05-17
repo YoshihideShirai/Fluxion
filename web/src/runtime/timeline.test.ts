@@ -14,6 +14,24 @@ const node: SceneNode = {
   children: [],
 };
 
+const groupedNode: SceneNode = {
+  id: "g1",
+  type: "group",
+  transform: { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+  style: {},
+  geometry: {},
+  children: [
+    {
+      id: "child-circle",
+      type: "circle",
+      transform: { x: 10, y: 0, scale: 1, rotation: 0, opacity: 1 },
+      style: { fill: "#fff", stroke: "#000", strokeWidth: 2 },
+      geometry: { r: 5 },
+      children: [],
+    },
+  ],
+};
+
 test("applies numeric animation interpolation", () => {
   const graph = new SceneGraph([node]);
   applyTimelineAt(graph, [{ t: 0, op: "animate", id: "c1", path: "transform.x", from: 0, to: 100, duration: 2, easing: "linear" }], 1);
@@ -107,4 +125,30 @@ test("ignores semantic effect operations while applying fallback animations", ()
 
   applyTimelineAt(graph, timeline, 0.5);
   assert.equal(graph.get("c1")?.transform.opacity, 0.5);
+});
+
+test("targets child nodes inside groups with timeline operations", () => {
+  const graph = new SceneGraph([groupedNode]);
+
+  graph.setPath("child-circle", "style.fill", "#38bdf8");
+  assert.equal(graph.get("child-circle")?.style.fill, "#38bdf8");
+  assert.equal(graph.get("g1")?.children[0]?.style.fill, "#38bdf8");
+  assert.equal(JSON.stringify(graph.all().map((root) => root.id)), JSON.stringify(["g1"]));
+
+  graph.delete("child-circle");
+  assert.equal(graph.get("child-circle"), undefined);
+  assert.equal(JSON.stringify(graph.get("g1")?.children), JSON.stringify([]));
+});
+
+test("applies timeline animations to child nodes inside groups", () => {
+  const graph = new SceneGraph([groupedNode]);
+
+  applyTimelineAt(
+    graph,
+    [{ t: 0, op: "animate", id: "child-circle", path: "transform.x", from: 10, to: 30, duration: 2, easing: "linear" }],
+    1,
+  );
+
+  assert.equal(graph.get("child-circle")?.transform.x, 20);
+  assert.equal(graph.get("g1")?.children[0]?.transform.x, 20);
 });
