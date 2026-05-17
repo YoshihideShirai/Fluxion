@@ -114,6 +114,17 @@ When adding or materially changing a Japanese page, add or update the matching E
 
 When changing documentation, update the canonical file in `site/src/content/docs/` first. Do not add long-form mirrors under root `docs/`; use `docs/README.md` only to direct readers to the canonical GitHub Pages source.
 
+### Documentation update checklist
+
+Before merging documentation changes, verify the docs and publishing pipeline are still in sync:
+
+- Confirm the README Quickstart / local setup commands still match the current `package.json` scripts in `web/` and `site/`.
+- Confirm README links to GitHub Pages, canonical docs, playground pages, and examples still resolve.
+- Confirm the Starlight sidebar entries in `site/astro.config.mjs` do not reference missing slugs in either `site/src/content/docs/` or `site/src/content/docs/en/`.
+- Confirm the Text DSL supported-command list remains consistent between the compiler implementation and the canonical Text DSL references. Run `cd site && npm run check:text-dsl-reference` when updating Text DSL command examples or docs.
+- Confirm `site/scripts/sync-playground.mjs` syncs playground assets before the site build. The site `build` script should run `sync:playground` before `astro build`, and the Pages workflow should build `web/` first so `web/dist/` exists.
+- Confirm `.github/workflows/pages.yml` still matches the README's publishing description: the Node.js version is current for the project, dependencies are installed with `npm ci`, `web/` is built before the site, and the site build runs afterward.
+
 ## Project status
 
 - **MVP**: the Python DSL, `.fluxion.json` schema, Text DSL compiler, SVG runtime, example scene, and tests are intended to demonstrate the end-to-end authoring-to-preview pipeline.
