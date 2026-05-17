@@ -30,6 +30,11 @@ Python DSL / Text DSL
   → Web Runtime
 ```
 
+
+## Documentation source of truth
+
+Canonical documentation lives under `site/src/content/docs/` and is published by the GitHub Pages build. The root `docs/` directory is intentionally limited to a pointer README; do not maintain duplicate long-form docs there.
+
 ## 次に読むもの
 
 - [Getting Started](../guides/getting-started/) でローカル実行手順を確認する。

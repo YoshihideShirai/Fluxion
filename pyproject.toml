@@ -7,7 +7,7 @@ name = "fluxion"
 version = "0.1.0"
 description = "Manim-like Python DSL that exports semantic scene graph animation JSON for a web runtime."
 requires-python = ">=3.10"
-readme = "docs/mvp.md"
+readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "Yoshihide Shirai" }]
 
