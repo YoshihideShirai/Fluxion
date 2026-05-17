@@ -8,6 +8,13 @@ export interface Transform {
   opacity: number;
 }
 
+export interface Camera {
+  x: number;
+  y: number;
+  scale: number;
+  rotation: number;
+}
+
 export type InterpolatableGeometryValue = number | string | number[] | boolean;
 
 export interface Style {
@@ -113,6 +120,7 @@ export interface FluxionDocument {
   height: number;
   fps: number;
   duration?: number;
+  camera: Camera;
   nodes: SceneNode[];
   values?: ValueTracker[];
   timeline: TimelineOperation[];

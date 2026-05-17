@@ -38,6 +38,24 @@ test("applies numeric animation interpolation", () => {
   assert.equal(graph.get("c1")?.transform.x, 50);
 });
 
+
+test("applies camera animation interpolation", () => {
+  const graph = new SceneGraph([node]);
+  const camera = { x: 0, y: 0, scale: 1, rotation: 0 };
+  applyTimelineAt(
+    graph,
+    [
+      { t: 0, op: "animate", id: "camera", path: "camera.x", from: 0, to: 100, duration: 2, easing: "linear" },
+      { t: 0, op: "animate", id: "camera", path: "camera.scale", from: 1, to: 2, duration: 2, easing: "linear" },
+    ],
+    1,
+    [],
+    camera,
+  );
+  assert.equal(camera.x, 50);
+  assert.equal(camera.scale, 1.5);
+});
+
 test("applies create, set, and delete operations", () => {
   const graph = new SceneGraph([]);
   const timeline: TimelineOperation[] = [
@@ -140,6 +158,7 @@ test("player starts from an empty graph when documents contain create operations
     height: 720,
     fps: 60,
     duration: 1,
+    camera: { x: 0, y: 0, scale: 1, rotation: 0 },
     nodes: [node],
     timeline: [{ t: 0.5, op: "create", node }],
   };

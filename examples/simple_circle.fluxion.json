@@ -4,6 +4,12 @@
   "height": 720,
   "fps": 60,
   "duration": 3.0,
+  "camera": {
+    "x": 0,
+    "y": 0,
+    "scale": 1,
+    "rotation": 0
+  },
   "nodes": [
     {
       "id": "title",

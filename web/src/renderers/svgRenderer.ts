@@ -1,9 +1,11 @@
-import type { SceneNode, Style, Transform } from "../types.js";
+import type { Camera, SceneNode, Style, Transform } from "../types.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
 type MathRendererName = "katex" | "mathjax";
+
+const DEFAULT_CAMERA: Camera = { x: 0, y: 0, scale: 1, rotation: 0 };
 
 interface KatexGlobal {
   render: (latex: string, element: HTMLElement, options?: { throwOnError?: boolean; displayMode?: boolean }) => void;
@@ -27,8 +29,11 @@ export class SvgRenderer {
     container.replaceChildren(this.svg);
   }
 
-  render(nodes: SceneNode[]): void {
-    this.svg.replaceChildren(...nodes.map((node) => this.renderNode(node)));
+  render(nodes: SceneNode[], camera: Camera = DEFAULT_CAMERA): void {
+    const root = document.createElementNS(SVG_NS, "g");
+    this.applyCameraTransform(root, camera);
+    root.replaceChildren(...nodes.map((node) => this.renderNode(node)));
+    this.svg.replaceChildren(root);
   }
 
   private renderNode(node: SceneNode): SVGElement {
@@ -147,6 +152,13 @@ export class SvgRenderer {
 
     container.textContent = `\\(${latex}\\)`;
     void mathJax.typesetPromise?.([container]);
+  }
+
+  private applyCameraTransform(element: SVGElement, camera: Camera): void {
+    element.setAttribute(
+      "transform",
+      `translate(${camera.x} ${camera.y}) rotate(${camera.rotation}) scale(${camera.scale})`,
+    );
   }
 
   private applyTransform(element: SVGElement, transform: Transform): void {

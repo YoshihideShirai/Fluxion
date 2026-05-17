@@ -214,3 +214,15 @@ Unsupported tokens are handled explicitly: source-only tokens fade out and are d
 ## Safety model
 
 The Text DSL compiler runs in the browser and does not execute Python or arbitrary JavaScript from the input. It only parses the supported statements and emits Fluxion IR.
+
+## Camera
+
+```text
+camera at 0,0 scale=1 rotation=0
+set camera.x to -120
+animate camera.scale from 1 to 1.6 duration=2s easing=easeInOut
+```
+
+`camera` configures the document-level `camera: { x, y, scale, rotation }`. Defaults are `x=0`, `y=0`, `scale=1`, and `rotation=0`. `set` / `animate` can target `camera.x`, `camera.y`, `camera.scale`, and `camera.rotation`.
+
+The renderer applies `translate(camera.x, camera.y) rotate(camera.rotation) scale(camera.scale)` to the root `<g>` before rendering nodes. Composition order is `Camera * ParentNode * ChildNode`, so the camera pans / zooms / rotates the entire scene while node transforms stay local.

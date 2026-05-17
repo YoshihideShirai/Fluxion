@@ -161,6 +161,20 @@ Scene
 | `text` | 通常テキスト |
 | `math` | LaTeX / KaTeX 数式 |
 
+### 4.4 Scene-level Camera
+
+`FluxionDocument` は Scene Graph の root 状態として `camera: { x, y, scale, rotation }` を持つ。既定値は `{ "x": 0, "y": 0, "scale": 1, "rotation": 0 }` で、既存の node 座標をそのまま表示する。
+
+Camera は個別 node ではなく renderer の root `<g>` に適用される scene-level transform である。SVG runtime の合成順序は次の通り。
+
+```text
+Screen = Camera * RootNode * ChildNode * Geometry
+Camera = translate(camera.x, camera.y) rotate(camera.rotation) scale(camera.scale)
+Node   = translate(node.x, node.y) rotate(node.rotation) scale(node.scale)
+```
+
+そのため `camera.x` / `camera.y` は scene 全体の pan、`camera.scale` は origin 周りの zoom、`camera.rotation` は origin 周りの回転として働く。Timeline IR では `id: "camera"`, `path: "camera.x"` のように表現し、通常の `animate` と同じ easing/interpolation rules で処理する。
+
 ---
 
 ## 5. Manim 概念との対応
@@ -178,6 +192,7 @@ Scene
 | `self.remove()` | `delete` |
 | `self.play()` | timeline operation generation |
 | `.animate` | property animation builder |
+| `Scene.camera` / `CameraFrame` | document-level `camera` |
 
 ---
 

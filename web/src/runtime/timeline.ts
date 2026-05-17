@@ -8,6 +8,7 @@ import type {
   SetValueOperation,
   TimelineOperation,
   ValueTracker,
+  Camera,
 } from "../types.js";
 import { evaluateExpression } from "./expression.js";
 import type { SceneGraph } from "./sceneGraph.js";
@@ -35,13 +36,20 @@ export function applyInstantOp(
   graph: SceneGraph,
   op: InstantOperation,
   trackerValues: Record<string, number> = {},
+  camera?: Camera,
 ): void {
   if (op.op === "create") graph.upsert(op.node);
   if (op.op === "delete") graph.delete(op.id);
-  if (op.op === "set") graph.setPath(op.id, op.path, op.value);
+  if (op.op === "set") {
+    if (isCameraTarget(op.id, op.path)) setCameraPath(camera, op.path, op.value);
+    else graph.setPath(op.id, op.path, op.value);
+  }
   if (op.op === "setValue") trackerValues[op.id] = op.value;
-  if (op.op === "setExpr")
-    graph.setPath(op.id, op.path, evaluateExpression(op.expr, trackerValues));
+  if (op.op === "setExpr") {
+    const value = evaluateExpression(op.expr, trackerValues);
+    if (isCameraTarget(op.id, op.path)) setCameraPath(camera, op.path, value);
+    else graph.setPath(op.id, op.path, value);
+  }
   // Effect operations are semantic hints for future renderers; fallback
   // visibility changes are represented by ordinary animate operations.
 }
@@ -51,6 +59,7 @@ export function applyTimelineAt(
   timeline: TimelineOperation[],
   seconds: number,
   values: ValueTracker[] = [],
+  camera?: Camera,
 ): Record<string, number> {
   const trackerValues: Record<string, number> = Object.fromEntries(
     values.map((value) => [value.id, value.initial]),
@@ -64,14 +73,16 @@ export function applyTimelineAt(
     if (op.op === "animate") {
       if (seconds < op.t) continue;
       const progress = op.duration <= 0 ? 1 : ease(op.easing, (seconds - op.t) / op.duration);
-      graph.setPath(op.id, op.path, interpolate(op.from, op.to, progress));
+      const value = interpolate(op.from, op.to, progress);
+      if (isCameraTarget(op.id, op.path)) setCameraPath(camera, op.path, value);
+      else graph.setPath(op.id, op.path, value);
     } else if (op.op === "animateValue") {
       if (seconds < op.t) continue;
       const progress = op.duration <= 0 ? 1 : ease(op.easing, (seconds - op.t) / op.duration);
       const value = interpolate(op.from, op.to, progress);
       if (typeof value === "number") trackerValues[op.id] = value;
     } else if (op.t <= seconds) {
-      applyInstantOp(graph, op, trackerValues);
+      applyInstantOp(graph, op, trackerValues, camera);
     }
   }
 
@@ -87,4 +98,18 @@ function orderedTimeline(timeline: TimelineOperation[]): TimelineOperation[] {
       return priority === 0 ? left.index - right.index : priority;
     })
     .map(({ op }) => op);
+}
+
+
+function isCameraTarget(id: string, path?: string): boolean {
+  return id === "camera" && (path === undefined || path.startsWith("camera."));
+}
+
+function setCameraPath(camera: Camera | undefined, path: string, value: unknown): void {
+  if (!camera) return;
+  const key = path.slice("camera.".length);
+  if (key === "x" || key === "y" || key === "scale" || key === "rotation") {
+    const numericValue = Number(value);
+    if (!Number.isNaN(numericValue)) camera[key] = numericValue;
+  }
 }

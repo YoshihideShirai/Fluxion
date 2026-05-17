@@ -350,3 +350,15 @@ Compiler は `DslCompileError` を投げます。message は `Line <line>, colum
 - nested groups declared before their children
 - live mutation of compiler node declarations after `set`
 - richer editor diagnostics using `DslCompileError.line` and `column`
+
+## Camera
+
+```text
+camera at 0,0 scale=1 rotation=0
+set camera.x to -120
+animate camera.scale from 1 to 1.6 duration=2s easing=easeInOut
+```
+
+`camera` は document-level の `camera: { x, y, scale, rotation }` を設定します。既定値は `x=0`, `y=0`, `scale=1`, `rotation=0` です。`set` / `animate` は `camera.x`, `camera.y`, `camera.scale`, `camera.rotation` を target にできます。
+
+Renderer は root `<g>` に `translate(camera.x, camera.y) rotate(camera.rotation) scale(camera.scale)` を適用してから node を描画します。合成順序は `Camera * ParentNode * ChildNode` です。つまり camera は scene 全体の pan / zoom / rotation、node transform は各 node の local transform として扱われます。

@@ -5,6 +5,7 @@ import type {
   TimelineOperation,
   Transform,
   FluxionDocument,
+  Camera,
 } from "../types.js";
 import { ExpressionError, validateExpression } from "../runtime/expression.js";
 
@@ -24,6 +25,7 @@ interface CompileState {
   width: number;
   height: number;
   fps: number;
+  camera: Camera;
   nodes: Map<string, SceneNode>;
   values: Map<string, number>;
   timeline: TimelineOperation[];
@@ -44,6 +46,7 @@ export function compileTextDsl(source: string): FluxionDocument {
     width: 1280,
     height: 720,
     fps: 60,
+    camera: defaultCamera(),
     nodes: new Map(),
     values: new Map(),
     timeline: [],
@@ -79,6 +82,11 @@ export function compileTextDsl(source: string): FluxionDocument {
           columnOf(withoutComment, "at"),
         );
       state.blockTime = parseSeconds(tokens[1], lineNumber);
+      return;
+    }
+
+    if (keyword === "camera") {
+      parseCamera(tokens, state, lineNumber);
       return;
     }
 
@@ -160,6 +168,7 @@ export function compileTextDsl(source: string): FluxionDocument {
     height: state.height,
     fps: state.fps,
     duration,
+    camera: state.camera,
     nodes: [...state.rootIds]
       .map((id) => state.nodes.get(id))
       .filter((node): node is SceneNode => node !== undefined),
@@ -181,6 +190,32 @@ function parseScene(
     else if (key === "fps") state.fps = parseNumber(value, lineNumber);
     else
       throw new DslCompileError(`Unknown scene option '${key}'.`, lineNumber);
+  }
+}
+
+function parseCamera(
+  tokens: string[],
+  state: CompileState,
+  lineNumber: number,
+): void {
+  for (const [key, value] of readCameraArguments(tokens.slice(1), lineNumber)) {
+    if (key === "at") {
+      const [x, y] = value
+        .split(",")
+        .map((item) => parseNumber(item, lineNumber));
+      if (x === undefined || y === undefined || Number.isNaN(x) || Number.isNaN(y))
+        throw new DslCompileError("Expected camera at x,y.", lineNumber);
+      state.camera.x = x;
+      state.camera.y = y;
+      continue;
+    }
+
+    if (key === "x" || key === "y" || key === "scale" || key === "rotation") {
+      state.camera[key] = parseNumber(value, lineNumber);
+      continue;
+    }
+
+    throw new DslCompileError(`Unknown camera option '${key}'.`, lineNumber);
   }
 }
 
@@ -323,8 +358,9 @@ function parseSet(
     throw new DslCompileError("Expected target after set.", lineNumber);
   const [id, property] = target.split(".");
   if (!id || !property)
-    throw new DslCompileError("Expected set target like 'c1.x'.", lineNumber);
-  if (!state.nodes.has(id))
+    throw new DslCompileError("Expected set target like 'c1.x' or 'camera.x'.", lineNumber);
+  const isCameraTarget = id === "camera" && isCameraProperty(property);
+  if (!isCameraTarget && !state.nodes.has(id))
     throw new DslCompileError(`Unknown node '${id}'.`, lineNumber);
   if (tokens[2] !== "to" || tokens[3] === undefined)
     throw new DslCompileError(
@@ -340,7 +376,7 @@ function parseSet(
       t: time,
       op: "setExpr",
       id,
-      path: propertyPath(property),
+      path: isCameraTarget ? cameraPropertyPath(property) : propertyPath(property),
       expr: expression,
     });
     return;
@@ -350,7 +386,7 @@ function parseSet(
     t: time,
     op: "set",
     id,
-    path: propertyPath(property),
+    path: isCameraTarget ? cameraPropertyPath(property) : propertyPath(property),
     value: parseValue(tokens[3], lineNumber),
   });
 }
@@ -710,10 +746,11 @@ function parseAnimate(
 
   const [id, property] = target.split(".");
   const isTrackerTarget = !property && state.values.has(target);
-  if (!isTrackerTarget) {
+  const isCameraTarget = id === "camera" && isCameraProperty(property);
+  if (!isTrackerTarget && !isCameraTarget) {
     if (!id || !property)
       throw new DslCompileError(
-        "Expected animate target like 'c1.x' or a declared value tracker id.",
+        "Expected animate target like 'c1.x', 'camera.x', or a declared value tracker id.",
         lineNumber,
       );
     if (!state.nodes.has(id))
@@ -775,7 +812,7 @@ function parseAnimate(
     t: start,
     op: "animate",
     id: id!,
-    path: propertyPath(property!),
+    path: isCameraTarget ? cameraPropertyPath(property!) : propertyPath(property!),
     from,
     to,
     duration,
@@ -1141,6 +1178,10 @@ function defaultTransform(): Transform {
   return { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 };
 }
 
+function defaultCamera(): Camera {
+  return { x: 0, y: 0, scale: 1, rotation: 0 };
+}
+
 function defaultGeometry(type: NodeType): Record<string, number | string> {
   if (type === "circle") return { r: 40 };
   if (type === "rect") return { w: 100, h: 80 };
@@ -1224,6 +1265,15 @@ function applyNodeOption(
   throw new DslCompileError(`Unknown node option '${key}'.`, lineNumber);
 }
 
+function cameraPropertyPath(property: string): string {
+  if (isCameraProperty(property)) return `camera.${property}`;
+  return property;
+}
+
+function isCameraProperty(property: string | undefined): property is keyof Camera {
+  return property === "x" || property === "y" || property === "scale" || property === "rotation";
+}
+
 function propertyPath(property: string): string {
   if (["x", "y", "scale", "rotation", "opacity"].includes(property))
     return `transform.${property}`;
@@ -1236,6 +1286,26 @@ function propertyPath(property: string): string {
   if (property === "renderer") return "renderer";
   if (property === "text") return "text";
   return property;
+}
+
+function readCameraArguments(
+  tokens: string[],
+  lineNumber: number,
+): Array<[string, string]> {
+  const args: Array<[string, string]> = [];
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    if (token === "at") {
+      const value = tokens[index + 1];
+      if (!value) throw new DslCompileError("Expected coordinates after camera at.", lineNumber);
+      args.push(["at", value]);
+      index += 1;
+      continue;
+    }
+    if (!token) throw new DslCompileError("Expected camera option.", lineNumber);
+    args.push(readAssignment(token, lineNumber));
+  }
+  return args;
 }
 
 function readNodeArguments(
