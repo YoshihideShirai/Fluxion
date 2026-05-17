@@ -200,22 +200,57 @@ animate c1.x from 220 to 640 duration=1.5s easing=easeInOut</code></pre>
               <label class="switch"><input id="live-compile" type="checkbox" checked />Live compile</label>
             </div>
             <textarea id="dsl" spellcheck="false">scene width=1280 height=720 fps=60
+camera at 0,0 scale=1
 
-text title "Fluxion MVP" at 640,110 size=32 fill="#e2e8f0" strokeWidth=2
-circle c1 r=48 at 220,360 fill="#38bdf8" stroke="#0f172a" strokeWidth=4
-rect box w=120 h=80 at 640,360 fill="#f97316" stroke="#111827" strokeWidth=2
+value theta = 0
+value pulse = 0
+
+rect backdrop w=1280 h=720 at 640,360 fill="#020617"
+path orbit d="M -360 0 C -210 -180 210 -180 360 0 C 210 180 -210 180 -360 0" at 640,390 fill="none" stroke="#1e3a8a" strokeWidth=5 opacity=0.5
+line axis x1=-460 y1=0 x2=460 y2=0 at 640,390 stroke="#475569" strokeWidth=2 opacity=0.65
+text title "Fluxion: editable motion IR" at 640,92 size=42 fill="#e2e8f0"
+text subtitle "Text DSL → scene graph → deterministic SVG playback" at 640,146 size=23 fill="#94a3b8"
+math equation "x^2+y^2=r^2" at 640,222 size=38 fill="#bae6fd" renderer=katex expandTokens=true
+math equation2 "x^2+y^2=R^2" at 640,222 size=38 fill="#fef3c7" renderer=katex expandTokens=true
+circle dot r=34 at 280,390 fill="#38bdf8" stroke="#0f172a" strokeWidth=5
+circle halo r=56 at 280,390 fill="#38bdf8" stroke="#7dd3fc" strokeWidth=2 opacity=0.18
+rect card w=230 h=112 at 1000,390 fill="#f97316" stroke="#fed7aa" strokeWidth=4 opacity=0.9
+text cardLabel "morph target" at 1000,390 size=26 fill="#111827"
+path spark d="M 0 -52 L 14 -14 L 52 0 L 14 14 L 0 52 L -14 14 L -52 0 L -14 -14 Z" at 640,510 fill="#facc15" stroke="#fef08a" strokeWidth=3 opacity=0
+text caption "Trackers drive orbit, halo pulse, camera drift, and token-aware math transforms." at 640,646 size=22 fill="#cbd5e1" opacity=0
+
+group cardGroup card cardLabel
+group hero title subtitle equation
+group heroNext title subtitle equation2
 
 at 0s:
-  show title
-  show c1
-  show box
+  show backdrop
+  show axis
+  play AnimationGroup(FadeIn(orbit), Write(hero), FadeIn(dot), FadeIn(halo), lagRatio=0.18) duration=1.6s easing=easeOut
 
-animate c1.x from 220 to 640 duration=1.5s easing=easeInOut
-animate c1.y from 360 to 360 duration=1.5s easing=easeInOut
-animate box.opacity from 1 to 0.35 duration=1.5s easing=easeInOut
-animate c1.x from 640 to 980 start=1.5s duration=1.5s easing=easeInOut
-animate c1.y from 360 to 360 start=1.5s duration=1.5s easing=easeInOut
-animate c1.scale from 1 to 1.4 start=1.5s duration=1.5s easing=easeInOut</textarea>
+wait 0.2s
+animate theta from 0 to 6.283 duration=2.8s easing=linear
+animate pulse from 0 to 6.283 duration=2.8s easing=linear
+set dot.x to expr="640 + 360 * cos(theta)"
+set dot.y to expr="390 + 135 * sin(theta)"
+set halo.x to expr="640 + 360 * cos(theta)"
+set halo.y to expr="390 + 135 * sin(theta)"
+set halo.scale to expr="1.0 + 0.22 * sin(pulse)"
+animate camera.x from 0 to -28 duration=2.8s easing=easeInOut
+animate camera.y from 0 to 18 duration=2.8s easing=easeInOut
+
+wait 0.2s
+play TransformMatchingTex(equation, equation2) duration=1.2s easing=easeInOut
+play FadeIn(cardGroup) duration=0.6s easing=easeOut
+play Transform(dot, card) duration=1.25s easing=easeInOut
+animate halo.opacity from 0.18 to 0 start=5.8s duration=0.8s easing=easeOut
+
+at 6.2s:
+  play FadeIn(spark) duration=0.4s easing=easeOut
+  animate spark.rotation from 0 to 180 duration=1s easing=linear
+  animate spark.scale from 0.8 to 1.45 duration=1s easing=easeOut
+  animate spark.opacity from 1 to 0.35 duration=1s easing=easeOut
+  play FadeIn(caption) duration=0.8s easing=easeOut</textarea>
             <div class="controls">
               <button id="compile">Compile</button>
               <button id="load-example" class="secondary">Load JSON Example</button>
