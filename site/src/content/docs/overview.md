@@ -33,5 +33,5 @@ Python DSL / Text DSL
 ## 次に読むもの
 
 - [Getting Started](../guides/getting-started/) でローカル実行手順を確認する。
-- ブラウザの [Playground](../../playground/) を試す。
+- ブラウザの [Playground](../playground/) を試す。
 - [Text DSL reference](../reference/text-dsl/) で syntax を確認する。

@@ -44,7 +44,7 @@ v0.1 で扱う構文は以下です。
 
 明示的に `show` されていない node は、preview しやすいように `t=0` の `create` として自動追加します。
 
-詳細な構文と v0.1 で扱わない範囲は [Text DSL v0.1](../reference/text-dsl/) に固定します。
+詳細な構文と v0.1 で扱わない範囲は [Text DSL v0.1](../../reference/text-dsl/) に固定します。
 
 ## Web Runtime v0.1
 
@@ -56,7 +56,7 @@ Runtime は `.fluxion.json` の `nodes` と `timeline` から Scene Graph を再
 - `duration <= 0` の animation は即時に final value を適用する
 - 非数値 animation は完了時に `to` value へ切り替える
 
-詳細は [Web Runtime](../reference/runtime/) にまとめます。
+詳細は [Web Runtime](../../reference/runtime/) にまとめます。
 
 ## 使い方
 

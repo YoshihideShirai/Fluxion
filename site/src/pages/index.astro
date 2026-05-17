@@ -1,9 +1,11 @@
 ---
-const base = import.meta.env.BASE_URL;
-const docsUrl = `${base}overview/`;
-const playgroundUrl = `${base}playground/`;
-const textDslUrl = `${base}reference/text-dsl/`;
-const englishUrl = `${base}en/`;
+const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : `${import.meta.env.BASE_URL}/`;
+const docsUrl = `${baseUrl}overview/`;
+const playgroundUrl = `${baseUrl}playground/`;
+const textDslUrl = `${baseUrl}reference/text-dsl/`;
+const englishUrl = `${baseUrl}en/`;
 ---
 
 <!doctype html>
@@ -106,7 +108,7 @@ const englishUrl = `${base}en/`;
   <body>
     <div class="shell">
       <nav aria-label="Primary navigation">
-        <a class="brand" href={base}><span class="logo">F</span><span>Fluxion</span></a>
+        <a class="brand" href={baseUrl}><span class="logo">F</span><span>Fluxion</span></a>
         <div class="links">
           <a href={docsUrl}>Docs</a>
           <a href={textDslUrl}>Text DSL</a>

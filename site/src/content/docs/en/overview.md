@@ -33,5 +33,5 @@ Python DSL / Text DSL
 ## Next steps
 
 - Start with the [Getting Started guide](../guides/getting-started/).
-- Try the browser [Playground](../../../playground/).
+- Try the browser [Playground](../../playground/).
 - Read the [Text DSL reference](../reference/text-dsl/).

@@ -43,7 +43,7 @@ The v0.1 surface includes:
 
 Nodes that are not explicitly shown are automatically added as `create` operations at `t=0` for easier previewing.
 
-See the [Text DSL reference](../reference/text-dsl/) for the frozen syntax.
+See the [Text DSL reference](../../reference/text-dsl/) for the frozen syntax.
 
 ## Web Runtime v0.1
 
@@ -55,4 +55,4 @@ The runtime reconstructs a Scene Graph from `.fluxion.json` `nodes` and `timelin
 - Animations with `duration <= 0` immediately apply their final value.
 - Non-numeric animations switch to their `to` value at completion.
 
-See the [Web Runtime reference](../reference/runtime/) for details.
+See the [Web Runtime reference](../../reference/runtime/) for details.
