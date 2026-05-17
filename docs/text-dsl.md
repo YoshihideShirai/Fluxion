@@ -145,6 +145,19 @@ hide c1
 
 指定した node を timeline に `delete` operation として追加します。Top-level では compiler の current time、`at` block 内では block time を使います。
 
+### value trackers
+
+```text
+value theta = 0
+animate theta from 0 to 6.28 duration=2s easing=linear
+set dot.x to expr="320 + 100 * cos(theta)"
+set dot.y to expr="240 + 100 * sin(theta)"
+```
+
+`value` declares a scalar tracker that lives separately from scene nodes. A tracker can be animated with `animate <name> from <number> to <number> ...`, and node properties can depend on tracker values through `set <id>.<property> to expr="..."`.
+
+Dependent expressions are intentionally static and analyzable. Fluxion does **not** execute arbitrary JavaScript and does not aim for full Manim updater compatibility. Expressions may reference declared tracker names, numeric literals, parentheses, arithmetic operators (`+`, `-`, `*`, `/`, `%`, `**`), constants (`pi`, `e`), and allowlisted math functions such as `sin`, `cos`, `tan`, `sqrt`, `abs`, `min`, `max`, and `pow`.
+
 ### set
 
 ```text
@@ -152,7 +165,7 @@ set title.fill to "#38bdf8"
 set c1.x to 320
 ```
 
-指定した property を timeline に `set` operation として追加します。
+指定した property を timeline に `set` operation として追加します。`expr="..."` を指定した場合は dependent expression として保持され、runtime が各時刻の tracker 値で評価します。
 
 Syntax:
 
@@ -241,6 +254,7 @@ Syntax:
 
 ```text
 animate <id>.<property> from <value> to <value> [start=<time>] [duration=<time>] [easing=<name>]
+animate <value-id> from <number> to <number> [start=<time>] [duration=<time>] [easing=<name>]
 ```
 
 Options:

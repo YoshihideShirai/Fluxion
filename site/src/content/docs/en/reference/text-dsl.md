@@ -17,8 +17,9 @@ The v0.2 scope is intentionally small: place shapes, math, paths, and groups; de
 | `text`, `math`, `group` | Labels, equations, and grouped nodes | `group intro title eq` |
 | `at` | Start an indented block at a fixed time | `at 0s:` |
 | `show`, `hide` | Create or delete a node on the timeline | `show dot` |
-| `set` | Apply an immediate property value | `set dot.fill to "#22c55e"` |
-| `animate` | Interpolate one property | `animate dot.x from 260 to 820 duration=1.4s` |
+| `value` | Declare a scalar tracker | `value theta = 0` |
+| `set` | Apply an immediate property value or dependent expression | `set dot.x to expr="320 + 100 * cos(theta)"` |
+| `animate` | Interpolate one property or scalar tracker | `animate theta from 0 to 6.28 duration=2s` |
 | `play` | Run Manim-like primitives | `play FadeIn(dot) duration=0.8s` |
 | `wait` | Advance the current time cursor | `wait 0.4s` |
 
@@ -141,6 +142,19 @@ at 0s:
 
 A block applies statements at a shared time. `show` creates a declared node at that time. `hide` deletes it. `set` applies an immediate property value.
 
+### value trackers
+
+```text
+value theta = 0
+animate theta from 0 to 6.28 duration=2s easing=linear
+set dot.x to expr="320 + 100 * cos(theta)"
+set dot.y to expr="240 + 100 * sin(theta)"
+```
+
+`value` declares a scalar tracker that lives separately from scene nodes. A tracker can be animated with `animate <name> from <number> to <number> ...`, and node properties can depend on tracker values through `set <id>.<property> to expr="..."`.
+
+Dependent expressions are intentionally static and analyzable. Fluxion does **not** execute arbitrary JavaScript and does not aim for full Manim updater compatibility. Expressions may reference declared tracker names, numeric literals, parentheses, arithmetic operators (`+`, `-`, `*`, `/`, `%`, `**`), constants (`pi`, `e`), and allowlisted math functions such as `sin`, `cos`, `tan`, `sqrt`, `abs`, `min`, `max`, and `pow`.
+
 ### animate
 
 ```text
@@ -148,7 +162,7 @@ animate c1.x from 220 to 640 duration=1.5s easing=easeInOut
 animate title.opacity from 0 to 1 start=0s duration=1s
 ```
 
-`animate` interpolates a target property. Numeric values interpolate; non-numeric values switch to `to` at completion.
+`animate` interpolates a target property or a declared scalar value tracker. Numeric values interpolate; non-numeric node property values switch to `to` at completion.
 
 ### play and wait
 

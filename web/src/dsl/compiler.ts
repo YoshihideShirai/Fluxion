@@ -6,6 +6,7 @@ import type {
   Transform,
   FluxionDocument,
 } from "../types.js";
+import { ExpressionError, validateExpression } from "../runtime/expression.js";
 
 export class DslCompileError extends Error {
   readonly line: number;
@@ -24,6 +25,7 @@ interface CompileState {
   height: number;
   fps: number;
   nodes: Map<string, SceneNode>;
+  values: Map<string, number>;
   timeline: TimelineOperation[];
   shown: Set<string>;
   rootIds: Set<string>;
@@ -43,6 +45,7 @@ export function compileTextDsl(source: string): FluxionDocument {
     height: 720,
     fps: 60,
     nodes: new Map(),
+    values: new Map(),
     timeline: [],
     shown: new Set(),
     rootIds: new Set(),
@@ -76,6 +79,11 @@ export function compileTextDsl(source: string): FluxionDocument {
           columnOf(withoutComment, "at"),
         );
       state.blockTime = parseSeconds(tokens[1], lineNumber);
+      return;
+    }
+
+    if (keyword === "value") {
+      parseValueDeclaration(tokens, state, lineNumber);
       return;
     }
 
@@ -155,6 +163,9 @@ export function compileTextDsl(source: string): FluxionDocument {
     nodes: [...state.rootIds]
       .map((id) => state.nodes.get(id))
       .filter((node): node is SceneNode => node !== undefined),
+    ...(state.values.size > 0
+      ? { values: [...state.values].map(([id, initial]) => ({ id, initial })) }
+      : {}),
     timeline: state.timeline,
   };
 }
@@ -171,6 +182,26 @@ function parseScene(
     else
       throw new DslCompileError(`Unknown scene option '${key}'.`, lineNumber);
   }
+}
+
+function parseValueDeclaration(
+  tokens: string[],
+  state: CompileState,
+  lineNumber: number,
+): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after value.", lineNumber);
+  if (!/^[_A-Za-z]\w*$/u.test(id))
+    throw new DslCompileError(`Invalid value id '${id}'.`, lineNumber);
+  if (state.values.has(id) || state.nodes.has(id))
+    throw new DslCompileError(`Duplicate id '${id}'.`, lineNumber);
+  if (tokens[2] !== "=" || tokens[3] === undefined || tokens.length > 4)
+    throw new DslCompileError(
+      "Expected value syntax: value name = number.",
+      lineNumber,
+    );
+
+  state.values.set(id, parseNumber(tokens[3], lineNumber));
 }
 
 function parseNode(
@@ -302,6 +333,18 @@ function parseSet(
     );
   if (tokens.length > 4)
     throw new DslCompileError("Unexpected tokens after set value.", lineNumber);
+
+  const expression = readExpressionAssignment(tokens[3], state, lineNumber);
+  if (expression !== null) {
+    state.timeline.push({
+      t: time,
+      op: "setExpr",
+      id,
+      path: propertyPath(property),
+      expr: expression,
+    });
+    return;
+  }
 
   state.timeline.push({
     t: time,
@@ -666,13 +709,16 @@ function parseAnimate(
     throw new DslCompileError("Expected target after animate.", lineNumber);
 
   const [id, property] = target.split(".");
-  if (!id || !property)
-    throw new DslCompileError(
-      "Expected animate target like 'c1.x'.",
-      lineNumber,
-    );
-  if (!state.nodes.has(id))
-    throw new DslCompileError(`Unknown node '${id}'.`, lineNumber);
+  const isTrackerTarget = !property && state.values.has(target);
+  if (!isTrackerTarget) {
+    if (!id || !property)
+      throw new DslCompileError(
+        "Expected animate target like 'c1.x' or a declared value tracker id.",
+        lineNumber,
+      );
+    if (!state.nodes.has(id))
+      throw new DslCompileError(`Unknown node '${id}'.`, lineNumber);
+  }
 
   const fromIndex = tokens.indexOf("from");
   const toIndex = tokens.indexOf("to");
@@ -707,11 +753,29 @@ function parseAnimate(
       );
   }
 
+  if (isTrackerTarget) {
+    if (typeof from !== "number" || typeof to !== "number")
+      throw new DslCompileError(
+        "Value tracker animations require numeric from/to values.",
+        lineNumber,
+      );
+    state.timeline.push({
+      t: start,
+      op: "animateValue",
+      id: target,
+      from,
+      to,
+      duration,
+      easing,
+    });
+    return;
+  }
+
   state.timeline.push({
     t: start,
     op: "animate",
-    id,
-    path: propertyPath(property),
+    id: id!,
+    path: propertyPath(property!),
     from,
     to,
     duration,
@@ -1200,6 +1264,27 @@ function readAssignments(
   lineNumber: number,
 ): Array<[string, string]> {
   return tokens.map((token) => readAssignment(token, lineNumber));
+}
+
+function readExpressionAssignment(
+  token: string,
+  state: CompileState,
+  lineNumber: number,
+): string | null {
+  if (!token.startsWith("expr=")) return null;
+  const [key, expression] = readAssignment(token, lineNumber);
+  if (key !== "expr") return null;
+  try {
+    validateExpression(expression, state.values.keys());
+  } catch (error) {
+    if (error instanceof ExpressionError)
+      throw new DslCompileError(
+        `Invalid expression: ${error.message}`,
+        lineNumber,
+      );
+    throw error;
+  }
+  return expression;
 }
 
 function readAssignment(token: string, lineNumber: number): [string, string] {

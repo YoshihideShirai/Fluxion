@@ -32,11 +32,15 @@ Fluxion Web Runtime は `.fluxion.json` を読み込み、Scene Graph と Timeli
 Timeline operations は時刻順に適用されます。同じ `t` の operation は Runtime 側で次の順に安定化します。
 
 1. `create`
-2. `set`
-3. `animate`
-4. `delete`
+2. `setValue`
+3. `set`
+4. `effect`
+5. `animateValue`
+6. `animate`
+7. `setExpr`
+8. `delete`
 
-同じ時刻・同じ operation type の中では source array order を保持します。
+同じ時刻・同じ operation type の中では source array order を保持します。`setExpr` は tracker animation と通常 node animation の後に評価されるため、同じ時刻の dependent property はその時刻の tracker 値を参照します。
 
 ## Animation Values
 
@@ -53,3 +57,9 @@ Runtime and compiler behavior is covered by the web test suite.
 cd web
 npm test
 ```
+
+## Expression Values
+
+Value trackers live outside the scene graph as scalar tracks declared by Text DSL `value` statements or JSON `values` entries. Runtime initializes these tracks on every seek, applies `setValue` and `animateValue`, then evaluates `setExpr` operations against the current tracker map.
+
+`setExpr` uses Fluxion's small arithmetic evaluator rather than JavaScript execution. It supports numeric literals, tracker identifiers, parentheses, arithmetic operators, constants (`pi`, `e`), and allowlisted math functions such as `sin`, `cos`, `tan`, `sqrt`, `abs`, `min`, `max`, and `pow`. This is a static dependency-expression feature, not full compatibility with Manim updaters.

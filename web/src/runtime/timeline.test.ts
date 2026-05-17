@@ -191,3 +191,18 @@ test("applies timeline animations to child nodes inside groups", () => {
   assert.equal(graph.get("child-circle")?.transform.x, 20);
   assert.equal(graph.get("g1")?.children[0]?.transform.x, 20);
 });
+
+test("evaluates value tracker animations before dependent property expressions", () => {
+  const graph = new SceneGraph([node]);
+  const values = [{ id: "theta", initial: 0 }];
+  const timeline: TimelineOperation[] = [
+    { t: 0, op: "animateValue", id: "theta", from: 0, to: Math.PI, duration: 2, easing: "linear" },
+    { t: 0, op: "setExpr", id: "c1", path: "transform.x", expr: "320 + 100 * cos(theta)" },
+    { t: 0, op: "setExpr", id: "c1", path: "transform.y", expr: "240 + 100 * sin(theta)" },
+  ];
+
+  const trackerValues = applyTimelineAt(graph, timeline, 1, values);
+  assert.equal(Math.round(graph.get("c1")?.transform.x ?? 0), 320);
+  assert.equal(Math.round(graph.get("c1")?.transform.y ?? 0), 340);
+  assert.equal(trackerValues.theta, Math.PI / 2);
+});

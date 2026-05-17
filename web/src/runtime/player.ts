@@ -35,7 +35,7 @@ export class Player {
   seek(seconds: number): void {
     this.currentTime = clamp(seconds, 0, this.duration);
     const graph = new SceneGraph(hasCreateOperations(this.document) ? [] : this.document.nodes);
-    applyTimelineAt(graph, this.document.timeline, this.currentTime);
+    applyTimelineAt(graph, this.document.timeline, this.currentTime, this.document.values);
     this.renderer.render(graph.all());
   }
 
