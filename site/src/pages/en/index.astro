@@ -97,9 +97,23 @@ const japaneseUrl = baseUrl;
       .card p { margin: 0; color: var(--muted); line-height: 1.7; }
       .flow { margin: 8px 0 64px; padding: 22px; color: var(--muted); }
       .flow code { color: var(--accent); }
+
+      .dsl-guide { padding: 10px 0 72px; }
+      .section-heading { max-width: 760px; margin-bottom: 22px; }
+      .section-heading h2 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 42px); letter-spacing: -0.04em; }
+      .section-heading p { margin: 0; color: var(--muted); line-height: 1.75; }
+      .command-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+      .command-card { border: 1px solid var(--border); border-radius: 18px; padding: 16px; background: rgba(15, 23, 42, 0.62); }
+      .command-card code { display: inline-block; margin-bottom: 8px; color: var(--accent); font-weight: 800; }
+      .command-card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+      .demo-panel { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr); gap: 16px; align-items: stretch; }
+      .demo-note { border: 1px solid var(--border); border-radius: 22px; padding: 22px; background: rgba(15, 23, 42, 0.62); color: var(--muted); line-height: 1.75; }
+      .demo-note h3 { margin: 0 0 10px; color: var(--text); }
+      .demo-note ol { margin: 12px 0 0; padding-left: 22px; }
+      .demo-note a { color: var(--accent); font-weight: 800; }
       footer { padding: 30px 0 44px; color: var(--subtle); border-top: 1px solid var(--border); }
       @media (max-width: 860px) {
-        .hero, .grid { grid-template-columns: 1fr; }
+        .hero, .grid, .command-grid, .demo-panel { grid-template-columns: 1fr; }
         .hero { padding-top: 40px; }
         .links { display: none; }
       }
@@ -142,6 +156,64 @@ at 0s:
   show c1
 
 animate c1.x from 220 to 640 duration=1.5s easing=easeInOut</code></pre>
+          </div>
+        </section>
+
+
+        <section class="dsl-guide" aria-labelledby="dsl-guide-title">
+          <div class="section-heading">
+            <p class="eyebrow">Text DSL commands</p>
+            <h2 id="dsl-guide-title">DSL commands you can try on GitHub Pages</h2>
+            <p>
+              Text DSL builds a Scene Graph and Timeline with one command per line. Copy the demo below into the Playground to verify
+              shape creation, property updates, timing, and Manim-like animation primitives together.
+            </p>
+          </div>
+
+          <div class="command-grid" aria-label="Text DSL command summary">
+            <article class="command-card"><code>scene</code><p>Configure canvas width, height, and fps.</p></article>
+            <article class="command-card"><code>circle / rect / line / path</code><p>Declare shape nodes with position, color, and geometry.</p></article>
+            <article class="command-card"><code>text / math / group</code><p>Create labels, equations, and grouped nodes.</p></article>
+            <article class="command-card"><code>at</code><p>Run indented commands from a specific time.</p></article>
+            <article class="command-card"><code>show / hide</code><p>Create or delete nodes on the timeline.</p></article>
+            <article class="command-card"><code>set</code><p>Apply an immediate value to an <code>id.property</code> path.</p></article>
+            <article class="command-card"><code>animate</code><p>Interpolate a property with from / to / duration / easing.</p></article>
+            <article class="command-card"><code>play / wait</code><p>Run FadeIn, Write, Transform, and advance the time cursor.</p></article>
+          </div>
+
+          <div class="demo-panel">
+            <div class="terminal" aria-label="Fluxion Text DSL demo">
+              <div class="terminal-header"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+              <pre><code>scene width=1280 height=720 fps=60
+
+text title "DSL command demo" at 640,90 size=36 fill="#e2e8f0"
+math eq "f(x)=x^2" at 640,155 size=34 fill="#bae6fd"
+circle dot r=34 at 260,420 fill="#38bdf8" stroke="#0f172a" strokeWidth=4
+rect target w=120 h=88 at 820,420 fill="#f97316" opacity=0.85
+line axis x1=-320 y1=0 x2=320 y2=0 at 640,540 stroke="#94a3b8" strokeWidth=3
+group intro title eq
+
+at 0s:
+  show axis
+  hide target
+  play Write(intro) duration=1s
+  play FadeIn(dot) duration=0.8s
+
+wait 0.4s
+set dot.fill to "#22c55e"
+animate dot.x from 260 to 820 duration=1.4s easing=easeInOut
+play Transform(dot, target) duration=1.2s easing=easeOut
+play FadeOut(intro) duration=0.8s</code></pre>
+            </div>
+            <div class="demo-note">
+              <h3>What the demo shows</h3>
+              <ol>
+                <li><code>scene</code> and node declarations define the viewport, labels, equation, and shapes.</li>
+                <li>The <code>at</code> block pins the starting time, then runs <code>show</code> and <code>play</code> in sequence.</li>
+                <li><code>set</code> and <code>animate</code> change the circle color and x position before <code>Transform</code> morphs it toward the rectangle.</li>
+              </ol>
+              <p><a href={playgroundUrl}>Try the demo in Playground</a> / <a href={textDslUrl}>Read the full Text DSL reference</a></p>
+            </div>
           </div>
         </section>
 

@@ -97,9 +97,23 @@ const englishUrl = `${baseUrl}en/`;
       .card p { margin: 0; color: var(--muted); line-height: 1.7; }
       .flow { margin: 8px 0 64px; padding: 22px; color: var(--muted); }
       .flow code { color: var(--accent); }
+
+      .dsl-guide { padding: 10px 0 72px; }
+      .section-heading { max-width: 760px; margin-bottom: 22px; }
+      .section-heading h2 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 42px); letter-spacing: -0.04em; }
+      .section-heading p { margin: 0; color: var(--muted); line-height: 1.75; }
+      .command-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+      .command-card { border: 1px solid var(--border); border-radius: 18px; padding: 16px; background: rgba(15, 23, 42, 0.62); }
+      .command-card code { display: inline-block; margin-bottom: 8px; color: var(--accent); font-weight: 800; }
+      .command-card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+      .demo-panel { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr); gap: 16px; align-items: stretch; }
+      .demo-note { border: 1px solid var(--border); border-radius: 22px; padding: 22px; background: rgba(15, 23, 42, 0.62); color: var(--muted); line-height: 1.75; }
+      .demo-note h3 { margin: 0 0 10px; color: var(--text); }
+      .demo-note ol { margin: 12px 0 0; padding-left: 22px; }
+      .demo-note a { color: var(--accent); font-weight: 800; }
       footer { padding: 30px 0 44px; color: var(--subtle); border-top: 1px solid var(--border); }
       @media (max-width: 860px) {
-        .hero, .grid { grid-template-columns: 1fr; }
+        .hero, .grid, .command-grid, .demo-panel { grid-template-columns: 1fr; }
         .hero { padding-top: 40px; }
         .links { display: none; }
       }
@@ -142,6 +156,64 @@ at 0s:
   show c1
 
 animate c1.x from 220 to 640 duration=1.5s easing=easeInOut</code></pre>
+          </div>
+        </section>
+
+
+        <section class="dsl-guide" aria-labelledby="dsl-guide-title">
+          <div class="section-heading">
+            <p class="eyebrow">Text DSL commands</p>
+            <h2 id="dsl-guide-title">GitHub Pages 上で試せる DSL 命令</h2>
+            <p>
+              Text DSL は 1 行 1 命令で Scene Graph と Timeline を組み立てます。下のデモをコピーして Playground に貼り付けると、
+              図形の生成、プロパティ変更、時間制御、Manim 風 animation primitive をまとめて確認できます。
+            </p>
+          </div>
+
+          <div class="command-grid" aria-label="Text DSL command summary">
+            <article class="command-card"><code>scene</code><p>キャンバスの width / height / fps を設定します。</p></article>
+            <article class="command-card"><code>circle / rect / line / path</code><p>図形 node を宣言し、位置や色、サイズを指定します。</p></article>
+            <article class="command-card"><code>text / math / group</code><p>ラベル、数式、複数 node のグループを作ります。</p></article>
+            <article class="command-card"><code>at</code><p>ブロック内の命令を指定時刻から実行します。</p></article>
+            <article class="command-card"><code>show / hide</code><p>node を timeline に出現・削除します。</p></article>
+            <article class="command-card"><code>set</code><p><code>id.property</code> に即時値を適用します。</p></article>
+            <article class="command-card"><code>animate</code><p>プロパティを from / to / duration / easing で補間します。</p></article>
+            <article class="command-card"><code>play / wait</code><p>FadeIn、Write、Transform などを再生し、時間カーソルを進めます。</p></article>
+          </div>
+
+          <div class="demo-panel">
+            <div class="terminal" aria-label="Fluxion Text DSL demo">
+              <div class="terminal-header"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+              <pre><code>scene width=1280 height=720 fps=60
+
+text title "DSL command demo" at 640,90 size=36 fill="#e2e8f0"
+math eq "f(x)=x^2" at 640,155 size=34 fill="#bae6fd"
+circle dot r=34 at 260,420 fill="#38bdf8" stroke="#0f172a" strokeWidth=4
+rect target w=120 h=88 at 820,420 fill="#f97316" opacity=0.85
+line axis x1=-320 y1=0 x2=320 y2=0 at 640,540 stroke="#94a3b8" strokeWidth=3
+group intro title eq
+
+at 0s:
+  show axis
+  hide target
+  play Write(intro) duration=1s
+  play FadeIn(dot) duration=0.8s
+
+wait 0.4s
+set dot.fill to "#22c55e"
+animate dot.x from 260 to 820 duration=1.4s easing=easeInOut
+play Transform(dot, target) duration=1.2s easing=easeOut
+play FadeOut(intro) duration=0.8s</code></pre>
+            </div>
+            <div class="demo-note">
+              <h3>デモの流れ</h3>
+              <ol>
+                <li><code>scene</code> と node 宣言で、再生領域・文字・数式・図形を定義します。</li>
+                <li><code>at</code> ブロックで開始時刻を固定し、<code>show</code> と <code>play</code> を順番に実行します。</li>
+                <li><code>set</code> と <code>animate</code> で円の色と座標を変え、<code>Transform</code> で矩形へ morph します。</li>
+              </ol>
+              <p><a href={playgroundUrl}>Playground でデモを試す</a> / <a href={textDslUrl}>詳しい Text DSL reference</a></p>
+            </div>
           </div>
         </section>
 
