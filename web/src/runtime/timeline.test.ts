@@ -82,14 +82,42 @@ test("applies zero-duration animations as immediate final values", () => {
   assert.equal(graph.get("c1")?.transform.x, 100);
 });
 
-test("switches non-numeric animations at completion", () => {
+test("interpolates CSS color animations", () => {
+  const graph = new SceneGraph([node]);
+  applyTimelineAt(graph, [{ t: 0, op: "animate", id: "c1", path: "style.fill", from: "#000", to: "rgb(255, 255, 255)", duration: 1, easing: "linear" }], 0.5);
+  assert.equal(graph.get("c1")?.style.fill, "rgb(128, 128, 128)");
+});
+
+test("interpolates same-length number arrays", () => {
+  const graph = new SceneGraph([{ ...node, geometry: { points: [0, 10, 20] } }]);
+  applyTimelineAt(graph, [{ t: 0, op: "animate", id: "c1", path: "geometry.points", from: [0, 10, 20], to: [10, 30, 50], duration: 1, easing: "linear" }], 0.5);
+  assert.equal(JSON.stringify(graph.get("c1")?.geometry.points), JSON.stringify([5, 20, 35]));
+});
+
+test("morphs SVG paths with matching command structure", () => {
+  const graph = new SceneGraph([{ ...node, type: "path", geometry: { d: "M 0 0 L 10 10" } }]);
+  applyTimelineAt(graph, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from: "M 0 0 L 10 10", to: "M 10 20 L 30 40", duration: 1, easing: "linear" }], 0.5);
+  assert.equal(graph.get("c1")?.geometry.d, "M 5 10 L 20 25");
+});
+
+test("falls back to step switching for unsupported string animations", () => {
   const beforeEnd = new SceneGraph([node]);
-  applyTimelineAt(beforeEnd, [{ t: 0, op: "animate", id: "c1", path: "style.fill", from: "#fff", to: "#38bdf8", duration: 1, easing: "linear" }], 0.5);
-  assert.equal(beforeEnd.get("c1")?.style.fill, "#fff");
+  applyTimelineAt(beforeEnd, [{ t: 0, op: "animate", id: "c1", path: "style.fill", from: "currentColor", to: "none", duration: 1, easing: "linear" }], 0.5);
+  assert.equal(beforeEnd.get("c1")?.style.fill, "currentColor");
 
   const atEnd = new SceneGraph([node]);
-  applyTimelineAt(atEnd, [{ t: 0, op: "animate", id: "c1", path: "style.fill", from: "#fff", to: "#38bdf8", duration: 1, easing: "linear" }], 1);
-  assert.equal(atEnd.get("c1")?.style.fill, "#38bdf8");
+  applyTimelineAt(atEnd, [{ t: 0, op: "animate", id: "c1", path: "style.fill", from: "currentColor", to: "none", duration: 1, easing: "linear" }], 1);
+  assert.equal(atEnd.get("c1")?.style.fill, "none");
+});
+
+test("falls back to step switching for incompatible SVG path morphs", () => {
+  const beforeEnd = new SceneGraph([{ ...node, type: "path", geometry: { d: "M 0 0 L 10 10" } }]);
+  applyTimelineAt(beforeEnd, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from: "M 0 0 L 10 10", to: "M 10 20 C 30 40 50 60 70 80", duration: 1, easing: "linear" }], 0.5);
+  assert.equal(beforeEnd.get("c1")?.geometry.d, "M 0 0 L 10 10");
+
+  const atEnd = new SceneGraph([{ ...node, type: "path", geometry: { d: "M 0 0 L 10 10" } }]);
+  applyTimelineAt(atEnd, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from: "M 0 0 L 10 10", to: "M 10 20 C 30 40 50 60 70 80", duration: 1, easing: "linear" }], 1);
+  assert.equal(atEnd.get("c1")?.geometry.d, "M 10 20 C 30 40 50 60 70 80");
 });
 
 test("player starts from an empty graph when documents contain create operations", () => {

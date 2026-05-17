@@ -27,11 +27,29 @@
     },
     "style": {
       "type": "object",
+      "description": "Style values that may be animated by the runtime. fill/stroke CSS hex/rgb(a) strings are interpolated as colors; other strings use step fallback.",
       "properties": {
-        "fill": { "type": "string" },
-        "stroke": { "type": "string" },
+        "fill": { "$ref": "#/$defs/styleColor" },
+        "stroke": { "$ref": "#/$defs/styleColor" },
         "strokeWidth": { "type": "number", "minimum": 0 }
       }
+    },
+    "styleColor": {
+      "type": "string",
+      "description": "CSS color string. Runtime interpolation supports hex (#rgb, #rgba, #rrggbb, #rrggbbaa) and rgb()/rgba(); unsupported strings fall back to step switching."
+    },
+    "numberArray": {
+      "type": "array",
+      "description": "Numeric vector. Runtime interpolation is element-wise when from/to arrays have identical lengths.",
+      "items": { "type": "number" }
+    },
+    "interpolatableGeometryValue": {
+      "description": "Geometry values supported by runtime interpolation: numbers, same-length number arrays, color/path strings where applicable, or step fallback strings.",
+      "oneOf": [
+        { "type": "number" },
+        { "type": "string" },
+        { "$ref": "#/$defs/numberArray" }
+      ]
     },
     "node": {
       "type": "object",
@@ -41,7 +59,7 @@
         "type": { "enum": ["group", "circle", "rect", "line", "path", "text", "math"] },
         "transform": { "$ref": "#/$defs/transform" },
         "style": { "$ref": "#/$defs/style" },
-        "geometry": { "type": "object" },
+        "geometry": { "type": "object", "additionalProperties": { "$ref": "#/$defs/interpolatableGeometryValue" } },
         "children": { "type": "array", "description": "Nested child nodes, typically used by group nodes. Child ids share the same global namespace as top-level node ids.", "items": { "$ref": "#/$defs/node" } },
         "text": { "type": "string" },
         "latex": { "type": "string", "description": "LaTeX source passed to the selected math renderer." },
@@ -73,7 +91,7 @@
       "type": "object",
       "required": ["d"],
       "properties": {
-        "d": { "type": "string" }
+        "d": { "type": "string", "description": "SVG path data. Runtime morphing supports only paths with the same command sequence and numeric arity; other path strings use step fallback." }
       }
     },
     "textGeometry": {
