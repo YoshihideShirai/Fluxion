@@ -153,18 +153,31 @@ animate title.opacity from 0 to 1 start=0s duration=1s
 ```text
 play FadeIn(title) duration=1s
 wait 0.5s
+play AnimationGroup(FadeIn(a), FadeIn(b), lagRatio=0.2) duration=1s
+play Succession(Create(a), Transform(a, b)) duration=2s
 play Transform(c1, c2) duration=1.5s easing=easeInOut
 ```
 
-`play` provides Manim-like primitives. `wait` advances the current cursor time.
+`play` provides Manim-like primitives and accepts nested calls for parallel or sequential composition. `wait` advances the current cursor time.
+
+Syntax:
+
+```text
+play <Primitive>(<args...>) [duration=<time>] [easing=<name>]
+play AnimationGroup(<Primitive>(...), <Primitive>(...), [lagRatio=<number>]) [duration=<time>] [easing=<name>]
+play Succession(<Primitive>(...), <Primitive>(...)) [duration=<time>] [easing=<name>]
+```
 
 Supported primitives include:
 
-- `FadeIn(id)`
-- `FadeOut(id)`
-- `Create(id)`
-- `Write(id)`
-- `Transform(source, target)`
+- `FadeIn(id)`: creates the node at hidden opacity, emits `effect=fadeIn`, and animates `transform.opacity`.
+- `FadeOut(id)`: emits `effect=fadeOut`, animates `transform.opacity` to `0`, and deletes the node when the duration ends.
+- `Create(id)`: creates the node and emits `effect=create`.
+- `Write(id)`: creates the node and emits `effect=write`.
+- `Transform(source, target)`: animates the source node toward transform/style/geometry properties from the target node.
+- `ReplacementTransform(from, to)`: expands into a simultaneous `FadeOut(from)` and `FadeIn(to)`.
+- `AnimationGroup(<animations...>, lagRatio=0)`: expands child animations in parallel. `lagRatio` offsets child starts by a ratio of child duration, and the group is normalized to fit the outer `duration`.
+- `Succession(<animations...>)`: expands child animations from left to right. Each child receives an equal share of the outer `duration`.
 
 ## Safety model
 

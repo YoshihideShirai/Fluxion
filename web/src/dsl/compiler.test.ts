@@ -188,6 +188,100 @@ at 5s:
   assert.equal(setOperation.value, "#38bdf8");
 });
 
+test("expands ReplacementTransform into simultaneous FadeOut and FadeIn", () => {
+  const documentData = compileTextDsl(`circle from at 0,0 opacity=0.75
+rect to at 100,0 opacity=0.5
+
+play ReplacementTransform(from, to) duration=1.25s easing=linear`);
+
+  equalJson(
+    documentData.timeline
+      .filter((op) => op.op === "effect")
+      .map((op) => [op.id, op.effect, op.t, op.duration, op.easing]),
+    [
+      ["from", "fadeOut", 0, 1.25, "linear"],
+      ["to", "fadeIn", 0, 1.25, "linear"],
+    ],
+  );
+
+  const toCreate = documentData.timeline.find(
+    (op) => op.op === "create" && op.node.id === "to",
+  );
+  assert.equal(toCreate?.op, "create");
+  if (toCreate?.op !== "create")
+    throw new Error("Expected ReplacementTransform target create.");
+  assert.equal(toCreate.node.transform.opacity, 0);
+
+  equalJson(
+    documentData.timeline
+      .filter((op): op is AnimateOperation => op.op === "animate")
+      .map((op) => [op.id, op.path, op.from, op.to, op.t, op.duration]),
+    [
+      ["from", "transform.opacity", 0.75, 0, 0, 1.25],
+      ["to", "transform.opacity", 0, 0.5, 0, 1.25],
+    ],
+  );
+  equalJson(
+    documentData.timeline
+      .filter((op) => op.op === "delete")
+      .map((op) => [op.id, op.t]),
+    [["from", 1.25]],
+  );
+});
+
+test("expands AnimationGroup with nested calls and lagRatio", () => {
+  const documentData = compileTextDsl(`circle a
+circle b
+
+play AnimationGroup(FadeIn(a), FadeIn(b), lagRatio=0.2) duration=1s easing=easeOut`);
+
+  const childDuration = 1 / 1.2;
+  equalJson(
+    documentData.timeline
+      .filter((op) => op.op === "effect")
+      .map((op) => [op.id, op.effect, op.t, op.duration, op.easing]),
+    [
+      ["a", "fadeIn", 0, childDuration, "easeOut"],
+      ["b", "fadeIn", childDuration * 0.2, childDuration, "easeOut"],
+    ],
+  );
+  assert.equal(documentData.duration, 1);
+});
+
+test("expands Succession into sequential nested animations", () => {
+  const documentData = compileTextDsl(`circle a at 0,0
+rect b at 100,50
+
+play Succession(Create(a), Transform(a, b)) duration=2s`);
+
+  equalJson(
+    documentData.timeline
+      .filter((op) => op.op === "effect")
+      .map((op) => [op.id, op.effect, op.t, op.duration]),
+    [
+      ["a", "create", 0, 1],
+      ["a", "transform", 1, 1],
+    ],
+  );
+
+  const transformAnimations = documentData.timeline.filter(
+    (op): op is AnimateOperation => op.op === "animate" && op.id === "a",
+  );
+  assert.equal(
+    transformAnimations.some(
+      (op) => op.path === "transform.x" && op.t === 1 && op.to === 100,
+    ),
+    true,
+  );
+  assert.equal(
+    transformAnimations.some(
+      (op) => op.path === "transform.y" && op.t === 1 && op.to === 50,
+    ),
+    true,
+  );
+  assert.equal(documentData.duration, 2);
+});
+
 test("compiles group roots with math and path children", () => {
   const documentData = compileTextDsl(`path curve d="M 0 0 L 10 10"
 math eq "x^2" renderer=katex size=24
