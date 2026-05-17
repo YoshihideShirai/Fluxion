@@ -58,7 +58,7 @@ play Transform(c1, box) duration=1s easing=easeInOut
 hide c1 at 3.5s
 ```
 
-Text DSL v0.2 supports `scene`, `circle`, `rect`, `line`, `path`, `text`, `math`, `group`, `camera`, `value`, `set`, `show`, `hide`, `wait`, `play`, and `animate` statements. It compiles in the browser and never runs arbitrary Python or JavaScript from the input; expressions are parsed as a small allowlisted arithmetic language. See the [Text DSL v0.2 reference](docs/text-dsl.md) for the full syntax, defaults, animation primitives, and out-of-scope features.
+Text DSL v0.2 supports `scene`, `circle`, `rect`, `line`, `path`, `text`, `math`, `group`, `camera`, `value`, `set`, `show`, `hide`, `wait`, `play`, and `animate` statements. It compiles in the browser and never runs arbitrary Python or JavaScript from the input; expressions are parsed as a small allowlisted arithmetic language. See the [canonical Text DSL v0.2 reference](site/src/content/docs/reference/text-dsl.md) for the full syntax, defaults, animation primitives, and out-of-scope features.
 
 ## Python DSL example
 
@@ -75,15 +75,22 @@ class Demo(Scene):
 
 ## Browser runtime
 
-The browser runtime applies timeline operations deterministically, supports seek/play/stop/reset controls, and renders the generated scene graph with SVG. See [Web Runtime](docs/runtime.md) for playback semantics, operation ordering, easing behavior, and value-tracker expression evaluation.
+The browser runtime applies timeline operations deterministically, supports seek/play/stop/reset controls, and renders the generated scene graph with SVG. See the [canonical Web Runtime reference](site/src/content/docs/reference/runtime.md) for playback semantics, operation ordering, easing behavior, and value-tracker expression evaluation.
 
 ## Docs
 
-- **GitHub Pages Overview**: start with the published project overview (`/overview/`) for the concept, pipeline, and high-level architecture.
-- **GitHub Pages Getting Started**: follow the published getting-started guide (`/guides/getting-started/`) for local Python, web runtime, and site-build workflows.
-- **GitHub Pages Text DSL**: use the published Text DSL reference (`/reference/text-dsl/`) for the current v0.2 syntax and examples.
-- **GitHub Pages Runtime**: use the published Runtime reference (`/reference/runtime/`) for SVG playback and timeline semantics.
-- Repository mirrors: [architecture](docs/architecture.md), [MVP scope](docs/mvp.md), [Text DSL v0.2](docs/text-dsl.md), and [Web Runtime](docs/runtime.md).
+Canonical documentation lives under [`site/src/content/docs/`](site/src/content/docs/) and is published by the GitHub Pages build. Root-level `docs/` is intentionally limited to a pointer README so there is only one documentation source of truth.
+
+- **Overview**: start with [`site/src/content/docs/overview.md`](site/src/content/docs/overview.md) for the concept, pipeline, and high-level architecture.
+- **Getting Started**: follow [`site/src/content/docs/guides/getting-started.md`](site/src/content/docs/guides/getting-started.md) for local Python, web runtime, and site-build workflows.
+- **Architecture**: use [`site/src/content/docs/concepts/architecture.md`](site/src/content/docs/concepts/architecture.md) for the Scene Graph / Timeline IR architecture.
+- **MVP Scope**: use [`site/src/content/docs/concepts/mvp.md`](site/src/content/docs/concepts/mvp.md) for current MVP boundaries.
+- **Text DSL**: use [`site/src/content/docs/reference/text-dsl.md`](site/src/content/docs/reference/text-dsl.md) for the current v0.2 syntax and examples.
+- **Runtime**: use [`site/src/content/docs/reference/runtime.md`](site/src/content/docs/reference/runtime.md) for SVG playback and timeline semantics.
+
+### Documentation update rule
+
+When changing documentation, update the canonical file in `site/src/content/docs/` first. Do not add long-form mirrors under root `docs/`; use `docs/README.md` only to direct readers to the canonical GitHub Pages source.
 
 ## Project status
 
