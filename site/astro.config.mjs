@@ -32,7 +32,7 @@ export default defineConfig({
           translations: { en: 'Start Here' },
           items: [
             { label: 'Overview', translations: { en: 'Overview' }, slug: 'overview' },
-            { label: 'Quickstart', translations: { en: 'Quickstart' }, slug: 'guides/getting-started' },
+            { label: 'Getting Started', translations: { en: 'Getting Started' }, slug: 'guides/getting-started' },
             { label: 'Playground tour', translations: { en: 'Playground tour' }, slug: 'guides/playground' },
           ],
         },
@@ -41,7 +41,7 @@ export default defineConfig({
           translations: { en: 'Authoring' },
           items: [
             { label: 'Python DSL', translations: { en: 'Python DSL' }, slug: 'guides/python-dsl' },
-            { label: 'Text DSL', translations: { en: 'Text DSL' }, slug: 'reference/text-dsl' },
+            { label: 'Text DSL reference', translations: { en: 'Text DSL reference' }, slug: 'reference/text-dsl' },
             { label: 'Examples', translations: { en: 'Examples' }, slug: 'guides/examples' },
           ],
         },
@@ -59,7 +59,7 @@ export default defineConfig({
           translations: { en: 'Design Notes' },
           items: [
             { label: 'Architecture', translations: { en: 'Architecture' }, slug: 'concepts/architecture' },
-            { label: 'MVP Scope / Roadmap', translations: { en: 'MVP Scope / Roadmap' }, slug: 'concepts/mvp' },
+            { label: 'Roadmap / MVP Scope', translations: { en: 'Roadmap / MVP Scope' }, slug: 'concepts/mvp' },
           ],
         },
       ],

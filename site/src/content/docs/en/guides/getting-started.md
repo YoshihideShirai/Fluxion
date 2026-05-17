@@ -1,9 +1,9 @@
 ---
-title: Quickstart
+title: Getting Started
 description: The shortest path to generate, build, and preview Fluxion locally.
 ---
 
-Quickstart is the second page in **Start Here**. It takes you from a Python DSL example to `.fluxion.json`, then previews that output in the Web Runtime / Playground.
+Getting Started is the second page in **Start Here**. It takes you from a Python DSL example to `.fluxion.json`, then previews that output in the Web Runtime / Playground.
 
 ## 1. Generate the example scene
 
@@ -37,7 +37,7 @@ Open `http://localhost:8000/web/`, edit the Text DSL, and preview it with live c
 
 - Learn the UI in the [Playground tour](./playground/).
 - Use [Python DSL](./python-dsl/) when authoring from Python.
-- Use [Text DSL](../reference/text-dsl/) when authoring in the browser.
+- Use [Text DSL reference](../reference/text-dsl/) when authoring in the browser.
 - Inspect runtime input in [Fluxion JSON / Scene Graph](../reference/ir/) and [Timeline](../reference/timeline/).
 
 ## Build the GitHub Pages site locally

@@ -19,7 +19,7 @@ Fluxion docs are organized around the same four paths shown in the sidebar.
 1. **Start Here**: project overview, the shortest local setup path, and the Playground workflow.
 2. **Authoring**: Python DSL, Text DSL, and examples that generate `.fluxion.json`.
 3. **Runtime & IR**: Fluxion JSON / Scene Graph, Timeline operations, and Web Runtime playback semantics.
-4. **Design Notes**: Architecture and MVP Scope / Roadmap.
+4. **Design Notes**: Architecture and Roadmap / MVP Scope.
 
 ## What Fluxion includes
 
@@ -41,9 +41,9 @@ Python DSL / Text DSL
 
 ## Next steps
 
-- Start with the [Quickstart](./guides/getting-started/) guide.
+- Start with the [Getting Started](./guides/getting-started/) guide.
 - Use the [Playground tour](./guides/playground/) to learn the browser editor.
-- Begin authoring with either [Python DSL](./guides/python-dsl/) or [Text DSL](./reference/text-dsl/).
+- Begin authoring with either [Python DSL](./guides/python-dsl/) or [Text DSL reference](./reference/text-dsl/).
 - Inspect the IR shape in [Fluxion JSON / Scene Graph](./reference/ir/) and [Timeline](./reference/timeline/).
 
 ## Documentation source of truth
