@@ -34,7 +34,7 @@ export class Player {
 
   seek(seconds: number): void {
     this.currentTime = clamp(seconds, 0, this.duration);
-    const graph = new SceneGraph(this.document.nodes);
+    const graph = new SceneGraph(hasCreateOperations(this.document) ? [] : this.document.nodes);
     applyTimelineAt(graph, this.document.timeline, this.currentTime);
     this.renderer.render(graph.all());
   }
@@ -69,4 +69,8 @@ export class Player {
 function clamp(value: number, min: number, max: number): number {
   if (max <= min) return min;
   return Math.min(max, Math.max(min, value));
+}
+
+function hasCreateOperations(documentData: VanimDocument): boolean {
+  return documentData.timeline.some((op) => op.op === "create");
 }
