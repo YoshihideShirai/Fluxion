@@ -103,6 +103,27 @@ class PythonDslTest(unittest.TestCase):
         self.assertEqual([child["latex"] for child in data["children"]], ["e", "^", "{", "i", r"\pi", "}", "+", "1", "=", "0"])
         self.assertTrue(all(child["type"] == "math" for child in data["children"]))
 
+    def test_transform_matching_tex_matches_tokens_and_fades_unmatched(self):
+        from fluxion import Math, TransformMatchingTex
+
+        scene = Scene()
+        src = Math(id="src", latex="a+b", expand_tokens=True)
+        dst = Math(id="dst", latex="bca", expand_tokens=True)
+        scene.add(src)
+
+        scene.play(TransformMatchingTex(src, dst), run_time=1.25)
+        data = scene.to_dict()
+
+        animate_ops = [op for op in data["timeline"] if op["op"] == "animate"]
+        fade_effects = [op for op in data["timeline"] if op["op"] == "effect"]
+
+        self.assertIn("src:tex:0", {op["id"] for op in animate_ops})
+        self.assertIn("src:tex:1", {op["id"] for op in animate_ops})
+        self.assertIn(("src:tex:1", "fadeOut"), {(op["id"], op["effect"]) for op in fade_effects})
+        self.assertIn(("dst:tex:1", "fadeIn"), {(op["id"], op["effect"]) for op in fade_effects})
+        self.assertIn({"t": 1.25, "op": "delete", "id": "src:tex:1"}, data["timeline"])
+        self.assertEqual(data["duration"], 1.25)
+
     def test_export_json_writes_file(self):
         scene = Demo()
         scene.construct()

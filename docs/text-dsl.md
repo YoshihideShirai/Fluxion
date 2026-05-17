@@ -56,7 +56,7 @@ rect box w=120 h=80 at 640,360 fill="#f97316"
 line axis x1=-50 y1=0 x2=50 y2=0 at 640,520 stroke="#e2e8f0" strokeWidth=2
 path curve d="M 0 0 C 40 80 80 80 120 0" at 640,420 fill="none" stroke="#38bdf8"
 text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"
-math equation "e^{i\\pi}+1=0" at 640,200 size=36
+math equation "e^{i\\pi}+1=0" at 640,200 size=36 expandTokens=true
 group intro title equation
 ```
 
@@ -90,7 +90,7 @@ Geometry options:
 - `line`: `x1`, `y1`, `x2`, `y2`
 - `path`: `d` (SVG path data string)
 - `text`: `size` or `fontSize`
-- `math`: `size` or `fontSize`, `renderer=katex|mathjax`
+- `math`: `size` or `fontSize`, `renderer=katex|mathjax`, `expandTokens=true|false`
 - `group`: child ids are copied into `children` and removed from top-level roots
 
 Default values:
@@ -102,7 +102,7 @@ Default values:
 - line: `x1=0`, `y1=0`, `x2=100`, `y2=0`
 - path: `d=""`
 - text: `fontSize=32`
-- math: `fontSize=36`, `renderer=katex`
+- math: `fontSize=36`, `renderer=katex`, `expandTokens=false`
 - group: empty geometry and `children=[]`
 
 ### at block
@@ -170,6 +170,7 @@ play FadeIn(title) duration=1s
 play AnimationGroup(FadeIn(a), FadeIn(b), lagRatio=0.2) duration=1s
 play Succession(Create(a), Transform(a, b)) duration=2s
 play Transform(a, b) duration=1.5s easing=easeInOut
+play TransformMatchingTex(eq1, eq2) duration=1s
 ```
 
 Manim 風の animation primitive を timeline operations に変換します。`play` は top-level と `at` block の両方で使えます。`play` は compiler state の current time から始まり、primitive の duration 分だけ current time を進めます。
@@ -196,9 +197,30 @@ Supported primitives:
 - `Create(id)`: `create` と semantic `effect=create` を生成します。
 - `Write(id)`: `create` と semantic `effect=write` を生成します。
 - `Transform(a, b)`: `a` を target として、`b` と異なる transform/style/geometry property ごとに `animate` operation を生成します。
+- `TransformMatchingTex(a, b)`: `math` node の token child を同一 token 文字列で対応付け、対応 token は `Transform`、消える token は `FadeOut`、新規 token は `FadeIn` に展開します。
 - `ReplacementTransform(from, to)`: `from` の `FadeOut` と `to` の `FadeIn` を同時に生成します。
 - `AnimationGroup(<animations...>, lagRatio=0)`: child animation を並列に展開します。`lagRatio` は child start のずれを child duration に対する比率で指定し、group 全体は `duration` に収まるように正規化されます。
 - `Succession(<animations...>)`: child animation を左から右へ逐次展開します。各 child の duration は `play` の `duration` を child 数で等分します。
+
+#### TransformMatchingTex and token matching
+
+`TransformMatchingTex(a, b)` は `math` node 専用です。両方の node を `expandTokens=true` 付きで宣言しておく必要があります。
+
+```text
+math eq1 "a+b" expandTokens=true at 320,180
+math eq2 "bca" expandTokens=true at 640,180
+play TransformMatchingTex(eq1, eq2) duration=1s
+```
+
+Token 化は LaTeX 文字列を command（例: `\pi`, `\frac`）、escape 済み 1 文字、`^` / `_`、brace、通常文字に分割し、whitespace は捨てます。matching は token の `latex` 文字列が完全一致する child 同士で行い、source 側の出現順で destination 側の未使用 token を先頭から 1 つ消費します。同じ token が複数ある場合はこの安定した出現順 matching になります。
+
+未対応 token の扱いは次の通りです。
+
+- source にだけある token: `FadeOut(token)` に展開し、duration 終了時に delete します。
+- destination にだけある token: hidden opacity の create から `FadeIn(token)` に展開します。
+- 両方にある token: source token id を target にした `Transform(sourceToken, destinationToken)` に展開します。
+
+制約: `expandTokens=true` がない `math` node、または token child を持たない node には使えません。現在の token child の位置は近似的な semantic anchor であり、複雑な TeX layout の厳密な glyph 位置合わせは renderer の責務として未対応です。
 
 ### animate
 

@@ -8,6 +8,7 @@ from .animation import (
     ReplacementTransform,
     Succession,
     Transform,
+    TransformMatchingTex,
     Write,
 )
 from .export import export_scene
@@ -35,6 +36,7 @@ __all__ = [
     "ReplacementTransform",
     "Succession",
     "Transform",
+    "TransformMatchingTex",
     "Write",
     "Circle",
     "Group",

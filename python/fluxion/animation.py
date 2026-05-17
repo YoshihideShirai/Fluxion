@@ -159,6 +159,59 @@ def ReplacementTransform(src: "Mobject", dst: "Mobject", *, easing: str = "easeI
     return AnimationGroup(FadeOut(src, remove=True, easing=easing), FadeIn(dst, easing=easing))
 
 
+def TransformMatchingTex(src: "Mobject", dst: "Mobject", *, easing: str = "easeInOut") -> AnimationGroup:
+    """Match expanded TeX token children by identical token strings.
+
+    ``src`` and ``dst`` must be ``Math(..., expand_tokens=True)`` objects (or
+    compatible mobjects with math children). Source children are matched to the
+    first unused destination child with the same ``latex`` token. Matched tokens
+    use ``Transform``; unmatched source tokens fade out; unmatched destination
+    tokens fade in.
+    """
+
+    src_tokens = _tex_token_children(src)
+    dst_tokens = _tex_token_children(dst)
+    if not src_tokens or not dst_tokens:
+        raise ValueError("TransformMatchingTex requires Math(expand_tokens=True) token children.")
+
+    available: dict[str, List[Mobject]] = {}
+    for child in dst_tokens:
+        token = child.node.latex
+        if token is None:
+            continue
+        available.setdefault(token, []).append(child)
+
+    animations: List[AnimationInput] = []
+    matched_dst_ids: set[str] = set()
+    for child in src_tokens:
+        token = child.node.latex
+        match = available.get(token or "")
+        if match:
+            dst_child = match.pop(0)
+            matched_dst_ids.add(dst_child.id)
+            animations.append(Transform(child, dst_child, easing=easing))
+        else:
+            animations.append(FadeOut(child, remove=True, easing=easing))
+
+    for child in dst_tokens:
+        if child.id not in matched_dst_ids:
+            animations.append(FadeIn(child, easing=easing))
+
+    return AnimationGroup(*animations)
+
+
+def _tex_token_children(mobject: "Mobject") -> List["Mobject"]:
+    return [_mobject_from_node(child) for child in mobject.node.children if child.type == "math" and child.latex is not None]
+
+
+def _mobject_from_node(node: Any) -> "Mobject":
+    from .mobject import Mobject
+
+    mobject = object.__new__(Mobject)
+    mobject.node = node
+    return mobject
+
+
 def _reveal_effect(mobject: "Mobject", effect: str, *, easing: str) -> EffectAnimation:
     create_state = mobject.to_dict()
     create_state["transform"]["opacity"] = 0
