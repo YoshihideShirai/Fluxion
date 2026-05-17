@@ -415,3 +415,36 @@ test("reports representative compile errors with line and column details", () =>
     /Line 2, column 1: Expected animate syntax/,
   );
 });
+
+test("compiles scalar value trackers and dependent expressions", () => {
+  const documentData = compileTextDsl(`circle dot r=8 at 320,240
+value theta = 0
+animate theta from 0 to 6.28 duration=2s easing=linear
+set dot.x to expr="320 + 100 * cos(theta)"
+set dot.y to expr="240 + 100 * sin(theta)"`);
+
+  equalJson(documentData.values, [{ id: "theta", initial: 0 }]);
+  equalJson(
+    documentData.timeline
+      .filter((op) => op.op === "animateValue")
+      .map((op) => [op.id, op.from, op.to, op.duration, op.easing]),
+    [["theta", 0, 6.28, 2, "linear"]],
+  );
+  equalJson(
+    documentData.timeline
+      .filter((op) => op.op === "setExpr")
+      .map((op) => [op.id, op.path, op.expr]),
+    [
+      ["dot", "transform.x", "320 + 100 * cos(theta)"],
+      ["dot", "transform.y", "240 + 100 * sin(theta)"],
+    ],
+  );
+});
+
+test("rejects dependent expressions with unknown identifiers", () => {
+  messageMatches(
+    `circle dot
+set dot.x to expr="missing + 1"`,
+    /Invalid expression: Unknown identifier 'missing'/u,
+  );
+});

@@ -52,12 +52,34 @@ export interface SetOperation extends BaseOperation {
   value: unknown;
 }
 
+export interface SetExpressionOperation extends BaseOperation {
+  op: "setExpr";
+  id: string;
+  path: string;
+  expr: string;
+}
+
+export interface SetValueOperation extends BaseOperation {
+  op: "setValue";
+  id: string;
+  value: number;
+}
+
 export interface AnimateOperation extends BaseOperation {
   op: "animate";
   id: string;
   path: string;
   from: unknown;
   to: unknown;
+  duration: number;
+  easing: EasingName;
+}
+
+export interface AnimateValueOperation extends BaseOperation {
+  op: "animateValue";
+  id: string;
+  from: number;
+  to: number;
   duration: number;
   easing: EasingName;
 }
@@ -70,7 +92,20 @@ export interface EffectOperation extends BaseOperation {
   easing: EasingName;
 }
 
-export type TimelineOperation = CreateOperation | DeleteOperation | SetOperation | AnimateOperation | EffectOperation;
+export type TimelineOperation =
+  | CreateOperation
+  | DeleteOperation
+  | SetOperation
+  | SetExpressionOperation
+  | SetValueOperation
+  | AnimateOperation
+  | AnimateValueOperation
+  | EffectOperation;
+
+export interface ValueTracker {
+  id: string;
+  initial: number;
+}
 
 export interface FluxionDocument {
   version: "0.1";
@@ -79,13 +114,15 @@ export interface FluxionDocument {
   fps: number;
   duration?: number;
   nodes: SceneNode[];
+  values?: ValueTracker[];
   timeline: TimelineOperation[];
 }
 
 export type DiffOperation =
   | Omit<CreateOperation, "t">
   | Omit<DeleteOperation, "t">
-  | Omit<SetOperation, "t">;
+  | Omit<SetOperation, "t">
+  | Omit<SetExpressionOperation, "t">;
 
 export interface DiffStream {
   seq?: number;
