@@ -1,0 +1,24 @@
+---
+interface Props {
+  title: string;
+  body: string;
+  primaryHref: string;
+  primaryLabel: string;
+  secondaryHref: string;
+  secondaryLabel: string;
+}
+
+const { title, body, primaryHref, primaryLabel, secondaryHref, secondaryLabel } = Astro.props;
+---
+
+<section class="cta" aria-labelledby="landing-cta-title">
+  <div>
+    <p class="eyebrow">Next step</p>
+    <h2 id="landing-cta-title">{title}</h2>
+    <p>{body}</p>
+  </div>
+  <div class="actions">
+    <a class="button" href={primaryHref}>{primaryLabel}</a>
+    <a class="button secondary" href={secondaryHref}>{secondaryLabel}</a>
+  </div>
+</section>

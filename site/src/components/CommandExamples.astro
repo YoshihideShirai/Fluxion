@@ -1,0 +1,139 @@
+---
+import { commandDemoSource, getLandingCommandExamples, type LandingLocale } from '../data/landingExamples';
+
+interface DemoNote {
+  title: string;
+  items: string[];
+  playgroundLabel: string;
+  referenceLabel: string;
+}
+
+interface Props {
+  locale: LandingLocale;
+  playgroundUrl: string;
+  textDslUrl: string;
+  heading: string;
+  intro: string;
+  eyebrow: string;
+  runLabel: string;
+  openLabel: string;
+  runnerTitle: string;
+  runnerStatus: string;
+  demoNote: DemoNote;
+}
+
+const {
+  locale,
+  playgroundUrl,
+  textDslUrl,
+  heading,
+  intro,
+  eyebrow,
+  runLabel,
+  openLabel,
+  runnerTitle,
+  runnerStatus,
+  demoNote,
+} = Astro.props;
+const commandExamples = getLandingCommandExamples(locale);
+const createPlaygroundUrl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent(source)}`;
+---
+
+<section class="dsl-guide" aria-labelledby="dsl-guide-title">
+  <div class="section-heading">
+    <p class="eyebrow">{eyebrow}</p>
+    <h2 id="dsl-guide-title">{heading}</h2>
+    <p>{intro}</p>
+  </div>
+
+  <div class="command-grid" aria-label="Text DSL command summary">
+    {commandExamples.map((example) => (
+      <article class="command-card">
+        <code>{example.command}</code>
+        <p>{example.description}</p>
+        <pre><code>{example.source}</code></pre>
+        <div class="command-actions">
+          <button class="mini-button run-command-demo" type="button" data-source={example.source}>{runLabel}</button>
+          <a class="mini-button secondary" href={createPlaygroundUrl(example.source)}>{openLabel}</a>
+        </div>
+      </article>
+    ))}
+  </div>
+
+  <div class="inline-runner" aria-live="polite">
+    <div class="runner-toolbar">
+      <strong>{runnerTitle}</strong>
+      <span id="command-runner-status">{runnerStatus}</span>
+    </div>
+    <div class="runner-workspace">
+      <textarea id="command-runner-source" class="runner-source" spellcheck="false" readonly></textarea>
+      <div id="command-runner-stage" class="runner-stage"></div>
+    </div>
+    <div class="command-actions">
+      <button id="command-runner-play" class="mini-button" type="button">Play</button>
+      <button id="command-runner-reset" class="mini-button secondary" type="button">Reset</button>
+    </div>
+  </div>
+
+  <div class="demo-panel">
+    <div class="terminal" aria-label="Fluxion Text DSL demo">
+      <div class="terminal-header"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <pre><code>{commandDemoSource}</code></pre>
+    </div>
+    <div class="demo-note">
+      <h3>{demoNote.title}</h3>
+      <ol>
+        {demoNote.items.map((item) => <li set:html={item} />)}
+      </ol>
+      <p><a href={playgroundUrl}>{demoNote.playgroundLabel}</a> / <a href={textDslUrl}>{demoNote.referenceLabel}</a></p>
+    </div>
+  </div>
+</section>
+
+<script is:inline define:vars={{ baseUrl: import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/` }}>
+  async function initCommandRunner() {
+    const stage = document.querySelector('#command-runner-stage');
+    const source = document.querySelector('#command-runner-source');
+    const status = document.querySelector('#command-runner-status');
+    const play = document.querySelector('#command-runner-play');
+    const reset = document.querySelector('#command-runner-reset');
+    const buttons = [...document.querySelectorAll('.run-command-demo')];
+    if (!stage || !source || !status || buttons.length === 0) return;
+
+    let player;
+    try {
+      const runtime = await import(`${baseUrl}playground/dist/index.js`);
+      const compiler = await import(`${baseUrl}playground/dist/dsl/compiler.js`);
+
+      const runSource = (dslSource) => {
+        source.value = dslSource;
+        try {
+          player?.stop();
+          const documentData = compiler.compileTextDsl(dslSource);
+          player = runtime.mountFluxionDocument(stage, documentData);
+          status.textContent = `Compiled ${documentData.nodes.length} nodes / ${documentData.timeline.length} ops / ${documentData.duration.toFixed(2)}s`;
+        } catch (error) {
+          status.textContent = error instanceof Error ? error.message : String(error);
+        }
+      };
+
+      buttons.forEach((button) => {
+        button.addEventListener('click', () => runSource(button.dataset.source ?? ''));
+      });
+      play?.addEventListener('click', () => {
+        if (!player) return;
+        player.play({ from: player.currentSeconds >= player.durationSeconds ? 0 : player.currentSeconds });
+      });
+      reset?.addEventListener('click', () => {
+        if (!player) return;
+        player.stop();
+        player.seek(0);
+      });
+      runSource(buttons[0].dataset.source ?? '');
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  void initCommandRunner();
+</script>
