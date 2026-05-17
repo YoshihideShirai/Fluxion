@@ -150,6 +150,7 @@ Supported property aliases:
 - `text` -> `text`
 
 v0.1 の runtime は numeric interpolation を主対象にします。string value の animation は IR としては出力できますが、滑らかな補間は保証しません。
+Runtime では non-numeric value は animation 完了時に `to` value へ切り替わります。
 
 ## Error Reporting
 
@@ -188,4 +189,4 @@ v0.2 で検討する拡張は以下です。
 - `set <id>.<property> to <value>` -> `set` operation
 - `group <id> [children...]`
 - `math <id> "<latex>"`
-- live editor diagnostics using `DslCompileError.line` and `column`
+- richer editor diagnostics using `DslCompileError.line` and `column`

@@ -11,7 +11,7 @@ cd web && npm run build
 cd .. && python -m http.server 8000
 ```
 
-Open `http://localhost:8000/web/`, edit the Text DSL, press **Compile**, then press **Play**.
+Open `http://localhost:8000/web/`, edit the Text DSL, and preview it with live compile, playback controls, scrubbing, and generated JSON output.
 
 ## Python example
 
@@ -42,6 +42,10 @@ animate c1.x from 220 to 640 duration=1.5s easing=easeInOut
 
 Text DSL v0.1 supports `scene`, `circle`, `rect`, `line`, `text`, `show`, and `animate` statements. It compiles in the browser and never runs arbitrary Python code. See [Text DSL v0.1](docs/text-dsl.md) for the small frozen syntax.
 
+## Browser runtime
+
+The browser runtime applies timeline operations deterministically, supports seek/play/stop/reset controls, and renders the generated scene graph with SVG. See [Web Runtime](docs/runtime.md) for playback semantics.
+
 ## Project layout
 
 - `python/fluxion/`: Python DSL and JSON exporter
@@ -50,3 +54,10 @@ Text DSL v0.1 supports `scene`, `circle`, `rect`, `line`, `text`, `show`, and `a
 - `schemas/vanim.schema.json`: MVP JSON schema
 - `examples/`: runnable example scene and generated `.vanim.json`
 - `tests/`: Python DSL tests
+
+## Checks
+
+```bash
+PYTHONPATH=python python3 -m unittest discover -s tests -p 'test_*.py'
+cd web && npm test
+```
