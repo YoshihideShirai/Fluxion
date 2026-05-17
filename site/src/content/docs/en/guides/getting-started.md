@@ -5,6 +5,12 @@ description: The shortest path to generate, build, and preview Fluxion locally.
 
 Getting Started is the second page in **Start Here**. It takes you from a Python DSL example to `.fluxion.json`, then previews that output in the Web Runtime / Playground.
 
+## Use the hosted playground
+
+To try Fluxion without installing anything, open the hosted GitHub Pages playground first. Until the repository owner is known, the expected URL format is `https://<owner>.github.io/Fluxion/playground/`.
+
+The hosted playground lets you enter Text DSL, compile it in the browser, inspect playback / scrubbing, and read the generated JSON. Use it as the first path for understanding the DSL-to-IR flow before building the runtime or site locally.
+
 ## 1. Generate the example scene
 
 From the repository root:

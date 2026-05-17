@@ -1,14 +1,16 @@
 # Fluxion
 
+> **Open the playground:** use the hosted GitHub Pages playground at `https://<owner>.github.io/Fluxion/playground/` once Pages is enabled for this repository.
+
 Fluxion is an editable animation IR toolkit for authoring Manim-like scenes in Python or a browser-friendly Text DSL, then previewing them with a deterministic SVG runtime. Instead of treating rendered video frames as the source of truth, Fluxion keeps a `.fluxion.json` scene graph and timeline that can be inspected, edited, replayed, and shared. The current MVP is best for small diagrams, runtime experiments, and validating the IR pipeline from authoring tools to browser playback.
 
 ## Try it
 
 ### GitHub Pages / playground
 
-- Open the GitHub Pages site for the hosted docs and playground.
+- **Open the playground first:** `https://<owner>.github.io/Fluxion/playground/` is the expected GitHub Pages URL format until the repository owner is known.
 - Use the playground to edit Text DSL in the browser, compile it to `.fluxion.json`, preview it with playback controls and scrubbing, and inspect the generated JSON.
-- The Pages build is produced from `site/` and bundles the latest `web/` runtime assets into `playground/`.
+- The Pages workflow builds `web/` first, then the Astro site copies `web/index.html`, `web/dist/`, and example JSON into `site/public/playground/` so they are published under `/playground/`.
 
 ### Local Python example and web runtime
 
