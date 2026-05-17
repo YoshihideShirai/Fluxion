@@ -44,7 +44,7 @@ test("compiles scene, nodes, styles, animation, and at blocks", () => {
 circle c1 r=24 at 100,200 fill="#38bdf8" stroke="#0f172a" strokeWidth=3
 rect box w=80 h=40 at 300,200 fill="#f97316" opacity=0.8
 line axis x1=-50 y1=0 x2=50 y2=0 at 400,350 stroke="#e2e8f0" strokeWidth=2
-text title "Fluxion v0.1" at 400,80 size=28 fill="#e2e8f0"
+text title "Fluxion Text DSL" at 400,80 size=28 fill="#e2e8f0"
 
 at 0s:
   show title
@@ -77,7 +77,7 @@ at 1s:
   assert.equal(line?.geometry.x2, 50);
 
   const title = documentData.nodes.find((node) => node.id === "title");
-  assert.equal(title?.text, "Fluxion v0.1");
+  assert.equal(title?.text, "Fluxion Text DSL");
   assert.equal(title?.geometry.fontSize, 28);
 
   equalJson(
@@ -133,7 +133,7 @@ test("compiles math nodes with renderer and font size", () => {
   assert.equal(equation?.style.fill, "#f8fafc");
 });
 
-test("compiles v0.2 play, wait, hide, and set statements", () => {
+test("compiles play, wait, hide, and set statements", () => {
   const documentData = compileTextDsl(`text title "Intro" at 100,80 opacity=1
 circle a r=20 at 0,0 fill="#000"
 rect b w=40 h=40 at 100,50 fill="#fff"

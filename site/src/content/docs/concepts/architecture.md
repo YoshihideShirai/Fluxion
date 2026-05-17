@@ -153,7 +153,7 @@ Scene
 
 ### 4.3 Node 種別
 
-初期 MVP では以下をサポートする。
+現在の MVP では以下をサポートする。
 
 | type | 用途 |
 |---|---|
@@ -278,7 +278,7 @@ Editor textarea / Markdown fenced block
 
 複雑な生成ロジック、ループ、外部データ読み込み、プログラム的な配置は Python DSL が担当する。短い説明アニメーション、図解、教材、ドキュメント埋め込みは Text DSL が担当する。
 
-必要であれば、将来的に Python DSL から Text DSL を出力する、または Text DSL から Python DSL の雛形を生成する相互変換も検討できる。ただし MVP では、両者が同じ IR を出力するところまでを目標にする。
+必要であれば、将来的に Python DSL から Text DSL を出力する、または Text DSL から Python DSL の雛形を生成する相互変換も検討できる。現在の MVP では、Python DSL と Text DSL の両方が同じ IR を出力するところまでを対象にする。
 
 ---
 
@@ -613,14 +613,16 @@ MVP で実装するもの:
 
 ### 13.3 Text DSL 側
 
-Python DSL MVP の後に追加するもの:
+現在使えるもの:
 
-- `.fluxion` parser
-- AST
+- Text DSL parser
 - AST to `.fluxion.json` compiler
 - browser editor
 - line / column error reporting
-- JSON schema validation
+
+将来構想として扱うもの:
+
+- JSON schema validation の compiler 内統合強化
 - fenced code block embedding
 
 ---
@@ -816,7 +818,7 @@ Manim-like Python DSL / Text DSL
 3. `play()` を Timeline / Diff 生成にする
 4. Renderer を Web 側に分離する
 
-最初の MVP は次で十分。
+現在の MVP は次の経路を対象にする。
 
 ```text
 Manim-like Python DSL / Text DSL

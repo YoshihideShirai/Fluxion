@@ -49,7 +49,7 @@ Timeline operations は時刻順に適用されます。同じ `t` の operation
 ## Animation Values
 
 - Numeric values are interpolated with the requested easing.
-- Unknown easing names fall back to linear behavior in the runtime. Text DSL v0.1 rejects unknown easing names before runtime.
+- Unknown easing names fall back to linear behavior in the runtime. Text DSL rejects unknown easing names before runtime.
 - `duration <= 0` の animation は即時に final value を適用します。
 - Non-numeric values, including colors and strings, are held at `from` until completion and switch to `to` at the end.
 
