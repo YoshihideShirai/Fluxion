@@ -94,3 +94,17 @@ test("player starts from an empty graph when documents contain create operations
   player.seek(0.5);
   assert.equal(rendered[0]?.id, "c1");
 });
+
+test("ignores semantic effect operations while applying fallback animations", () => {
+  const graph = new SceneGraph([]);
+  const hiddenNode: SceneNode = structuredClone(node);
+  hiddenNode.transform.opacity = 0;
+  const timeline: TimelineOperation[] = [
+    { t: 0, op: "create", node: hiddenNode },
+    { t: 0, op: "effect", id: "c1", effect: "fadeIn", duration: 1, easing: "linear" },
+    { t: 0, op: "animate", id: "c1", path: "transform.opacity", from: 0, to: 1, duration: 1, easing: "linear" },
+  ];
+
+  applyTimelineAt(graph, timeline, 0.5);
+  assert.equal(graph.get("c1")?.transform.opacity, 0.5);
+});
