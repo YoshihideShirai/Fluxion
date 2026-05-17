@@ -110,14 +110,25 @@ test("falls back to step switching for unsupported string animations", () => {
   assert.equal(atEnd.get("c1")?.style.fill, "none");
 });
 
-test("falls back to step switching for incompatible SVG path morphs", () => {
-  const beforeEnd = new SceneGraph([{ ...node, type: "path", geometry: { d: "M 0 0 L 10 10" } }]);
-  applyTimelineAt(beforeEnd, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from: "M 0 0 L 10 10", to: "M 10 20 C 30 40 50 60 70 80", duration: 1, easing: "linear" }], 0.5);
-  assert.equal(beforeEnd.get("c1")?.geometry.d, "M 0 0 L 10 10");
+test("resamples SVG paths with different command topology before morphing", () => {
+  const graph = new SceneGraph([{ ...node, type: "path", geometry: { d: "M 0 0 L 10 10" } }]);
+  applyTimelineAt(graph, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from: "M 0 0 L 10 10", to: "M 10 20 C 30 40 50 60 70 80", duration: 1, easing: "linear" }], 0.5);
 
-  const atEnd = new SceneGraph([{ ...node, type: "path", geometry: { d: "M 0 0 L 10 10" } }]);
-  applyTimelineAt(atEnd, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from: "M 0 0 L 10 10", to: "M 10 20 C 30 40 50 60 70 80", duration: 1, easing: "linear" }], 1);
-  assert.equal(atEnd.get("c1")?.geometry.d, "M 10 20 C 30 40 50 60 70 80");
+  const d = graph.get("c1")?.geometry.d;
+  assert.equal(typeof d, "string");
+  assert.equal(d !== "M 0 0 L 10 10", true);
+  assert.equal(d !== "M 10 20 C 30 40 50 60 70 80", true);
+  assert.equal(/^M 5 10 L /u.test(d as string), true);
+});
+
+test("falls back to step switching for unsupported SVG path morph fallback commands", () => {
+  const beforeEnd = new SceneGraph([{ ...node, type: "path", geometry: { d: "M 0 0 A 10 10 0 0 1 20 20" } }]);
+  applyTimelineAt(beforeEnd, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from: "M 0 0 A 10 10 0 0 1 20 20", to: "M 10 20 L 30 40 L 50 60", duration: 1, easing: "linear" }], 0.5);
+  assert.equal(beforeEnd.get("c1")?.geometry.d, "M 0 0 A 10 10 0 0 1 20 20");
+
+  const atEnd = new SceneGraph([{ ...node, type: "path", geometry: { d: "M 0 0 A 10 10 0 0 1 20 20" } }]);
+  applyTimelineAt(atEnd, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from: "M 0 0 A 10 10 0 0 1 20 20", to: "M 10 20 L 30 40 L 50 60", duration: 1, easing: "linear" }], 1);
+  assert.equal(atEnd.get("c1")?.geometry.d, "M 10 20 L 30 40 L 50 60");
 });
 
 test("player starts from an empty graph when documents contain create operations", () => {
