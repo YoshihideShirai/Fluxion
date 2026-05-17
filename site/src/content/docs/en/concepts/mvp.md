@@ -1,5 +1,5 @@
 ---
-title: MVP Scope
+title: MVP Scope / Roadmap
 description: The DSL, IR, runtime, and compiler scope included in the Fluxion MVP.
 ---
 

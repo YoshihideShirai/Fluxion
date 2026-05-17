@@ -28,27 +28,38 @@ export default defineConfig({
       ],
       sidebar: [
         {
-          label: 'はじめに',
+          label: 'Start Here',
           translations: { en: 'Start Here' },
           items: [
-            { label: '概要', translations: { en: 'Overview' }, slug: 'overview' },
-            { label: 'はじめる', translations: { en: 'Getting Started' }, slug: 'guides/getting-started' },
+            { label: 'Overview', translations: { en: 'Overview' }, slug: 'overview' },
+            { label: 'Quickstart', translations: { en: 'Quickstart' }, slug: 'guides/getting-started' },
+            { label: 'Playground tour', translations: { en: 'Playground tour' }, slug: 'guides/playground' },
           ],
         },
         {
-          label: 'コンセプト',
-          translations: { en: 'Concepts' },
+          label: 'Authoring',
+          translations: { en: 'Authoring' },
           items: [
-            { label: 'アーキテクチャ', translations: { en: 'Architecture' }, slug: 'concepts/architecture' },
-            { label: 'MVP 範囲', translations: { en: 'MVP Scope' }, slug: 'concepts/mvp' },
+            { label: 'Python DSL', translations: { en: 'Python DSL' }, slug: 'guides/python-dsl' },
+            { label: 'Text DSL', translations: { en: 'Text DSL' }, slug: 'reference/text-dsl' },
+            { label: 'Examples', translations: { en: 'Examples' }, slug: 'guides/examples' },
           ],
         },
         {
-          label: 'リファレンス',
-          translations: { en: 'Reference' },
+          label: 'Runtime & IR',
+          translations: { en: 'Runtime & IR' },
           items: [
-            { label: 'Text DSL', slug: 'reference/text-dsl' },
-            { label: 'Web Runtime', slug: 'reference/runtime' },
+            { label: 'Fluxion JSON / Scene Graph', translations: { en: 'Fluxion JSON / Scene Graph' }, slug: 'reference/ir' },
+            { label: 'Timeline', translations: { en: 'Timeline' }, slug: 'reference/timeline' },
+            { label: 'Web Runtime', translations: { en: 'Web Runtime' }, slug: 'reference/runtime' },
+          ],
+        },
+        {
+          label: 'Design Notes',
+          translations: { en: 'Design Notes' },
+          items: [
+            { label: 'Architecture', translations: { en: 'Architecture' }, slug: 'concepts/architecture' },
+            { label: 'MVP Scope / Roadmap', translations: { en: 'MVP Scope / Roadmap' }, slug: 'concepts/mvp' },
           ],
         },
       ],
