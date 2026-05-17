@@ -86,6 +86,14 @@ circle third`);
   );
 });
 
+test("keeps comments outside quoted strings and unescapes quoted text", () => {
+  const documentData = compileTextDsl(`text label "A \\"quoted\\" # value" at 10,20 fill="#fff" # trailing comment`);
+
+  const label = documentData.nodes[0];
+  assert.equal(label?.text, 'A "quoted" # value');
+  assert.equal(label?.style.fill, "#fff");
+});
+
 test("reports representative compile errors with line and column details", () => {
   messageMatches("circle c1\ncircle c1", /Line 2, column 1: Duplicate node id 'c1'\./);
   messageMatches("show missing", /Line 1, column 1: Unknown node 'missing'\./);
@@ -94,4 +102,6 @@ test("reports representative compile errors with line and column details", () =>
   messageMatches('text title "Fluxion', /Line 1, column 19: Unclosed quoted string\./);
   messageMatches("wat c1", /Line 1, column 1: Unknown statement 'wat'\./);
   messageMatches("circle c1\nanimate c1.x from 0 to 1 duration=1s easing=bouncy", /Line 2, column 1: Unknown easing 'bouncy'\./);
+  messageMatches("at 1s", /Line 1, column 1: Expected ':' after at block\./);
+  messageMatches("circle c1\nanimate c1.x from 0 duration=1s", /Line 2, column 1: Expected animate syntax/);
 });
