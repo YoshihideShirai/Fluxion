@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Iterable, List
 
 from .animation import Animation, AnimationGroup, AnimationInput, EffectAnimation, Succession
+from .camera import CameraFrame
 from .mobject import Mobject
 from .timeline import animate_op, create_op, delete_op, effect_op
 
@@ -18,6 +19,7 @@ class Scene:
         self.height = height
         self.fps = fps
         self.time = 0.0
+        self.camera = CameraFrame()
         self.nodes: List[Mobject] = []
         self.timeline: List[dict[str, Any]] = []
 
@@ -49,6 +51,7 @@ class Scene:
             "height": self.height,
             "fps": self.fps,
             "duration": self.time,
+            "camera": self.camera.to_dict(),
             "nodes": [node.to_dict() for node in self.nodes],
             "timeline": self.timeline,
         }

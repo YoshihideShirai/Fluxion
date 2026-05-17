@@ -112,6 +112,20 @@ Path morphing constraints:
 - math: `fontSize=36`, `renderer=katex`, `expandTokens=false`
 - group: empty geometry and `children=[]`
 
+### camera
+
+```text
+camera at 0,0 scale=1 rotation=0
+set camera.x to -120
+animate camera.scale from 1 to 1.6 duration=2s easing=easeInOut
+```
+
+`camera` configures the document-level camera stored as `camera: { x, y, scale, rotation }`. The default is `x=0`, `y=0`, `scale=1`, and `rotation=0`, which preserves scene coordinates. `at x,y` is a shortcut for `camera.x` and `camera.y`.
+
+The SVG runtime applies camera as a root group transform before any node is rendered: `translate(camera.x, camera.y) rotate(camera.rotation) scale(camera.scale)`. After that, each node or group applies its own `translate(node.x, node.y) rotate(node.rotation) scale(node.scale)`. In matrix terms the composition is `Camera * ParentNode * ChildNode`, so camera pan/zoom affects the whole scene while node transforms remain local.
+
+Camera properties can be targeted with `set camera.x to ...` and `animate camera.scale from ... to ...`. Supported camera paths are `camera.x`, `camera.y`, `camera.scale`, and `camera.rotation`.
+
 ### at block
 
 ```text
@@ -254,6 +268,7 @@ Syntax:
 
 ```text
 animate <id>.<property> from <value> to <value> [start=<time>] [duration=<time>] [easing=<name>]
+animate camera.<property> from <number> to <number> [start=<time>] [duration=<time>] [easing=<name>]
 animate <value-id> from <number> to <number> [start=<time>] [duration=<time>] [easing=<name>]
 ```
 

@@ -1,4 +1,4 @@
-import type { FluxionDocument } from "../types.js";
+import type { Camera, FluxionDocument } from "../types.js";
 import type { SvgRenderer } from "../renderers/svgRenderer.js";
 import { SceneGraph } from "./sceneGraph.js";
 import { applyTimelineAt } from "./timeline.js";
@@ -35,8 +35,9 @@ export class Player {
   seek(seconds: number): void {
     this.currentTime = clamp(seconds, 0, this.duration);
     const graph = new SceneGraph(hasCreateOperations(this.document) ? [] : this.document.nodes);
-    applyTimelineAt(graph, this.document.timeline, this.currentTime, this.document.values);
-    this.renderer.render(graph.all());
+    const camera = cloneCamera(this.document.camera);
+    applyTimelineAt(graph, this.document.timeline, this.currentTime, this.document.values, camera);
+    this.renderer.render(graph.all(), camera);
   }
 
   play(options: PlayOptions = {}): void {
@@ -73,4 +74,9 @@ function clamp(value: number, min: number, max: number): number {
 
 function hasCreateOperations(documentData: FluxionDocument): boolean {
   return documentData.timeline.some((op) => op.op === "create");
+}
+
+
+function cloneCamera(camera: Camera | undefined): Camera {
+  return { x: camera?.x ?? 0, y: camera?.y ?? 0, scale: camera?.scale ?? 1, rotation: camera?.rotation ?? 0 };
 }

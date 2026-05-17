@@ -833,3 +833,17 @@ Manim-like Python DSL / Text DSL
 - インタラクティブ教材
 - AI による構造編集
 - Git 管理可能な animation source
+
+## Scene-level camera
+
+`FluxionDocument` includes a root camera state: `camera: { x, y, scale, rotation }`. The default `{ x: 0, y: 0, scale: 1, rotation: 0 }` keeps scene coordinates unchanged. Timeline operations address the camera with `id: "camera"` and paths such as `camera.x` or `camera.scale`.
+
+The SVG renderer creates a root `<g>` for all scene nodes and applies camera before node transforms:
+
+```text
+Screen = Camera * ParentNode * ChildNode * Geometry
+Camera = translate(camera.x, camera.y) rotate(camera.rotation) scale(camera.scale)
+Node   = translate(node.x, node.y) rotate(node.rotation) scale(node.scale)
+```
+
+This makes camera pan / zoom / rotation scene-level, while each node's transform remains local and composes under the camera.

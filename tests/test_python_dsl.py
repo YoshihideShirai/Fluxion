@@ -124,6 +124,21 @@ class PythonDslTest(unittest.TestCase):
         self.assertIn({"t": 1.25, "op": "delete", "id": "src:tex:1"}, data["timeline"])
         self.assertEqual(data["duration"], 1.25)
 
+
+    def test_scene_camera_exports_and_animates(self):
+        scene = Scene()
+        scene.camera.move_to(10, 20).set_scale(1.5)
+        scene.play(scene.camera.animate.move_to(110, 120), scene.camera.animate.set_scale(2), run_time=2)
+        data = scene.to_dict()
+
+        self.assertEqual(data["camera"], {"x": 110, "y": 120, "scale": 2, "rotation": 0.0})
+        camera_ops = [op for op in data["timeline"] if op.get("id") == "camera"]
+        self.assertEqual([op["path"] for op in camera_ops], ["camera.x", "camera.y", "camera.scale"])
+        self.assertEqual(camera_ops[0]["from"], 10)
+        self.assertEqual(camera_ops[0]["to"], 110)
+        self.assertEqual(camera_ops[2]["from"], 1.5)
+        self.assertEqual(camera_ops[2]["to"], 2)
+
     def test_export_json_writes_file(self):
         scene = Demo()
         scene.construct()

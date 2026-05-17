@@ -3,18 +3,30 @@
   "$id": "https://fluxion.local/schemas/fluxion.schema.json",
   "title": "Fluxion Document",
   "type": "object",
-  "required": ["version", "width", "height", "fps", "nodes", "timeline"],
+  "required": ["version", "width", "height", "fps", "camera", "nodes", "timeline"],
   "properties": {
     "version": { "const": "0.1" },
     "width": { "type": "integer", "minimum": 1 },
     "height": { "type": "integer", "minimum": 1 },
     "fps": { "type": "integer", "minimum": 1 },
     "duration": { "type": "number", "minimum": 0 },
+    "camera": { "$ref": "#/$defs/camera", "description": "Scene-level camera transform applied to the root renderer group before node transforms." },
     "values": { "type": "array", "description": "Scalar value trackers that live outside the scene graph and can drive setExpr dependent properties.", "items": { "$ref": "#/$defs/valueTracker" } },
     "nodes": { "type": "array", "description": "Top-level scene nodes. Every node id in this array and in any nested children array must be unique across the entire document because timeline operations resolve ids globally.", "items": { "$ref": "#/$defs/node" } },
     "timeline": { "type": "array", "items": { "$ref": "#/$defs/timelineOperation" } }
   },
   "$defs": {
+    "camera": {
+      "type": "object",
+      "required": ["x", "y", "scale", "rotation"],
+      "description": "Scene-level transform applied as translate(x, y) rotate(rotation) scale(scale) on a root group before node and group transforms.",
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "scale": { "type": "number" },
+        "rotation": { "type": "number" }
+      }
+    },
     "transform": {
       "type": "object",
       "required": ["x", "y", "scale", "rotation", "opacity"],

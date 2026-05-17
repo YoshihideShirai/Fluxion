@@ -21,6 +21,23 @@ function messageMatches(source: string, pattern: RegExp): void {
   assert.equal(pattern.test(mustFail(source).message), true);
 }
 
+test("compiles scene camera and camera animations", () => {
+  const documentData = compileTextDsl(`camera at 10,20 scale=1.5 rotation=5
+animate camera.x from 10 to 110 duration=2s easing=linear
+animate camera.scale from 1.5 to 2 duration=2s`);
+
+  equalJson(documentData.camera, { x: 10, y: 20, scale: 1.5, rotation: 5 });
+  equalJson(
+    documentData.timeline.map((op) =>
+      op.op === "animate" ? [op.id, op.path, op.from, op.to, op.duration, op.easing] : [],
+    ),
+    [
+      ["camera", "camera.x", 10, 110, 2, "linear"],
+      ["camera", "camera.scale", 1.5, 2, 2, "smooth"],
+    ],
+  );
+});
+
 test("compiles scene, nodes, styles, animation, and at blocks", () => {
   const documentData = compileTextDsl(`scene width=800 height=450 fps=30
 

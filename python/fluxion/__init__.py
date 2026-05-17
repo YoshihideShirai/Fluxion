@@ -11,6 +11,7 @@ from .animation import (
     TransformMatchingTex,
     Write,
 )
+from .camera import CameraFrame
 from .export import export_scene
 from .mobject import Mobject
 from .primitives import (
@@ -38,6 +39,7 @@ __all__ = [
     "Transform",
     "TransformMatchingTex",
     "Write",
+    "CameraFrame",
     "Circle",
     "Group",
     "Line",
