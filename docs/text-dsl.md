@@ -101,6 +101,13 @@ Default values:
 - rect: `w=100`, `h=80`
 - line: `x1=0`, `y1=0`, `x2=100`, `y2=0`
 - path: `d=""`
+
+Path morphing constraints:
+
+- `path.d` animations with identical SVG command topology (same command sequence and numeric arity) use strict numeric interpolation of each command value.
+- `path.d` animations with different topology use a resampling fallback: supported `M`/`L`/`C`/`Q`/`Z` path data is sampled into a fixed number of polyline points, then those points are interpolated. This allows common line/curve command-count differences to morph as path strings.
+- If either side contains path commands outside the fallback sampler, the animation falls back to step interpolation (source value before the end time, destination value at the end time).
+
 - text: `fontSize=32`
 - math: `fontSize=36`, `renderer=katex`, `expandTokens=false`
 - group: empty geometry and `children=[]`

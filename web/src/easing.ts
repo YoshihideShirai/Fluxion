@@ -1,3 +1,4 @@
+import { interpolateResampledPath } from "./pathMorph.js";
 import type { EasingName } from "./types.js";
 
 interface RgbaColor {
@@ -148,7 +149,7 @@ function parseAlphaChannel(component: string): number | undefined {
 function interpolatePath(from: string, to: string, t: number): string | undefined {
   const fromPath = parsePath(from);
   const toPath = parsePath(to);
-  if (!fromPath || !toPath || fromPath.length !== toPath.length) return undefined;
+  if (!fromPath || !toPath || fromPath.length !== toPath.length) return interpolateResampledPath(from, to, t);
 
   const segments = fromPath.map((fromSegment, index): PathSegment | undefined => {
     const toSegment = toPath[index]!;
@@ -160,7 +161,7 @@ function interpolatePath(from: string, to: string, t: number): string | undefine
     };
   });
 
-  if (segments.some((segment) => segment === undefined)) return undefined;
+  if (segments.some((segment) => segment === undefined)) return interpolateResampledPath(from, to, t);
   return (segments as PathSegment[])
     .map((segment) => [segment.command, ...segment.values.map(formatNumber)].join(" "))
     .join(" ");
