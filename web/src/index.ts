@@ -1,19 +1,19 @@
 import { Player } from "./runtime/player.js";
 import { SvgRenderer } from "./renderers/svgRenderer.js";
-import type { VanimDocument } from "./types.js";
+import type { FluxionDocument } from "./types.js";
 
-export async function loadVanim(url: string): Promise<VanimDocument> {
+export async function loadFluxionJson(url: string): Promise<FluxionDocument> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Failed to load ${url}: ${response.status}`);
-  return (await response.json()) as VanimDocument;
+  return (await response.json()) as FluxionDocument;
 }
 
 export async function mountFluxion(container: Element, url: string): Promise<Player> {
-  const documentData = await loadVanim(url);
+  const documentData = await loadFluxionJson(url);
   return mountFluxionDocument(container, documentData);
 }
 
-export function mountFluxionDocument(container: Element, documentData: VanimDocument): Player {
+export function mountFluxionDocument(container: Element, documentData: FluxionDocument): Player {
   const renderer = new SvgRenderer(container, documentData.width, documentData.height);
   const player = new Player(documentData, renderer);
   player.seek(0);

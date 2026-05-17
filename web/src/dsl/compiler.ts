@@ -1,4 +1,4 @@
-import type { NodeType, SceneNode, Style, TimelineOperation, Transform, VanimDocument } from "../types.js";
+import type { NodeType, SceneNode, Style, TimelineOperation, Transform, FluxionDocument } from "../types.js";
 
 export class DslCompileError extends Error {
   readonly line: number;
@@ -28,7 +28,7 @@ const DEFAULT_STYLE: Style = {
   strokeWidth: 0,
 };
 
-export function compileTextDsl(source: string): VanimDocument {
+export function compileTextDsl(source: string): FluxionDocument {
   const state: CompileState = {
     width: 1280,
     height: 720,

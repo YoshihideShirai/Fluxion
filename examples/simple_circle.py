@@ -15,4 +15,4 @@ class SimpleCircle(Scene):
 if __name__ == "__main__":
     scene = SimpleCircle()
     scene.construct()
-    scene.export_json("examples/simple_circle.vanim.json")
+    scene.export_json("examples/simple_circle.fluxion.json")

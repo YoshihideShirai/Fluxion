@@ -10,7 +10,7 @@ from .timeline import animate_op, create_op, delete_op
 
 
 class Scene:
-    """Collects scene graph nodes and timeline operations for .vanim.json export."""
+    """Collects scene graph nodes and timeline operations for .fluxion.json export."""
 
     def __init__(self, width: int = 1280, height: int = 720, fps: int = 60) -> None:
         self.width = width
