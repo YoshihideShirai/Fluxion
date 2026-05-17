@@ -8,6 +8,8 @@ export interface Transform {
   opacity: number;
 }
 
+export type InterpolatableGeometryValue = number | string | number[];
+
 export interface Style {
   fill?: string;
   stroke?: string;
@@ -19,7 +21,7 @@ export interface SceneNode {
   type: NodeType;
   transform: Transform;
   style: Style;
-  geometry: Record<string, number | string>;
+  geometry: Record<string, InterpolatableGeometryValue>;
   children: SceneNode[];
   text?: string;
   latex?: string;
