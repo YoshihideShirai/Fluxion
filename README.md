@@ -40,7 +40,7 @@ at 0s:
 animate c1.x from 220 to 640 duration=1.5s easing=easeInOut
 ```
 
-Text DSL v0.1 supports `scene`, `circle`, `rect`, `line`, `text`, `show`, and `animate` statements. It compiles in the browser and never runs arbitrary Python code.
+Text DSL v0.1 supports `scene`, `circle`, `rect`, `line`, `text`, `show`, and `animate` statements. It compiles in the browser and never runs arbitrary Python code. See [Text DSL v0.1](docs/text-dsl.md) for the small frozen syntax.
 
 ## Project layout
 
