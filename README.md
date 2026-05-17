@@ -13,6 +13,18 @@ cd .. && python -m http.server 8000
 
 Open `http://localhost:8000/web/`, edit the Text DSL, and preview it with live compile, playback controls, scrubbing, and generated JSON output.
 
+
+## GitHub Pages site
+
+The project site is built with Astro + Starlight from `site/`. It publishes Japanese and English landing pages, localized documentation, and a bundled copy of the browser playground.
+
+```bash
+cd web && npm run build
+cd ../site && npm run build
+```
+
+The Pages workflow builds the TypeScript runtime first, syncs `web/index.html`, `web/dist`, and the example JSON into the Astro public assets, then uploads `site/dist`.
+
 ## Python example
 
 ```python
