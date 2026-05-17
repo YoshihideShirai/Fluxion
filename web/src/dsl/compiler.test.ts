@@ -92,6 +92,20 @@ test("compiles path nodes with SVG d geometry", () => {
   );
 });
 
+
+test("compiles math nodes with renderer and font size", () => {
+  const documentData = compileTextDsl(`math equation "e^{i\\pi}+1=0" at 320,180 size=42 renderer=mathjax fill="#f8fafc"`);
+
+  const equation = documentData.nodes[0];
+  assert.equal(equation?.type, "math");
+  assert.equal(equation?.latex, "e^{i\\pi}+1=0");
+  assert.equal(equation?.renderer, "mathjax");
+  assert.equal(equation?.geometry.fontSize, 42);
+  assert.equal(equation?.transform.x, 320);
+  assert.equal(equation?.transform.y, 180);
+  assert.equal(equation?.style.fill, "#f8fafc");
+});
+
 test("auto-creates unshown nodes in source order", () => {
   const documentData = compileTextDsl(`circle first
 circle second

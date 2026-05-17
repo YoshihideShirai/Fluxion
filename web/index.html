@@ -4,6 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Fluxion Text DSL - Guide & Demo</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
+    <script>
+      window.MathJax = { tex: { inlineMath: [["\\(", "\\)"]] }, startup: { typeset: false } };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <style>
       :root {
         color-scheme: dark;
@@ -252,6 +258,7 @@ animate c1.scale from 1 to 1.4 start=1.5s duration=1.5s easing=easeInOut</textar
               <li><code>rect &lt;id&gt; w=&lt;number&gt; h=&lt;number&gt; at x,y</code></li>
               <li><code>line &lt;id&gt; x1=&lt;number&gt; y1=&lt;number&gt; x2=&lt;number&gt; y2=&lt;number&gt;</code></li>
               <li><code>text &lt;id&gt; "label" at x,y size=&lt;number&gt;</code></li>
+              <li><code>math &lt;id&gt; "e^{i\\pi}+1=0" renderer=katex|mathjax size=&lt;number&gt;</code></li>
             </ul>
           </div>
           <div>

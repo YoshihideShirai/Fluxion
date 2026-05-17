@@ -44,13 +44,28 @@
         "geometry": { "type": "object" },
         "children": { "type": "array", "items": { "$ref": "#/$defs/node" } },
         "text": { "type": "string" },
-        "latex": { "type": "string" },
-        "renderer": { "type": "string" }
+        "latex": { "type": "string", "description": "LaTeX source passed to the selected math renderer." },
+        "renderer": { "enum": ["katex", "mathjax"] }
       },
       "allOf": [
         {
           "if": { "properties": { "type": { "const": "path" } }, "required": ["type"] },
           "then": { "properties": { "geometry": { "$ref": "#/$defs/pathGeometry" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "text" } }, "required": ["type"] },
+          "then": { "required": ["text"], "properties": { "geometry": { "$ref": "#/$defs/textGeometry" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "math" } }, "required": ["type"] },
+          "then": {
+            "required": ["latex", "renderer"],
+            "properties": {
+              "latex": { "type": "string", "minLength": 1, "description": "LaTeX source passed to KaTeX or MathJax." },
+              "renderer": { "enum": ["katex", "mathjax"], "description": "Math renderer implementation to use in SVG foreignObject HTML." },
+              "geometry": { "$ref": "#/$defs/mathGeometry" }
+            }
+          }
         }
       ]
     },
@@ -59,6 +74,23 @@
       "required": ["d"],
       "properties": {
         "d": { "type": "string" }
+      }
+    },
+    "textGeometry": {
+      "type": "object",
+      "required": ["fontSize"],
+      "properties": {
+        "fontSize": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "mathGeometry": {
+      "type": "object",
+      "required": ["fontSize"],
+      "description": "Math geometry. fontSize is required so KaTeX/MathJax render at a predictable size.",
+      "properties": {
+        "fontSize": { "type": "number", "exclusiveMinimum": 0, "description": "CSS pixel font size used by the math renderer." },
+        "w": { "type": "number", "exclusiveMinimum": 0, "description": "Optional foreignObject width override in scene units." },
+        "h": { "type": "number", "exclusiveMinimum": 0, "description": "Optional foreignObject height override in scene units." }
       }
     },
     "timelineOperation": {

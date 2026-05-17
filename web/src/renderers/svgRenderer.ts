@@ -1,6 +1,19 @@
 import type { SceneNode, Style, Transform } from "../types.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
+const XHTML_NS = "http://www.w3.org/1999/xhtml";
+
+type MathRendererName = "katex" | "mathjax";
+
+interface KatexGlobal {
+  render: (latex: string, element: HTMLElement, options?: { throwOnError?: boolean; displayMode?: boolean }) => void;
+}
+
+interface MathJaxGlobal {
+  tex2chtml?: (latex: string, options?: { display?: boolean }) => Node;
+  tex2svg?: (latex: string, options?: { display?: boolean }) => Node;
+  typesetPromise?: (elements?: HTMLElement[]) => Promise<unknown>;
+}
 
 export class SvgRenderer {
   private readonly svg: SVGSVGElement;
@@ -53,15 +66,87 @@ export class SvgRenderer {
       el.setAttribute("d", String(node.geometry.d ?? ""));
       return el;
     }
-    if (node.type === "text" || node.type === "math") {
+    if (node.type === "text") {
       const el = document.createElementNS(SVG_NS, "text");
-      el.textContent = node.text ?? node.latex ?? "";
+      el.textContent = node.text ?? "";
       el.setAttribute("font-size", String(node.geometry.fontSize ?? 32));
       el.setAttribute("text-anchor", "middle");
       el.setAttribute("dominant-baseline", "middle");
       return el;
     }
+    if (node.type === "math") return this.createMathElement(node);
     return document.createElementNS(SVG_NS, "g");
+  }
+
+  private createMathElement(node: SceneNode): SVGElement {
+    const group = document.createElementNS(SVG_NS, "g");
+    const foreignObject = document.createElementNS(SVG_NS, "foreignObject");
+    const fontSize = Number(node.geometry.fontSize ?? 36);
+    const latex = node.latex ?? "";
+    const width = Number(node.geometry.w ?? Math.max(fontSize * 4, latex.length * fontSize * 0.65));
+    const height = Number(node.geometry.h ?? fontSize * 2.5);
+
+    foreignObject.setAttribute("x", String(-width / 2));
+    foreignObject.setAttribute("y", String(-height / 2));
+    foreignObject.setAttribute("width", String(width));
+    foreignObject.setAttribute("height", String(height));
+
+    const container = document.createElementNS(XHTML_NS, "div") as HTMLDivElement;
+    container.style.width = "100%";
+    container.style.height = "100%";
+    container.style.display = "flex";
+    container.style.alignItems = "center";
+    container.style.justifyContent = "center";
+    container.style.fontSize = `${fontSize}px`;
+    container.style.color = node.style.fill ?? "#ffffff";
+    container.style.overflow = "visible";
+    container.dataset.mathRenderer = this.normalizeMathRenderer(node.renderer);
+
+    foreignObject.append(container);
+    group.append(foreignObject);
+    this.renderLatex(container, latex, this.normalizeMathRenderer(node.renderer));
+    return group;
+  }
+
+  private normalizeMathRenderer(renderer: string | undefined): MathRendererName {
+    return renderer === "mathjax" ? "mathjax" : "katex";
+  }
+
+  private renderLatex(container: HTMLElement, latex: string, renderer: MathRendererName): void {
+    if (renderer === "mathjax") {
+      this.renderWithMathJax(container, latex);
+      return;
+    }
+    this.renderWithKatex(container, latex);
+  }
+
+  private renderWithKatex(container: HTMLElement, latex: string): void {
+    const katex = (globalThis as { katex?: KatexGlobal }).katex;
+    if (!katex) {
+      container.textContent = latex;
+      return;
+    }
+    katex.render(latex, container, { throwOnError: false, displayMode: false });
+  }
+
+  private renderWithMathJax(container: HTMLElement, latex: string): void {
+    const mathJax = (globalThis as { MathJax?: MathJaxGlobal }).MathJax;
+    if (!mathJax) {
+      container.textContent = latex;
+      return;
+    }
+
+    if (mathJax.tex2chtml) {
+      container.replaceChildren(mathJax.tex2chtml(latex, { display: false }));
+      return;
+    }
+    if (mathJax.tex2svg) {
+      container.replaceChildren(mathJax.tex2svg(latex, { display: false }));
+      return;
+    }
+
+    container.textContent = `\\(${latex}\\)`;
+    void mathJax.typesetPromise?.([container]);
   }
 
   private applyTransform(element: SVGElement, transform: Transform): void {

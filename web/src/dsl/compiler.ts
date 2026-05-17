@@ -73,7 +73,7 @@ export function compileTextDsl(source: string): FluxionDocument {
       return;
     }
 
-    if (keyword === "circle" || keyword === "rect" || keyword === "line" || keyword === "path" || keyword === "text") {
+    if (keyword === "circle" || keyword === "rect" || keyword === "line" || keyword === "path" || keyword === "text" || keyword === "math") {
       parseNode(tokens, state, lineNumber);
       return;
     }
@@ -121,15 +121,19 @@ function parseNode(tokens: string[], state: CompileState, lineNumber: number): v
   if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
 
   let rest = tokens.slice(2);
-  let text: string | undefined;
-  if (type === "text") {
-    text = rest[0];
-    if (!text) throw new DslCompileError("Expected quoted text after text id.", lineNumber);
+  let content: string | undefined;
+  if (type === "text" || type === "math") {
+    content = rest[0];
+    if (!content) throw new DslCompileError(`Expected quoted ${type === "math" ? "LaTeX" : "text"} after ${type} id.`, lineNumber);
     rest = rest.slice(1);
   }
 
   const node = createBaseNode(id, type);
-  if (text !== undefined) node.text = text;
+  if (type === "text" && content !== undefined) node.text = content;
+  if (type === "math" && content !== undefined) {
+    node.latex = content;
+    node.renderer = "katex";
+  }
 
   const assignments = readNodeArguments(rest, lineNumber);
   for (const [key, value] of assignments) applyNodeOption(node, key, value, lineNumber);
@@ -209,6 +213,7 @@ function defaultGeometry(type: NodeType): Record<string, number | string> {
   if (type === "line") return { x1: 0, y1: 0, x2: 100, y2: 0 };
   if (type === "path") return { d: "" };
   if (type === "text") return { fontSize: 32 };
+  if (type === "math") return { fontSize: 36 };
   return {};
 }
 
@@ -238,6 +243,12 @@ function applyNodeOption(node: SceneNode, key: string, value: string, lineNumber
     return;
   }
 
+  if (key === "renderer") {
+    if (value !== "katex" && value !== "mathjax") throw new DslCompileError("Expected renderer to be 'katex' or 'mathjax'.", lineNumber);
+    node.renderer = value;
+    return;
+  }
+
   if (key === "size" || key === "fontSize") {
     node.geometry.fontSize = parseNumber(value, lineNumber);
     return;
@@ -260,6 +271,7 @@ function propertyPath(property: string): string {
   if (["x", "y", "scale", "rotation", "opacity"].includes(property)) return `transform.${property}`;
   if (["fill", "stroke", "strokeWidth"].includes(property)) return `style.${property}`;
   if (["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d"].includes(property)) return `geometry.${property}`;
+  if (property === "renderer") return "renderer";
   if (property === "text") return "text";
   return property;
 }
@@ -357,7 +369,7 @@ function tokenize(line: string, lineNumber: number): string[] {
 }
 
 function isNodeType(value: string | undefined): value is NodeType {
-  return value === "circle" || value === "rect" || value === "line" || value === "path" || value === "text";
+  return value === "circle" || value === "rect" || value === "line" || value === "path" || value === "text" || value === "math";
 }
 
 function unescapeToken(token: string): string {

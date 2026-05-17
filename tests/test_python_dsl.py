@@ -87,6 +87,22 @@ class PythonDslTest(unittest.TestCase):
         self.assertEqual(data["nodes"][0]["geometry"], {"d": "M 0 0 C 20 40 40 40 60 0"})
         self.assertEqual(data["nodes"][0]["style"]["stroke"], "#38bdf8")
 
+
+    def test_math_token_helpers_export_child_nodes(self):
+        from fluxion import Math, tokenize_latex
+
+        self.assertEqual(tokenize_latex(r"e^{i\pi}+1=0"), ["e", "^", "{", "i", r"\pi", "}", "+", "1", "=", "0"])
+
+        equation = Math(id="eq", latex=r"e^{i\pi}+1=0", expand_tokens=True)
+        data = equation.to_dict()
+
+        self.assertEqual(data["type"], "math")
+        self.assertEqual(data["latex"], r"e^{i\pi}+1=0")
+        self.assertEqual(data["renderer"], "katex")
+        self.assertEqual(data["geometry"], {"fontSize": 36})
+        self.assertEqual([child["latex"] for child in data["children"]], ["e", "^", "{", "i", r"\pi", "}", "+", "1", "=", "0"])
+        self.assertTrue(all(child["type"] == "math" for child in data["children"]))
+
     def test_export_json_writes_file(self):
         scene = Demo()
         scene.construct()
