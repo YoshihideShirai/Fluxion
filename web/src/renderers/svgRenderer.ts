@@ -23,8 +23,10 @@ export class SvgRenderer {
   constructor(container: Element, width = 1280, height = 720) {
     this.svg = document.createElementNS(SVG_NS, "svg");
     this.svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    this.svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
     this.svg.setAttribute("width", "100%");
     this.svg.setAttribute("height", "100%");
+    this.svg.style.display = "block";
     this.svg.style.background = "#0f172a";
     container.replaceChildren(this.svg);
   }

@@ -15,10 +15,10 @@ export const heroTextDslExample = `scene width=1280 height=720 fps=60
 camera at 0,0 scale=1
 value theta = 0
 
-path orbit d="M -300 0 C -170 -135 170 -135 300 0 C 170 135 -170 135 -300 0" at 640,390 fill="none" stroke="#38bdf8" strokeWidth=4 opacity=0.55
+path orbit d="M -170 0 C -170 -94 -94 -170 0 -170 C 94 -170 170 -94 170 0 C 170 94 94 170 0 170 C -94 170 -170 94 -170 0" at 640,390 fill="none" stroke="#38bdf8" strokeWidth=4 opacity=0.55
 text title "Fluxion Motion Lab" at 640,118 size=42 fill="#e2e8f0"
 math equation "x^2+y^2=r^2" at 640,200 size=38 fill="#bae6fd" renderer=katex
-circle dot r=38 at 340,390 fill="#38bdf8" stroke="#0f172a" strokeWidth=5
+circle dot r=38 at 470,390 fill="#38bdf8" stroke="#0f172a" strokeWidth=5
 rect target w=190 h=104 at 960,390 fill="#f97316" stroke="#fed7aa" strokeWidth=4
 
 at 0s:
@@ -26,8 +26,8 @@ at 0s:
   play AnimationGroup(Write(title), FadeIn(equation), FadeIn(orbit), FadeIn(dot), lagRatio=0.16) duration=1.4s easing=easeOut
 
 animate theta from 0 to 6.283 duration=2.4s easing=linear
-set dot.x to expr="640 + 300 * cos(theta)"
-set dot.y to expr="390 + 120 * sin(theta)"
+set dot.x to expr="640 + 170 * cos(theta)"
+set dot.y to expr="390 + 170 * sin(theta)"
 animate camera.x from 0 to -24 duration=2.4s easing=easeInOut
 play Transform(dot, target) duration=1s easing=easeInOut`;
 
@@ -38,14 +38,14 @@ value theta = 0
 value pulse = 0
 
 rect backdrop w=1280 h=720 at 640,360 fill="#020617"
-path orbit d="M -360 0 C -210 -180 210 -180 360 0 C 210 180 -210 180 -360 0" at 640,390 fill="none" stroke="#1e3a8a" strokeWidth=5 opacity=0.5
+path orbit d="M -170 0 C -170 -94 -94 -170 0 -170 C 94 -170 170 -94 170 0 C 170 94 94 170 0 170 C -94 170 -170 94 -170 0" at 640,390 fill="none" stroke="#1e3a8a" strokeWidth=5 opacity=0.5
 line axis x1=-460 y1=0 x2=460 y2=0 at 640,390 stroke="#475569" strokeWidth=2 opacity=0.65
 text title "Fluxion command demo" at 640,92 size=42 fill="#e2e8f0"
 text subtitle "Text DSL → scene graph → timeline playback" at 640,146 size=23 fill="#94a3b8"
 math equation "x^2+y^2=r^2" at 640,222 size=38 fill="#bae6fd" renderer=katex expandTokens=true
 math equation2 "x^2+y^2=R^2" at 640,222 size=38 fill="#fef3c7" renderer=katex expandTokens=true
-circle dot r=34 at 280,390 fill="#38bdf8" stroke="#0f172a" strokeWidth=5
-circle halo r=56 at 280,390 fill="#38bdf8" stroke="#7dd3fc" strokeWidth=2 opacity=0.18
+circle dot r=34 at 470,390 fill="#38bdf8" stroke="#0f172a" strokeWidth=5
+circle halo r=56 at 470,390 fill="#38bdf8" stroke="#7dd3fc" strokeWidth=2 opacity=0.18
 rect card w=230 h=112 at 1000,390 fill="#f97316" stroke="#fed7aa" strokeWidth=4 opacity=0.9
 text cardLabel "morph target" at 1000,390 size=26 fill="#111827"
 path spark d="M 0 -52 L 14 -14 L 52 0 L 14 14 L 0 52 L -14 14 L -52 0 L -14 -14 Z" at 640,510 fill="#facc15" stroke="#fef08a" strokeWidth=3 opacity=0
@@ -63,10 +63,10 @@ at 0s:
 wait 0.2s
 animate theta from 0 to 6.283 duration=2.8s easing=linear
 animate pulse from 0 to 6.283 duration=2.8s easing=linear
-set dot.x to expr="640 + 360 * cos(theta)"
-set dot.y to expr="390 + 135 * sin(theta)"
-set halo.x to expr="640 + 360 * cos(theta)"
-set halo.y to expr="390 + 135 * sin(theta)"
+set dot.x to expr="640 + 170 * cos(theta)"
+set dot.y to expr="390 + 170 * sin(theta)"
+set halo.x to expr="640 + 170 * cos(theta)"
+set halo.y to expr="390 + 170 * sin(theta)"
 set halo.scale to expr="1.0 + 0.22 * sin(pulse)"
 animate camera.x from 0 to -28 duration=2.8s easing=easeInOut
 animate camera.y from 0 to 18 duration=2.8s easing=easeInOut
