@@ -38,6 +38,6 @@ PYTHONPATH=python python examples/simple_circle.py
 
 ## 関連ページ
 
-- [Examples](./examples/) で repository 内の sample を確認する。
-- [Fluxion JSON / Scene Graph](../reference/ir/) で export 後の document 形状を確認する。
-- [Timeline](../reference/timeline/) で `self.play()` が生成する operation semantics を確認する。
+- [Examples](../examples/) で repository 内の sample を確認する。
+- [Fluxion JSON / Scene Graph](../../reference/ir/) で export 後の document 形状を確認する。
+- [Timeline](../../reference/timeline/) で `self.play()` が生成する operation semantics を確認する。

@@ -60,4 +60,4 @@ Nodes are addressed by `id` and carry `transform`, `style`, `geometry`, and `chi
 
 `nodes` describe structure; `timeline` describes change over time. Text DSL `show` statements and Python DSL animation helpers generate operations such as `create`, `set`, and `animate`.
 
-See [Timeline](./timeline/) for operation details and [Web Runtime](./runtime/) for seek / playback behavior.
+See [Timeline](../timeline/) for operation details and [Web Runtime](../runtime/) for seek / playback behavior.

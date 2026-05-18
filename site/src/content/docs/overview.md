@@ -41,10 +41,10 @@ Python DSL / Text DSL
 
 ## 次に読むもの
 
-- [Getting Started](./guides/getting-started/) でローカル実行手順を確認する。
-- [Playground tour](./guides/playground/) でブラウザ editor の操作を確認する。
-- [Python DSL](./guides/python-dsl/) または [Text DSL reference](./reference/text-dsl/) から authoring を始める。
-- [Fluxion JSON / Scene Graph](./reference/ir/) と [Timeline](./reference/timeline/) で IR の形を確認する。
+- [Getting Started](../guides/getting-started/) でローカル実行手順を確認する。
+- [Playground tour](../guides/playground/) でブラウザ editor の操作を確認する。
+- [Python DSL](../guides/python-dsl/) または [Text DSL reference](../reference/text-dsl/) から authoring を始める。
+- [Fluxion JSON / Scene Graph](../reference/ir/) と [Timeline](../reference/timeline/) で IR の形を確認する。
 
 ## Documentation source of truth
 

@@ -60,4 +60,4 @@ Node は `id` で参照され、`transform`、`style`、`geometry`、`children` 
 
 `nodes` は構造を表し、`timeline` は時間変化を表します。Text DSL の `show` や Python DSL の animation helper は `create`、`set`、`animate` などの operation を生成します。
 
-Timeline operation の詳細は [Timeline](./timeline/) を参照してください。Runtime の seek / playback の詳細は [Web Runtime](./runtime/) を参照してください。
+Timeline operation の詳細は [Timeline](../timeline/) を参照してください。Runtime の seek / playback の詳細は [Web Runtime](../runtime/) を参照してください。

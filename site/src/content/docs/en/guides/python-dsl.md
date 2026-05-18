@@ -38,6 +38,6 @@ The generated `examples/simple_circle.fluxion.json` is Fluxion IR that can be lo
 
 ## Related pages
 
-- Use [Examples](./examples/) for repository samples.
-- Use [Fluxion JSON / Scene Graph](../reference/ir/) to inspect the exported document shape.
-- Use [Timeline](../reference/timeline/) to understand operations produced by `self.play()`.
+- Use [Examples](../examples/) for repository samples.
+- Use [Fluxion JSON / Scene Graph](../../reference/ir/) to inspect the exported document shape.
+- Use [Timeline](../../reference/timeline/) to understand operations produced by `self.play()`.

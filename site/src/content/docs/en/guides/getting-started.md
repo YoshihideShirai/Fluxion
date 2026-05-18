@@ -41,10 +41,10 @@ Open `http://localhost:8000/web/`, edit the Text DSL, and preview it with live c
 
 ## 4. Continue through the docs
 
-- Learn the UI in the [Playground tour](./playground/).
-- Use [Python DSL](./python-dsl/) when authoring from Python.
-- Use [Text DSL reference](../reference/text-dsl/) when authoring in the browser.
-- Inspect runtime input in [Fluxion JSON / Scene Graph](../reference/ir/) and [Timeline](../reference/timeline/).
+- Learn the UI in the [Playground tour](../playground/).
+- Use [Python DSL](../python-dsl/) when authoring from Python.
+- Use [Text DSL reference](../../reference/text-dsl/) when authoring in the browser.
+- Inspect runtime input in [Fluxion JSON / Scene Graph](../../reference/ir/) and [Timeline](../../reference/timeline/).
 
 ## Build the GitHub Pages site locally
 
