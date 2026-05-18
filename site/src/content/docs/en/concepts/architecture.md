@@ -141,8 +141,8 @@ The SVG renderer creates a root `<g>` for all scene nodes and applies camera bef
 
 ```text
 Screen = Camera * ParentNode * ChildNode * Geometry
-Camera = translate(camera.x, camera.y) rotate(camera.rotation) scale(camera.scale)
+Camera = translate(centerX + camera.x, centerY + camera.y) rotate(camera.rotation) scale(camera.scale) translate(-centerX, -centerY)
 Node   = translate(node.x, node.y) rotate(node.rotation) scale(node.scale)
 ```
 
-This makes camera pan / zoom / rotation scene-level, while each node's transform remains local and composes under the camera.
+This makes camera pan scene-level while zoom / rotation pivot around the scene center, and each node's transform remains local and composes under the camera.

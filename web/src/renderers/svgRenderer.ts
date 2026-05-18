@@ -17,10 +17,29 @@ interface MathJaxGlobal {
   typesetPromise?: (elements?: HTMLElement[]) => Promise<unknown>;
 }
 
+export function buildCameraTransform(
+  camera: Camera,
+  width = 1280,
+  height = 720,
+): string {
+  const centerX = width / 2;
+  const centerY = height / 2;
+  return [
+    `translate(${centerX + camera.x} ${centerY + camera.y})`,
+    `rotate(${camera.rotation})`,
+    `scale(${camera.scale})`,
+    `translate(${-centerX} ${-centerY})`,
+  ].join(" ");
+}
+
 export class SvgRenderer {
   private readonly svg: SVGSVGElement;
+  private readonly width: number;
+  private readonly height: number;
 
   constructor(container: Element, width = 1280, height = 720) {
+    this.width = width;
+    this.height = height;
     this.svg = document.createElementNS(SVG_NS, "svg");
     this.svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     this.svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
@@ -161,10 +180,7 @@ export class SvgRenderer {
   }
 
   private applyCameraTransform(element: SVGElement, camera: Camera): void {
-    element.setAttribute(
-      "transform",
-      `translate(${camera.x} ${camera.y}) rotate(${camera.rotation}) scale(${camera.scale})`,
-    );
+    element.setAttribute("transform", buildCameraTransform(camera, this.width, this.height));
   }
 
   private applyTransform(element: SVGElement, transform: Transform): void {

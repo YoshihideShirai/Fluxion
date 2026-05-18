@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { SceneGraph } from "./sceneGraph.js";
 import { applyTimelineAt } from "./timeline.js";
 import { Player } from "./player.js";
+import { buildCameraTransform } from "../renderers/svgRenderer.js";
 import type { SceneNode, TimelineOperation, FluxionDocument } from "../types.js";
 
 const node: SceneNode = {
@@ -54,6 +55,13 @@ test("applies camera animation interpolation", () => {
   );
   assert.equal(camera.x, 50);
   assert.equal(camera.scale, 1.5);
+});
+
+test("builds camera transforms around the scene center", () => {
+  assert.equal(
+    buildCameraTransform({ x: -24, y: 18, scale: 1.6, rotation: 15 }, 1280, 720),
+    "translate(616 378) rotate(15) scale(1.6) translate(-640 -360)",
+  );
 });
 
 test("applies create, set, and delete operations", () => {
