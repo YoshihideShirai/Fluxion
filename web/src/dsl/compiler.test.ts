@@ -280,6 +280,18 @@ test("copies math token styles after all node options are applied", () => {
   );
 });
 
+test("keeps superscript and subscript groups renderable when expanding math tokens", () => {
+  const documentData = compileTextDsl(
+    `math equation "e^{i\\pi}+x_1^2" expandTokens=true size=42 renderer=katex`,
+  );
+
+  const equation = documentData.nodes.find((node) => node.id === "equation");
+  equalJson(
+    equation?.children.map((child) => child.latex),
+    ["e^{i\\pi}", "+", "x_1^2"],
+  );
+});
+
 test("does not auto-create a root group when a descendant is shown by TransformMatchingTex", () => {
   const documentData = compileTextDsl(`math equation "r" expandTokens=true
 math equation2 "R" expandTokens=true
