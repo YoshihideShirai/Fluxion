@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { compileTextDsl, DslCompileError } from "./compiler.js";
 import type { AnimateOperation } from "../types.js";
 
@@ -20,6 +21,52 @@ function equalJson(actual: unknown, expected: unknown): void {
 function messageMatches(source: string, pattern: RegExp): void {
   assert.equal(pattern.test(mustFail(source).message), true);
 }
+
+function extractPlaygroundDemo(): string {
+  const html = readFileSync("index.html", "utf8");
+  const match = html.match(
+    /<textarea id="dsl" spellcheck="false">([\s\S]*?)<\/textarea>/u,
+  );
+  if (!match?.[1]) throw new Error("Expected playground DSL textarea.");
+  return match[1]
+    .replace(/&quot;/gu, '"')
+    .replace(/&amp;/gu, "&")
+    .replace(/&lt;/gu, "<")
+    .replace(/&gt;/gu, ">");
+}
+
+function assertNoOverlappingAnimations(
+  documentData: ReturnType<typeof compileTextDsl>,
+): void {
+  const animations = documentData.timeline.filter((op) => op.op === "animate");
+  for (let leftIndex = 0; leftIndex < animations.length; leftIndex += 1) {
+    const left = animations[leftIndex];
+    if (!left) continue;
+    for (
+      let rightIndex = leftIndex + 1;
+      rightIndex < animations.length;
+      rightIndex += 1
+    ) {
+      const right = animations[rightIndex];
+      if (!right) continue;
+      const overlaps =
+        Math.max(left.t, right.t) <
+        Math.min(left.t + left.duration, right.t + right.duration);
+      assert.equal(
+        left.id === right.id && left.path === right.path && overlaps,
+        false,
+        `Overlapping animations target ${left.id}.${left.path} at ${left.t}s and ${right.t}s.`,
+      );
+    }
+  }
+}
+
+test("compiles the playground demo without overlapping same-target animations", () => {
+  const documentData = compileTextDsl(extractPlaygroundDemo());
+
+  assert.equal(documentData.duration, 9);
+  assertNoOverlappingAnimations(documentData);
+});
 
 test("compiles scene camera and camera animations", () => {
   const documentData = compileTextDsl(`camera at 10,20 scale=1.5 rotation=5
