@@ -429,7 +429,7 @@ function parsePlay(
   }
 
   emitPlayCall(state, call, statementTime(state), duration, easing, lineNumber);
-  advanceStatementTime(state, duration);
+  if (state.blockTime === null) advanceStatementTime(state, duration);
 }
 
 function emitPlayCall(
@@ -604,7 +604,14 @@ function pushTransformMatchingTex(
         duration,
         easing,
       });
-      pushTransformAnimations(state, start, child, match, duration, easing);
+      pushTransformAnimations(
+        state,
+        start,
+        child,
+        retargetTokenNode(match, fromNode, toNode),
+        duration,
+        easing,
+      );
     } else {
       pushFadeOutNode(state, start, child, duration, easing);
     }
@@ -630,6 +637,27 @@ function texTokenChildren(node: SceneNode): SceneNode[] {
   );
 }
 
+function retargetTokenNode(
+  targetChild: SceneNode,
+  sourceParent: SceneNode,
+  targetParent: SceneNode,
+): SceneNode {
+  const clone = structuredClone(targetChild);
+  clone.transform.x += targetParent.transform.x - sourceParent.transform.x;
+  clone.transform.y += targetParent.transform.y - sourceParent.transform.y;
+  clone.transform.rotation +=
+    targetParent.transform.rotation - sourceParent.transform.rotation;
+  clone.transform.scale *= safeRatio(
+    targetParent.transform.scale,
+    sourceParent.transform.scale,
+  );
+  clone.transform.opacity *= safeRatio(
+    targetParent.transform.opacity,
+    sourceParent.transform.opacity,
+  );
+  return clone;
+}
+
 function absolutizeTokenNode(child: SceneNode, parent: SceneNode): SceneNode {
   const clone = structuredClone(child);
   clone.transform.x += parent.transform.x;
@@ -638,6 +666,10 @@ function absolutizeTokenNode(child: SceneNode, parent: SceneNode): SceneNode {
   clone.transform.scale *= parent.transform.scale;
   clone.transform.opacity *= parent.transform.opacity;
   return clone;
+}
+
+function safeRatio(numerator: number, denominator: number): number {
+  return denominator === 0 ? numerator : numerator / denominator;
 }
 
 function pushFadeInNode(

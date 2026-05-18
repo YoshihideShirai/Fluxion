@@ -205,6 +205,33 @@ at 5s:
   assert.equal(setOperation.value, "#38bdf8");
 });
 
+test("keeps play statements inside at blocks anchored to the block time", () => {
+  const documentData = compileTextDsl(`circle dot r=24 at 100,100 fill="#38bdf8" opacity=1
+text caption "Ready" at 100,160 fill="#e2e8f0" opacity=1
+
+at 2s:
+  play FadeIn(dot) duration=0.4s easing=easeOut
+  animate dot.rotation from 0 to 180 duration=1s easing=linear
+  play FadeIn(caption) duration=0.8s easing=easeOut`);
+
+  equalJson(
+    documentData.timeline
+      .flatMap((op) =>
+        (op.op === "effect" || op.op === "animate") &&
+        (op.id === "dot" || op.id === "caption")
+          ? [[op.t, op.op, op.id]]
+          : [],
+      ),
+    [
+      [2, "effect", "dot"],
+      [2, "animate", "dot"],
+      [2, "animate", "dot"],
+      [2, "effect", "caption"],
+      [2, "animate", "caption"],
+    ],
+  );
+});
+
 test("expands math tokens and TransformMatchingTex matches by token text", () => {
   const documentData = compileTextDsl(`math a "a+b" expandTokens=true at 100,100
 math b "bca" expandTokens=true at 200,100
@@ -258,6 +285,27 @@ play TransformMatchingTex(a, b) duration=1s easing=easeInOut`);
       .filter((op) => op.op === "delete")
       .map((op) => [op.id, op.t]),
     [["a:tex:1", 1]],
+  );
+});
+
+test("moves matched math tokens to the target math node position", () => {
+  const documentData = compileTextDsl(`math source "x" expandTokens=true at 100,120
+math target "x" expandTokens=true at 260,180
+
+play TransformMatchingTex(source, target) duration=1s easing=linear`);
+
+  equalJson(
+    documentData.timeline
+      .flatMap((op) =>
+        op.op === "animate" && op.id === "source:tex:0"
+          ? [[op.path, op.from, op.to]]
+          : [],
+      )
+      .filter(([path]) => path === "transform.x" || path === "transform.y"),
+    [
+      ["transform.x", 0, 160],
+      ["transform.y", 0, 60],
+    ],
   );
 });
 
