@@ -48,8 +48,8 @@ circle dot r=34 at 470,390 fill="#38bdf8" stroke="#0f172a" strokeWidth=5
 circle halo r=56 at 470,390 fill="#38bdf8" stroke="#7dd3fc" strokeWidth=2 opacity=0.18
 rect card w=230 h=112 at 1000,390 fill="#f97316" stroke="#fed7aa" strokeWidth=4 opacity=0.9
 text cardLabel "morph target" at 1000,390 size=26 fill="#111827"
-path spark d="M 0 -52 L 14 -14 L 52 0 L 14 14 L 0 52 L -14 14 L -52 0 L -14 -14 Z" at 640,510 fill="#facc15" stroke="#fef08a" strokeWidth=3 opacity=0
-text caption "Values, expressions, camera moves, groups, and math-token transforms in one scene." at 640,646 size=22 fill="#cbd5e1" opacity=0
+path spark d="M 0 -52 L 14 -14 L 52 0 L 14 14 L 0 52 L -14 14 L -52 0 L -14 -14 Z" at 640,510 fill="#facc15" stroke="#fef08a" strokeWidth=3
+text caption "Values, expressions, camera moves, groups, and math-token transforms in one scene." at 640,646 size=22 fill="#cbd5e1"
 
 group cardGroup card cardLabel
 group hero title subtitle equation
@@ -81,7 +81,7 @@ at 6.2s:
   play FadeIn(spark) duration=0.4s easing=easeOut
   animate spark.rotation from 0 to 180 duration=1s easing=linear
   animate spark.scale from 0.8 to 1.45 duration=1s easing=easeOut
-  animate spark.opacity from 1 to 0.35 duration=1s easing=easeOut
+  animate spark.opacity from 1 to 0.35 start=6.6s duration=0.6s easing=easeOut
   play FadeIn(caption) duration=0.8s easing=easeOut`;
 
 export const textDslCommandExamples: TextDslCommandExample[] = [
