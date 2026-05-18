@@ -1137,9 +1137,47 @@ function expandMathTokens(node: SceneNode, lineNumber: number): void {
 }
 
 function tokenizeLatex(latex: string): string[] {
-  return [...latex.matchAll(LATEX_TOKEN_PATTERN)]
+  const rawTokens = [...latex.matchAll(LATEX_TOKEN_PATTERN)]
     .map((match) => match[0])
     .filter((token) => !/^\s+$/u.test(token));
+  const tokens: string[] = [];
+
+  for (let index = 0; index < rawTokens.length; index += 1) {
+    let token = rawTokens[index] ?? "";
+
+    while (rawTokens[index + 1] === "^" || rawTokens[index + 1] === "_") {
+      const marker = rawTokens[index + 1];
+      const [argument, nextIndex] = readScriptArgument(rawTokens, index + 2);
+      if (!marker || argument === undefined) break;
+      token += marker + argument;
+      index = nextIndex - 1;
+    }
+
+    tokens.push(token);
+  }
+
+  return tokens;
+}
+
+function readScriptArgument(
+  tokens: string[],
+  start: number,
+): [argument: string | undefined, nextIndex: number] {
+  const first = tokens[start];
+  if (first === undefined) return [undefined, start];
+  if (first !== "{") return [first, start + 1];
+
+  let depth = 0;
+  let argument = "";
+  for (let index = start; index < tokens.length; index += 1) {
+    const token = tokens[index] ?? "";
+    if (token === "{") depth += 1;
+    if (token === "}") depth -= 1;
+    argument += token;
+    if (depth === 0) return [argument, index + 1];
+  }
+
+  return [argument, tokens.length];
 }
 
 function latexToTokenNodes(
