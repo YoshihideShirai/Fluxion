@@ -41,10 +41,10 @@ python -m http.server 8000
 
 ## 4. 次に進む
 
-- Playground の UI は [Playground tour](./playground/) で確認する。
-- Python から scene を書く場合は [Python DSL](./python-dsl/) を読む。
-- Browser 上で text から書く場合は [Text DSL reference](../reference/text-dsl/) を読む。
-- Runtime が読む IR は [Fluxion JSON / Scene Graph](../reference/ir/) と [Timeline](../reference/timeline/) で確認する。
+- Playground の UI は [Playground tour](../playground/) で確認する。
+- Python から scene を書く場合は [Python DSL](../python-dsl/) を読む。
+- Browser 上で text から書く場合は [Text DSL reference](../../reference/text-dsl/) を読む。
+- Runtime が読む IR は [Fluxion JSON / Scene Graph](../../reference/ir/) と [Timeline](../../reference/timeline/) で確認する。
 
 ## GitHub Pages site をローカルでビルドする
 

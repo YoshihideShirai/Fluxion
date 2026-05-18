@@ -8,7 +8,7 @@ The Playground is a compact browser editor that compiles Text DSL to `.fluxion.j
 ## Open it
 
 - In the GitHub Pages build, it is published at `/playground/`. Until the repository owner is known, the expected URL format is `https://<owner>.github.io/Fluxion/playground/`.
-- Locally, follow [Getting Started](./getting-started/) to build the `web/` runtime, then open `http://localhost:8000/web/`.
+- Locally, follow [Getting Started](../getting-started/) to build the `web/` runtime, then open `http://localhost:8000/web/`.
 
 ## Text DSL input
 
@@ -52,6 +52,6 @@ play FadeOut(title) duration=0.5s
 
 ## Next steps
 
-- Read [Text DSL reference](../reference/text-dsl/) for authoring syntax.
-- Read [Fluxion JSON / Scene Graph](../reference/ir/) for the compiled JSON structure.
-- Read [Timeline](../reference/timeline/) and [Web Runtime](../reference/runtime/) for seek and playback behavior.
+- Read [Text DSL reference](../../reference/text-dsl/) for authoring syntax.
+- Read [Fluxion JSON / Scene Graph](../../reference/ir/) for the compiled JSON structure.
+- Read [Timeline](../../reference/timeline/) and [Web Runtime](../../reference/runtime/) for seek and playback behavior.

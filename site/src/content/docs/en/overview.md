@@ -41,10 +41,10 @@ Python DSL / Text DSL
 
 ## Next steps
 
-- Start with the [Getting Started](./guides/getting-started/) guide.
-- Use the [Playground tour](./guides/playground/) to learn the browser editor.
-- Begin authoring with either [Python DSL](./guides/python-dsl/) or [Text DSL reference](./reference/text-dsl/).
-- Inspect the IR shape in [Fluxion JSON / Scene Graph](./reference/ir/) and [Timeline](./reference/timeline/).
+- Start with the [Getting Started](../guides/getting-started/) guide.
+- Use the [Playground tour](../guides/playground/) to learn the browser editor.
+- Begin authoring with either [Python DSL](../guides/python-dsl/) or [Text DSL reference](../reference/text-dsl/).
+- Inspect the IR shape in [Fluxion JSON / Scene Graph](../reference/ir/) and [Timeline](../reference/timeline/).
 
 ## Documentation source of truth
 

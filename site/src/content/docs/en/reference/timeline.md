@@ -54,5 +54,5 @@ Numeric values interpolate with easing. Non-numeric values such as colors and st
 
 ## Related pages
 
-- Read [Fluxion JSON / Scene Graph](./ir/) for the full document shape that contains the timeline.
-- Read [Web Runtime](./runtime/) for seek, duration, and playback semantics.
+- Read [Fluxion JSON / Scene Graph](../ir/) for the full document shape that contains the timeline.
+- Read [Web Runtime](../runtime/) for seek, duration, and playback semantics.
