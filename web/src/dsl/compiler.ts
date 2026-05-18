@@ -612,7 +612,13 @@ function pushTransformMatchingTex(
 
   for (const child of toTokens) {
     if (!matchedTo.has(child.id))
-      pushFadeInNode(state, start, child, duration, easing);
+      pushFadeInNode(
+        state,
+        start,
+        absolutizeTokenNode(child, toNode),
+        duration,
+        easing,
+      );
   }
 
   state.shown.add(toId);
@@ -622,6 +628,16 @@ function texTokenChildren(node: SceneNode): SceneNode[] {
   return node.children.filter(
     (child) => child.type === "math" && typeof child.latex === "string",
   );
+}
+
+function absolutizeTokenNode(child: SceneNode, parent: SceneNode): SceneNode {
+  const clone = structuredClone(child);
+  clone.transform.x += parent.transform.x;
+  clone.transform.y += parent.transform.y;
+  clone.transform.rotation += parent.transform.rotation;
+  clone.transform.scale *= parent.transform.scale;
+  clone.transform.opacity *= parent.transform.opacity;
+  return clone;
 }
 
 function pushFadeInNode(
