@@ -245,12 +245,14 @@ play TransformMatchingTex(a, b) duration=1s easing=easeInOut`);
     ),
     true,
   );
-  assert.equal(
-    documentData.timeline.some(
-      (op) => op.op === "create" && op.node.id === "b:tex:1",
-    ),
-    true,
+  const unmatchedCreate = documentData.timeline.find(
+    (op) => op.op === "create" && op.node.id === "b:tex:1",
   );
+  assert.equal(unmatchedCreate?.op, "create");
+  if (unmatchedCreate?.op !== "create")
+    throw new Error("Expected unmatched TransformMatchingTex target create.");
+  assert.equal(unmatchedCreate.node.transform.x > 100, true);
+  assert.equal(unmatchedCreate.node.transform.y, 100);
   equalJson(
     documentData.timeline
       .filter((op) => op.op === "delete")
