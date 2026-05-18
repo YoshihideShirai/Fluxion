@@ -39,6 +39,36 @@
       }
       a { color: var(--accent); text-decoration: none; }
       a:hover { text-decoration: underline; }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 20px 16px 0;
+      }
+      .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--text); font-weight: 900; }
+      .logo {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--accent), #1d4ed8);
+        color: var(--bg-deep);
+      }
+      .topbar-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+      .topbar-actions > a { color: var(--muted); font-size: 14px; font-weight: 700; }
+      .language-switcher { display: inline-flex; overflow: hidden; border: 1px solid var(--border); border-radius: 999px; }
+      .language-switcher button {
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
+        color: var(--muted);
+        padding: 7px 11px;
+      }
+      .language-switcher button[aria-pressed="true"] { background: rgba(56, 189, 248, 0.18); color: var(--text); }
       main { max-width: 1180px; margin: 0 auto; padding: 32px 16px 48px; }
       .hero { padding: 40px 0 28px; }
       .eyebrow { margin: 0 0 12px; color: var(--accent); font-size: 13px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
@@ -115,6 +145,8 @@
       .reference-grid ul { margin: 0; padding-left: 20px; color: var(--muted); line-height: 1.7; }
       .footer-note { margin: 28px 0 0; color: var(--subtle); font-size: 14px; line-height: 1.6; }
       @media (max-width: 900px) {
+        .topbar { align-items: flex-start; flex-direction: column; }
+        .topbar-actions { width: 100%; }
         .cards, .reference-grid { grid-template-columns: 1fr; }
         .workspace { grid-template-columns: 1fr; }
         textarea { min-height: 320px; }
@@ -123,45 +155,56 @@
     </style>
   </head>
   <body>
+    <nav class="topbar" aria-label="Page navigation">
+      <a class="brand" href="../" data-home-link><span class="logo">F</span><span>Fluxion</span></a>
+      <div class="topbar-actions">
+        <a href="../overview/" data-i18n="navDocs" data-docs-link>Docs</a>
+        <a href="#demo" data-i18n="navDemo">デモ</a>
+        <div class="language-switcher" aria-label="Language selector">
+          <button type="button" data-lang-button="ja" aria-pressed="true">日本語</button>
+          <button type="button" data-lang-button="en" aria-pressed="false">English</button>
+        </div>
+      </div>
+    </nav>
     <main>
       <header class="hero">
-        <p class="eyebrow">Fluxion Text DSL</p>
-        <h1>ブラウザで書ける、編集可能なアニメーション DSL</h1>
-        <p class="lead">
+        <p class="eyebrow" data-i18n="eyebrow">Fluxion Text DSL</p>
+        <h1 data-i18n="heroTitle">ブラウザで書ける、編集可能なアニメーション DSL</h1>
+        <p class="lead" data-i18n-html="heroLead">
           Fluxion は短い宣言的な Text DSL を <code>.fluxion.json</code> に変換し、SVG ランタイムでその場で再生します。
           Python や任意コードをブラウザで実行せず、図形の配置・表示タイミング・プロパティアニメーションを安全に試せます。
         </p>
         <div class="hero-actions">
-          <a class="button-link" href="#demo">デモを試す</a>
-          <a class="button-link secondary" href="#usage">使い方を見る</a>
+          <a class="button-link" href="#demo" data-i18n="tryDemo">デモを試す</a>
+          <a class="button-link secondary" href="#usage" data-i18n="viewUsage">使い方を見る</a>
         </div>
         <div class="pill-row" aria-label="supported features">
-          <span class="pill">scene / circle / rect / line / text</span>
-          <span class="pill">show と at block</span>
-          <span class="pill">animate with easing</span>
-          <span class="pill">Generated JSON preview</span>
+          <span class="pill" data-i18n="pillNodes">scene / circle / rect / line / text</span>
+          <span class="pill" data-i18n="pillTimeline">show と at block</span>
+          <span class="pill" data-i18n="pillAnimate">animate with easing</span>
+          <span class="pill" data-i18n="pillJson">Generated JSON preview</span>
         </div>
       </header>
 
       <section id="usage" class="section" aria-labelledby="usage-title">
         <div class="section-header">
           <div>
-            <h2 id="usage-title">DSL の使い方</h2>
+            <h2 id="usage-title" data-i18n="usageTitle">DSL の使い方</h2>
           </div>
-          <p>まず scene を宣言し、node を配置し、timeline に show / animate を追加します。左のエディタに貼り付けて Compile または Live compile で確認できます。</p>
+          <p data-i18n="usageIntro">まず scene を宣言し、node を配置し、timeline に show / animate を追加します。左のエディタに貼り付けて Compile または Live compile で確認できます。</p>
         </div>
         <div class="cards">
           <article class="card">
-            <h3>1. Scene を設定</h3>
-            <p><code>scene width=1280 height=720 fps=60</code> のようにキャンバスサイズと FPS を指定します。省略時は 1280x720 / 60fps です。</p>
+            <h3 data-i18n="cardSceneTitle">1. Scene を設定</h3>
+            <p data-i18n-html="cardSceneBody"><code>scene width=1280 height=720 fps=60</code> のようにキャンバスサイズと FPS を指定します。省略時は 1280x720 / 60fps です。</p>
           </article>
           <article class="card">
-            <h3>2. Node を宣言</h3>
-            <p><code>circle</code>、<code>rect</code>、<code>line</code>、<code>text</code> に一意な id を付け、<code>at x,y</code> や <code>fill</code> で見た目を指定します。</p>
+            <h3 data-i18n="cardNodeTitle">2. Node を宣言</h3>
+            <p data-i18n-html="cardNodeBody"><code>circle</code>、<code>rect</code>、<code>line</code>、<code>text</code> に一意な id を付け、<code>at x,y</code> や <code>fill</code> で見た目を指定します。</p>
           </article>
           <article class="card">
-            <h3>3. Timeline を書く</h3>
-            <p><code>show id</code> で表示し、<code>animate id.x from 0 to 100 duration=1s</code> のようにプロパティを動かします。</p>
+            <h3 data-i18n="cardTimelineTitle">3. Timeline を書く</h3>
+            <p data-i18n-html="cardTimelineBody"><code>show id</code> で表示し、<code>animate id.x from 0 to 100 duration=1s</code> のようにプロパティを動かします。</p>
           </article>
         </div>
       </section>
@@ -169,9 +212,9 @@
       <section class="section" aria-labelledby="example-title">
         <div class="section-header">
           <div>
-            <h2 id="example-title">最小サンプル</h2>
+            <h2 id="example-title" data-i18n="exampleTitle">最小サンプル</h2>
           </div>
-          <p>このサンプルはタイトルと円を表示し、円の x 座標を 1.5 秒で移動させます。</p>
+          <p data-i18n="exampleIntro">このサンプルはタイトルと円を表示し、円の x 座標を 1.5 秒で移動させます。</p>
         </div>
         <div class="snippet">
           <pre><code>scene width=1280 height=720 fps=60
@@ -189,15 +232,15 @@ animate c1.x from 220 to 640 duration=1.5s easing=easeInOut</code></pre>
       <section id="demo" class="section" aria-labelledby="demo-title">
         <div class="section-header">
           <div>
-            <h2 id="demo-title">ライブデモ</h2>
+            <h2 id="demo-title" data-i18n="demoTitle">ライブデモ</h2>
           </div>
-          <p>DSL を編集するとブラウザ内で Fluxion IR にコンパイルされ、右側の SVG プレビューと JSON 出力が更新されます。</p>
+          <p data-i18n="demoIntro">DSL を編集するとブラウザ内で Fluxion IR にコンパイルされ、右側の SVG プレビューと JSON 出力が更新されます。</p>
         </div>
         <div class="workspace">
           <section class="editor">
             <div class="toolbar">
-              <label for="dsl">Text DSL editor</label>
-              <label class="switch"><input id="live-compile" type="checkbox" checked />Live compile</label>
+              <label for="dsl" data-i18n="editorLabel">Text DSL editor</label>
+              <label class="switch"><input id="live-compile" type="checkbox" checked /><span data-i18n="liveCompile">Live compile</span></label>
             </div>
             <textarea id="dsl" spellcheck="false">scene width=1280 height=720 fps=60
 camera at 0,0 scale=1
@@ -252,17 +295,17 @@ at 8s:
   animate spark.opacity from 1 to 0.35 duration=1s easing=easeOut
   play FadeIn(caption) duration=0.8s easing=easeOut</textarea>
             <div class="controls">
-              <button id="compile">Compile</button>
-              <button id="load-example" class="secondary">Load JSON Example</button>
+              <button id="compile" data-i18n="compileButton">Compile</button>
+              <button id="load-example" class="secondary" data-i18n="loadExampleButton">Load JSON Example</button>
             </div>
           </section>
           <section class="preview">
-            <label>Preview</label>
+            <label data-i18n="previewLabel">Preview</label>
             <div id="stage"></div>
             <div class="controls">
-              <button id="play">Play</button>
-              <button id="stop" class="secondary">Stop</button>
-              <button id="reset" class="secondary">Reset</button>
+              <button id="play" data-i18n="playButton">Play</button>
+              <button id="stop" class="secondary" data-i18n="stopButton">Stop</button>
+              <button id="reset" class="secondary" data-i18n="resetButton">Reset</button>
               <div class="timebar">
                 <input id="scrubber" type="range" min="0" max="0" step="0.01" value="0" />
                 <span id="time-readout">0.00 / 0.00</span>
@@ -270,7 +313,7 @@ at 8s:
               <span id="status" aria-live="polite"></span>
             </div>
             <details>
-              <summary>Generated .fluxion.json</summary>
+              <summary data-i18n="generatedJson">Generated .fluxion.json</summary>
               <pre id="json-output"></pre>
             </details>
           </section>
@@ -280,9 +323,9 @@ at 8s:
       <section class="section quick-reference" aria-labelledby="reference-title">
         <div class="section-header">
           <div>
-            <h2 id="reference-title">クイックリファレンス</h2>
+            <h2 id="reference-title" data-i18n="referenceTitle">クイックリファレンス</h2>
           </div>
-          <p>Text DSL は現在サポートしている小さな構文に絞っています。より詳しい仕様は正本の <code>site/src/content/docs/reference/text-dsl.md</code> を参照してください。</p>
+          <p data-i18n-html="referenceIntro">Text DSL は現在サポートしている小さな構文に絞っています。より詳しい仕様は正本の <code>site/src/content/docs/reference/text-dsl.md</code> を参照してください。</p>
         </div>
         <div class="reference-grid">
           <div>
@@ -299,8 +342,8 @@ at 8s:
           <div>
             <h3>Timeline / Properties</h3>
             <ul>
-              <li><code>at 1.5s:</code> で block 内の開始時刻を指定</li>
-              <li><code>show &lt;id&gt;</code> で node を作成</li>
+              <li data-i18n-html="refAt"><code>at 1.5s:</code> で block 内の開始時刻を指定</li>
+              <li data-i18n-html="refShow"><code>show &lt;id&gt;</code> で node を作成</li>
               <li><code>animate &lt;id&gt;.&lt;property&gt; from &lt;value&gt; to &lt;value&gt; duration=1s</code></li>
               <li>Property: <code>x</code>, <code>y</code>, <code>scale</code>, <code>rotation</code>, <code>opacity</code>, <code>fill</code>, <code>stroke</code>, <code>strokeWidth</code>, geometry fields</li>
               <li>Easing: <code>linear</code>, <code>smooth</code>, <code>easeInOut</code>, <code>easeIn</code>, <code>easeOut</code></li>
@@ -309,7 +352,7 @@ at 8s:
         </div>
       </section>
 
-      <p class="footer-note">
+      <p class="footer-note" data-i18n-html="footerNote">
         Tip: GitHub Pages ではこのページだけで DSL の編集、コンパイル、プレビュー、生成 JSON の確認ができます。
         ローカルでは <code>cd web &amp;&amp; npm run build</code> 後に <code>python -m http.server 8000</code> を実行し、<code>/web/</code> を開いてください。
       </p>
@@ -317,6 +360,125 @@ at 8s:
     <script type="module">
       import { mountFluxion, mountFluxionDocument } from "./dist/index.js";
       import { compileTextDsl } from "./dist/dsl/compiler.js";
+
+
+      const translations = {
+        ja: {
+          title: "Fluxion Text DSL - ガイド & デモ",
+          navDocs: "Docs",
+          navDemo: "デモ",
+          eyebrow: "Fluxion Text DSL",
+          heroTitle: "ブラウザで書ける、編集可能なアニメーション DSL",
+          heroLead: 'Fluxion は短い宣言的な Text DSL を <code>.fluxion.json</code> に変換し、SVG ランタイムでその場で再生します。Python や任意コードをブラウザで実行せず、図形の配置・表示タイミング・プロパティアニメーションを安全に試せます。',
+          tryDemo: "デモを試す",
+          viewUsage: "使い方を見る",
+          pillNodes: "scene / circle / rect / line / text",
+          pillTimeline: "show と at block",
+          pillAnimate: "animate with easing",
+          pillJson: "Generated JSON preview",
+          usageTitle: "DSL の使い方",
+          usageIntro: "まず scene を宣言し、node を配置し、timeline に show / animate を追加します。左のエディタに貼り付けて Compile または Live compile で確認できます。",
+          cardSceneTitle: "1. Scene を設定",
+          cardSceneBody: '<code>scene width=1280 height=720 fps=60</code> のようにキャンバスサイズと FPS を指定します。省略時は 1280x720 / 60fps です。',
+          cardNodeTitle: "2. Node を宣言",
+          cardNodeBody: '<code>circle</code>、<code>rect</code>、<code>line</code>、<code>text</code> に一意な id を付け、<code>at x,y</code> や <code>fill</code> で見た目を指定します。',
+          cardTimelineTitle: "3. Timeline を書く",
+          cardTimelineBody: '<code>show id</code> で表示し、<code>animate id.x from 0 to 100 duration=1s</code> のようにプロパティを動かします。',
+          exampleTitle: "最小サンプル",
+          exampleIntro: "このサンプルはタイトルと円を表示し、円の x 座標を 1.5 秒で移動させます。",
+          demoTitle: "ライブデモ",
+          demoIntro: "DSL を編集するとブラウザ内で Fluxion IR にコンパイルされ、右側の SVG プレビューと JSON 出力が更新されます。",
+          editorLabel: "Text DSL editor",
+          liveCompile: "Live compile",
+          compileButton: "Compile",
+          loadExampleButton: "Load JSON Example",
+          previewLabel: "Preview",
+          playButton: "Play",
+          stopButton: "Stop",
+          resetButton: "Reset",
+          generatedJson: "Generated .fluxion.json",
+          referenceTitle: "クイックリファレンス",
+          referenceIntro: 'Text DSL は現在サポートしている小さな構文に絞っています。より詳しい仕様は正本の <code>site/src/content/docs/reference/text-dsl.md</code> を参照してください。',
+          refAt: '<code>at 1.5s:</code> で block 内の開始時刻を指定',
+          refShow: '<code>show &lt;id&gt;</code> で node を作成',
+          footerNote: 'Tip: GitHub Pages ではこのページだけで DSL の編集、コンパイル、プレビュー、生成 JSON の確認ができます。ローカルでは <code>cd web &amp;&amp; npm run build</code> 後に <code>python -m http.server 8000</code> を実行し、<code>/web/</code> を開いてください。',
+          compiled: (nodes, operations) => `Compiled ${nodes} nodes, ${operations} operations`,
+          loadedJson: "Loaded JSON example",
+        },
+        en: {
+          title: "Fluxion Text DSL - Guide & Demo",
+          navDocs: "Docs",
+          navDemo: "Demo",
+          eyebrow: "Fluxion Text DSL",
+          heroTitle: "An editable animation DSL you can write in the browser.",
+          heroLead: 'Fluxion turns a compact declarative Text DSL into <code>.fluxion.json</code> and plays it instantly with the SVG runtime. Try layout, reveal timing, and property animation safely without running Python or arbitrary code in the browser.',
+          tryDemo: "Try the demo",
+          viewUsage: "View usage",
+          pillNodes: "scene / circle / rect / line / text",
+          pillTimeline: "show and at blocks",
+          pillAnimate: "animate with easing",
+          pillJson: "Generated JSON preview",
+          usageTitle: "How to use the DSL",
+          usageIntro: "Start by declaring a scene, place nodes, then add show / animate operations to the timeline. Paste commands into the editor on the left and check them with Compile or Live compile.",
+          cardSceneTitle: "1. Configure the scene",
+          cardSceneBody: 'Set the canvas size and FPS with commands like <code>scene width=1280 height=720 fps=60</code>. Defaults are 1280x720 / 60fps.',
+          cardNodeTitle: "2. Declare nodes",
+          cardNodeBody: 'Create uniquely named <code>circle</code>, <code>rect</code>, <code>line</code>, and <code>text</code> nodes, then style them with options such as <code>at x,y</code> and <code>fill</code>.',
+          cardTimelineTitle: "3. Write the timeline",
+          cardTimelineBody: 'Reveal nodes with <code>show id</code> and animate properties with commands such as <code>animate id.x from 0 to 100 duration=1s</code>.',
+          exampleTitle: "Minimal sample",
+          exampleIntro: "This sample shows a title and a circle, then moves the circle’s x coordinate over 1.5 seconds.",
+          demoTitle: "Live demo",
+          demoIntro: "As you edit the DSL, the browser compiles it into Fluxion IR and updates the SVG preview plus generated JSON output.",
+          editorLabel: "Text DSL editor",
+          liveCompile: "Live compile",
+          compileButton: "Compile",
+          loadExampleButton: "Load JSON Example",
+          previewLabel: "Preview",
+          playButton: "Play",
+          stopButton: "Stop",
+          resetButton: "Reset",
+          generatedJson: "Generated .fluxion.json",
+          referenceTitle: "Quick reference",
+          referenceIntro: 'Text DSL currently focuses on a small supported syntax. See the canonical <code>site/src/content/docs/reference/text-dsl.md</code> for the full specification.',
+          refAt: '<code>at 1.5s:</code> sets the start time for commands inside the block',
+          refShow: '<code>show &lt;id&gt;</code> creates a node on the timeline',
+          footerNote: 'Tip: on GitHub Pages, this page can edit DSL, compile it, preview it, and inspect generated JSON by itself. Locally, run <code>cd web &amp;&amp; npm run build</code>, then <code>python -m http.server 8000</code> and open <code>/web/</code>.',
+          compiled: (nodes, operations) => `Compiled ${nodes} nodes, ${operations} operations`,
+          loadedJson: "Loaded JSON example",
+        },
+      };
+
+      const langButtons = [...document.querySelectorAll("[data-lang-button]")];
+      const initialLang = new URLSearchParams(window.location.search).get("lang") || localStorage.getItem("fluxion-language") || (navigator.language?.toLowerCase().startsWith("en") ? "en" : "ja");
+      let currentLang = initialLang === "en" ? "en" : "ja";
+
+      function t(key, ...args) {
+        const value = translations[currentLang][key];
+        return typeof value === "function" ? value(...args) : value;
+      }
+
+      function applyLanguage(lang) {
+        currentLang = lang === "en" ? "en" : "ja";
+        localStorage.setItem("fluxion-language", currentLang);
+        document.documentElement.lang = currentLang;
+        document.title = t("title");
+        document.querySelectorAll("[data-i18n]").forEach((element) => {
+          element.textContent = t(element.dataset.i18n);
+        });
+        document.querySelectorAll("[data-i18n-html]").forEach((element) => {
+          element.innerHTML = t(element.dataset.i18nHtml);
+        });
+        document.querySelector("[data-home-link]").href = currentLang === "en" ? "../en/" : "../";
+        document.querySelector("[data-docs-link]").href = currentLang === "en" ? "../en/overview/" : "../overview/";
+        langButtons.forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.langButton === currentLang));
+        });
+      }
+
+      langButtons.forEach((button) => {
+        button.addEventListener("click", () => applyLanguage(button.dataset.langButton));
+      });
 
       const stage = document.querySelector("#stage");
       const input = document.querySelector("#dsl");
@@ -328,6 +490,8 @@ at 8s:
       const scrubber = document.querySelector("#scrubber");
       const timeReadout = document.querySelector("#time-readout");
       const jsonOutput = document.querySelector("#json-output");
+      applyLanguage(currentLang);
+
       const sourceFromUrl = new URLSearchParams(window.location.search).get("dsl");
       if (sourceFromUrl) input.value = sourceFromUrl;
       let documentData = compileTextDsl(input.value);
@@ -366,7 +530,7 @@ at 8s:
           player = mountFluxionDocument(stage, documentData);
           updateTransport(0);
           updateJsonOutput(documentData);
-          setStatus(`Compiled ${documentData.nodes.length} nodes, ${documentData.timeline.length} operations`);
+          setStatus(t("compiled", documentData.nodes.length, documentData.timeline.length));
         } catch (error) {
           setStatus(error instanceof Error ? error.message : String(error), true);
         }
@@ -404,7 +568,7 @@ at 8s:
           documentData = null;
           updateTransport(0);
           updateJsonOutput(null);
-          setStatus("Loaded JSON example");
+          setStatus(t("loadedJson"));
         } catch (error) {
           setStatus(error instanceof Error ? error.message : String(error), true);
         }
@@ -435,7 +599,7 @@ at 8s:
       input.addEventListener("input", scheduleCompile);
       updateTransport(0);
       updateJsonOutput(documentData);
-      setStatus(`Compiled ${documentData.nodes.length} nodes, ${documentData.timeline.length} operations`);
+      setStatus(t("compiled", documentData.nodes.length, documentData.timeline.length));
     </script>
   </body>
 </html>
