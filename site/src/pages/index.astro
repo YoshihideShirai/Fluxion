@@ -15,16 +15,16 @@ const textDslUrl = `${baseUrl}reference/text-dsl/`;
 const englishUrl = `${baseUrl}en/`;
 const features = [
   {
-    title: 'Python と Text DSL',
-    body: 'Manim 風 API と Mermaid / PlantUML 風の短い declarative syntax から、同じ Fluxion IR を生成します。',
+    title: '編集し続けられる成果物',
+    body: '動画を書き出して終わりではなく、Scene Graph / Timeline IR を残すので、あとから要素やタイミングを再編集できます。',
   },
   {
-    title: '安全なブラウザ compiler',
-    body: 'Text DSL は任意の Python code を実行せず、ブラウザ上で `.fluxion.json` へ変換できます。',
+    title: '非エンジニアとも共有しやすい',
+    body: 'Text DSL は 1 行 1 命令で読みやすく、Playground でそのまま動作確認できるため、仕様レビューや合意形成が速くなります。',
   },
   {
-    title: 'SVG Runtime',
-    body: 'Timeline operation を deterministic に適用し、play / seek / scrub / reset できる runtime で preview します。',
+    title: '導入が軽く、安全に試せる',
+    body: 'ブラウザ上で任意の Python を実行せずに `.fluxion.json` を生成し、SVG Runtime ですぐ preview できるため、初期検証の負荷を抑えられます。',
   },
 ];
 ---
@@ -57,9 +57,9 @@ const features = [
 
       <main>
         <Hero
-          eyebrow="Hosted Playground first"
-          title="動画フレームではなく、編集可能な Scene Graph Timeline を生成する。"
-          lead={'まず hosted Playground で Text DSL を開き、<code>.fluxion.json</code> と SVG preview を確認できます。Fluxion は Manim 風 Python DSL とブラウザ Text DSL から編集可能な animation IR を生成します。'}
+          eyebrow="Fluxion の概要"
+          title="Fluxion は、アニメーションを“あとから編集できる状態”で作るためのソフトウェアです。"
+          lead={'Fluxion は Python DSL / Text DSL から Scene Graph と Timeline を IR として生成し、ブラウザで再生・検証できます。<strong>作って終わり</strong>ではなく、内容や演出を継続的に改善しやすいことが最大のメリットです。'}
           primaryHref={playgroundUrl}
           primaryLabel="Playground を開く"
           secondaryHref={docsUrl}
@@ -71,8 +71,8 @@ const features = [
           playgroundUrl={playgroundUrl}
           textDslUrl={textDslUrl}
           eyebrow="Text DSL commands"
-          heading="GitHub Pages 上で試せる DSL 命令"
-          intro="Text DSL は 1 行 1 命令で Scene Graph と Timeline を組み立てます。各カードのサンプルコードは「この場で実行」からすぐにインラインプレビューでき、必要に応じて Playground でも開けます。"
+          heading="GitHub Pages 上で体験できる Fluxion"
+          intro="Text DSL は 1 行 1 命令で Scene Graph と Timeline を組み立てます。短い命令列を動かしながら、Fluxion がどのように“編集可能な成果物”を作るかをその場で確認できます。"
           runLabel="この場で実行"
           openLabel="Playground で開く"
           runnerTitle="インラインプレビュー"
@@ -98,8 +98,8 @@ const features = [
         <FeatureGrid ariaLabel="Fluxion highlights" features={features} />
 
         <CTA
-          title="まずは Text DSL をブラウザで試す。"
-          body="インストールなしで DSL を編集し、生成される Scene Graph / Timeline IR と SVG preview を確認できます。"
+          title="まずは概要をつかみ、メリットを体験する。"
+          body="Playground で Text DSL を数行編集するだけで、再編集可能な IR と SVG preview を確認できます。Fluxion の価値を最短で理解したい人に最適です。"
           primaryHref={playgroundUrl}
           primaryLabel="Playground を開く"
           secondaryHref={textDslUrl}
