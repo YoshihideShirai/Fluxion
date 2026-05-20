@@ -84,6 +84,22 @@ class PythonDslTest(unittest.TestCase):
         self.assertEqual(data["type"], "rect")
         self.assertEqual(data["geometry"], {"w": 24, "h": 24})
 
+    def test_animate_set_fill_and_stroke_paths(self):
+        from fluxion import Square
+
+        scene = Scene()
+        square = Square(id="sq2", side=20)
+        scene.add(square)
+        scene.play(square.animate.set_fill("#22c55e", opacity=0.5), run_time=0.5)
+        scene.play(square.animate.set_stroke("#111827", width=6), run_time=0.5)
+        data = scene.to_dict()
+
+        square_ops = [op for op in data["timeline"] if op.get("id") == "sq2" and op["op"] == "animate"]
+        self.assertIn("style.fill", [op["path"] for op in square_ops])
+        self.assertIn("transform.opacity", [op["path"] for op in square_ops])
+        self.assertIn("style.stroke", [op["path"] for op in square_ops])
+        self.assertIn("style.strokeWidth", [op["path"] for op in square_ops])
+
 
     def test_path_primitive_exports_svg_path_geometry(self):
         from fluxion import Path

@@ -23,6 +23,14 @@ Use it when you want to verify the Python DSL → Fluxion JSON → Web Runtime p
 PYTHONPATH=python python examples/basic_concepts_square_to_circle.py
 ```
 
+## Animations demo (Using `.animate`)
+
+`examples/animations_using_animate.py` reproduces the Manim Animations-style `MovingAround` flow (shift → fill change → scale → rotate) and exports `examples/animations_using_animate.fluxion.json`.
+
+```bash
+PYTHONPATH=python python examples/animations_using_animate.py
+```
+
 ## Browser example
 
 The Playground includes a Text DSL editor. Paste snippets from [Text DSL reference](../../reference/text-dsl/) or [Playground tour](../playground/) and compile them directly in the browser.

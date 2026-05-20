@@ -65,6 +65,18 @@ class Mobject:
         self.node.style.update(style)
         return self
 
+    def set_fill(self, color: str, opacity: float | None = None) -> "Mobject":
+        self.node.style["fill"] = color
+        if opacity is not None:
+            self.node.transform["opacity"] = opacity
+        return self
+
+    def set_stroke(self, color: str, width: float | None = None) -> "Mobject":
+        self.node.style["stroke"] = color
+        if width is not None:
+            self.node.style["strokeWidth"] = width
+        return self
+
     def to_dict(self) -> Dict[str, Any]:
         return self.node.to_dict()
 
