@@ -1,0 +1,152 @@
+{
+  "version": "0.1",
+  "width": 1280,
+  "height": 720,
+  "fps": 60,
+  "duration": 3.0,
+  "camera": {
+    "x": 0.0,
+    "y": 0.0,
+    "scale": 1.0,
+    "rotation": 0.0
+  },
+  "nodes": [],
+  "timeline": [
+    {
+      "t": 0.0,
+      "op": "create",
+      "node": {
+        "id": "square",
+        "type": "rect",
+        "transform": {
+          "x": 640,
+          "y": 360,
+          "scale": 1.0,
+          "rotation": 45,
+          "opacity": 0
+        },
+        "style": {
+          "fill": "#ffffff",
+          "stroke": "#111827",
+          "strokeWidth": 2
+        },
+        "geometry": {
+          "w": 120,
+          "h": 120
+        },
+        "children": []
+      }
+    },
+    {
+      "t": 0.0,
+      "op": "effect",
+      "id": "square",
+      "effect": "create",
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 0.0,
+      "op": "animate",
+      "id": "square",
+      "path": "transform.opacity",
+      "from": 0,
+      "to": 1,
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 1.0,
+      "op": "animate",
+      "id": "square",
+      "path": "geometry.h",
+      "from": 120,
+      "to": null,
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 1.0,
+      "op": "animate",
+      "id": "square",
+      "path": "geometry.r",
+      "from": null,
+      "to": 56,
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 1.0,
+      "op": "animate",
+      "id": "square",
+      "path": "geometry.w",
+      "from": 120,
+      "to": null,
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 1.0,
+      "op": "animate",
+      "id": "square",
+      "path": "style.fill",
+      "from": "#ffffff",
+      "to": "#facc15",
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 1.0,
+      "op": "animate",
+      "id": "square",
+      "path": "style.opacity",
+      "from": null,
+      "to": 0.8,
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 1.0,
+      "op": "animate",
+      "id": "square",
+      "path": "style.stroke",
+      "from": "#111827",
+      "to": "#facc15",
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 1.0,
+      "op": "animate",
+      "id": "square",
+      "path": "transform.rotation",
+      "from": 45,
+      "to": 0.0,
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 2.0,
+      "op": "effect",
+      "id": "square",
+      "effect": "fadeOut",
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 2.0,
+      "op": "animate",
+      "id": "square",
+      "path": "transform.opacity",
+      "from": 1.0,
+      "to": 0,
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 3.0,
+      "op": "delete",
+      "id": "square"
+    }
+  ]
+}

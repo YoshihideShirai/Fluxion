@@ -75,6 +75,16 @@ class PythonDslTest(unittest.TestCase):
         self.assertEqual([op["t"] for op in other_ops], [1.0, 1.0])
         self.assertEqual(data["duration"], 2.0)
 
+    def test_square_primitive_exports_equal_sides(self):
+        from fluxion import Square
+
+        square = Square(id="sq", side=24)
+        data = square.to_dict()
+
+        self.assertEqual(data["type"], "rect")
+        self.assertEqual(data["geometry"], {"w": 24, "h": 24})
+
+
     def test_path_primitive_exports_svg_path_geometry(self):
         from fluxion import Path
 

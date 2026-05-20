@@ -15,6 +15,14 @@ PYTHONPATH=python python examples/simple_circle.py
 
 Use it to verify the Python DSL → Fluxion JSON → Web Runtime path.
 
+## Basic Concepts demo (Square to Circle)
+
+`examples/basic_concepts_square_to_circle.py` reproduces the Manim Basic Concepts style flow (`Create` → `Transform` → `FadeOut`) and exports `examples/basic_concepts_square_to_circle.fluxion.json`.
+
+```bash
+PYTHONPATH=python python examples/basic_concepts_square_to_circle.py
+```
+
 ## Browser example
 
 The Playground includes a Text DSL editor. Paste snippets from [Text DSL reference](../../reference/text-dsl/) or [Playground tour](../playground/) and compile them directly in the browser.
