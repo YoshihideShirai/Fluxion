@@ -520,7 +520,7 @@ function emitPlayCall(
     return;
   }
 
-  if (call.name === "AnimationGroup") {
+  if (call.name === "AnimationGroup" || call.name === "LaggedStart") {
     const childCalls = expectPlayCallArgs(call, lineNumber);
     const lagRatio = readLagRatio(call, lineNumber);
     const childDuration =
