@@ -11,7 +11,8 @@ text title "Manim Community" at 480,210 size=56 fill="#93c5fd"
 text subtitle "Rendered with Fluxion DSL" at 480,290 size=32 fill="#e5e7eb"
 at 0s:
   play LaggedStart(Write(title), FadeIn(subtitle), lagRatio=0.28) duration=1.8s easing=easeOut
-play FadeOut(subtitle) start=2.8s duration=0.8s easing=easeInOut`,
+at 2.8s:
+  play FadeOut(subtitle) duration=0.8s easing=easeInOut`,
   },
   {
     title: 'Orbital Dot',
@@ -28,8 +29,10 @@ at 0s:
 animate theta from 0 to 6.283 duration=2.2s easing=linear
 set dot.x to expr="480 + 140 * cos(theta)"
 set dot.y to expr="280 + 140 * sin(theta)"
-play FadeIn(card) start=2.2s duration=0.5s easing=easeOut
-play Transform(dot, card) start=2.5s duration=1.0s easing=easeInOut`,
+at 2.2s:
+  play FadeIn(card) duration=0.5s easing=easeOut
+at 2.5s:
+  play Transform(dot, card) duration=1.0s easing=easeInOut`,
   },
   {
     title: 'Transform Matching Tex',
