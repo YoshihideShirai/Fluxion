@@ -31,6 +31,14 @@ PYTHONPATH=python python examples/basic_concepts_square_to_circle.py
 PYTHONPATH=python python examples/animations_using_animate.py
 ```
 
+## Plotting demo (Sin/Cos)
+
+`examples/plotting_with_manim.py` reproduces the Manim Plotting-style flow by drawing axes and function curves (`sin(x)`, `cos(x)`) and exports `examples/plotting_with_manim.fluxion.json`.
+
+```bash
+PYTHONPATH=python python examples/plotting_with_manim.py
+```
+
 ## Browser example
 
 The Playground includes a Text DSL editor. Paste snippets from [Text DSL reference](../../reference/text-dsl/) or [Playground tour](../playground/) and compile them directly in the browser.
