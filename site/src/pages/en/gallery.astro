@@ -74,38 +74,69 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
     </main>
     <script is:inline define:vars={{ baseUrl }}>
       const players = new Map();
+      const status = document.createElement('p');
+      status.style.color = '#dc2626';
+      status.style.marginTop = '12px';
+
+      const runtimeCandidates = [
+        `${baseUrl}playground/dist/index.js`,
+        `${baseUrl}playground/dist/index.mjs`,
+      ];
+      const compilerCandidates = [
+        `${baseUrl}playground/dist/dsl/compiler.js`,
+        `${baseUrl}playground/dist/dsl/compiler.mjs`,
+      ];
+
+      async function importFirst(candidates) {
+        let lastError;
+        for (const url of candidates) {
+          try {
+            return await import(url);
+          } catch (error) {
+            lastError = error;
+          }
+        }
+        throw lastError ?? new Error(`Failed to import ${candidates[0]}`);
+      }
+
       async function bootGallery() {
-        const runtime = await import(`${baseUrl}playground/dist/index.js`);
-        const compiler = await import(`${baseUrl}playground/dist/dsl/compiler.js`);
-        const playButtons = [...document.querySelectorAll('.play-inline')];
-        const resetButtons = [...document.querySelectorAll('.reset-inline')];
+        try {
+          const runtime = await importFirst(runtimeCandidates);
+          const compiler = await importFirst(compilerCandidates);
+          const playButtons = [...document.querySelectorAll('.play-inline')];
+          const resetButtons = [...document.querySelectorAll('.reset-inline')];
 
-        const run = (stageId, dsl) => {
-          const stage = document.getElementById(stageId);
-          if (!stage) return;
-          const prev = players.get(stageId);
-          prev?.stop();
-          const doc = compiler.compileTextDsl(dsl);
-          const player = runtime.mountFluxionDocument(stage, doc);
-          player.play({ from: 0 });
-          players.set(stageId, player);
-        };
+          const run = (stageId, dsl) => {
+            const stage = document.getElementById(stageId);
+            if (!stage) return;
+            const prev = players.get(stageId);
+            prev?.stop();
+            const doc = compiler.compileTextDsl(dsl);
+            const player = runtime.mountFluxionDocument(stage, doc);
+            player.play({ from: 0 });
+            players.set(stageId, player);
+          };
 
-        playButtons.forEach((button) => {
-          button.addEventListener('click', () => {
+          playButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+              run(button.dataset.stage ?? '', button.dataset.source ?? '');
+            });
             run(button.dataset.stage ?? '', button.dataset.source ?? '');
           });
-          run(button.dataset.stage ?? '', button.dataset.source ?? '');
-        });
 
-        resetButtons.forEach((button) => {
-          button.addEventListener('click', () => {
-            const player = players.get(button.dataset.stage ?? '');
-            if (!player) return;
-            player.stop();
-            player.seek(0);
+          resetButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+              const player = players.get(button.dataset.stage ?? '');
+              if (!player) return;
+              player.stop();
+              player.seek(0);
+            });
           });
-        });
+        } catch (error) {
+          status.textContent = 'Failed to load gallery runtime. Open Playground and rebuild web/dist if needed.';
+          document.querySelector('main')?.appendChild(status);
+          console.error(error);
+        }
       }
       void bootGallery();
     </script>
