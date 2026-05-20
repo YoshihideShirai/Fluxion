@@ -1,0 +1,187 @@
+{
+  "version": "0.1",
+  "width": 1280,
+  "height": 720,
+  "fps": 60,
+  "duration": 5.0,
+  "camera": {
+    "x": 980,
+    "y": 360,
+    "scale": 1.0,
+    "rotation": 0.0
+  },
+  "nodes": [
+    {
+      "id": "title",
+      "type": "text",
+      "transform": {
+        "x": 640,
+        "y": 90,
+        "scale": 1.0,
+        "rotation": 0.0,
+        "opacity": 1.0
+      },
+      "style": {
+        "fill": "#ffffff",
+        "stroke": "#111827",
+        "strokeWidth": 2
+      },
+      "geometry": {
+        "fontSize": 32
+      },
+      "children": [],
+      "text": "Special Camera Settings"
+    },
+    {
+      "id": "dot",
+      "type": "circle",
+      "transform": {
+        "x": 980,
+        "y": 360,
+        "scale": 1.0,
+        "rotation": 0.0,
+        "opacity": 1.0
+      },
+      "style": {
+        "fill": "#22d3ee",
+        "stroke": "#0891b2",
+        "strokeWidth": 3
+      },
+      "geometry": {
+        "r": 28
+      },
+      "children": []
+    }
+  ],
+  "timeline": [
+    {
+      "t": 0.0,
+      "op": "create",
+      "node": {
+        "id": "title",
+        "type": "text",
+        "transform": {
+          "x": 640,
+          "y": 90,
+          "scale": 1.0,
+          "rotation": 0.0,
+          "opacity": 1.0
+        },
+        "style": {
+          "fill": "#ffffff",
+          "stroke": "#111827",
+          "strokeWidth": 2
+        },
+        "geometry": {
+          "fontSize": 32
+        },
+        "children": [],
+        "text": "Special Camera Settings"
+      }
+    },
+    {
+      "t": 0.0,
+      "op": "create",
+      "node": {
+        "id": "dot",
+        "type": "circle",
+        "transform": {
+          "x": 260,
+          "y": 360,
+          "scale": 1.0,
+          "rotation": 0.0,
+          "opacity": 1.0
+        },
+        "style": {
+          "fill": "#22d3ee",
+          "stroke": "#0891b2",
+          "strokeWidth": 3
+        },
+        "geometry": {
+          "r": 28
+        },
+        "children": []
+      }
+    },
+    {
+      "t": 0.0,
+      "op": "animate",
+      "id": "camera",
+      "path": "camera.x",
+      "from": 0.0,
+      "to": 640,
+      "duration": 1.0,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 0.0,
+      "op": "animate",
+      "id": "camera",
+      "path": "camera.y",
+      "from": 0.0,
+      "to": 360,
+      "duration": 1.0,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 1.0,
+      "op": "animate",
+      "id": "camera",
+      "path": "camera.scale",
+      "from": 1.0,
+      "to": 0.65,
+      "duration": 1.0,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 2.0,
+      "op": "animate",
+      "id": "dot",
+      "path": "transform.x",
+      "from": 260,
+      "to": 980,
+      "duration": 1.0,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 2.0,
+      "op": "animate",
+      "id": "dot",
+      "path": "transform.y",
+      "from": 360,
+      "to": 360,
+      "duration": 1.0,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 3.0,
+      "op": "animate",
+      "id": "camera",
+      "path": "camera.x",
+      "from": 640,
+      "to": 980,
+      "duration": 1.0,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 3.0,
+      "op": "animate",
+      "id": "camera",
+      "path": "camera.y",
+      "from": 360,
+      "to": 360,
+      "duration": 1.0,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 4.0,
+      "op": "animate",
+      "id": "camera",
+      "path": "camera.scale",
+      "from": 0.65,
+      "to": 1.0,
+      "duration": 1.0,
+      "easing": "easeInOut"
+    }
+  ]
+}

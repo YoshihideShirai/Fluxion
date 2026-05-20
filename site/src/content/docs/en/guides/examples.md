@@ -39,6 +39,14 @@ PYTHONPATH=python python examples/animations_using_animate.py
 PYTHONPATH=python python examples/plotting_with_manim.py
 ```
 
+## Special Camera Settings demo
+
+`examples/special_camera_settings.py` reproduces the Manim Special Camera Settings style flow by animating camera position/scale changes around scene content and exports `examples/special_camera_settings.fluxion.json`.
+
+```bash
+PYTHONPATH=python python examples/special_camera_settings.py
+```
+
 ## Browser example
 
 The Playground includes a Text DSL editor. Paste snippets from [Text DSL reference](../../reference/text-dsl/) or [Playground tour](../playground/) and compile them directly in the browser.
