@@ -194,6 +194,7 @@ Syntax:
 ```text
 play <Primitive>(<args...>) [duration=<time>] [easing=<name>]
 play AnimationGroup(<Primitive>(...), <Primitive>(...), [lagRatio=<number>]) [duration=<time>] [easing=<name>]
+play LaggedStart(<Primitive>(...), <Primitive>(...), [lagRatio=<number>]) [duration=<time>] [easing=<name>]
 play Succession(<Primitive>(...), <Primitive>(...)) [duration=<time>] [easing=<name>]
 ```
 
@@ -207,6 +208,7 @@ Supported primitives include:
 - `TransformMatchingTex(source, target)`: matches expanded `math` token children by identical token text. Matched tokens expand to `Transform`, source-only tokens expand to `FadeOut`, and target-only tokens expand to `FadeIn`.
 - `ReplacementTransform(from, to)`: expands into a simultaneous `FadeOut(from)` and `FadeIn(to)`.
 - `AnimationGroup(<animations...>, lagRatio=0)`: expands child animations in parallel. `lagRatio` offsets child starts by a ratio of child duration, and the group is normalized to fit the outer `duration`.
+- `LaggedStart(<animations...>, lagRatio=0.05)`: alias of `AnimationGroup` tuned for staggered starts (Manim-like naming).
 - `Succession(<animations...>)`: expands child animations from left to right. Each child receives an equal share of the outer `duration`.
 
 ### TransformMatchingTex and token matching

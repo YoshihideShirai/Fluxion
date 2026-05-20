@@ -250,6 +250,7 @@ Syntax:
 ```text
 play <Primitive>(<args...>) [duration=<time>] [easing=<name>]
 play AnimationGroup(<Primitive>(...), <Primitive>(...), [lagRatio=<number>]) [duration=<time>] [easing=<name>]
+play LaggedStart(<Primitive>(...), <Primitive>(...), [lagRatio=<number>]) [duration=<time>] [easing=<name>]
 play Succession(<Primitive>(...), <Primitive>(...)) [duration=<time>] [easing=<name>]
 ```
 

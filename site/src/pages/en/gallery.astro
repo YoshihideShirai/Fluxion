@@ -3,78 +3,111 @@ const baseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_UR
 const playgroundUrl = `${baseUrl}playground/`;
 const demos = [
   {
-    title: 'Orbit + Morph',
-    description: '円運動から Transform でカードへ morph。カメラ移動と式連動も確認できます。',
+    title: 'Opening Manim Community Banner',
+    description: 'Inspired by Manim examples: staged title + subtitle reveal using LaggedStart.',
+    source: `scene width=960 height=540 fps=60
+rect bg w=960 h=540 at 480,270 fill="#030712"
+text title "Manim Community" at 480,210 size=56 fill="#93c5fd"
+text subtitle "Rendered with Fluxion DSL" at 480,290 size=32 fill="#e5e7eb"
+at 0s:
+  play LaggedStart(Write(title), FadeIn(subtitle), lagRatio=0.28) duration=1.8s easing=easeOut
+play FadeOut(subtitle) start=2.8s duration=0.8s easing=easeInOut`,
+  },
+  {
+    title: 'Orbital Dot',
+    description: 'Parametric movement using value trackers, expressions, and Transform.',
     source: `scene width=960 height=540 fps=60
 value theta = 0
 rect bg w=960 h=540 at 480,270 fill="#020617"
 path orbit d="M -140 0 C -140 -77 -77 -140 0 -140 C 77 -140 140 -77 140 0 C 140 77 77 140 0 140 C -77 140 -140 77 -140 0" at 480,280 fill="none" stroke="#1d4ed8" strokeWidth=4 opacity=0.55
 circle dot r=28 at 340,280 fill="#38bdf8" stroke="#0f172a" strokeWidth=4
 rect card w=180 h=92 at 740,280 fill="#f97316" stroke="#fed7aa" strokeWidth=4
-text title "Orbit to Card" at 480,90 size=40 fill="#e2e8f0"
 at 0s:
   hide card
-  play AnimationGroup(Write(title), FadeIn(orbit), FadeIn(dot), lagRatio=0.15) duration=1.2s easing=easeOut
+  play AnimationGroup(FadeIn(orbit), FadeIn(dot), lagRatio=0.15) duration=1.1s easing=easeOut
 animate theta from 0 to 6.283 duration=2.2s easing=linear
 set dot.x to expr="480 + 140 * cos(theta)"
 set dot.y to expr="280 + 140 * sin(theta)"
 play FadeIn(card) start=2.2s duration=0.5s easing=easeOut
-play Transform(dot, card) start=2.5s duration=1.0s easing=easeInOut`
+play Transform(dot, card) start=2.5s duration=1.0s easing=easeInOut`,
   },
   {
-    title: 'Math Token Transform',
-    description: 'TransformMatchingTex で数式のトークン変換をデモ。',
+    title: 'Transform Matching Tex',
+    description: 'Token-by-token math transform like Manim TransformMatchingTex.',
     source: `scene width=960 height=540 fps=60
 rect bg w=960 h=540 at 480,270 fill="#111827"
 math eq1 "x^2+y^2=r^2" at 480,220 size=58 fill="#bae6fd" renderer=katex expandTokens=true
 math eq2 "x^2+y^2=R^2" at 480,220 size=58 fill="#fde68a" renderer=katex expandTokens=true
-text label "Token-level equation morph" at 480,110 size=36 fill="#e5e7eb"
 at 0s:
   hide eq2
-  play FadeIn(label) duration=0.7s easing=easeOut
   play Write(eq1) duration=1.2s easing=easeOut
 wait 0.4s
 show eq2
-play TransformMatchingTex(eq1, eq2) duration=1.3s easing=easeInOut`
-  },
-  {
-    title: 'Staggered Group Animation',
-    description: 'AnimationGroup と lagRatio で複数オブジェクトの段階表示。',
-    source: `scene width=960 height=540 fps=60
-rect bg w=960 h=540 at 480,270 fill="#0b1020"
-text title "Staggered reveal" at 480,86 size=38 fill="#f8fafc"
-circle a r=28 at 240,300 fill="#38bdf8"
-circle b r=28 at 400,300 fill="#22c55e"
-circle c r=28 at 560,300 fill="#f59e0b"
-circle d r=28 at 720,300 fill="#f43f5e"
-group dots a b c d
-at 0s:
-  play Write(title) duration=0.8s easing=easeOut
-  play AnimationGroup(FadeIn(a), FadeIn(b), FadeIn(c), FadeIn(d), lagRatio=0.25) duration=1.8s easing=easeOut
-animate dots.y from 300 to 250 start=2.0s duration=0.8s easing=easeInOut
-animate dots.rotation from 0 to 360 start=2.0s duration=1.6s easing=linear`
+play TransformMatchingTex(eq1, eq2) duration=1.3s easing=easeInOut`,
   }
 ];
 const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent(source)}`;
 ---
 <!doctype html>
 <html lang="en">
-  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Fluxion Demo Gallery</title></head>
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Fluxion × Manim Gallery</title></head>
   <body>
-    <main style="max-width:1100px;margin:0 auto;padding:32px 20px;font-family:system-ui">
-      <h1>Fluxion Demo Gallery</h1>
-      <p>A demo gallery on GitHub Pages that showcases different animation patterns.</p>
-      <p><a href={baseUrl}>← Back to home</a></p>
-      <section style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:20px;">
-        {demos.map((demo) => (
-          <article style="border:1px solid #cbd5e1;border-radius:12px;padding:14px;">
-            <h2 style="font-size:1.1rem;">{demo.title}</h2>
-            <p>{demo.description}</p>
-            <pre style="max-height:220px;overflow:auto;background:#0f172a;color:#e2e8f0;padding:10px;border-radius:8px;font-size:12px;"><code>{demo.source}</code></pre>
-            <a href={encodeDsl(demo.source)}>Open in Playground</a>
+    <main style="max-width:1200px;margin:0 auto;padding:32px 20px;font-family:system-ui">
+      <h1>Fluxion × Manim Example Gallery</h1>
+      <p>GitHub Pages gallery inspired by Manim examples. You can read Fluxion DSL and play each animation inline.</p>
+      <p><a href={baseUrl}>← Back to home</a> / <a href={playgroundUrl}>Open Playground</a></p>
+      <section style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));margin-top:20px;">
+        {demos.map((demo, index) => (
+          <article style="border:1px solid #cbd5e1;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px;">
+            <h2 style="font-size:1.1rem;margin:0;">{demo.title}</h2>
+            <p style="margin:0;">{demo.description}</p>
+            <div class="gallery-stage" id={`gallery-stage-${index}`} style="height:220px;border-radius:8px;border:1px solid #334155;background:#020617;"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="play-inline" data-source={demo.source} data-stage={`gallery-stage-${index}`}>Play</button>
+              <button type="button" class="reset-inline" data-stage={`gallery-stage-${index}`}>Reset</button>
+              <a href={encodeDsl(demo.source)}>Open in Playground</a>
+            </div>
+            <pre style="max-height:260px;overflow:auto;background:#0f172a;color:#e2e8f0;padding:10px;border-radius:8px;font-size:12px;"><code>{demo.source}</code></pre>
           </article>
         ))}
       </section>
     </main>
+    <script is:inline define:vars={{ baseUrl }}>
+      const players = new Map();
+      async function bootGallery() {
+        const runtime = await import(`${baseUrl}playground/dist/index.js`);
+        const compiler = await import(`${baseUrl}playground/dist/dsl/compiler.js`);
+        const playButtons = [...document.querySelectorAll('.play-inline')];
+        const resetButtons = [...document.querySelectorAll('.reset-inline')];
+
+        const run = (stageId, dsl) => {
+          const stage = document.getElementById(stageId);
+          if (!stage) return;
+          const prev = players.get(stageId);
+          prev?.stop();
+          const doc = compiler.compileTextDsl(dsl);
+          const player = runtime.mountFluxionDocument(stage, doc);
+          player.play({ from: 0 });
+          players.set(stageId, player);
+        };
+
+        playButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            run(button.dataset.stage ?? '', button.dataset.source ?? '');
+          });
+          run(button.dataset.stage ?? '', button.dataset.source ?? '');
+        });
+
+        resetButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            const player = players.get(button.dataset.stage ?? '');
+            if (!player) return;
+            player.stop();
+            player.seek(0);
+          });
+        });
+      }
+      void bootGallery();
+    </script>
   </body>
 </html>

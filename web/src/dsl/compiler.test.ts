@@ -618,3 +618,15 @@ set dot.x to expr="missing + 1"`,
     /Invalid expression: Unknown identifier 'missing'/u,
   );
 });
+
+test("supports LaggedStart as AnimationGroup alias", () => {
+  const documentData = compileTextDsl(`circle a r=20 at 0,0 fill="#000"
+circle b r=20 at 60,0 fill="#fff"
+play LaggedStart(FadeIn(a), FadeIn(b), lagRatio=0.5) duration=2s easing=linear`);
+
+  const animated = documentData.timeline.filter((op) => op.op === "animate" && op.path === "transform.opacity");
+  assert.equal(animated.length >= 2, true);
+  const starts = animated.map((op) => op.t).sort((x, y) => x - y);
+  assert.equal(starts[0], 0);
+  assert.equal(starts.includes(2 / 3), true);
+});
