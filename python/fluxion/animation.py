@@ -100,6 +100,20 @@ class AnimationBuilder:
         self.target.set_style(**style)
         return [self._animation(f"style.{key}") for key in style]
 
+    def set_fill(self, color: str, opacity: float | None = None) -> List[Animation]:
+        self.target.set_fill(color, opacity)
+        paths = [self._animation("style.fill")]
+        if opacity is not None:
+            paths.append(self._animation("transform.opacity"))
+        return paths
+
+    def set_stroke(self, color: str, width: float | None = None) -> List[Animation]:
+        self.target.set_stroke(color, width)
+        paths = [self._animation("style.stroke")]
+        if width is not None:
+            paths.append(self._animation("style.strokeWidth"))
+        return paths
+
 
 def FadeIn(mobject: "Mobject", *, easing: str = "easeInOut") -> EffectAnimation:
     create_state = mobject.to_dict()

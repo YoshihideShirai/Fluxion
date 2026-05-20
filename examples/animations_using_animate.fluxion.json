@@ -1,0 +1,123 @@
+{
+  "version": "0.1",
+  "width": 1280,
+  "height": 720,
+  "fps": 60,
+  "duration": 4.0,
+  "camera": {
+    "x": 0.0,
+    "y": 0.0,
+    "scale": 1.0,
+    "rotation": 0.0
+  },
+  "nodes": [
+    {
+      "id": "square",
+      "type": "rect",
+      "transform": {
+        "x": 800,
+        "y": 360,
+        "scale": 0.5,
+        "rotation": 45,
+        "opacity": 0.6
+      },
+      "style": {
+        "fill": "#0ea5e9",
+        "stroke": "#111827",
+        "strokeWidth": 2
+      },
+      "geometry": {
+        "w": 120,
+        "h": 120
+      },
+      "children": []
+    }
+  ],
+  "timeline": [
+    {
+      "t": 0.0,
+      "op": "create",
+      "node": {
+        "id": "square",
+        "type": "rect",
+        "transform": {
+          "x": 640,
+          "y": 360,
+          "scale": 1.0,
+          "rotation": 0.0,
+          "opacity": 1.0
+        },
+        "style": {
+          "fill": "#ffffff",
+          "stroke": "#111827",
+          "strokeWidth": 2
+        },
+        "geometry": {
+          "w": 120,
+          "h": 120
+        },
+        "children": []
+      }
+    },
+    {
+      "t": 0.0,
+      "op": "animate",
+      "id": "square",
+      "path": "transform.x",
+      "from": 640,
+      "to": 800,
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 0.0,
+      "op": "animate",
+      "id": "square",
+      "path": "transform.y",
+      "from": 360,
+      "to": 360,
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 1.0,
+      "op": "animate",
+      "id": "square",
+      "path": "style.fill",
+      "from": "#ffffff",
+      "to": "#0ea5e9",
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 1.0,
+      "op": "animate",
+      "id": "square",
+      "path": "transform.opacity",
+      "from": 1.0,
+      "to": 0.6,
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 2.0,
+      "op": "animate",
+      "id": "square",
+      "path": "transform.scale",
+      "from": 1.0,
+      "to": 0.5,
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 3.0,
+      "op": "animate",
+      "id": "square",
+      "path": "transform.rotation",
+      "from": 0.0,
+      "to": 45,
+      "duration": 1,
+      "easing": "easeInOut"
+    }
+  ]
+}
