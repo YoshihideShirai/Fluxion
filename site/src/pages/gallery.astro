@@ -47,6 +47,71 @@ at 0s:
 wait 0.4s
 show eq2
 play TransformMatchingTex(eq1, eq2) duration=1.3s easing=easeInOut`,
+  },
+  {
+    title: 'Simple Circle (Python DSL sample)',
+    description: 'Text DSL version of examples/simple_circle.py: create one circle and fade it out.',
+    source: `scene width=960 height=540 fps=60
+circle circle r=80 at 480,270 fill="#38bdf8" stroke="#0f172a" strokeWidth=6
+at 0s:
+  play Create(circle) duration=1.0s easing=easeOut
+wait 0.6s
+play FadeOut(circle) duration=0.8s easing=easeInOut`,
+  },
+  {
+    title: 'Basic Concepts: Square to Circle',
+    description: 'Text DSL version of examples/basic_concepts_square_to_circle.py.',
+    source: `scene width=960 height=540 fps=60
+rect square w=170 h=170 at 480,270 fill="none" stroke="#38bdf8" strokeWidth=8
+circle circle r=85 at 480,270 fill="#38bdf8" stroke="#bae6fd" strokeWidth=6 opacity=0
+at 0s:
+  play Create(square) duration=1.0s easing=easeOut
+wait 0.3s
+show circle
+play Transform(square, circle) duration=1.1s easing=easeInOut
+wait 0.3s
+play FadeOut(square) duration=0.8s easing=easeInOut`,
+  },
+  {
+    title: 'Animations Using .animate',
+    description: 'Text DSL version of examples/animations_using_animate.py: shift, recolor, scale, rotate.',
+    source: `scene width=960 height=540 fps=60
+rect square w=160 h=160 at 300,270 fill="#38bdf8" stroke="#0f172a" strokeWidth=6
+play FadeIn(square) duration=0.8s easing=easeOut
+animate square.x from 300 to 640 duration=1.0s easing=easeInOut
+animate square.fill from "#38bdf8" to "#f97316" duration=0.9s easing=easeInOut
+animate square.scale from 1 to 1.9 duration=1.0s easing=easeOut
+animate square.rotation from 0 to 180 duration=1.0s easing=easeInOut`,
+  },
+  {
+    title: 'Plotting with Manim (Sin / Cos)',
+    description: 'Text DSL version of examples/plotting_with_manim.py with axes and two curves.',
+    source: `scene width=960 height=540 fps=60
+line xAxis x1=-380 y1=0 x2=380 y2=0 at 480,300 stroke="#94a3b8" strokeWidth=3
+line yAxis x1=0 y1=-180 x2=0 y2=180 at 480,300 stroke="#94a3b8" strokeWidth=3
+path sinCurve d="M 0 0 C 64 -52 128 -52 192 0 C 256 52 320 52 384 0 C 448 -52 512 -52 576 0 C 640 52 704 52 768 0" at 96,300 fill="none" stroke="#38bdf8" strokeWidth=5
+path cosCurve d="M 0 -48 C 64 -48 128 0 192 48 C 256 96 320 96 384 48 C 448 0 512 -48 576 -48 C 640 -48 704 0 768 48" at 96,300 fill="none" stroke="#f97316" strokeWidth=5
+text sinLabel "sin(x)" at 770,210 size=28 fill="#38bdf8"
+text cosLabel "cos(x)" at 770,250 size=28 fill="#f97316"
+at 0s:
+  play AnimationGroup(Create(xAxis), Create(yAxis), lagRatio=0.15) duration=0.9s easing=easeOut
+  play AnimationGroup(Create(sinCurve), Create(cosCurve), FadeIn(sinLabel), FadeIn(cosLabel), lagRatio=0.1) duration=1.8s easing=easeInOut`,
+  },
+  {
+    title: 'Special Camera Settings',
+    description: 'Text DSL version of examples/special_camera_settings.py with camera pan and zoom.',
+    source: `scene width=960 height=540 fps=60
+camera at 0,0 scale=1
+circle center r=70 at 480,270 fill="#38bdf8"
+circle left r=42 at 280,270 fill="#22c55e"
+circle right r=42 at 680,270 fill="#f97316"
+text label "Camera move demo" at 480,120 size=34 fill="#e2e8f0"
+at 0s:
+  play AnimationGroup(FadeIn(center), FadeIn(left), FadeIn(right), Write(label), lagRatio=0.15) duration=1.2s easing=easeOut
+animate camera.x from 0 to -120 duration=1.2s easing=easeInOut
+animate camera.scale from 1 to 1.35 duration=1.2s easing=easeInOut
+animate camera.x from -120 to 120 start=2.0s duration=1.2s easing=easeInOut
+animate camera.scale from 1.35 to 1.0 start=2.0s duration=1.2s easing=easeInOut`,
   }
 ];
 const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent(source)}`;
