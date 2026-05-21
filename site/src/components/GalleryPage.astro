@@ -1,0 +1,125 @@
+---
+import type { GalleryDemo } from '../data/galleryDemos';
+
+interface Props {
+  title: string;
+  intro: string;
+  locale: string;
+  demos: GalleryDemo[];
+}
+
+const { title, intro, locale, demos } = Astro.props;
+const baseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+const playgroundUrl = `${baseUrl}playground/`;
+const docsPath = locale === 'ja' ? 'docs/guides/examples/' : 'en/docs/guides/examples/';
+const backHomePath = locale === 'ja' ? baseUrl : `${baseUrl}en/`;
+const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent(source)}`;
+---
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
+    <script>
+      (window as any).MathJax = { tex: { inlineMath: [["\(", "\)"]] }, startup: { typeset: false } };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  </head>
+  <body>
+    <main style="max-width:1200px;margin:0 auto;padding:32px 20px;font-family:system-ui">
+      <h1>{title}</h1>
+      <p>{intro}</p>
+      <p><a href={`${baseUrl}${docsPath}`}>Manim coverage matrix（移植率）</a></p>
+      <p><a href={backHomePath}>← Back to home</a> / <a href={playgroundUrl}>Open Playground</a></p>
+      <section style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));margin-top:20px;">
+        {demos.map((demo, index) => (
+          <article style="border:1px solid #cbd5e1;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px;">
+            <h2 style="font-size:1.1rem;margin:0;">{demo.title}</h2>
+            <p style="margin:0;">{demo.description}</p>
+            <p style="margin:0;font-size:12px;">Category: {demo.category} / Status: <strong>{demo.status}</strong></p>
+            <p style="margin:0;font-size:12px;"><a href={demo.source_manim_url} target="_blank" rel="noreferrer">Manim source</a></p>
+            {(demo.missing_instructions || demo.blocker_reason) && <p style="margin:0;font-size:12px;color:#b45309;">{demo.missing_instructions ?? demo.blocker_reason}</p>}
+            <div class="gallery-stage" id={`gallery-stage-${index}`} style="height:220px;border-radius:8px;border:1px solid #334155;background:#020617;"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="play-inline" data-source={demo.source} data-stage={`gallery-stage-${index}`}>Play</button>
+              <button type="button" class="reset-inline" data-stage={`gallery-stage-${index}`}>Reset</button>
+              <a href={encodeDsl(demo.source)}>Open in Playground</a>
+            </div>
+            <pre style="max-height:260px;overflow:auto;background:#0f172a;color:#e2e8f0;padding:10px;border-radius:8px;font-size:12px;"><code>{demo.source}</code></pre>
+          </article>
+        ))}
+      </section>
+    </main>
+    <script is:inline define:vars={{ baseUrl }}>
+      const players = new Map();
+      const status = document.createElement('p');
+      status.style.color = '#dc2626';
+      status.style.marginTop = '12px';
+
+      const runtimeCandidates = [
+        `${baseUrl}playground/dist/index.js`,
+        `${baseUrl}playground/dist/index.mjs`,
+      ];
+      const compilerCandidates = [
+        `${baseUrl}playground/dist/dsl/compiler.js`,
+        `${baseUrl}playground/dist/dsl/compiler.mjs`,
+      ];
+
+      async function importFirst(candidates) {
+        let lastError;
+        for (const url of candidates) {
+          try {
+            return await import(url);
+          } catch (error) {
+            lastError = error;
+          }
+        }
+        throw lastError ?? new Error(`Failed to import ${candidates[0]}`);
+      }
+
+      async function bootGallery() {
+        try {
+          const runtime = await importFirst(runtimeCandidates);
+          const compiler = await importFirst(compilerCandidates);
+          const playButtons = [...document.querySelectorAll('.play-inline')];
+          const resetButtons = [...document.querySelectorAll('.reset-inline')];
+
+          const run = (stageId, dsl) => {
+            const stage = document.getElementById(stageId);
+            if (!stage) return;
+            const prev = players.get(stageId);
+            prev?.stop();
+            const doc = compiler.compileTextDsl(dsl);
+            const player = runtime.mountFluxionDocument(stage, doc);
+            player.play({ from: 0 });
+            players.set(stageId, player);
+          };
+
+          playButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+              run(button.dataset.stage ?? '', button.dataset.source ?? '');
+            });
+            run(button.dataset.stage ?? '', button.dataset.source ?? '');
+          });
+
+          resetButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+              const player = players.get(button.dataset.stage ?? '');
+              if (!player) return;
+              player.stop();
+              player.seek(0);
+            });
+          });
+        } catch (error) {
+          status.textContent = 'Failed to load gallery runtime. Open Playground and rebuild web/dist if needed.';
+          document.querySelector('main')?.appendChild(status);
+          console.error(error);
+        }
+      }
+      void bootGallery();
+    </script>
+  </body>
+</html>
