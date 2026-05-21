@@ -128,6 +128,20 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     source: 'scene width=640 height=360 fps=60\nrect card w=220 h=120 at 320,180 fill="#f97316" opacity=0.85',
   },
   {
+    key: 'triangle',
+    command: 'triangle',
+    description: {
+      ja: '幅と高さを指定して三角形を描きます。',
+      en: 'Draw a triangle with width and height.',
+    },
+    referencePurpose: {
+      ja: 'Triangle node declaration',
+      en: 'Triangle node declaration',
+    },
+    minimalExample: 'triangle t1 w=120 h=104 at 640,360 fill="#ef4444"',
+    source: 'scene width=640 height=360 fps=60\ntriangle tri w=220 h=190 at 320,180 fill="#ef4444" stroke="#7f1d1d" strokeWidth=6',
+  },
+  {
     key: 'line',
     command: 'line',
     description: {
