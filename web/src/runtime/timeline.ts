@@ -6,6 +6,7 @@ import type {
   SetExpressionOperation,
   SetOperation,
   SetValueOperation,
+  BindExpressionOperation,
   TimelineOperation,
   ValueTracker,
   Camera,
@@ -19,7 +20,8 @@ type InstantOperation =
   | EffectOperation
   | SetOperation
   | SetExpressionOperation
-  | SetValueOperation;
+  | SetValueOperation
+  | BindExpressionOperation;
 
 const OPERATION_PRIORITY: Record<TimelineOperation["op"], number> = {
   create: 0,
@@ -29,7 +31,8 @@ const OPERATION_PRIORITY: Record<TimelineOperation["op"], number> = {
   animateValue: 4,
   animate: 5,
   setExpr: 6,
-  delete: 7,
+  bindExpr: 7,
+  delete: 8,
 };
 
 export function applyInstantOp(
@@ -50,8 +53,18 @@ export function applyInstantOp(
     if (isCameraTarget(op.id, op.path)) setCameraPath(camera, op.path, value);
     else graph.setPath(op.id, op.path, value);
   }
+  if (op.op === "bindExpr") {
+    const value = evaluateExpression(op.expr, trackerValues);
+    if (isCameraTarget(op.id, op.path)) setCameraPath(camera, op.path, value);
+    else graph.setPath(op.id, op.path, value);
+  }
   // Effect operations are semantic hints for future renderers; fallback
   // visibility changes are represented by ordinary animate operations.
+}
+
+export interface TickPhaseResult {
+  trackerValues: Record<string, number>;
+  postAnimationUpdaters: InstantOperation[];
 }
 
 export function applyTimelineAt(
@@ -60,11 +73,12 @@ export function applyTimelineAt(
   seconds: number,
   values: ValueTracker[] = [],
   camera?: Camera,
-): Record<string, number> {
+): TickPhaseResult {
   const trackerValues: Record<string, number> = Object.fromEntries(
     values.map((value) => [value.id, value.initial]),
   );
 
+  const postAnimationUpdaters: InstantOperation[] = [];
   for (const op of orderedTimeline(timeline)) {
     if (op.op === "effect") {
       continue;
@@ -82,11 +96,13 @@ export function applyTimelineAt(
       const value = interpolate(op.from, op.to, progress);
       if (typeof value === "number") trackerValues[op.id] = value;
     } else if (op.t <= seconds) {
-      applyInstantOp(graph, op, trackerValues, camera);
+      if (op.op === "bindExpr") postAnimationUpdaters.push(op);
+      else applyInstantOp(graph, op, trackerValues, camera);
     }
   }
 
-  return trackerValues;
+  for (const updater of postAnimationUpdaters) applyInstantOp(graph, updater, trackerValues, camera);
+  return { trackerValues, postAnimationUpdaters };
 }
 
 function orderedTimeline(timeline: TimelineOperation[]): TimelineOperation[] {

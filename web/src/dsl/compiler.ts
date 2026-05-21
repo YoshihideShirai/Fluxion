@@ -7,7 +7,7 @@ import type {
   FluxionDocument,
   Camera,
 } from "../types.js";
-import { ExpressionError, validateExpression } from "../runtime/expression.js";
+import { ExpressionError, validateExpression, collectExpressionDependencies } from "../runtime/expression.js";
 
 export class DslCompileError extends Error {
   readonly line: number;
@@ -107,6 +107,11 @@ export function compileTextDsl(source: string): FluxionDocument {
 
     if (keyword === "set") {
       parseSet(tokens, state, lineNumber, statementTime(state));
+      return;
+    }
+
+    if (keyword === "always") {
+      parseAlways(tokens, state, lineNumber, statementTime(state));
       return;
     }
 
@@ -405,6 +410,32 @@ function parseSet(
     id,
     path: isCameraTarget ? cameraPropertyPath(property) : propertyPath(property),
     value: parseValue(tokens[3], lineNumber),
+  });
+}
+
+
+function parseAlways(
+  tokens: string[],
+  state: CompileState,
+  lineNumber: number,
+  time: number,
+): void {
+  const target = tokens[1];
+  if (!target) throw new DslCompileError("Expected target after always.", lineNumber);
+  const [id, property] = target.split(".");
+  if (!id || !property) throw new DslCompileError("Expected always target like 'c1.x'.", lineNumber);
+  const isCameraTarget = id === "camera" && isCameraProperty(property);
+  if (!isCameraTarget && !state.nodes.has(id)) throw new DslCompileError(`Unknown node '${id}'.`, lineNumber);
+  if (tokens[2] !== "=" || tokens[3] === undefined) throw new DslCompileError("Expected always syntax: always id.property = expr=...", lineNumber);
+  const expression = readExpressionAssignment(tokens.slice(3).join(" "), state, lineNumber);
+  if (expression === null) throw new DslCompileError("always requires expr=...", lineNumber);
+  state.timeline.push({
+    t: time,
+    op: "bindExpr",
+    id,
+    path: isCameraTarget ? cameraPropertyPath(property) : propertyPath(property),
+    expr: expression,
+    deps: collectExpressionDependencies(expression).filter((name) => state.values.has(name)),
   });
 }
 
