@@ -5,7 +5,7 @@ source_manim_url: https://docs.manim.community/en/stable/examples.html#braceanno
 source_example_path: examples/gallery/brace_annotation.fluxion.txt
 porting_strategy: visual_approximation
 category: Basic Concepts
-status: partial
+status: ported
 order: 13
 ---
 scene width=960 height=540 fps=60
