@@ -57,3 +57,12 @@ The Playground includes a Text DSL editor. Paste snippets from [Text DSL referen
 2. Modify `examples/simple_circle.py` with the [Python DSL](../python-dsl/) concepts.
 3. Recreate a similar animation in [Text DSL reference](../../reference/text-dsl/).
 4. Compare both outputs with [Fluxion JSON / Scene Graph](../../reference/ir/) and [Timeline](../../reference/timeline/).
+
+## Manim coverage matrix（移植率）
+
+See the live matrix in [Gallery](/gallery/) (English page: [/en/gallery/](/en/gallery/)).
+
+Status meanings:
+- `ported`: fully runnable in Fluxion DSL.
+- `partial`: partially ported; some instructions are missing.
+- `blocker`: blocked by missing primitives/runtime capability.
