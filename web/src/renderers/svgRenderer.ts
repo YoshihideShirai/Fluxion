@@ -82,6 +82,15 @@ export class SvgRenderer {
       el.setAttribute("height", String(height));
       return el;
     }
+    if (node.type === "triangle") {
+      const el = document.createElementNS(SVG_NS, "path");
+      const w = Number(node.geometry.w ?? 100);
+      const h = Number(node.geometry.h ?? 90);
+      const halfW = w / 2;
+      const halfH = h / 2;
+      el.setAttribute("d", `M 0 ${-halfH} L ${halfW} ${halfH} L ${-halfW} ${halfH} Z`);
+      return el;
+    }
     if (node.type === "line") {
       const el = document.createElementNS(SVG_NS, "line");
       for (const key of ["x1", "y1", "x2", "y2"] as const) el.setAttribute(key, String(node.geometry[key]));

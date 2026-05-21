@@ -128,6 +128,7 @@ export function compileTextDsl(source: string): FluxionDocument {
     if (
       keyword === "circle" ||
       keyword === "rect" ||
+      keyword === "triangle" ||
       keyword === "line" ||
       keyword === "path" ||
       keyword === "text" ||
@@ -1282,6 +1283,7 @@ function defaultCamera(): Camera {
 function defaultGeometry(type: NodeType): Record<string, number | string> {
   if (type === "circle") return { r: 40 };
   if (type === "rect") return { w: 100, h: 80 };
+  if (type === "triangle") return { w: 100, h: 90 };
   if (type === "line") return { x1: 0, y1: 0, x2: 100, y2: 0 };
   if (type === "path") return { d: "" };
   if (type === "text") return { fontSize: 32 };
@@ -1554,6 +1556,7 @@ function isNodeType(value: string | undefined): value is NodeType {
     value === "group" ||
     value === "circle" ||
     value === "rect" ||
+    value === "triangle" ||
     value === "line" ||
     value === "path" ||
     value === "text" ||
