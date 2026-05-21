@@ -1,6 +1,6 @@
 ---
 title: Simple Circle
-description: Text DSL version of examples/simple_circle.py: create one circle and fade it out.
+description: "Text DSL version of examples/simple_circle.py: create one circle and fade it out."
 source_manim_url: https://docs.manim.community/en/stable/examples.html#simplecircle
 source_example_path: examples/simple_circle.py
 porting_strategy: faithful
