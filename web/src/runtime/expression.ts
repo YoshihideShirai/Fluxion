@@ -179,6 +179,16 @@ class Parser {
   }
 }
 
+
+
+export function collectExpressionDependencies(source: string): string[] {
+  const dependencies = new Set<string>();
+  for (const token of tokenizeExpression(source)) {
+    if (token.type === "identifier" && !(token.value in FUNCTIONS) && !(token.value in CONSTANTS)) dependencies.add(token.value);
+  }
+  return [...dependencies];
+}
+
 function tokenizeExpression(source: string): Token[] {
   const tokens: Token[] = [];
   for (let index = 0; index < source.length;) {

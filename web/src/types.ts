@@ -66,6 +66,14 @@ export interface SetExpressionOperation extends BaseOperation {
   expr: string;
 }
 
+export interface BindExpressionOperation extends BaseOperation {
+  op: "bindExpr";
+  id: string;
+  path: string;
+  expr: string;
+  deps?: string[];
+}
+
 export interface SetValueOperation extends BaseOperation {
   op: "setValue";
   id: string;
@@ -104,6 +112,7 @@ export type TimelineOperation =
   | DeleteOperation
   | SetOperation
   | SetExpressionOperation
+  | BindExpressionOperation
   | SetValueOperation
   | AnimateOperation
   | AnimateValueOperation
@@ -130,7 +139,9 @@ export type DiffOperation =
   | Omit<CreateOperation, "t">
   | Omit<DeleteOperation, "t">
   | Omit<SetOperation, "t">
-  | Omit<SetExpressionOperation, "t">;
+  | Omit<SetExpressionOperation, "t">
+  | Omit<BindExpressionOperation, "t">;
+  
 
 export interface DiffStream {
   seq?: number;

@@ -228,8 +228,19 @@ test("evaluates value tracker animations before dependent property expressions",
     { t: 0, op: "setExpr", id: "c1", path: "transform.y", expr: "240 + 100 * sin(theta)" },
   ];
 
-  const trackerValues = applyTimelineAt(graph, timeline, 1, values);
+  const trackerValues = applyTimelineAt(graph, timeline, 1, values).trackerValues;
   assert.equal(Math.round(graph.get("c1")?.transform.x ?? 0), 320);
   assert.equal(Math.round(graph.get("c1")?.transform.y ?? 0), 340);
   assert.equal(trackerValues.theta, Math.PI / 2);
+});
+
+
+test("runs bindExpr after animateValue on each tick", () => {
+  const graph = new SceneGraph([node]);
+  const values = [{ id: "phase", initial: 0 }];
+  applyTimelineAt(graph, [
+    { t: 0, op: "animateValue", id: "phase", from: 0, to: 10, duration: 2, easing: "linear" },
+    { t: 0, op: "bindExpr", id: "c1", path: "transform.x", expr: "phase * 2" },
+  ], 1, values);
+  assert.equal(graph.get("c1")?.transform.x, 10);
 });

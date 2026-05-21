@@ -647,3 +647,15 @@ play LaggedStart(FadeIn(a), FadeIn(b), lagRatio=0.5) duration=2s easing=linear`)
   assert.equal(starts[0], 0);
   assert.equal(starts.includes(2 / 3), true);
 });
+
+test("compiles always updater bindings", () => {
+  const documentData = compileTextDsl(`value t = 0
+circle dot r=10 at 0,0
+always dot.x = expr=100*cos(t)`);
+
+  const bind = documentData.timeline.find((op) => op.op === "bindExpr");
+  assert.equal(bind?.op, "bindExpr");
+  if (bind?.op !== "bindExpr") throw new Error("Expected bindExpr operation");
+  assert.equal(bind.path, "transform.x");
+  assert.equal(bind.expr, "100*cos(t)");
+});
