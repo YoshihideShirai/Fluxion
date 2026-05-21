@@ -2,6 +2,8 @@
 title: Transform Matching Tex
 description: Token-by-token math transform like Manim TransformMatchingTex.
 source_manim_url: https://docs.manim.community/en/stable/examples.html#textransformexample
+source_example_path: examples/gallery/transform_matching_tex.fluxion.txt
+porting_strategy: visual_approximation
 category: Advanced Projects
 status: ported
 order: 50

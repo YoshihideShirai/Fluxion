@@ -6,6 +6,8 @@ export type GalleryDemo = {
   category: string;
   status: string;
   source_manim_url: string;
+  source_example_path: string;
+  porting_strategy: 'faithful' | 'visual_approximation' | 'omitted_parts';
   missing_instructions?: string;
   blocker_reason?: string;
   source: string;

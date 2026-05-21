@@ -2,6 +2,8 @@
 title: Basic Concepts: Square to Circle
 description: Text DSL version of examples/basic_concepts_square_to_circle.py.
 source_manim_url: https://docs.manim.community/en/stable/examples.html#squaretocircle
+source_example_path: examples/basic_concepts_square_to_circle.py
+porting_strategy: faithful
 category: Basic Concepts
 status: ported
 order: 11
