@@ -133,6 +133,7 @@ export function compileTextDsl(source: string): FluxionDocument {
       keyword === "path" ||
       keyword === "text" ||
       keyword === "math" ||
+      keyword === "brace" ||
       keyword === "group"
     ) {
       parseNode(tokens, state, lineNumber);
@@ -311,6 +312,13 @@ function parseNode(
     )
   ) {
     expandMathTokens(node, lineNumber);
+  }
+  if (type === "brace") {
+    const target = String(node.geometry.target ?? "").trim();
+    if (!target)
+      throw new DslCompileError("Brace requires target=<nodeId>.", lineNumber);
+    if (!state.nodes.has(target))
+      throw new DslCompileError(`Brace target '${target}' could not be resolved.`, lineNumber);
   }
 
   state.nodes.set(id, node);
@@ -1288,6 +1296,8 @@ function defaultGeometry(type: NodeType): Record<string, number | string> {
   if (type === "path") return { d: "" };
   if (type === "text") return { fontSize: 32 };
   if (type === "math") return { fontSize: 36 };
+  if (type === "brace")
+    return { target: "", direction: "down", buff: 8, label: "", labelSize: 24, labelColor: "#ffffff" };
   return {};
 }
 
@@ -1350,6 +1360,32 @@ function applyNodeOption(
     node.geometry.fontSize = parseNumber(value, lineNumber);
     return;
   }
+  if (key === "target") {
+    node.geometry.target = value;
+    return;
+  }
+  if (key === "direction") {
+    if (!["up", "down", "left", "right"].includes(value))
+      throw new DslCompileError("Brace direction must be one of up/down/left/right.", lineNumber);
+    node.geometry.direction = value;
+    return;
+  }
+  if (key === "buff") {
+    node.geometry.buff = parseNumber(value, lineNumber);
+    return;
+  }
+  if (key === "label") {
+    node.geometry.label = value;
+    return;
+  }
+  if (key === "labelSize") {
+    node.geometry.labelSize = parseNumber(value, lineNumber);
+    return;
+  }
+  if (key === "labelColor") {
+    node.geometry.labelColor = value;
+    return;
+  }
 
   if (["r", "w", "h", "x1", "y1", "x2", "y2"].includes(key)) {
     node.geometry[key] = parseNumber(value, lineNumber);
@@ -1379,7 +1415,7 @@ function propertyPath(property: string): string {
   if (["fill", "stroke", "strokeWidth"].includes(property))
     return `style.${property}`;
   if (
-    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d"].includes(property)
+    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "target", "direction", "buff", "label", "labelSize", "labelColor"].includes(property)
   )
     return `geometry.${property}`;
   if (property === "renderer") return "renderer";
@@ -1560,7 +1596,8 @@ function isNodeType(value: string | undefined): value is NodeType {
     value === "line" ||
     value === "path" ||
     value === "text" ||
-    value === "math"
+    value === "math" ||
+    value === "brace"
   );
 }
 

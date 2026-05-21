@@ -28,6 +28,10 @@ class Scene:
 
     def add(self, *mobjects: Mobject) -> None:
         for mobject in mobjects:
+            if mobject.node.type == "brace":
+                target = str(mobject.node.geometry.get("target", ""))
+                if target and all(existing.id != target for existing in self.nodes):
+                    raise ValueError(f"Brace target '{target}' is not in the scene. Add the target mobject before the brace.")
             if mobject not in self.nodes:
                 self.nodes.append(mobject)
                 self.timeline.append(create_op(self.time, mobject))
