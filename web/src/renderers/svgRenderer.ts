@@ -71,12 +71,26 @@ export class SvgRenderer {
 
   private createElement(node: SceneNode): SVGElement {
     if (node.type === "brace") {
+      const group = document.createElementNS(SVG_NS, "g");
       const el = document.createElementNS(SVG_NS, "path");
       const d = this.buildBracePath(node);
       el.setAttribute("d", d.path);
-      el.dataset.labelAnchorX = String(d.anchor.x);
-      el.dataset.labelAnchorY = String(d.anchor.y);
-      return el;
+      group.append(el);
+
+      const label = String(node.geometry.label ?? "").trim();
+      if (label) {
+        const text = document.createElementNS(SVG_NS, "text");
+        text.textContent = label;
+        text.setAttribute("x", String(d.anchor.x));
+        text.setAttribute("y", String(d.anchor.y));
+        text.setAttribute("font-size", String(Number(node.geometry.labelSize ?? 24)));
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("dominant-baseline", "middle");
+        text.setAttribute("fill", String(node.geometry.labelColor ?? "#ffffff"));
+        text.setAttribute("stroke", "none");
+        group.append(text);
+      }
+      return group;
     }
     if (node.type === "circle") {
       const el = document.createElementNS(SVG_NS, "circle");
