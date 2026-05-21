@@ -48,6 +48,22 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
               <button type="button" class="reset-inline" data-stage={`gallery-stage-${index}`}>Reset</button>
               <a href={encodeDsl(demo.source)}>Open in Playground</a>
             </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <label style="font-size:12px;" for={`gallery-seek-${index}`} data-i18n-seek-label>{locale === 'ja' ? 'シーク' : 'Seek'}</label>
+              <input
+                id={`gallery-seek-${index}`}
+                type="range"
+                min="0"
+                max="0"
+                step="0.01"
+                value="0"
+                class="seek-inline"
+                data-stage={`gallery-stage-${index}`}
+                style="flex:1;min-width:180px;"
+                aria-label={locale === 'ja' ? '再生位置' : 'Playback position'}
+              />
+              <span style="font-size:12px;font-variant-numeric:tabular-nums;" class="seek-time" data-stage={`gallery-stage-${index}`}>0:00 / 0:00</span>
+            </div>
             <pre style="max-height:260px;overflow:auto;background:#0f172a;color:#e2e8f0;padding:10px;border-radius:8px;font-size:12px;"><code>{demo.source}</code></pre>
           </article>
         ))}
@@ -55,6 +71,7 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
     </main>
     <script is:inline define:vars={{ baseUrl }}>
       const players = new Map();
+      const syncHandles = new Map();
       const status = document.createElement('p');
       status.style.color = '#dc2626';
       status.style.marginTop = '12px';
@@ -86,16 +103,59 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
           const compiler = await importFirst(compilerCandidates);
           const playButtons = [...document.querySelectorAll('.play-inline')];
           const resetButtons = [...document.querySelectorAll('.reset-inline')];
+          const seekInputs = [...document.querySelectorAll('.seek-inline')];
+          const seekTimes = new Map(
+            [...document.querySelectorAll('.seek-time')].map((node) => [node.dataset.stage ?? '', node]),
+          );
+
+          const formatSeconds = (value) => {
+            const safe = Number.isFinite(value) ? Math.max(0, value) : 0;
+            const minutes = Math.floor(safe / 60);
+            const seconds = Math.floor(safe % 60);
+            return `${minutes}:${String(seconds).padStart(2, '0')}`;
+          };
+
+          const updateTimelineUi = (stageId, currentSeconds = 0, durationSeconds = 0) => {
+            const input = seekInputs.find((item) => item.dataset.stage === stageId);
+            const label = seekTimes.get(stageId);
+            const max = Math.max(0, Number.isFinite(durationSeconds) ? durationSeconds : 0);
+            const next = Math.max(0, Math.min(max, Number.isFinite(currentSeconds) ? currentSeconds : 0));
+            if (input) {
+              input.max = String(max);
+              input.value = String(next);
+            }
+            if (label) {
+              label.textContent = `${formatSeconds(next)} / ${formatSeconds(max)}`;
+            }
+          };
+
+          const stopSync = (stageId) => {
+            const handle = syncHandles.get(stageId);
+            if (handle != null) cancelAnimationFrame(handle);
+            syncHandles.delete(stageId);
+          };
+
+          const startSync = (stageId, player) => {
+            stopSync(stageId);
+            const tick = () => {
+              updateTimelineUi(stageId, player.currentSeconds, player.durationSeconds);
+              syncHandles.set(stageId, requestAnimationFrame(tick));
+            };
+            syncHandles.set(stageId, requestAnimationFrame(tick));
+          };
 
           const run = (stageId, dsl) => {
             const stage = document.getElementById(stageId);
             if (!stage) return;
             const prev = players.get(stageId);
             prev?.stop();
+            stopSync(stageId);
             const doc = compiler.compileTextDsl(dsl);
             const player = runtime.mountFluxionDocument(stage, doc);
             player.play({ from: 0 });
             players.set(stageId, player);
+            updateTimelineUi(stageId, 0, player.durationSeconds);
+            startSync(stageId, player);
           };
 
           playButtons.forEach((button) => {
@@ -107,10 +167,23 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
 
           resetButtons.forEach((button) => {
             button.addEventListener('click', () => {
-              const player = players.get(button.dataset.stage ?? '');
+              const stageId = button.dataset.stage ?? '';
+              const player = players.get(stageId);
               if (!player) return;
               player.stop();
               player.seek(0);
+              updateTimelineUi(stageId, 0, player.durationSeconds);
+            });
+          });
+
+          seekInputs.forEach((input) => {
+            input.addEventListener('input', () => {
+              const stageId = input.dataset.stage ?? '';
+              const player = players.get(stageId);
+              if (!player) return;
+              const next = Number(input.value);
+              player.seek(next);
+              updateTimelineUi(stageId, next, player.durationSeconds);
             });
           });
         } catch (error) {
