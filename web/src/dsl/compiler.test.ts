@@ -144,6 +144,23 @@ at 1s:
   );
 });
 
+
+
+test("compiles triangle nodes with width and height geometry", () => {
+  const documentData = compileTextDsl(
+    `triangle tri w=120 h=96 at 360,220 fill="#ef4444" stroke="#111827" strokeWidth=3`,
+  );
+
+  const triangle = documentData.nodes[0];
+  assert.equal(triangle?.type, "triangle");
+  assert.equal(triangle?.geometry.w, 120);
+  assert.equal(triangle?.geometry.h, 96);
+  assert.equal(triangle?.transform.x, 360);
+  assert.equal(triangle?.transform.y, 220);
+  assert.equal(triangle?.style.fill, "#ef4444");
+  assert.equal(triangle?.style.stroke, "#111827");
+});
+
 test("compiles path nodes with SVG d geometry", () => {
   const documentData = compileTextDsl(
     `path curve d="M 0 0 C 20 40 40 40 60 0" at 100,120 fill="none" stroke="#38bdf8" strokeWidth=4`,

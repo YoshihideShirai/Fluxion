@@ -15,6 +15,7 @@ Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション
 | `scene` | Canvas size and fps | `scene width=1280 height=720 fps=60` |
 | `circle` | Circle node declaration | `circle dot r=34 at 260,420 fill="#38bdf8"` |
 | `rect` | Rectangle node declaration | `rect target w=120 h=88 at 820,420 fill="#f97316"` |
+| `triangle` | Triangle node declaration | `triangle t1 w=120 h=104 at 640,360 fill="#ef4444"` |
 | `line` | Line node declaration | `line axis x1=-50 y1=0 x2=50 y2=0 at 640,520 stroke="#e2e8f0"` |
 | `path` | Path node declaration | `path curve d="M 0 0 C 40 80 80 80 120 0" at 640,420 fill="none" stroke="#38bdf8"` |
 | `text` | Text label node declaration | `text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"` |
@@ -104,6 +105,7 @@ Supported options:
 ```text
 circle c1 r=40 at 220,360 fill="#38bdf8"
 rect box w=120 h=80 at 640,360 fill="#f97316"
+triangle tri w=120 h=104 at 760,360 fill="#ef4444"
 line axis x1=-50 y1=0 x2=50 y2=0 at 640,520 stroke="#e2e8f0" strokeWidth=2
 path curve d="M 0 0 C 40 80 80 80 120 0" at 640,420 fill="none" stroke="#38bdf8"
 text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"
@@ -115,6 +117,7 @@ Supported node types:
 
 - `circle <id>`
 - `rect <id>`
+- `triangle <id>`
 - `line <id>`
 - `path <id> d="<svg-path-data>"`
 - `text <id> "<text>"`
