@@ -6,8 +6,7 @@ source_example_path: examples/gallery/sine_curve_unit_circle.fluxion.txt
 porting_strategy: omitted_parts
 category: Advanced Projects
 status: partial
-missing_instructions:
-  - Full always_redraw parity for procedural path topology updates is still limited.
+missing_instructions: "Full always_redraw parity for procedural path topology updates is still limited."
 order: 52
 ---
 scene width=960 height=540 fps=60
