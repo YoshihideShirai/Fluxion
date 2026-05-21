@@ -3,7 +3,7 @@ title: BraceAnnotation
 description: Distance braces and labels between two dots.
 source_manim_url: https://docs.manim.community/en/stable/examples.html#braceannotation
 source_example_path: examples/gallery/brace_annotation.fluxion.txt
-porting_strategy: direct_translation
+porting_strategy: visual_approximation
 category: Basic Concepts
 status: partial
 order: 13
