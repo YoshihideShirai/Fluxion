@@ -2,6 +2,8 @@
 title: Orbital Dot
 description: Parametric movement using value trackers, expressions, and Transform.
 source_manim_url: https://docs.manim.community/en/stable/examples.html#pointmovingonshapes
+source_example_path: examples/gallery/orbital_dot.fluxion.txt
+porting_strategy: visual_approximation
 category: Animations
 status: ported
 order: 21

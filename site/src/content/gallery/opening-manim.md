@@ -2,6 +2,8 @@
 title: Opening Manim Community Banner
 description: Inspired by OpeningManim; staged title + subtitle reveal using LaggedStart.
 source_manim_url: https://docs.manim.community/en/stable/examples.html#openingmanim
+source_example_path: examples/gallery/opening_manim.fluxion.txt
+porting_strategy: visual_approximation
 category: Advanced Projects
 status: ported
 order: 51
