@@ -36,6 +36,7 @@ export class SvgRenderer {
   private readonly svg: SVGSVGElement;
   private readonly width: number;
   private readonly height: number;
+  private readonly nodeById = new Map<string, SceneNode>();
 
   constructor(container: Element, width = 1280, height = 720) {
     this.width = width;
@@ -51,6 +52,8 @@ export class SvgRenderer {
   }
 
   render(nodes: SceneNode[], camera: Camera = DEFAULT_CAMERA): void {
+    this.nodeById.clear();
+    for (const node of nodes) this.indexNode(node);
     const root = document.createElementNS(SVG_NS, "g");
     this.applyCameraTransform(root, camera);
     root.replaceChildren(...nodes.map((node) => this.renderNode(node)));
@@ -67,6 +70,14 @@ export class SvgRenderer {
   }
 
   private createElement(node: SceneNode): SVGElement {
+    if (node.type === "brace") {
+      const el = document.createElementNS(SVG_NS, "path");
+      const d = this.buildBracePath(node);
+      el.setAttribute("d", d.path);
+      el.dataset.labelAnchorX = String(d.anchor.x);
+      el.dataset.labelAnchorY = String(d.anchor.y);
+      return el;
+    }
     if (node.type === "circle") {
       const el = document.createElementNS(SVG_NS, "circle");
       el.setAttribute("r", String(node.geometry.r));
@@ -115,6 +126,47 @@ export class SvgRenderer {
       return this.createMathElement(node);
     }
     return document.createElementNS(SVG_NS, "g");
+  }
+
+  private indexNode(node: SceneNode): void {
+    this.nodeById.set(node.id, node);
+    for (const child of node.children ?? []) this.indexNode(child);
+  }
+
+  private buildBracePath(node: SceneNode): { path: string; anchor: { x: number; y: number } } {
+    const targetId = String(node.geometry.target ?? "");
+    const target = this.nodeById.get(targetId);
+    if (!target) return { path: "M 0 0", anchor: { x: 0, y: 0 } };
+    const b = this.getApproxBounds(target);
+    const buff = Number(node.geometry.buff ?? 8);
+    const dir = String(node.geometry.direction ?? "down");
+    if (dir === "up" || dir === "down") {
+      const y = dir === "up" ? b.minY - buff : b.maxY + buff;
+      const midX = (b.minX + b.maxX) / 2;
+      const curl = dir === "up" ? -12 : 12;
+      const path = `M ${b.minX} ${y} C ${b.minX + 12} ${y} ${b.minX + 12} ${y + curl} ${midX} ${y + curl} C ${b.maxX - 12} ${y + curl} ${b.maxX - 12} ${y} ${b.maxX} ${y}`;
+      return { path, anchor: { x: midX, y: y + (dir === "up" ? -18 : 18) } };
+    }
+    const x = dir === "left" ? b.minX - buff : b.maxX + buff;
+    const midY = (b.minY + b.maxY) / 2;
+    const curl = dir === "left" ? -12 : 12;
+    const path = `M ${x} ${b.minY} C ${x} ${b.minY + 12} ${x + curl} ${b.minY + 12} ${x + curl} ${midY} C ${x + curl} ${b.maxY - 12} ${x} ${b.maxY - 12} ${x} ${b.maxY}`;
+    return { path, anchor: { x: x + (dir === "left" ? -18 : 18), y: midY } };
+  }
+
+  private getApproxBounds(node: SceneNode): { minX: number; maxX: number; minY: number; maxY: number } {
+    const x = Number(node.transform.x ?? 0);
+    const y = Number(node.transform.y ?? 0);
+    if (node.type === "circle") {
+      const r = Number(node.geometry.r ?? 40);
+      return { minX: x - r, maxX: x + r, minY: y - r, maxY: y + r };
+    }
+    if (node.type === "line") {
+      return { minX: x + Number(node.geometry.x1 ?? 0), maxX: x + Number(node.geometry.x2 ?? 0), minY: y + Number(node.geometry.y1 ?? 0), maxY: y + Number(node.geometry.y2 ?? 0) };
+    }
+    const w = Number(node.geometry.w ?? (Number(node.geometry.fontSize ?? 32) * 4));
+    const h = Number(node.geometry.h ?? (Number(node.geometry.fontSize ?? 32) * 1.5));
+    return { minX: x - w / 2, maxX: x + w / 2, minY: y - h / 2, maxY: y + h / 2 };
   }
 
   private createMathElement(node: SceneNode): SVGElement {

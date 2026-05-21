@@ -16,6 +16,7 @@ from .export import export_scene
 from .mobject import Mobject
 from .primitives import (
     Circle,
+    Brace,
     Group,
     Line,
     Math,
@@ -42,6 +43,7 @@ __all__ = [
     "Write",
     "CameraFrame",
     "Circle",
+    "Brace",
     "Group",
     "Line",
     "Math",

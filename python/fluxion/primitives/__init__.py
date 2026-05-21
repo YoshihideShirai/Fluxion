@@ -1,4 +1,5 @@
 from .circle import Circle
+from .brace import Brace
 from .group import Group
 from .line import Line
 from .path import Path
@@ -9,6 +10,7 @@ from .text import Text
 
 __all__ = [
     "Circle",
+    "Brace",
     "Group",
     "Line",
     "Math",

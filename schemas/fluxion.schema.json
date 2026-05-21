@@ -69,7 +69,7 @@
       "required": ["id", "type", "transform", "style", "geometry", "children"],
       "properties": {
         "id": { "type": "string", "minLength": 1, "description": "Unique node id. The id must be unique across the entire document, including children nested under group nodes, so timeline operations can target any node unambiguously." },
-        "type": { "enum": ["group", "circle", "rect", "line", "path", "text", "math"] },
+        "type": { "enum": ["group", "circle", "rect", "line", "path", "text", "math", "brace"] },
         "transform": { "$ref": "#/$defs/transform" },
         "style": { "$ref": "#/$defs/style" },
         "geometry": { "type": "object", "additionalProperties": { "$ref": "#/$defs/interpolatableGeometryValue" } },
@@ -97,8 +97,24 @@
               "geometry": { "$ref": "#/$defs/mathGeometry" }
             }
           }
+        },
+        {
+          "if": { "properties": { "type": { "const": "brace" } }, "required": ["type"] },
+          "then": { "properties": { "geometry": { "$ref": "#/$defs/braceGeometry" } } }
         }
       ]
+    },
+    "braceGeometry": {
+      "type": "object",
+      "required": ["target", "direction", "buff"],
+      "properties": {
+        "target": { "type": "string", "minLength": 1 },
+        "direction": { "enum": ["up", "down", "left", "right"] },
+        "buff": { "type": "number", "minimum": 0 },
+        "label": { "type": "string" },
+        "labelSize": { "type": "number", "exclusiveMinimum": 0 },
+        "labelColor": { "$ref": "#/$defs/styleColor" }
+      }
     },
     "pathGeometry": {
       "type": "object",
