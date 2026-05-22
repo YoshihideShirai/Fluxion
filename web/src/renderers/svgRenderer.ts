@@ -160,20 +160,97 @@ export class SvgRenderer {
     const target = this.nodeById.get(targetId);
     if (!target) return { path: "M 0 0", anchor: { x: 0, y: 0 } };
     const b = this.getApproxBounds(target);
-    const buff = Number(node.geometry.buff ?? 8);
+    const buff = Math.max(0, Number(node.geometry.buff ?? 8));
+    const curvature = this.clamp(Number(node.geometry.curvature ?? 0.22), 0.08, 0.6);
+    const tip = this.clamp(Number(node.geometry.tip ?? 0.35), 0.12, 0.75);
     const dir = String(node.geometry.direction ?? "down");
-    if (dir === "up" || dir === "down") {
-      const y = dir === "up" ? b.minY - buff : b.maxY + buff;
-      const midX = (b.minX + b.maxX) / 2;
-      const curl = dir === "up" ? -12 : 12;
-      const path = `M ${b.minX} ${y} C ${b.minX + 12} ${y} ${b.minX + 12} ${y + curl} ${midX} ${y + curl} C ${b.maxX - 12} ${y + curl} ${b.maxX - 12} ${y} ${b.maxX} ${y}`;
-      return { path, anchor: { x: midX, y: y + (dir === "up" ? -18 : 18) } };
-    }
+    if (dir === "up" || dir === "down") return this.buildHorizontalBrace(b, dir, buff, curvature, tip, node);
+    return this.buildVerticalBrace(b, dir === "left" ? "left" : "right", buff, curvature, tip, node);
+  }
+
+  private buildHorizontalBrace(
+    b: { minX: number; maxX: number; minY: number; maxY: number },
+    dir: "up" | "down",
+    buff: number,
+    curvature: number,
+    tip: number,
+    node: SceneNode,
+  ): { path: string; anchor: { x: number; y: number } } {
+    const length = Math.max(1, b.maxX - b.minX);
+    const y = dir === "up" ? b.minY - buff : b.maxY + buff;
+    const sign = dir === "up" ? -1 : 1;
+    const center = (b.minX + b.maxX) / 2;
+    const control = this.clamp(length * curvature, 10, 64);
+    const tipDepth = this.clamp(length * tip * 0.32, 12, Math.max(18, length * 0.75));
+    const cpInset = this.clamp(control * 0.45, 6, control);
+    const path = [
+      `M ${b.minX} ${y}`,
+      `C ${b.minX + cpInset} ${y} ${center - control} ${y + sign * tipDepth} ${center} ${y + sign * tipDepth}`,
+      `C ${center + control} ${y + sign * tipDepth} ${b.maxX - cpInset} ${y} ${b.maxX} ${y}`,
+    ].join(" ");
+    const anchor = this.computeBraceLabelAnchor(
+      { x: center, y: y + sign * tipDepth },
+      sign,
+      tipDepth,
+      length,
+      node,
+      true,
+    );
+    return { path, anchor };
+  }
+
+  private buildVerticalBrace(
+    b: { minX: number; maxX: number; minY: number; maxY: number },
+    dir: "left" | "right",
+    buff: number,
+    curvature: number,
+    tip: number,
+    node: SceneNode,
+  ): { path: string; anchor: { x: number; y: number } } {
+    const length = Math.max(1, b.maxY - b.minY);
     const x = dir === "left" ? b.minX - buff : b.maxX + buff;
-    const midY = (b.minY + b.maxY) / 2;
-    const curl = dir === "left" ? -12 : 12;
-    const path = `M ${x} ${b.minY} C ${x} ${b.minY + 12} ${x + curl} ${b.minY + 12} ${x + curl} ${midY} C ${x + curl} ${b.maxY - 12} ${x} ${b.maxY - 12} ${x} ${b.maxY}`;
-    return { path, anchor: { x: x + (dir === "left" ? -18 : 18), y: midY } };
+    const sign = dir === "left" ? -1 : 1;
+    const center = (b.minY + b.maxY) / 2;
+    const control = this.clamp(length * curvature, 10, 64);
+    const tipDepth = this.clamp(length * tip * 0.32, 12, Math.max(18, length * 0.75));
+    const cpInset = this.clamp(control * 0.45, 6, control);
+    const path = [
+      `M ${x} ${b.minY}`,
+      `C ${x} ${b.minY + cpInset} ${x + sign * tipDepth} ${center - control} ${x + sign * tipDepth} ${center}`,
+      `C ${x + sign * tipDepth} ${center + control} ${x} ${b.maxY - cpInset} ${x} ${b.maxY}`,
+    ].join(" ");
+    const anchor = this.computeBraceLabelAnchor(
+      { x: x + sign * tipDepth, y: center },
+      sign,
+      tipDepth,
+      length,
+      node,
+      false,
+    );
+    return { path, anchor };
+  }
+
+  private computeBraceLabelAnchor(
+    tipPoint: { x: number; y: number },
+    outwardSign: number,
+    tipDepth: number,
+    targetLength: number,
+    node: SceneNode,
+    horizontal: boolean,
+  ): { x: number; y: number } {
+    const alignment = String(node.geometry.labelAlignment ?? "center").toLowerCase();
+    const rawOffset = Number(node.geometry.labelOffset ?? 0);
+    const stretch = this.clamp(targetLength / 220, 0.65, 2.4);
+    const baseGap = tipDepth * 0.65 + 8 + stretch * 4;
+    const gap = Math.max(0, baseGap + rawOffset * stretch);
+    const axisShift = this.clamp(targetLength * 0.28, 18, 90);
+    const shiftSign = alignment === "start" ? -1 : alignment === "end" ? 1 : 0;
+    if (horizontal) return { x: tipPoint.x + shiftSign * axisShift, y: tipPoint.y + outwardSign * gap };
+    return { x: tipPoint.x + outwardSign * gap, y: tipPoint.y + shiftSign * axisShift };
+  }
+
+  private clamp(value: number, min: number, max: number): number {
+    return Math.min(max, Math.max(min, value));
   }
 
   private getApproxBounds(node: SceneNode): { minX: number; maxX: number; minY: number; maxY: number } {
