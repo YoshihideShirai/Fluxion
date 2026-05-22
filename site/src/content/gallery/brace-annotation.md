@@ -17,11 +17,3 @@ circle b r=14 at 700,270 fill="#38bdf8" stroke="#e2e8f0" strokeWidth=2
 line segment x1=-220 y1=0 x2=220 y2=0 at 480,270 stroke="#94a3b8" strokeWidth=2
 brace span target=segment direction=up buff=22 label="d(A,B)" labelSize=28 labelColor="#e2e8f0" stroke="#f8fafc" strokeWidth=3
 text caption "Brace annotation (preview)" at 480,110 size=24 fill="#e2e8f0"
-
-# minimal_repro_dsl
-scene width=960 height=540 fps=60
-rect box w=300 h=100 at 0,0 stroke="#cbd5e1" strokeWidth=2
-brace top target=box direction=up buff=18 curvature=0.24 tip=0.34 label="UP" labelAlignment=start stroke="#f8fafc" strokeWidth=3
-brace bottom target=box direction=down buff=18 curvature=0.24 tip=0.34 label="DOWN" labelAlignment=end stroke="#f8fafc" strokeWidth=3
-brace left target=box direction=left buff=18 curvature=0.24 tip=0.34 label="LEFT" stroke="#f8fafc" strokeWidth=3
-brace right target=box direction=right buff=18 curvature=0.24 tip=0.34 label="RIGHT" stroke="#f8fafc" strokeWidth=3
