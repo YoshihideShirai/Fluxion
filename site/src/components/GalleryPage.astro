@@ -231,12 +231,22 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
             const stage = document.getElementById(stageId);
             const dsl = stageSources.get(stageId) ?? '';
             if (!stage || !dsl) return null;
-            const doc = compiler.compileTextDsl(dsl);
-            const player = runtime.mountFluxionDocument(stage, doc);
-            playerStates.set(stageId, { player, loopEnabled: false, isPlaying: false, completionHandled: false });
-            updateTimelineUi(stageId, 0, player.durationSeconds);
-            startSync(stageId);
-            return player;
+            try {
+              const doc = compiler.compileTextDsl(dsl);
+              const player = runtime.mountFluxionDocument(stage, doc);
+              playerStates.set(stageId, { player, loopEnabled: false, isPlaying: false, completionHandled: false });
+              updateTimelineUi(stageId, 0, player.durationSeconds);
+              startSync(stageId);
+              return player;
+            } catch (error) {
+              stage.textContent = 'Failed to compile this demo.';
+              stage.style.display = 'grid';
+              stage.style.placeItems = 'center';
+              stage.style.color = '#fca5a5';
+              stage.style.fontSize = '12px';
+              console.error(`Failed to initialize stage: ${stageId}`, error);
+              return null;
+            }
           };
 
           playButtons.forEach((button) => {
