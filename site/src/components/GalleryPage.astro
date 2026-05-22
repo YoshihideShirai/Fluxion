@@ -70,7 +70,7 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
             </section>
             <p style="margin:0;font-size:12px;"><a href={demo.source_manim_url} target="_blank" rel="noreferrer">Manim source</a></p>
             {(demo.missing_instructions || demo.blocker_reason) && <p style="margin:0;font-size:12px;color:#b45309;">{demo.missing_instructions ?? demo.blocker_reason}</p>}
-            <div class="gallery-stage" id={`gallery-stage-${index}`} style="height:220px;border-radius:8px;border:1px solid #334155;background:#020617;"></div>
+            <div class="gallery-stage" id={`gallery-stage-${index}`} style="width:100%;aspect-ratio:16 / 9;border-radius:8px;border:1px solid #334155;background:#020617;"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button type="button" class="play-inline" data-source={demo.source} data-stage={`gallery-stage-${index}`}>Play</button>
               <button type="button" class="pause-inline" data-stage={`gallery-stage-${index}`}>Pause</button>
