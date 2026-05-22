@@ -13,7 +13,7 @@ order: 21
 ---
 scene width=960 height=540 fps=60
 value theta = 0
-rect bg w=960 h=540 at 480,270 fill="#020617"
+rect bg w=960 h=540 at 0,0 fill="#020617"
 path orbit d="M -140 0 C -140 -77 -77 -140 0 -140 C 77 -140 140 -77 140 0 C 140 77 77 140 0 140 C -77 140 -140 77 -140 0" at 480,280 fill="none" stroke="#1d4ed8" strokeWidth=4 opacity=0.55
 circle dot r=28 at 340,280 fill="#38bdf8" stroke="#0f172a" strokeWidth=4
 rect card w=180 h=92 at 740,280 fill="#f97316" stroke="#fed7aa" strokeWidth=4

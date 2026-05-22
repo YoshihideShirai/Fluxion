@@ -13,7 +13,7 @@ order: 40
 ---
 scene width=960 height=540 fps=60
 camera at 0,0 scale=1
-circle center r=70 at 480,270 fill="#38bdf8"
+circle center r=70 at 0,0 fill="#38bdf8"
 circle left r=42 at 280,270 fill="#22c55e"
 circle right r=42 at 680,270 fill="#f97316"
 text label "Camera move demo" at 480,120 size=34 fill="#e2e8f0"
