@@ -12,7 +12,7 @@ status: ported
 order: 50
 ---
 scene width=960 height=540 fps=60
-rect bg w=960 h=540 at 480,270 fill="#111827"
+rect bg w=960 h=540 at 0,0 fill="#111827"
 math eq1 "x^2+y^2=r^2" at 480,220 size=58 fill="#bae6fd" renderer=katex expandTokens=true
 math eq2 "x^2+y^2=R^2" at 480,220 size=58 fill="#fde68a" renderer=katex expandTokens=true
 at 0s:
