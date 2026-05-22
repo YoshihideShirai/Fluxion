@@ -238,6 +238,9 @@
             "katex",
             "mathjax"
           ]
+        },
+        "metadata": {
+          "$ref": "#/$defs/nodeMetadata"
         }
       },
       "allOf": [
@@ -802,6 +805,31 @@
           }
         }
       ]
+    },
+    "nodeMetadata": {
+      "type": "object",
+      "properties": {
+        "plot": {
+          "$ref": "#/$defs/plotMetadata"
+        }
+      }
+    },
+    "plotMetadata": {
+      "type": "object",
+      "properties": {
+        "range": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "samples": {
+          "type": "integer",
+          "minimum": 2
+        }
+      }
     }
   }
 }

@@ -7,7 +7,7 @@ import type {
   FluxionDocument,
   Camera,
 } from "../types.js";
-import { ExpressionError, validateExpression, collectExpressionDependencies } from "../runtime/expression.js";
+import { ExpressionError, validateExpression, collectExpressionDependencies, evaluateExpression } from "../runtime/expression.js";
 
 export class DslCompileError extends Error {
   readonly line: number;
@@ -142,6 +142,16 @@ export function compileTextDsl(source: string): FluxionDocument {
       keyword === "group"
     ) {
       parseNode(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "axes") {
+      parseAxes(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "plot") {
+      parsePlot(tokens, state, lineNumber);
       return;
     }
 
@@ -350,6 +360,82 @@ function parseNode(
   }
 }
 
+
+function parseAxes(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after axes.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const at = options.get("at") ?? `${state.width / 2},${state.height / 2}`;
+  const [cx, cy] = at.split(",").map((v) => parseNumber(v, lineNumber));
+  const xRange = (options.get("xRange") ?? "-5,5").split(",").map((v) => parseNumber(v, lineNumber));
+  const yRange = (options.get("yRange") ?? "-3,3").split(",").map((v) => parseNumber(v, lineNumber));
+  const width = parseNumber(options.get("width") ?? "760", lineNumber);
+  const height = parseNumber(options.get("height") ?? "360", lineNumber);
+  const stroke = options.get("stroke") ?? "#94a3b8";
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "3", lineNumber);
+
+  const xAxis = createBaseNode(`${id}_x`, "line");
+  xAxis.transform.x = cx!; xAxis.transform.y = cy!;
+  xAxis.geometry.x1 = -width / 2; xAxis.geometry.y1 = 0; xAxis.geometry.x2 = width / 2; xAxis.geometry.y2 = 0;
+  xAxis.style.stroke = stroke; xAxis.style.strokeWidth = strokeWidth;
+
+  const yAxis = createBaseNode(`${id}_y`, "line");
+  yAxis.transform.x = cx!; yAxis.transform.y = cy!;
+  yAxis.geometry.x1 = 0; yAxis.geometry.y1 = -height / 2; yAxis.geometry.x2 = 0; yAxis.geometry.y2 = height / 2;
+  yAxis.style.stroke = stroke; yAxis.style.strokeWidth = strokeWidth;
+
+  const group = createBaseNode(id, "group");
+  group.children = [xAxis, yAxis];
+  group.metadata = { plot: { range: [xRange[0]!, xRange[1]!] } };
+  state.nodes.set(id, group);
+  state.rootIds.add(id);
+}
+
+function parsePlot(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after plot.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const fnExpr = options.get("fn");
+  if (!fnExpr) throw new DslCompileError("plot requires fn=...", lineNumber);
+  const [r0, r1] = (options.get("range") ?? "-5,5").split(",").map((v) => parseNumber(v, lineNumber));
+  const samples = parseNumber(options.get("samples") ?? "200", lineNumber);
+  const at = options.get("at") ?? `${state.width / 2},${state.height / 2}`;
+  const [cx, cy] = at.split(",").map((v) => parseNumber(v, lineNumber));
+  const scaleX = parseNumber(options.get("scaleX") ?? "76", lineNumber);
+  const scaleY = parseNumber(options.get("scaleY") ?? "60", lineNumber);
+  const stroke = options.get("stroke") ?? "#38bdf8";
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "4", lineNumber);
+  const pathOp = readPathGeneratorAssignment(`path(x=t*${scaleX}, y=(${fnExpr})*-${scaleY}, from=${r0!}, to=${r1!}, samples=${samples})`, state, lineNumber);
+  if (!pathOp) throw new DslCompileError("Failed to build plot path.", lineNumber);
+
+  const node = createBaseNode(id, "path");
+  node.transform.x = cx!; node.transform.y = cy!;
+  node.style.fill = "none"; node.style.stroke = stroke; node.style.strokeWidth = strokeWidth;
+  node.metadata = { plot: { range: [r0!, r1!], samples } };
+  const d = buildPathDataPreview(pathOp, state);
+  node.geometry.d = d;
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+}
+
+function buildPathDataPreview(op: { samples:number; tMinExpr:string; tMaxExpr:string; xExpr:string; yExpr:string; close?:boolean }, state: CompileState): string {
+  const vars = Object.fromEntries([...state.values].map(([k,v])=>[k,v]));
+  const tMin = evaluateExpression(op.tMinExpr, vars);
+  const tMax = evaluateExpression(op.tMaxExpr, vars);
+  const pts:string[]=[];
+  for (let i=0;i<op.samples;i++){
+    const u = op.samples===1?0:i/(op.samples-1);
+    const t = tMin + (tMax-tMin)*u;
+    const scope={...vars,t};
+    const x = evaluateExpression(op.xExpr, scope);
+    const y = evaluateExpression(op.yExpr, scope);
+    pts.push(`${i===0?'M':'L'} ${x} ${y}`);
+  }
+  if (op.close) pts.push('Z');
+  return pts.join(' ');
+}
 function statementTime(state: CompileState): number {
   return state.blockTime ?? state.currentTime;
 }

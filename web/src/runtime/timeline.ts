@@ -113,12 +113,17 @@ export function applyTimelineAt(
   return { trackerValues, postAnimationUpdaters };
 }
 
+const MAX_PLOT_SAMPLES = 512;
+const SIMPLIFY_EPSILON = 0.35;
+
 function buildPathData(op: BindPathOperation, trackerValues: Record<string, number>): string {
   const tMin = evaluateExpression(op.tMinExpr, trackerValues);
   const tMax = evaluateExpression(op.tMaxExpr, trackerValues);
+  const effectiveSamples = Math.min(op.samples, MAX_PLOT_SAMPLES);
+  const stride = op.samples > MAX_PLOT_SAMPLES ? Math.ceil(op.samples / MAX_PLOT_SAMPLES) : 1;
   const points: Array<{ x: number; y: number }> = [];
-  for (let i = 0; i < op.samples; i += 1) {
-    const unit = op.samples === 1 ? 0 : i / (op.samples - 1);
+  for (let i = 0; i < op.samples; i += stride) {
+    const unit = effectiveSamples === 1 ? 0 : i / (op.samples - 1);
     const t = tMin + (tMax - tMin) * unit;
     const scope = { ...trackerValues, t };
     points.push({
@@ -127,8 +132,9 @@ function buildPathData(op: BindPathOperation, trackerValues: Record<string, numb
     });
   }
   if (points.length === 0) return "";
-  const head = `M ${points[0]!.x} ${points[0]!.y}`;
-  const segments = points.slice(1).map((point) => `L ${point.x} ${point.y}`);
+  const simplified = simplifyPolyline(points, SIMPLIFY_EPSILON);
+  const head = `M ${simplified[0]!.x} ${simplified[0]!.y}`;
+  const segments = simplified.slice(1).map((point) => `L ${point.x} ${point.y}`);
   return [head, ...segments, ...(op.close ? ["Z"] : [])].join(" ");
 }
 
@@ -173,4 +179,21 @@ function setCameraPath(camera: Camera | undefined, path: string, value: unknown)
 
 function applyCameraInterpolation(camera: Camera | undefined, path: string, value: unknown): void {
   setCameraPath(camera, path, value);
+}
+
+
+function simplifyPolyline(points: Array<{ x: number; y: number }>, epsilon: number): Array<{ x: number; y: number }> {
+  if (points.length <= 2) return points;
+  const out = [points[0]!];
+  for (let i = 1; i < points.length - 1; i += 1) {
+    const prev = out[out.length - 1]!;
+    const curr = points[i]!;
+    const next = points[i + 1]!;
+    const area2 = Math.abs((curr.x - prev.x) * (next.y - prev.y) - (curr.y - prev.y) * (next.x - prev.x));
+    const base = Math.hypot(next.x - prev.x, next.y - prev.y) || 1;
+    const dist = area2 / base;
+    if (dist >= epsilon) out.push(curr);
+  }
+  out.push(points[points.length - 1]!);
+  return out;
 }

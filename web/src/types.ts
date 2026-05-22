@@ -26,6 +26,11 @@ export interface Style {
   strokeWidth?: number;
 }
 
+export interface PlotMetadata {
+  range?: [number, number];
+  samples?: number;
+}
+
 export interface SceneNode {
   id: string;
   type: NodeType;
@@ -36,6 +41,9 @@ export interface SceneNode {
   text?: string;
   latex?: string;
   renderer?: string;
+  metadata?: {
+    plot?: PlotMetadata;
+  };
 }
 
 export type EasingName = "linear" | "smooth" | "easeInOut" | "easeIn" | "easeOut" | string;

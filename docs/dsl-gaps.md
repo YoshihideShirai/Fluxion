@@ -60,9 +60,9 @@ Text DSL に新しい命令・構文・意味論を追加する場合、**最低
 
 > 実需要が発生するまでは実装しない。ここでは候補と設計論点のみ管理する。
 
-### proposal: axis / graph 補助構文
+### axis / graph 補助構文
 
-- status: `proposal`
+- status: `planned`
 - 構文（案）:
   - `axes ax xRange=-5,5 yRange=-3,3 at 640,360`
   - `plot g1 fn="sin(x)" range=-5,5 samples=200`
