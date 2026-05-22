@@ -74,6 +74,19 @@ export interface BindExpressionOperation extends BaseOperation {
   deps?: string[];
 }
 
+export interface BindPathOperation extends BaseOperation {
+  op: "bindPath";
+  id: string;
+  path: string;
+  samples: number;
+  tMinExpr: string;
+  tMaxExpr: string;
+  xExpr: string;
+  yExpr: string;
+  close?: boolean;
+  deps?: string[];
+}
+
 export interface SetValueOperation extends BaseOperation {
   op: "setValue";
   id: string;
@@ -113,6 +126,7 @@ export type TimelineOperation =
   | SetOperation
   | SetExpressionOperation
   | BindExpressionOperation
+  | BindPathOperation
   | SetValueOperation
   | AnimateOperation
   | AnimateValueOperation
@@ -140,7 +154,8 @@ export type DiffOperation =
   | Omit<DeleteOperation, "t">
   | Omit<SetOperation, "t">
   | Omit<SetExpressionOperation, "t">
-  | Omit<BindExpressionOperation, "t">;
+  | Omit<BindExpressionOperation, "t">
+  | Omit<BindPathOperation, "t">;
   
 
 export interface DiffStream {

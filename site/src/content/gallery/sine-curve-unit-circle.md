@@ -6,10 +6,9 @@ source_example_path: examples/gallery/sine_curve_unit_circle.fluxion.txt
 porting_strategy: omitted_parts
 fidelity: visual_approximation
 known_gaps:
-  - always_redraw-level procedural path growth is still partially unsupported.
+  - Path growth can now be sampled with `always ... = path(...)`, but true append-only stroke history parity is still simplified.
 category: Advanced Projects
 status: partial
-missing_instructions: "Full always_redraw parity for procedural path topology updates is still limited."
 order: 52
 ---
 scene width=960 height=540 fps=60
