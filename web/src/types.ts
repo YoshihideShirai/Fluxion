@@ -13,6 +13,9 @@ export interface Camera {
   y: number;
   scale: number;
   rotation: number;
+  target?: { x: number; y: number };
+  padding?: number;
+  mode?: "center" | "target" | "frame-fit";
 }
 
 export type InterpolatableGeometryValue = number | string | number[] | boolean;

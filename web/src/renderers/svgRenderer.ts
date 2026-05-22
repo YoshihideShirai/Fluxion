@@ -5,7 +5,7 @@ const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
 type MathRendererName = "katex" | "mathjax";
 
-const DEFAULT_CAMERA: Camera = { x: 0, y: 0, scale: 1, rotation: 0 };
+const DEFAULT_CAMERA: Camera = { x: 0, y: 0, scale: 1, rotation: 0, target: { x: 0, y: 0 }, padding: 0, mode: "center" };
 
 interface KatexGlobal {
   render: (latex: string, element: HTMLElement, options?: { throwOnError?: boolean; displayMode?: boolean }) => void;
@@ -24,11 +24,19 @@ export function buildCameraTransform(
 ): string {
   const centerX = width / 2;
   const centerY = height / 2;
+  const targetX = camera.target?.x ?? centerX;
+  const targetY = camera.target?.y ?? centerY;
+  const padding = camera.padding ?? 0;
+  const mode = camera.mode ?? "center";
+  const fitScale = mode === "frame-fit" ? Math.max(0.0001, camera.scale * ((Math.min(width, height) - padding * 2) / Math.min(width, height))) : camera.scale;
+  const anchorX = mode === "center" ? centerX : targetX;
+  const anchorY = mode === "center" ? centerY : targetY;
   return [
     `translate(${centerX + camera.x} ${centerY + camera.y})`,
     `rotate(${camera.rotation})`,
-    `scale(${camera.scale})`,
-    `translate(${-centerX} ${-centerY})`,
+    `translate(${anchorX} ${anchorY})`,
+    `scale(${fitScale})`,
+    `translate(${-anchorX} ${-anchorY})`,
   ].join(" ");
 }
 
