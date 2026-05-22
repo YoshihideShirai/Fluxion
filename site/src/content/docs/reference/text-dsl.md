@@ -25,7 +25,6 @@ Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション
 | `show / hide` | Create or delete a node on the timeline | `show dot` |
 | `value` | Declare a scalar tracker | `value theta = 0` |
 | `set` | Apply an immediate property value or dependent expression | `set dot.x to expr="320 + 100 * cos(theta)"` |
-| `always` | 毎フレーム評価の式更新（動的 path サンプリングを含む） | `always curve.d = path(x=320+80*cos(t),y=240+80*sin(t),samples=96)` |
 | `animate` | Interpolate one property or scalar tracker | `animate theta from 0 to 6.28 duration=2s` |
 | `play` | Run Manim-like primitives | `play FadeIn(dot) duration=0.8s` |
 | `wait` | Advance the current time cursor | `wait 0.4s` |
