@@ -76,6 +76,10 @@ export class SceneGraph {
     current[leaf] = value;
   }
 
+  setPathData(id: string, d: string): void {
+    this.setPath(id, "geometry.d", d);
+  }
+
   private registerSubtree(node: SceneNode, parentId?: string): void {
     this.nodes.set(node.id, node);
     if (parentId) this.parents.set(node.id, parentId);

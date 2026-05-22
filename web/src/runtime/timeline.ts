@@ -7,6 +7,7 @@ import type {
   SetOperation,
   SetValueOperation,
   BindExpressionOperation,
+  BindPathOperation,
   TimelineOperation,
   ValueTracker,
   Camera,
@@ -21,7 +22,8 @@ type InstantOperation =
   | SetOperation
   | SetExpressionOperation
   | SetValueOperation
-  | BindExpressionOperation;
+  | BindExpressionOperation
+  | BindPathOperation;
 
 const OPERATION_PRIORITY: Record<TimelineOperation["op"], number> = {
   create: 0,
@@ -32,6 +34,7 @@ const OPERATION_PRIORITY: Record<TimelineOperation["op"], number> = {
   animate: 5,
   setExpr: 6,
   bindExpr: 7,
+  bindPath: 7,
   delete: 8,
 };
 
@@ -57,6 +60,11 @@ export function applyInstantOp(
     const value = evaluateExpression(op.expr, trackerValues);
     if (isCameraTarget(op.id, op.path)) setCameraPath(camera, op.path, value);
     else graph.setPath(op.id, op.path, value);
+  }
+  if (op.op === "bindPath") {
+    const d = buildPathData(op, trackerValues);
+    if (op.path === "geometry.d") graph.setPathData(op.id, d);
+    else graph.setPath(op.id, op.path, d);
   }
   // Effect operations are semantic hints for future renderers; fallback
   // visibility changes are represented by ordinary animate operations.
@@ -96,13 +104,32 @@ export function applyTimelineAt(
       const value = interpolate(op.from, op.to, progress);
       if (typeof value === "number") trackerValues[op.id] = value;
     } else if (op.t <= seconds) {
-      if (op.op === "bindExpr") postAnimationUpdaters.push(op);
+      if (op.op === "bindExpr" || op.op === "bindPath") postAnimationUpdaters.push(op);
       else applyInstantOp(graph, op, trackerValues, camera);
     }
   }
 
   for (const updater of postAnimationUpdaters) applyInstantOp(graph, updater, trackerValues, camera);
   return { trackerValues, postAnimationUpdaters };
+}
+
+function buildPathData(op: BindPathOperation, trackerValues: Record<string, number>): string {
+  const tMin = evaluateExpression(op.tMinExpr, trackerValues);
+  const tMax = evaluateExpression(op.tMaxExpr, trackerValues);
+  const points: Array<{ x: number; y: number }> = [];
+  for (let i = 0; i < op.samples; i += 1) {
+    const unit = op.samples === 1 ? 0 : i / (op.samples - 1);
+    const t = tMin + (tMax - tMin) * unit;
+    const scope = { ...trackerValues, t };
+    points.push({
+      x: evaluateExpression(op.xExpr, scope),
+      y: evaluateExpression(op.yExpr, scope),
+    });
+  }
+  if (points.length === 0) return "";
+  const head = `M ${points[0]!.x} ${points[0]!.y}`;
+  const segments = points.slice(1).map((point) => `L ${point.x} ${point.y}`);
+  return [head, ...segments, ...(op.close ? ["Z"] : [])].join(" ");
 }
 
 function orderedTimeline(timeline: TimelineOperation[]): TimelineOperation[] {

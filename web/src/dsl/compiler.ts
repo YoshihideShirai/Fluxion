@@ -427,8 +427,32 @@ function parseAlways(
   const isCameraTarget = id === "camera" && isCameraProperty(property);
   if (!isCameraTarget && !state.nodes.has(id)) throw new DslCompileError(`Unknown node '${id}'.`, lineNumber);
   if (tokens[2] !== "=" || tokens[3] === undefined) throw new DslCompileError("Expected always syntax: always id.property = expr=...", lineNumber);
-  const expression = readExpressionAssignment(tokens.slice(3).join(" "), state, lineNumber);
-  if (expression === null) throw new DslCompileError("always requires expr=...", lineNumber);
+  const rightHandSide = tokens.slice(3).join(" ");
+  const pathGenerator = readPathGeneratorAssignment(rightHandSide, state, lineNumber);
+  if (pathGenerator) {
+    state.timeline.push({
+      t: time,
+      op: "bindPath",
+      id,
+      path: isCameraTarget ? cameraPropertyPath(property) : propertyPath(property),
+      ...pathGenerator,
+      deps: [
+        ...new Set([
+          ...collectExpressionDependencies(pathGenerator.tMinExpr),
+          ...collectExpressionDependencies(pathGenerator.tMaxExpr),
+          ...collectExpressionDependencies(pathGenerator.xExpr),
+          ...collectExpressionDependencies(pathGenerator.yExpr),
+        ]),
+      ].filter((name) => state.values.has(name)),
+    });
+    return;
+  }
+  const expression = readExpressionAssignment(rightHandSide, state, lineNumber);
+  if (expression === null)
+    throw new DslCompileError(
+      "always requires expr=... or path(...).",
+      lineNumber,
+    );
   state.timeline.push({
     t: time,
     op: "bindExpr",
@@ -437,6 +461,78 @@ function parseAlways(
     expr: expression,
     deps: collectExpressionDependencies(expression).filter((name) => state.values.has(name)),
   });
+}
+
+function readPathGeneratorAssignment(
+  token: string,
+  state: CompileState,
+  lineNumber: number,
+):
+  | {
+      samples: number;
+      tMinExpr: string;
+      tMaxExpr: string;
+      xExpr: string;
+      yExpr: string;
+      close?: boolean;
+    }
+  | null {
+  const match = /^path\((.*)\)$/u.exec(token.trim());
+  if (!match) return null;
+  const args = splitInlineArgs(match[1] ?? "");
+  const map = new Map(args.map((item) => readAssignment(item, lineNumber)));
+  const xExpr = map.get("x");
+  const yExpr = map.get("y");
+  if (!xExpr || !yExpr)
+    throw new DslCompileError("path(...) requires x=... and y=...", lineNumber);
+  const tMinExpr = map.get("from") ?? "0";
+  const tMaxExpr = map.get("to") ?? "2*pi";
+  const samples = Number(map.get("samples") ?? "96");
+  const close = map.get("close")
+    ? parseBoolean(map.get("close")!, lineNumber)
+    : undefined;
+  if (!Number.isInteger(samples) || samples < 2)
+    throw new DslCompileError(
+      "path(...) samples must be an integer >= 2.",
+      lineNumber,
+    );
+  try {
+    for (const expression of [xExpr, yExpr, tMinExpr, tMaxExpr])
+      validateExpression(expression, [...state.values.keys(), "t"]);
+  } catch (error) {
+    if (error instanceof ExpressionError)
+      throw new DslCompileError(
+        `Invalid path(...) expression: ${error.message}`,
+        lineNumber,
+      );
+    throw error;
+  }
+  return {
+    samples,
+    tMinExpr,
+    tMaxExpr,
+    xExpr,
+    yExpr,
+    ...(close === undefined ? {} : { close }),
+  };
+}
+
+function splitInlineArgs(source: string): string[] {
+  const out: string[] = [];
+  let current = "";
+  let quoted = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index]!;
+    if (char === '"' && source[index - 1] !== "\\") quoted = !quoted;
+    if (char === "," && !quoted) {
+      if (current.trim()) out.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += char;
+  }
+  if (current.trim()) out.push(current.trim());
+  return out;
 }
 
 function parseWait(

@@ -146,6 +146,7 @@
         { "$ref": "#/$defs/deleteOperation" },
         { "$ref": "#/$defs/setOperation" },
         { "$ref": "#/$defs/setExpressionOperation" },
+        { "$ref": "#/$defs/bindPathOperation" },
         { "$ref": "#/$defs/setValueOperation" },
         { "$ref": "#/$defs/animateOperation" },
         { "$ref": "#/$defs/animateValueOperation" },
@@ -196,6 +197,27 @@
       "allOf": [
         { "$ref": "#/$defs/baseOperation" },
         { "type": "object", "required": ["id", "value"], "properties": { "op": { "const": "setValue" }, "id": { "type": "string" }, "value": { "type": "number" } } }
+      ]
+    },
+    "bindPathOperation": {
+      "allOf": [
+        { "$ref": "#/$defs/baseOperation" },
+        {
+          "type": "object",
+          "required": ["id", "path", "samples", "tMinExpr", "tMaxExpr", "xExpr", "yExpr"],
+          "properties": {
+            "op": { "const": "bindPath" },
+            "id": { "type": "string" },
+            "path": { "type": "string", "description": "Typically geometry.d for SVG path nodes." },
+            "samples": { "type": "integer", "minimum": 2 },
+            "tMinExpr": { "type": "string", "minLength": 1 },
+            "tMaxExpr": { "type": "string", "minLength": 1 },
+            "xExpr": { "type": "string", "minLength": 1 },
+            "yExpr": { "type": "string", "minLength": 1 },
+            "close": { "type": "boolean" },
+            "deps": { "type": "array", "items": { "type": "string" } }
+          }
+        }
       ]
     },
     "animateOperation": {

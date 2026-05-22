@@ -25,6 +25,7 @@ Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション
 | `show / hide` | Create or delete a node on the timeline | `show dot` |
 | `value` | Declare a scalar tracker | `value theta = 0` |
 | `set` | Apply an immediate property value or dependent expression | `set dot.x to expr="320 + 100 * cos(theta)"` |
+| `always` | 毎フレーム評価の式更新（動的 path サンプリングを含む） | `always curve.d = path(x=320+80*cos(t),y=240+80*sin(t),samples=96)` |
 | `animate` | Interpolate one property or scalar tracker | `animate theta from 0 to 6.28 duration=2s` |
 | `play` | Run Manim-like primitives | `play FadeIn(dot) duration=0.8s` |
 | `wait` | Advance the current time cursor | `wait 0.4s` |
@@ -210,6 +211,15 @@ set dot.y to expr="240 + 100 * sin(theta)"
 `value` declares a scalar tracker that lives separately from scene nodes. A tracker can be animated with `animate <name> from <number> to <number> ...`, and node properties can depend on tracker values through `set <id>.<property> to expr="..."`.
 
 Dependent expressions are intentionally static and analyzable. Fluxion does **not** execute arbitrary JavaScript and does not aim for full Manim updater compatibility. Expressions may reference declared tracker names, numeric literals, parentheses, arithmetic operators (`+`, `-`, `*`, `/`, `%`, `**`), constants (`pi`, `e`), and allowlisted math functions such as `sin`, `cos`, `tan`, `sqrt`, `abs`, `min`, `max`, and `pow`.
+
+### always
+
+```text
+always dot.x = expr=240 + 96*cos(theta)
+always curve.d = path(x=240+96*cos(t),y=270+96*sin(t),from=0,to=2*pi,samples=128,close=true)
+```
+
+`always` は毎フレーム実行される updater を登録します。`expr=...` は単一プロパティを更新し、`path(...)` はパラメトリック曲線をサンプルして（通常は `geometry.d` に）SVG path 文字列を書き戻します。`path(...)` の必須項目は `x` / `y`（`t` を使える式）で、`from` / `to` / `samples` / `close` は省略可能です（既定: `0`, `2*pi`, `96`, `false`）。
 
 ### set
 
