@@ -13,13 +13,13 @@ Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション
 | Command | Purpose | Minimal example |
 |---|---|---|
 | `scene` | Canvas size and fps | `scene width=1280 height=720 fps=60` |
-| `circle` | Circle node declaration | `circle dot r=34 at 260,420 fill="#38bdf8"` |
-| `rect` | Rectangle node declaration | `rect target w=120 h=88 at 820,420 fill="#f97316"` |
-| `triangle` | Triangle node declaration | `triangle t1 w=120 h=104 at 640,360 fill="#ef4444"` |
-| `line` | Line node declaration | `line axis x1=-50 y1=0 x2=50 y2=0 at 640,520 stroke="#e2e8f0"` |
-| `path` | Path node declaration | `path curve d="M 0 0 C 40 80 80 80 120 0" at 640,420 fill="none" stroke="#38bdf8"` |
-| `text` | Text label node declaration | `text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"` |
-| `math` | Math equation node declaration | `math equation "e^{i\pi}+1=0" at 640,200 size=36 renderer=katex` |
+| `circle` | Circle node declaration | `circle dot r=34 at -380,-20 fill="#38bdf8"` |
+| `rect` | Rectangle node declaration | `rect target w=120 h=88 at 180,-20 fill="#f97316"` |
+| `triangle` | Triangle node declaration | `triangle t1 w=120 h=104 at 0,0 fill="#ef4444"` |
+| `line` | Line node declaration | `line axis x1=-50 y1=0 x2=50 y2=0 at 0,-160 stroke="#e2e8f0"` |
+| `path` | Path node declaration | `path curve d="M 0 0 C 40 80 80 80 120 0" at 0,-20 fill="none" stroke="#38bdf8"` |
+| `text` | Text label node declaration | `text title "Fluxion" at 0,240 size=32 fill="#e2e8f0"` |
+| `math` | Math equation node declaration | `math equation "e^{i\pi}+1=0" at 0,160 size=36 renderer=katex` |
 | `group` | Grouped node declaration | `group intro title equation` |
 | `at` | Start an indented block at a fixed time | `at 0s:` |
 | `show / hide` | Create or delete a node on the timeline | `show dot` |
@@ -83,6 +83,13 @@ play Transform(c1, c2) duration=1.5s easing=easeInOut
 - token は whitespace で区切ります。quoted string 内の whitespace は保持します。
 - time は `1`, `1.5`, `1s`, `1.5s` を受け付け、単位は seconds として扱います。
 - color は文字列として扱います。現在は CSS color validation はしません。
+
+## Coordinate system
+
+- `at x,y` / `x` / `y` are **scene-centered coordinates**.
+- `(0,0)` is the canvas center.
+- Positive `x` goes right. Positive `y` goes **up** (Manim-style).
+- Example on a `1280x720` scene: left edge is about `x=-640`, right edge is about `x=640`, top is about `y=360`, bottom is about `y=-360`.
 
 ## Statements
 
