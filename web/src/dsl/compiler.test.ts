@@ -373,6 +373,24 @@ play TransformMatchingTex(source, target) duration=1s easing=linear`);
   );
 });
 
+test("matches duplicate TransformMatchingTex tokens left-to-right by first unmatched target", () => {
+  const documentData = compileTextDsl(`math src "a+a+a" expandTokens=true
+math dst "a+a+a" expandTokens=true at 120,0
+play TransformMatchingTex(src, dst) duration=1s easing=linear`);
+
+  const xAnimations = documentData.timeline
+    .filter((op): op is AnimateOperation => op.op === "animate" && op.path === "transform.x" && op.id.startsWith("src:tex:"))
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((op) => Number(op.to));
+  assert.equal(xAnimations.length, 5);
+  assert.equal(
+    xAnimations.every(
+      (value, index, values) => index === 0 || value > (values[index - 1] as number),
+    ),
+    true,
+  );
+});
+
 test("copies math token styles after all node options are applied", () => {
   const documentData = compileTextDsl(
     `math equation "x+y" expandTokens=true size=42 fill="#bae6fd" renderer=katex`,
@@ -487,6 +505,47 @@ play AnimationGroup(FadeIn(a), FadeIn(b), lagRatio=0.2) duration=1s easing=easeO
     ],
   );
   assert.equal(documentData.duration, 1);
+});
+
+test("expands nested lagged groups and keeps total duration normalized", () => {
+  const documentData = compileTextDsl(`circle a
+circle b
+circle c
+play AnimationGroup(LaggedStart(FadeIn(a), FadeIn(b), lagRatio=0.5), FadeIn(c), lagRatio=0.25) duration=2s easing=linear`);
+
+  assert.equal(documentData.duration, 2);
+  const effectTimes = documentData.timeline
+    .filter((op) => op.op === "effect")
+    .map((op) => [op.id, op.t, op.duration]);
+  assert.equal(effectTimes.length >= 3, true);
+});
+
+test("handles lagRatio boundary values", () => {
+  const zeroLag = compileTextDsl(`circle a
+circle b
+play LaggedStart(FadeIn(a), FadeIn(b), lagRatio=0) duration=2s easing=linear`);
+  equalJson(
+    zeroLag.timeline
+      .filter((op) => op.op === "effect")
+      .map((op) => [op.id, op.t, op.duration]),
+    [
+      ["a", 0, 2],
+      ["b", 0, 2],
+    ],
+  );
+
+  const unitLag = compileTextDsl(`circle a
+circle b
+play LaggedStart(FadeIn(a), FadeIn(b), lagRatio=1) duration=2s easing=linear`);
+  equalJson(
+    unitLag.timeline
+      .filter((op) => op.op === "effect")
+      .map((op) => [op.id, op.t, op.duration]),
+    [
+      ["a", 0, 1],
+      ["b", 1, 1],
+    ],
+  );
 });
 
 test("expands Succession into sequential nested animations", () => {

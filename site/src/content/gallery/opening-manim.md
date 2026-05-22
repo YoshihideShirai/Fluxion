@@ -6,7 +6,7 @@ source_example_path: examples/gallery/opening_manim.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - LaggedStart timing/kerning are approximated for browser playback.
+  - Text kerning still depends on browser font metrics and may differ slightly from Manim raster output.
 category: Advanced Projects
 status: ported
 order: 51

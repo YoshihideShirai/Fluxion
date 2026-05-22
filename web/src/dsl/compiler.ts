@@ -762,15 +762,16 @@ function emitPlayCall(
   if (call.name === "AnimationGroup" || call.name === "LaggedStart") {
     const childCalls = expectPlayCallArgs(call, lineNumber);
     const lagRatio = readLagRatio(call, lineNumber);
-    const childDuration =
-      childCalls.length === 0
-        ? 0
-        : duration / (1 + Math.max(0, childCalls.length - 1) * lagRatio);
+    const { childDuration, childOffset } = normalizeLaggedGroupTiming(
+      duration,
+      childCalls.length,
+      lagRatio,
+    );
     childCalls.forEach((childCall, index) => {
       emitPlayCall(
         state,
         childCall,
-        start + childDuration * lagRatio * index,
+        start + childOffset * index,
         childDuration,
         easing,
         lineNumber,
@@ -832,6 +833,9 @@ function pushTransformMatchingTex(
   const matchedTo = new Set<string>();
   for (const child of fromTokens) {
     const matches = child.latex ? available.get(child.latex) : undefined;
+    // Duplicate-token priority rule (Manim-compatible enough for stable output):
+    // match each source token to the earliest still-unmatched target token with
+    // the same LaTeX string, scanning strictly left-to-right.
     const match = matches?.shift();
     if (match) {
       matchedTo.add(match.id);
@@ -1321,6 +1325,20 @@ function readLagRatio(call: PlayCall, lineNumber: number): number {
       lineNumber,
     );
   return lagRatio;
+}
+
+function normalizeLaggedGroupTiming(
+  duration: number,
+  childCount: number,
+  lagRatio: number,
+): { childDuration: number; childOffset: number } {
+  if (childCount <= 0) return { childDuration: 0, childOffset: 0 };
+  const normalizedChildDuration =
+    duration / (1 + Math.max(0, childCount - 1) * lagRatio);
+  return {
+    childDuration: normalizedChildDuration,
+    childOffset: normalizedChildDuration * lagRatio,
+  };
 }
 
 function requireNode(
