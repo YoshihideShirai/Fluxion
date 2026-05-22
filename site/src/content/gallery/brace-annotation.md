@@ -12,8 +12,8 @@ status: ported
 order: 13
 ---
 scene width=960 height=540 fps=60
-circle a r=14 at 260,270 fill="#38bdf8" stroke="#e2e8f0" strokeWidth=2
-circle b r=14 at 700,270 fill="#38bdf8" stroke="#e2e8f0" strokeWidth=2
-line segment x1=-220 y1=0 x2=220 y2=0 at 480,270 stroke="#94a3b8" strokeWidth=2
+circle a r=14 at -220,0 fill="#38bdf8" stroke="#e2e8f0" strokeWidth=2
+circle b r=14 at 220,0 fill="#38bdf8" stroke="#e2e8f0" strokeWidth=2
+line segment x1=-220 y1=0 x2=220 y2=0 at 0,0 stroke="#94a3b8" strokeWidth=2
 brace span target=segment direction=up buff=22 label="d(A,B)" labelSize=28 labelColor="#e2e8f0" stroke="#f8fafc" strokeWidth=3
-text caption "Brace annotation (preview)" at 480,110 size=24 fill="#e2e8f0"
+text caption "Brace annotation (preview)" at 0,-160 size=24 fill="#e2e8f0"
