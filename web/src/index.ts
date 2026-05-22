@@ -14,7 +14,7 @@ export async function mountFluxion(container: Element, url: string): Promise<Pla
 }
 
 export function mountFluxionDocument(container: Element, documentData: FluxionDocument): Player {
-  const renderer = new SvgRenderer(container, documentData.width, documentData.height);
+  const renderer = new SvgRenderer(container, documentData.width ?? 1280, documentData.height ?? 720);
   const player = new Player(documentData, renderer);
   player.seek(0);
   return player;
