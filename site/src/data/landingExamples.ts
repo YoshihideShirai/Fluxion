@@ -110,7 +110,7 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
       ja: 'Circle node declaration',
       en: 'Circle node declaration',
     },
-    minimalExample: 'circle dot r=34 at 260,420 fill="#38bdf8"',
+    minimalExample: 'circle dot r=34 at -380,-20 fill="#38bdf8"',
     source: 'scene width=640 height=360 fps=60\ncircle dot r=58 at 320,180 fill="#38bdf8" stroke="#0f172a" strokeWidth=6',
   },
   {
@@ -124,7 +124,7 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
       ja: 'Rectangle node declaration',
       en: 'Rectangle node declaration',
     },
-    minimalExample: 'rect target w=120 h=88 at 820,420 fill="#f97316"',
+    minimalExample: 'rect target w=120 h=88 at 180,-20 fill="#f97316"',
     source: 'scene width=640 height=360 fps=60\nrect card w=220 h=120 at 320,180 fill="#f97316" opacity=0.85',
   },
   {
@@ -138,7 +138,7 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
       ja: 'Triangle node declaration',
       en: 'Triangle node declaration',
     },
-    minimalExample: 'triangle t1 w=120 h=104 at 640,360 fill="#ef4444"',
+    minimalExample: 'triangle t1 w=120 h=104 at 0,0 fill="#ef4444"',
     source: 'scene width=640 height=360 fps=60\ntriangle tri w=220 h=190 at 320,180 fill="#ef4444" stroke="#7f1d1d" strokeWidth=6',
   },
   {
@@ -152,7 +152,7 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
       ja: 'Line node declaration',
       en: 'Line node declaration',
     },
-    minimalExample: 'line axis x1=-50 y1=0 x2=50 y2=0 at 640,520 stroke="#e2e8f0"',
+    minimalExample: 'line axis x1=-50 y1=0 x2=50 y2=0 at 0,-160 stroke="#e2e8f0"',
     source: 'scene width=640 height=360 fps=60\nline axis x1=-220 y1=0 x2=220 y2=0 at 320,180 stroke="#e2e8f0" strokeWidth=8',
   },
   {
@@ -166,7 +166,7 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
       ja: 'Path node declaration',
       en: 'Path node declaration',
     },
-    minimalExample: 'path curve d="M 0 0 C 40 80 80 80 120 0" at 640,420 fill="none" stroke="#38bdf8"',
+    minimalExample: 'path curve d="M 0 0 C 40 80 80 80 120 0" at 0,-20 fill="none" stroke="#38bdf8"',
     source: 'scene width=640 height=360 fps=60\npath curve d="M 80 220 C 180 60 460 60 560 220" fill="none" stroke="#38bdf8" strokeWidth=8',
   },
   {
@@ -180,7 +180,7 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
       ja: 'Text label node declaration',
       en: 'Text label node declaration',
     },
-    minimalExample: 'text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"',
+    minimalExample: 'text title "Fluxion" at 0,240 size=32 fill="#e2e8f0"',
     source: 'scene width=640 height=360 fps=60\ntext title "Hello Text DSL" at 320,180 size=42 fill="#e2e8f0"',
   },
   {
@@ -194,7 +194,7 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
       ja: 'Math equation node declaration',
       en: 'Math equation node declaration',
     },
-    minimalExample: 'math equation "e^{i\\pi}+1=0" at 640,200 size=36 renderer=katex',
+    minimalExample: 'math equation "e^{i\\pi}+1=0" at 0,160 size=36 renderer=katex',
     source: 'scene width=640 height=360 fps=60\nmath formula "e^{i\\pi}+1=0" at 320,180 size=44 fill="#bae6fd" renderer=katex',
   },
   {
