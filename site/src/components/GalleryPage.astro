@@ -40,6 +40,17 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
             <h2 style="font-size:1.1rem;margin:0;">{demo.title}</h2>
             <p style="margin:0;">{demo.description}</p>
             <p style="margin:0;font-size:12px;">Category: {demo.category} / Status: <strong>{demo.status}</strong></p>
+            <section style="margin:0;padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc;">
+              <p style="margin:0 0 6px 0;font-size:12px;font-weight:600;">Manimとの差分</p>
+              <p style="margin:0 0 6px 0;font-size:12px;">
+                <span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#e2e8f0;color:#0f172a;font-weight:600;">
+                  Fidelity: {demo.fidelity}
+                </span>
+              </p>
+              <ul style="margin:0;padding-left:18px;font-size:12px;color:#334155;">
+                {demo.known_gaps.map((gap) => <li>{gap}</li>)}
+              </ul>
+            </section>
             <p style="margin:0;font-size:12px;"><a href={demo.source_manim_url} target="_blank" rel="noreferrer">Manim source</a></p>
             {(demo.missing_instructions || demo.blocker_reason) && <p style="margin:0;font-size:12px;color:#b45309;">{demo.missing_instructions ?? demo.blocker_reason}</p>}
             <div class="gallery-stage" id={`gallery-stage-${index}`} style="height:220px;border-radius:8px;border:1px solid #334155;background:#020617;"></div>

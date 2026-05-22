@@ -11,6 +11,8 @@ const gallery = defineCollection({
     source_manim_url: z.string().url(),
     source_example_path: z.string(),
     porting_strategy: z.enum(['faithful', 'visual_approximation', 'omitted_parts']),
+    fidelity: z.enum(['faithful', 'visual_approximation']),
+    known_gaps: z.array(z.string()).min(1),
     category: z.string(),
     status: z.enum(['ported', 'partial', 'blocker']),
     missing_instructions: z.string().optional(),

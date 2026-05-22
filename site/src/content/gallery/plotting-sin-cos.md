@@ -4,6 +4,9 @@ description: Text DSL version of plotting example with axes and two curves.
 source_manim_url: https://docs.manim.community/en/stable/examples.html#sinandcosfunctionplot
 source_example_path: examples/plotting_with_manim.py
 porting_strategy: visual_approximation
+fidelity: visual_approximation
+known_gaps:
+  - Axes scaling and curve sampling are simplified versus GraphScene behavior.
 category: Plotting with Manim
 status: ported
 order: 30

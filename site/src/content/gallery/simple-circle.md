@@ -4,6 +4,9 @@ description: "Text DSL version of examples/simple_circle.py: create one circle a
 source_manim_url: https://docs.manim.community/en/stable/examples.html#simplecircle
 source_example_path: examples/simple_circle.py
 porting_strategy: faithful
+fidelity: faithful
+known_gaps:
+  - Stroke join/cap rendering can differ slightly across browsers.
 category: Basic Concepts
 status: ported
 order: 10

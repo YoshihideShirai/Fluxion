@@ -4,6 +4,9 @@ description: Parametric movement using value trackers, expressions, and Transfor
 source_manim_url: https://docs.manim.community/en/stable/examples.html#pointmovingonshapes
 source_example_path: examples/gallery/orbital_dot.fluxion.txt
 porting_strategy: visual_approximation
+fidelity: visual_approximation
+known_gaps:
+  - Updater-style continuous re-binding is approximated with expression updates.
 category: Animations
 status: ported
 order: 21

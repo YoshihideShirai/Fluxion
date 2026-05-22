@@ -4,6 +4,9 @@ description: Unit circle tracer with continuously extended sine curve.
 source_manim_url: https://docs.manim.community/en/stable/examples.html#sinecurveunitcircle
 source_example_path: examples/gallery/sine_curve_unit_circle.fluxion.txt
 porting_strategy: omitted_parts
+fidelity: visual_approximation
+known_gaps:
+  - always_redraw-level procedural path growth is still partially unsupported.
 category: Advanced Projects
 status: partial
 missing_instructions: "Full always_redraw parity for procedural path topology updates is still limited."

@@ -4,6 +4,9 @@ description: Recreate logo composition with MathTex + circle/square/triangle pri
 source_manim_url: https://docs.manim.community/en/stable/examples.html#manimcelogo
 source_example_path: examples/gallery/manim_ce_logo.fluxion.txt
 porting_strategy: visual_approximation
+fidelity: visual_approximation
+known_gaps:
+  - Exact font metrics and layer blending differ from Manim output.
 category: Basic Concepts
 status: ported
 order: 12

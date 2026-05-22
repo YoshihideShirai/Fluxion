@@ -4,6 +4,9 @@ description: Inspired by OpeningManim; staged title + subtitle reveal using Lagg
 source_manim_url: https://docs.manim.community/en/stable/examples.html#openingmanim
 source_example_path: examples/gallery/opening_manim.fluxion.txt
 porting_strategy: visual_approximation
+fidelity: visual_approximation
+known_gaps:
+  - LaggedStart timing/kerning are approximated for browser playback.
 category: Advanced Projects
 status: ported
 order: 51

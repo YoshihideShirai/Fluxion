@@ -8,6 +8,8 @@ export type GalleryDemo = {
   source_manim_url: string;
   source_example_path: string;
   porting_strategy: 'faithful' | 'visual_approximation' | 'omitted_parts';
+  fidelity: 'faithful' | 'visual_approximation';
+  known_gaps: string[];
   missing_instructions?: string;
   blocker_reason?: string;
   source: string;
