@@ -34,6 +34,23 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
       <p>{intro}</p>
       <p><a href={`${baseUrl}${docsPath}`}>Manim coverage matrix（移植率）</a></p>
       <p><a href={backHomePath}>← Back to home</a> / <a href={playgroundUrl}>Open Playground</a></p>
+      <section style="margin-top:16px;padding:12px;border:1px solid #cbd5e1;border-radius:10px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;background:#f8fafc;">
+        <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;">
+          <input type="checkbox" id="study-mode-enabled" />
+          Study mode
+        </label>
+        <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;">
+          <input type="checkbox" id="study-mode-auto-next" disabled />
+          Auto-next
+        </label>
+        <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;">
+          Last card behavior
+          <select id="study-mode-end-action" disabled>
+            <option value="stop">Stop</option>
+            <option value="wrap">Return to first card</option>
+          </select>
+        </label>
+      </section>
       <section style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));margin-top:20px;">
         {demos.map((demo, index) => (
           <article style="border:1px solid #cbd5e1;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px;">
@@ -119,7 +136,39 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
             [...document.querySelectorAll('.seek-time')].map((node) => [node.dataset.stage ?? '', node]),
           );
           const stageSources = new Map(playButtons.map((button) => [button.dataset.stage ?? '', button.dataset.source ?? '']));
+          const stageOrder = playButtons.map((button) => button.dataset.stage ?? '').filter(Boolean);
+          const stageIndexMap = new Map(stageOrder.map((stageId, index) => [stageId, index]));
           const playerStates = new Map();
+          let currentPlayingIndex = -1;
+          let studyModeEnabled = false;
+          let studyModeAutoNext = false;
+          let studyModeEndAction = 'stop';
+          const studyModeToggle = document.getElementById('study-mode-enabled');
+          const studyModeAutoNextToggle = document.getElementById('study-mode-auto-next');
+          const studyModeEndActionSelect = document.getElementById('study-mode-end-action');
+
+          const playStageById = (stageId) => {
+            const player = ensurePlayer(stageId);
+            if (!player) return;
+            const index = stageIndexMap.get(stageId);
+            if (typeof index === 'number') currentPlayingIndex = index;
+            player.play();
+          };
+
+          const playNextStage = (stageId) => {
+            const currentIndex = stageIndexMap.get(stageId);
+            if (typeof currentIndex !== 'number') return;
+            const nextIndex = currentIndex + 1;
+            let targetStageId = '';
+            if (nextIndex < stageOrder.length) {
+              targetStageId = stageOrder[nextIndex];
+            } else if (studyModeEndAction === 'wrap' && stageOrder.length > 0) {
+              targetStageId = stageOrder[0];
+            }
+            if (!targetStageId) return;
+            document.getElementById(targetStageId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            playStageById(targetStageId);
+          };
 
           const formatSeconds = (value) => {
             const safe = Number.isFinite(value) ? Math.max(0, value) : 0;
@@ -156,6 +205,15 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
               const { player } = state;
               const duration = Number.isFinite(player.durationSeconds) ? player.durationSeconds : 0;
               const current = Number.isFinite(player.currentSeconds) ? player.currentSeconds : 0;
+              if (state.isPlaying && duration > 0 && current >= duration - 0.01 && !state.completionHandled) {
+                state.completionHandled = true;
+                state.isPlaying = false;
+                if (studyModeEnabled && studyModeAutoNext) {
+                  playNextStage(stageId);
+                }
+              } else if (duration > 0 && current < duration - 0.01) {
+                state.completionHandled = false;
+              }
               updateTimelineUi(stageId, current, duration);
               if (state.loopEnabled && duration > 0 && current >= duration - 0.01) {
                 player.seek(0);
@@ -175,7 +233,7 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
             if (!stage || !dsl) return null;
             const doc = compiler.compileTextDsl(dsl);
             const player = runtime.mountFluxionDocument(stage, doc);
-            playerStates.set(stageId, { player, loopEnabled: false });
+            playerStates.set(stageId, { player, loopEnabled: false, isPlaying: false, completionHandled: false });
             updateTimelineUi(stageId, 0, player.durationSeconds);
             startSync(stageId);
             return player;
@@ -184,9 +242,11 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
           playButtons.forEach((button) => {
             button.addEventListener('click', () => {
               const stageId = button.dataset.stage ?? '';
-              const player = ensurePlayer(stageId);
-              if (!player) return;
-              player.play();
+              playStageById(stageId);
+              const state = playerStates.get(stageId);
+              if (!state) return;
+              state.isPlaying = true;
+              state.completionHandled = false;
             });
           });
 
@@ -196,6 +256,8 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
               const player = ensurePlayer(stageId);
               if (!player) return;
               player.pause();
+              const state = playerStates.get(stageId);
+              if (state) state.isPlaying = false;
             });
           });
 
@@ -207,6 +269,11 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
               player.stop();
               player.seek(0);
               updateTimelineUi(stageId, 0, player.durationSeconds);
+              const state = playerStates.get(stageId);
+              if (state) {
+                state.isPlaying = false;
+                state.completionHandled = false;
+              }
             });
           });
 
@@ -227,8 +294,32 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
               const next = Number(input.value);
               player.seek(next);
               updateTimelineUi(stageId, next, player.durationSeconds);
+              const state = playerStates.get(stageId);
+              if (state && next < player.durationSeconds - 0.01) state.completionHandled = false;
             });
           });
+
+          if (studyModeToggle instanceof HTMLInputElement) {
+            studyModeToggle.addEventListener('change', () => {
+              studyModeEnabled = studyModeToggle.checked;
+              if (studyModeAutoNextToggle instanceof HTMLInputElement) {
+                studyModeAutoNextToggle.disabled = !studyModeEnabled;
+              }
+              if (studyModeEndActionSelect instanceof HTMLSelectElement) {
+                studyModeEndActionSelect.disabled = !studyModeEnabled;
+              }
+            });
+          }
+          if (studyModeAutoNextToggle instanceof HTMLInputElement) {
+            studyModeAutoNextToggle.addEventListener('change', () => {
+              studyModeAutoNext = studyModeAutoNextToggle.checked;
+            });
+          }
+          if (studyModeEndActionSelect instanceof HTMLSelectElement) {
+            studyModeEndActionSelect.addEventListener('change', () => {
+              studyModeEndAction = studyModeEndActionSelect.value === 'wrap' ? 'wrap' : 'stop';
+            });
+          }
 
           stageSources.forEach((_source, stageId) => ensurePlayer(stageId));
         } catch (error) {
