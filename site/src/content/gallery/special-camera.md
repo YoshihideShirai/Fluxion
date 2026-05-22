@@ -6,7 +6,7 @@ source_example_path: examples/special_camera_settings.py
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - Camera model is approximated (no full Manim moving-camera parity).
+  - Camera DSL now supports target follow / frame-fit channels, but auto-bounds fitting from arbitrary node sets is still simplified.
 category: Special Camera Settings
 status: ported
 order: 40

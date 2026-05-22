@@ -96,7 +96,7 @@ export function applyTimelineAt(
       if (seconds < op.t) continue;
       const progress = op.duration <= 0 ? 1 : ease(op.easing, (seconds - op.t) / op.duration);
       const value = interpolate(op.from, op.to, progress);
-      if (isCameraTarget(op.id, op.path)) setCameraPath(camera, op.path, value);
+      if (isCameraTarget(op.id, op.path)) applyCameraInterpolation(camera, op.path, value);
       else graph.setPath(op.id, op.path, value);
     } else if (op.op === "animateValue") {
       if (seconds < op.t) continue;
@@ -155,4 +155,22 @@ function setCameraPath(camera: Camera | undefined, path: string, value: unknown)
     const numericValue = Number(value);
     if (!Number.isNaN(numericValue)) camera[key] = numericValue;
   }
+  if (key === "padding") {
+    const numericValue = Number(value);
+    if (!Number.isNaN(numericValue)) camera.padding = numericValue;
+  }
+  if (key === "target.x" || key === "target.y") {
+    const numericValue = Number(value);
+    if (!Number.isNaN(numericValue)) {
+      const axis = key.endsWith(".x") ? "x" : "y";
+      camera.target = { ...(camera.target ?? { x: 0, y: 0 }), [axis]: numericValue };
+    }
+  }
+  if (key === "mode" && (value === "center" || value === "target" || value === "frame-fit")) {
+    camera.mode = value;
+  }
+}
+
+function applyCameraInterpolation(camera: Camera | undefined, path: string, value: unknown): void {
+  setCameraPath(camera, path, value);
 }

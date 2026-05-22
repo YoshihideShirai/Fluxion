@@ -229,6 +229,23 @@ function parseCamera(
       state.camera[key] = parseNumber(value, lineNumber);
       continue;
     }
+    if (key === "target") {
+      const [x, y] = value.split(",").map((item) => parseNumber(item, lineNumber));
+      if (x === undefined || y === undefined || Number.isNaN(x) || Number.isNaN(y))
+        throw new DslCompileError("Expected camera target x,y.", lineNumber);
+      state.camera.target = { x, y };
+      continue;
+    }
+    if (key === "padding") {
+      state.camera.padding = parseNumber(value, lineNumber);
+      continue;
+    }
+    if (key === "mode") {
+      if (value !== "center" && value !== "target" && value !== "frame-fit")
+        throw new DslCompileError("Camera mode must be center|target|frame-fit.", lineNumber);
+      state.camera.mode = value;
+      continue;
+    }
 
     throw new DslCompileError(`Unknown camera option '${key}'.`, lineNumber);
   }
@@ -1412,7 +1429,7 @@ function defaultTransform(): Transform {
 }
 
 function defaultCamera(): Camera {
-  return { x: 0, y: 0, scale: 1, rotation: 0 };
+  return { x: 0, y: 0, scale: 1, rotation: 0, target: { x: 0, y: 0 }, padding: 0, mode: "center" };
 }
 
 function defaultGeometry(type: NodeType): Record<string, number | string> {
@@ -1532,8 +1549,8 @@ function cameraPropertyPath(property: string): string {
   return property;
 }
 
-function isCameraProperty(property: string | undefined): property is keyof Camera {
-  return property === "x" || property === "y" || property === "scale" || property === "rotation";
+function isCameraProperty(property: string | undefined): boolean {
+  return ["x", "y", "scale", "rotation", "padding", "mode", "target.x", "target.y"].includes(property ?? "");
 }
 
 function propertyPath(property: string): string {
