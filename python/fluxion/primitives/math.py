@@ -43,9 +43,53 @@ class Math(Mobject):
 
 
 def tokenize_latex(latex: str) -> List[str]:
-    """Split LaTeX into stable token strings for future TransformMatchingTex work."""
+    """Split LaTeX into stable token strings for TransformMatchingTex matching.
 
-    return [match.group(0) for match in _LATEX_TOKEN_RE.finditer(latex) if not match.group(0).isspace()]
+    Matching is intentionally left-to-right stable:
+    - base tokens absorb following script operators (`^` / `_`) with their
+      immediate argument (single token or `{...}` group), e.g. `x_1^2`
+    - whitespace is ignored
+    - duplicate token strings are preserved in-order so matching can apply a
+      first-unmatched-target rule
+    """
+
+    raw_tokens = [match.group(0) for match in _LATEX_TOKEN_RE.finditer(latex) if not match.group(0).isspace()]
+    tokens: List[str] = []
+    index = 0
+    while index < len(raw_tokens):
+        token = raw_tokens[index]
+        index += 1
+        while index < len(raw_tokens) and raw_tokens[index] in {"^", "_"}:
+            marker = raw_tokens[index]
+            argument, index = _read_script_argument(raw_tokens, index + 1)
+            if argument is None:
+                break
+            token += marker + argument
+        tokens.append(token)
+    return tokens
+
+
+def _read_script_argument(tokens: List[str], start: int) -> tuple[str | None, int]:
+    first = tokens[start] if start < len(tokens) else None
+    if first is None:
+        return None, start
+    if first != "{":
+        return first, start + 1
+
+    depth = 0
+    argument = ""
+    index = start
+    while index < len(tokens):
+        token = tokens[index]
+        if token == "{":
+            depth += 1
+        if token == "}":
+            depth -= 1
+        argument += token
+        index += 1
+        if depth == 0:
+            return argument, index
+    return argument, len(tokens)
 
 
 def latex_to_token_mobjects(

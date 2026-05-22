@@ -6,7 +6,7 @@ source_example_path: examples/gallery/transform_matching_tex.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - Token matching heuristics are simplified compared with Manim TransformMatchingTex.
+  - Token geometry interpolation is approximate because browser text shaping differs from Manim's TeX rasterization.
 category: Advanced Projects
 status: ported
 order: 50
