@@ -52,13 +52,15 @@ PYTHONPATH=python python examples/special_camera_settings.py
 
 Use this table as the canonical mapping for migration tracking and regression checks when upstream Manim examples change.
 
-| Python example / source | Gallery demo | Porting strategy | Notes |
+| Python example / source | Gallery demo | Porting strategy | Fidelity | Notes |
 | --- | --- | --- | --- |
-| `examples/simple_circle.py` | `site/src/content/gallery/simple-circle.md` | `faithful` (忠実移植) | Core flow is fully matched. |
-| `examples/basic_concepts_square_to_circle.py` | `site/src/content/gallery/square-to-circle.md` | `faithful` (忠実移植) | Create → Transform → FadeOut is preserved. |
-| `examples/animations_using_animate.py` | `site/src/content/gallery/animations-using-animate.md` | `faithful` (忠実移植) | `.animate` sequence is preserved. |
-| `examples/plotting_with_manim.py` | `site/src/content/gallery/plotting-sin-cos.md` | `visual_approximation` (視覚近似) | Curves/axes are approximated for web runtime parity. |
-| `examples/special_camera_settings.py` | `site/src/content/gallery/special-camera.md` | `visual_approximation` (視覚近似) | Camera behavior is approximated to current camera model. |
+| `examples/simple_circle.py` | `site/src/content/gallery/simple-circle.md` | `faithful` (忠実移植) | `faithful` | Core flow is matched; minor browser rendering differences may remain. |
+| `examples/basic_concepts_square_to_circle.py` | `site/src/content/gallery/square-to-circle.md` | `faithful` (忠実移植) | `faithful` | Create → Transform → FadeOut is preserved with interpolation caveats. |
+| `examples/animations_using_animate.py` | `site/src/content/gallery/animations-using-animate.md` | `faithful` (忠実移植) | `faithful` | `.animate` sequence is preserved; default easing may differ slightly. |
+| `examples/plotting_with_manim.py` | `site/src/content/gallery/plotting-sin-cos.md` | `visual_approximation` (視覚近似) | `visual_approximation` | Curves/axes are approximated for web runtime parity. |
+| `examples/special_camera_settings.py` | `site/src/content/gallery/special-camera.md` | `visual_approximation` (視覚近似) | `visual_approximation` | Camera behavior is approximated to current camera model. |
+
+Interpretation rule: `fidelity=faithful` means behavior-oriented parity, while `fidelity=visual_approximation` means visual-first approximation with explicit known gaps.
 
 For gallery entries that are not yet backed by a runnable Python example, `source_example_path` points to the planned/placeholder path under `examples/gallery/` so impact can still be tracked systematically.
 
@@ -78,6 +80,6 @@ The Playground includes a Text DSL editor. Paste snippets from [Text DSL referen
 See the live matrix in [Gallery](/gallery/) (English page: [/en/gallery/](/en/gallery/)).
 
 Status meanings:
-- `ported`: fully runnable in Fluxion DSL.
-- `partial`: partially ported; some instructions are missing.
+- `ported`: runnable in Fluxion DSL (with possible known gaps).
+- `partial`: partially ported; known gaps are larger or unresolved.
 - `blocker`: blocked by missing primitives/runtime capability.

@@ -4,6 +4,9 @@ description: Distance braces and labels between two dots.
 source_manim_url: https://docs.manim.community/en/stable/examples.html#braceannotation
 source_example_path: examples/gallery/brace_annotation.fluxion.txt
 porting_strategy: visual_approximation
+fidelity: visual_approximation
+known_gaps:
+  - Brace geometry and tip styling are approximated in current web renderer.
 category: Basic Concepts
 status: ported
 order: 13

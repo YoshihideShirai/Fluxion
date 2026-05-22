@@ -4,6 +4,9 @@ description: Token-by-token math transform like Manim TransformMatchingTex.
 source_manim_url: https://docs.manim.community/en/stable/examples.html#textransformexample
 source_example_path: examples/gallery/transform_matching_tex.fluxion.txt
 porting_strategy: visual_approximation
+fidelity: visual_approximation
+known_gaps:
+  - Token matching heuristics are simplified compared with Manim TransformMatchingTex.
 category: Advanced Projects
 status: ported
 order: 50

@@ -4,6 +4,9 @@ description: Text DSL version with camera pan and zoom.
 source_manim_url: https://docs.manim.community/en/stable/examples.html#followinggraphcamera
 source_example_path: examples/special_camera_settings.py
 porting_strategy: visual_approximation
+fidelity: visual_approximation
+known_gaps:
+  - Camera model is approximated (no full Manim moving-camera parity).
 category: Special Camera Settings
 status: ported
 order: 40

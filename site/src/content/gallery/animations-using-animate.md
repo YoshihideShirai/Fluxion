@@ -4,6 +4,9 @@ description: Text DSL version of examples/animations_using_animate.py.
 source_manim_url: https://docs.manim.community/en/stable/examples.html#animationsusinganimate
 source_example_path: examples/animations_using_animate.py
 porting_strategy: faithful
+fidelity: faithful
+known_gaps:
+  - Rate function and transform interpolation may differ slightly from Manim defaults.
 category: Animations
 status: ported
 order: 20
