@@ -45,7 +45,12 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
             <div class="gallery-stage" id={`gallery-stage-${index}`} style="height:220px;border-radius:8px;border:1px solid #334155;background:#020617;"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button type="button" class="play-inline" data-source={demo.source} data-stage={`gallery-stage-${index}`}>Play</button>
+              <button type="button" class="pause-inline" data-stage={`gallery-stage-${index}`}>Pause</button>
               <button type="button" class="reset-inline" data-stage={`gallery-stage-${index}`}>Reset</button>
+              <label style="font-size:12px;display:inline-flex;align-items:center;gap:4px;">
+                <input type="checkbox" class="loop-inline" data-stage={`gallery-stage-${index}`} />
+                Loop
+              </label>
               <a href={encodeDsl(demo.source)}>Open in Playground</a>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -70,20 +75,13 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
       </section>
     </main>
     <script is:inline define:vars={{ baseUrl }}>
-      const players = new Map();
       const syncHandles = new Map();
       const status = document.createElement('p');
       status.style.color = '#dc2626';
       status.style.marginTop = '12px';
 
-      const runtimeCandidates = [
-        `${baseUrl}playground/dist/index.js`,
-        `${baseUrl}playground/dist/index.mjs`,
-      ];
-      const compilerCandidates = [
-        `${baseUrl}playground/dist/dsl/compiler.js`,
-        `${baseUrl}playground/dist/dsl/compiler.mjs`,
-      ];
+      const runtimeCandidates = [`${baseUrl}playground/dist/index.js`, `${baseUrl}playground/dist/index.mjs`];
+      const compilerCandidates = [`${baseUrl}playground/dist/dsl/compiler.js`, `${baseUrl}playground/dist/dsl/compiler.mjs`];
 
       async function importFirst(candidates) {
         let lastError;
@@ -102,11 +100,15 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
           const runtime = await importFirst(runtimeCandidates);
           const compiler = await importFirst(compilerCandidates);
           const playButtons = [...document.querySelectorAll('.play-inline')];
+          const pauseButtons = [...document.querySelectorAll('.pause-inline')];
           const resetButtons = [...document.querySelectorAll('.reset-inline')];
           const seekInputs = [...document.querySelectorAll('.seek-inline')];
+          const loopInputs = [...document.querySelectorAll('.loop-inline')];
           const seekTimes = new Map(
             [...document.querySelectorAll('.seek-time')].map((node) => [node.dataset.stage ?? '', node]),
           );
+          const stageSources = new Map(playButtons.map((button) => [button.dataset.stage ?? '', button.dataset.source ?? '']));
+          const playerStates = new Map();
 
           const formatSeconds = (value) => {
             const safe = Number.isFinite(value) ? Math.max(0, value) : 0;
@@ -135,40 +137,61 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
             syncHandles.delete(stageId);
           };
 
-          const startSync = (stageId, player) => {
+          const startSync = (stageId) => {
             stopSync(stageId);
             const tick = () => {
-              updateTimelineUi(stageId, player.currentSeconds, player.durationSeconds);
+              const state = playerStates.get(stageId);
+              if (!state) return;
+              const { player } = state;
+              const duration = Number.isFinite(player.durationSeconds) ? player.durationSeconds : 0;
+              const current = Number.isFinite(player.currentSeconds) ? player.currentSeconds : 0;
+              updateTimelineUi(stageId, current, duration);
+              if (state.loopEnabled && duration > 0 && current >= duration - 0.01) {
+                player.seek(0);
+                player.play();
+                updateTimelineUi(stageId, 0, duration);
+              }
               syncHandles.set(stageId, requestAnimationFrame(tick));
             };
             syncHandles.set(stageId, requestAnimationFrame(tick));
           };
 
-          const run = (stageId, dsl) => {
+          const ensurePlayer = (stageId) => {
+            const existing = playerStates.get(stageId);
+            if (existing) return existing.player;
             const stage = document.getElementById(stageId);
-            if (!stage) return;
-            const prev = players.get(stageId);
-            prev?.stop();
-            stopSync(stageId);
+            const dsl = stageSources.get(stageId) ?? '';
+            if (!stage || !dsl) return null;
             const doc = compiler.compileTextDsl(dsl);
             const player = runtime.mountFluxionDocument(stage, doc);
-            player.play({ from: 0 });
-            players.set(stageId, player);
+            playerStates.set(stageId, { player, loopEnabled: false });
             updateTimelineUi(stageId, 0, player.durationSeconds);
-            startSync(stageId, player);
+            startSync(stageId);
+            return player;
           };
 
           playButtons.forEach((button) => {
             button.addEventListener('click', () => {
-              run(button.dataset.stage ?? '', button.dataset.source ?? '');
+              const stageId = button.dataset.stage ?? '';
+              const player = ensurePlayer(stageId);
+              if (!player) return;
+              player.play();
             });
-            run(button.dataset.stage ?? '', button.dataset.source ?? '');
+          });
+
+          pauseButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+              const stageId = button.dataset.stage ?? '';
+              const player = ensurePlayer(stageId);
+              if (!player) return;
+              player.pause();
+            });
           });
 
           resetButtons.forEach((button) => {
             button.addEventListener('click', () => {
               const stageId = button.dataset.stage ?? '';
-              const player = players.get(stageId);
+              const player = ensurePlayer(stageId);
               if (!player) return;
               player.stop();
               player.seek(0);
@@ -176,18 +199,34 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
             });
           });
 
+          loopInputs.forEach((input) => {
+            input.addEventListener('change', () => {
+              const stageId = input.dataset.stage ?? '';
+              const state = playerStates.get(stageId);
+              if (!state) return;
+              state.loopEnabled = input.checked;
+            });
+          });
+
           seekInputs.forEach((input) => {
             input.addEventListener('input', () => {
               const stageId = input.dataset.stage ?? '';
-              const player = players.get(stageId);
+              const player = ensurePlayer(stageId);
               if (!player) return;
               const next = Number(input.value);
               player.seek(next);
               updateTimelineUi(stageId, next, player.durationSeconds);
             });
           });
+
+          stageSources.forEach((_source, stageId) => ensurePlayer(stageId));
         } catch (error) {
           status.textContent = 'Failed to load gallery runtime. Open Playground and rebuild web/dist if needed.';
+          document.querySelectorAll('.play-inline, .pause-inline, .reset-inline, .seek-inline, .loop-inline').forEach((control) => {
+            if (control instanceof HTMLButtonElement || control instanceof HTMLInputElement) {
+              control.disabled = true;
+            }
+          });
           document.querySelector('main')?.appendChild(status);
           console.error(error);
         }
