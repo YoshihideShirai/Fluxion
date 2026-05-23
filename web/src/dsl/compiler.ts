@@ -145,6 +145,11 @@ export function compileTextDsl(source: string): FluxionDocument {
       return;
     }
 
+    if (keyword === "surroundingRect") {
+      parseSurroundingRect(tokens, state, lineNumber);
+      return;
+    }
+
     if (keyword === "axes") {
       parseAxes(tokens, state, lineNumber);
       return;
@@ -358,6 +363,52 @@ function parseNode(
   if (type === "group") {
     for (const childId of childIds) state.rootIds.delete(childId);
   }
+}
+
+function parseSurroundingRect(
+  tokens: string[],
+  state: CompileState,
+  lineNumber: number,
+): void {
+  const id = tokens[1];
+  if (!id)
+    throw new DslCompileError("Expected id after surroundingRect.", lineNumber);
+  if (state.nodes.has(id))
+    throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+
+  const options = readNodeArguments(tokens.slice(2), lineNumber);
+  const targetId = options.find(([key]) => key === "target")?.[1];
+  if (!targetId)
+    throw new DslCompileError(
+      "surroundingRect requires target=<nodeId>.",
+      lineNumber,
+    );
+  const target = findNode(state, targetId);
+  if (!target)
+    throw new DslCompileError(
+      `surroundingRect target '${targetId}' could not be resolved.`,
+      lineNumber,
+    );
+
+  const buffRaw = options.find(([key]) => key === "buff")?.[1] ?? "8";
+  const buff = parseNumber(buffRaw, lineNumber);
+  const bounds = approximateNodeBounds(target);
+  const node = createBaseNode(id, "rect");
+  node.transform.x = (bounds.minX + bounds.maxX) / 2;
+  node.transform.y = (bounds.minY + bounds.maxY) / 2;
+  node.geometry.w = Math.max(1, bounds.maxX - bounds.minX + buff * 2);
+  node.geometry.h = Math.max(1, bounds.maxY - bounds.minY + buff * 2);
+  node.style.fill = "none";
+  node.style.stroke = "#ffffff";
+  node.style.strokeWidth = 2;
+
+  for (const [key, value] of options) {
+    if (key === "target" || key === "buff") continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
 }
 
 
@@ -1346,9 +1397,99 @@ function requireNode(
   id: string,
   lineNumber: number,
 ): SceneNode {
-  const node = state.nodes.get(id);
+  const node = findNode(state, id);
   if (!node) throw new DslCompileError(`Unknown node '${id}'.`, lineNumber);
   return node;
+}
+
+function findNode(state: CompileState, id: string): SceneNode | undefined {
+  const root = state.nodes.get(id);
+  if (root) return root;
+  for (const node of state.nodes.values()) {
+    const found = findNodeInTree(node, id);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+function findNodeInTree(node: SceneNode, id: string): SceneNode | undefined {
+  if (node.id === id) return node;
+  for (const child of node.children ?? []) {
+    const found = findNodeInTree(child, id);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+function approximateNodeBounds(node: SceneNode): {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+} {
+  const childBounds = (node.children ?? [])
+    .map((child) => approximateNodeBounds(child))
+    .filter((bounds) => Number.isFinite(bounds.minX));
+  if (childBounds.length > 0) {
+    return offsetBounds(
+      unionBounds(childBounds),
+      Number(node.transform.x ?? 0),
+      Number(node.transform.y ?? 0),
+    );
+  }
+
+  const x = Number(node.transform.x ?? 0);
+  const y = Number(node.transform.y ?? 0);
+  const scale = Number(node.transform.scale ?? 1);
+  if (node.type === "circle") {
+    const r = Number(node.geometry.r ?? 40) * scale;
+    return { minX: x - r, maxX: x + r, minY: y - r, maxY: y + r };
+  }
+  if (node.type === "line") {
+    const x1 = Number(node.geometry.x1 ?? 0) * scale;
+    const x2 = Number(node.geometry.x2 ?? 0) * scale;
+    const y1 = Number(node.geometry.y1 ?? 0) * scale;
+    const y2 = Number(node.geometry.y2 ?? 0) * scale;
+    return {
+      minX: x + Math.min(x1, x2),
+      maxX: x + Math.max(x1, x2),
+      minY: y + Math.min(y1, y2),
+      maxY: y + Math.max(y1, y2),
+    };
+  }
+  const fontSize = Number(node.geometry.fontSize ?? 32);
+  const contentLength = node.type === "math"
+    ? String(node.latex ?? "").length
+    : String(node.text ?? "").length;
+  const fallbackWidth = Math.max(fontSize * 2, contentLength * fontSize * 0.55);
+  const fallbackHeight = node.type === "math" ? fontSize * 2.5 : fontSize * 1.5;
+  const w = Number(node.geometry.w ?? fallbackWidth) * scale;
+  const h = Number(node.geometry.h ?? fallbackHeight) * scale;
+  return { minX: x - w / 2, maxX: x + w / 2, minY: y - h / 2, maxY: y + h / 2 };
+}
+
+function unionBounds(
+  bounds: Array<{ minX: number; maxX: number; minY: number; maxY: number }>,
+): { minX: number; maxX: number; minY: number; maxY: number } {
+  return {
+    minX: Math.min(...bounds.map((item) => item.minX)),
+    maxX: Math.max(...bounds.map((item) => item.maxX)),
+    minY: Math.min(...bounds.map((item) => item.minY)),
+    maxY: Math.max(...bounds.map((item) => item.maxY)),
+  };
+}
+
+function offsetBounds(
+  bounds: { minX: number; maxX: number; minY: number; maxY: number },
+  x: number,
+  y: number,
+): { minX: number; maxX: number; minY: number; maxY: number } {
+  return {
+    minX: bounds.minX + x,
+    maxX: bounds.maxX + x,
+    minY: bounds.minY + y,
+    maxY: bounds.maxY + y,
+  };
 }
 
 function hiddenClone(node: SceneNode): SceneNode {

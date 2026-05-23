@@ -21,6 +21,7 @@ The current Text DSL scope is intentionally small: place shapes, math, paths, an
 | `text` | Text label node declaration | `text title "Fluxion" at 0,240 size=32 fill="#e2e8f0"` |
 | `math` | Math equation node declaration | `math equation "e^{i\pi}+1=0" at 0,160 size=36 renderer=katex` |
 | `group` | Grouped node declaration | `group intro title equation` |
+| `surroundingRect` | Target-bounds rectangle declaration | `surroundingRect frame target=equation buff=10 stroke="#fbbf24"` |
 | `at` | Start an indented block at a fixed time | `at 0s:` |
 | `show / hide` | Create or delete a node on the timeline | `show dot` |
 | `value` | Declare a scalar tracker | `value theta = 0` |
@@ -119,6 +120,7 @@ path curve d="M 0 0 C 40 80 80 80 120 0" at 640,420 fill="none" stroke="#38bdf8"
 text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"
 math equation "e^{i\\pi}+1=0" at 640,200 size=36 expandTokens=true
 group intro title equation
+surroundingRect frame target=equation buff=10 stroke="#fbbf24"
 ```
 
 Supported node types:
@@ -131,6 +133,7 @@ Supported node types:
 - `text <id> "<text>"`
 - `math <id> "<latex>"`
 - `group <id> [child-id...]`
+- `surroundingRect <id> target=<node-id>`
 
 `id` values must be unique in a document.
 
@@ -144,6 +147,7 @@ Common options:
 - `fill`, `stroke`, `strokeWidth`
 - `size` / `fontSize`
 - `math` only: `renderer=katex|mathjax`, `expandTokens=true|false`
+- `surroundingRect` only: `target=<node-id>`, `buff=<number>`; emits a normal `rect` node sized from the target node's declared/estimated bounds.
 
 
 ### Path morphing constraints

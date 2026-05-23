@@ -182,6 +182,21 @@ test("compiles path nodes with SVG d geometry", () => {
   );
 });
 
+test("compiles surroundingRect nodes from target bounds", () => {
+  const documentData = compileTextDsl(`math term "f(x)\\frac{d}{dx}g(x)" at 120,80 size=30 w=260 h=72
+surroundingRect frame target=term buff=10 stroke="#fbbf24" strokeWidth=4`);
+
+  const frame = documentData.nodes.find((node) => node.id === "frame");
+  assert.equal(frame?.type, "rect");
+  assert.equal(frame?.transform.x, 120);
+  assert.equal(frame?.transform.y, 80);
+  assert.equal(frame?.geometry.w, 280);
+  assert.equal(frame?.geometry.h, 92);
+  assert.equal(frame?.style.fill, "none");
+  assert.equal(frame?.style.stroke, "#fbbf24");
+  assert.equal(frame?.style.strokeWidth, 4);
+});
+
 test("compiles math nodes with renderer and font size", () => {
   const documentData = compileTextDsl(
     `math equation "e^{i\\pi}+1=0" at 320,180 size=42 renderer=mathjax fill="#f8fafc"`,
