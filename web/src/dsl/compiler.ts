@@ -401,6 +401,7 @@ function parseSurroundingRect(
   node.style.fill = "none";
   node.style.stroke = "#ffffff";
   node.style.strokeWidth = 2;
+  node.geometry.shapeMatcher = "surroundingRect";
 
   for (const [key, value] of options) {
     if (key === "target" || key === "buff") continue;
@@ -757,21 +758,7 @@ function emitPlayCall(
   if (call.name === "Create") {
     ensureNoPlayOptions(call, lineNumber);
     const id = expectPlayArg(call, 1, lineNumber);
-    const node = requireNode(state, id, lineNumber);
-    state.timeline.push({
-      t: start,
-      op: "create",
-      node: structuredClone(node),
-    });
-    state.timeline.push({
-      t: start,
-      op: "effect",
-      id,
-      effect: "create",
-      duration,
-      easing,
-    });
-    state.shown.add(id);
+    pushCreate(state, start, id, duration, easing, lineNumber);
     return;
   }
 
@@ -1574,6 +1561,49 @@ function pushWrite(
 
 function supportsWriteProgress(node: SceneNode): boolean {
   return node.type === "math" || node.type === "text";
+}
+
+function pushCreate(
+  state: CompileState,
+  start: number,
+  id: string,
+  duration: number,
+  easing: string,
+  lineNumber: number,
+): void {
+  const node = requireNode(state, id, lineNumber);
+  const createNode = structuredClone(node);
+  if (supportsDrawProgress(node)) createNode.geometry.drawProgress = 0;
+  state.timeline.push({
+    t: start,
+    op: "create",
+    node: createNode,
+  });
+  state.timeline.push({
+    t: start,
+    op: "effect",
+    id,
+    effect: "create",
+    duration,
+    easing,
+  });
+  if (supportsDrawProgress(node)) {
+    state.timeline.push({
+      t: start,
+      op: "animate",
+      id,
+      path: "geometry.drawProgress",
+      from: 0,
+      to: 1,
+      duration,
+      easing,
+    });
+  }
+  state.shown.add(id);
+}
+
+function supportsDrawProgress(node: SceneNode): boolean {
+  return node.geometry.shapeMatcher === "surroundingRect";
 }
 
 function pushTransformAnimations(

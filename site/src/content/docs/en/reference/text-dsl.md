@@ -147,7 +147,7 @@ Common options:
 - `fill`, `stroke`, `strokeWidth`
 - `size` / `fontSize`
 - `math` only: `renderer=katex|mathjax`, `expandTokens=true|false`
-- `surroundingRect` only: `target=<node-id>`, `buff=<number>`; emits a normal `rect` node sized from the target node's declared/estimated bounds.
+- `surroundingRect` only: `target=<node-id>`, `buff=<number>`; emits a frame-like `rect` node sized from the target node's declared/estimated bounds. `play Create(frame)` animates its border with `geometry.drawProgress` for a Manim-like outline draw.
 
 
 ### Path morphing constraints
@@ -225,7 +225,7 @@ Supported primitives include:
 
 - `FadeIn(id)`: creates the node at hidden opacity, emits `effect=fadeIn`, and animates `transform.opacity`.
 - `FadeOut(id)`: emits `effect=fadeOut`, animates `transform.opacity` to `0`, and deletes the node when the duration ends.
-- `Create(id)`: creates the node and emits `effect=create`.
+- `Create(id)`: creates the node and emits `effect=create`. For `surroundingRect` frames, it also animates `geometry.drawProgress` so the border is drawn on.
 - `Write(id)`: creates writable leaves with `geometry.writeProgress=0`, emits `effect=write`, and reveals each leaf with a short left-to-right stagger to approximate Manim's written-on appearance.
 - `Transform(source, target)`: animates the source node toward transform/style/geometry properties from the target node.
 - `TransformMatchingTex(source, target)`: matches expanded `math` token children by identical token text. Matched tokens expand to `Transform`, source-only tokens expand to `FadeOut`, and target-only tokens expand to `FadeIn`.

@@ -6,7 +6,7 @@ source_example_path: examples/gallery/moving_frame_box.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - MathTex part layout is approximated with separate math nodes, and the frame bounds use declared width/height metrics rather than Manim glyph boxes; Write reveal uses left-to-right clipping rather than stroke-by-stroke glyph drawing.
+  - MathTex part layout is approximated with separate math nodes, and the frame bounds use declared width/height metrics rather than Manim glyph boxes; Write reveal uses left-to-right clipping and frame Create uses stroke-dash drawing rather than exact Manim vector tracing.
 category: Animations
 status: ported
 order: 24

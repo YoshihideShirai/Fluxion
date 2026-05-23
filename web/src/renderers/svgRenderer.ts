@@ -75,6 +75,7 @@ export class SvgRenderer {
     element.dataset.nodeId = node.id;
     this.applyTransform(element, node.transform);
     this.applyStyle(element, node.style);
+    this.applyDrawProgress(element, node);
     for (const child of node.children ?? []) element.append(this.renderNode(child));
     return element;
   }
@@ -420,5 +421,13 @@ export class SvgRenderer {
     element.setAttribute("fill", style.fill ?? "none");
     element.setAttribute("stroke", style.stroke ?? "none");
     element.setAttribute("stroke-width", String(style.strokeWidth ?? 0));
+  }
+
+  private applyDrawProgress(element: SVGElement, node: SceneNode): void {
+    if (!Object.hasOwn(node.geometry, "drawProgress")) return;
+    const progress = this.clamp(Number(node.geometry.drawProgress), 0, 1);
+    element.setAttribute("pathLength", "1");
+    element.setAttribute("stroke-dasharray", "1");
+    element.setAttribute("stroke-dashoffset", String(1 - progress));
   }
 }

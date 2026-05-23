@@ -192,9 +192,30 @@ surroundingRect frame target=term buff=10 stroke="#fbbf24" strokeWidth=4`);
   assert.equal(frame?.transform.y, 80);
   assert.equal(frame?.geometry.w, 280);
   assert.equal(frame?.geometry.h, 92);
+  assert.equal(frame?.geometry.shapeMatcher, "surroundingRect");
   assert.equal(frame?.style.fill, "none");
   assert.equal(frame?.style.stroke, "#fbbf24");
   assert.equal(frame?.style.strokeWidth, 4);
+});
+
+test("expands Create on surroundingRect into border draw progress", () => {
+  const documentData = compileTextDsl(`math term "f(x)" at 120,80 size=30 w=100 h=72
+surroundingRect frame target=term buff=10 stroke="#fbbf24" strokeWidth=4
+play Create(frame) duration=0.75s easing=linear`);
+
+  const create = documentData.timeline.find(
+    (op) => op.op === "create" && op.node.id === "frame",
+  );
+  assert.equal(create?.op, "create");
+  if (create?.op !== "create") throw new Error("Expected frame create op.");
+  assert.equal(create.node.geometry.drawProgress, 0);
+
+  equalJson(
+    documentData.timeline
+      .filter((op): op is AnimateOperation => op.op === "animate")
+      .map((op) => [op.id, op.path, op.from, op.to, op.duration, op.easing]),
+    [["frame", "geometry.drawProgress", 0, 1, 0.75, "linear"]],
+  );
 });
 
 test("compiles math nodes with renderer and font size", () => {
