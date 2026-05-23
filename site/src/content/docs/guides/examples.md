@@ -111,7 +111,7 @@ known_gaps:
 | moving-angle | blocker | P1 | **要サンプル生成**; dynamic angle/arc updater | 角度更新とラベル同期が破綻しない。 |
 | polygon-on-axes | blocker | P1 | **要サンプル生成**; axes coordinate transform parity | 座標変換と polygon 配置が一致。 |
 | point-with-trace | blocker | P1 | **要サンプル生成**; traced path primitive | 軌跡線が欠損なく描画・更新される。 |
-| moving-group-to-destination | partial | P1 | group-level destination command（`group` 向け move/align DSL）の追加 | 子要素個別 animate ではなく group 単位命令で destination 遷移できる。 |
+| moving-group-to-destination | ported | P1 | sample parity 完了（group transform animate） | `animate dots.x/y` で group 単位移動が再現される。 |
 | arg-min-example | blocker | P2 | **要サンプル生成**; graph query helper（argmin） | argmin ハイライトの導出と注釈が再現。 |
 | boolean-operations | blocker | P2 | **要サンプル生成**; boolean path ops（union/intersection/subtract） | 図形ブーリアン演算結果が正しくレンダリング。 |
 | gradient-image-from-array | blocker | P2 | **要サンプル生成**; image-from-array runtime | 配列由来 gradient が色ずれなく表示。 |

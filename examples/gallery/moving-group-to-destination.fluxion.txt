@@ -24,12 +24,8 @@ at 0s:
   play FadeIn(targetLabel) duration=0.4s
 
 wait 0.2s
-animate c1.x from -300 to 120 duration=1.2s easing=easeInOut
-animate c2.x from -240 to 180 duration=1.2s easing=easeInOut
-animate c3.x from -180 to 240 duration=1.2s easing=easeInOut
-animate c1.y from -40 to 20 duration=1.2s easing=easeInOut
-animate c2.y from -40 to 20 duration=1.2s easing=easeInOut
-animate c3.y from -40 to 20 duration=1.2s easing=easeInOut
+animate dots.x from 0 to 420 duration=1.2s easing=easeInOut
+animate dots.y from 0 to 60 duration=1.2s easing=easeInOut
 wait 0.2s
 play Circumscribe(dots) duration=0.9s color="#fbbf24"
 wait 0.2s
