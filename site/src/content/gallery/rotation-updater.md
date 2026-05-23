@@ -1,26 +1,36 @@
 ---
 title: RotationUpdater
-description: "Manim Example: `RotationUpdater` (`#rotationupdater`) の未移植デモ（プレースホルダー）。"
+description: "Manim Example: `RotationUpdater` (`#rotationupdater`) の Fluxion 移植版。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#rotationupdater
 source_example_path: examples/gallery/rotation-updater.fluxion.txt
-porting_strategy: omitted_parts
+porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "この Example はまだ Fluxion へ移植されていません（プレースホルダー表示のみ）。"
-    layer: compiler
-    impact: high
-    workaround: "同テーマの移植済み Example を参照する。"
-    closure_condition: "当該 Example の DSL 実装とアニメーションシーケンスが追加される。"
-    fidelity_upgrade_condition: "プレースホルダーではなく元Example相当のシーンが再現され、主要差分が解消された時。"
+  - symptom: "本家の updater callback 連鎖は未対応のため、value tracker と `always` で回転合成を近似している。"
+    layer: dsl
+    impact: medium
+    workaround: "角度を value で管理し、`always` で複数要素へ回転を伝播する。"
+    closure_condition: "callback ベース updater（引数 `dt`）を DSL/runtime で直接扱えるようにする。"
+    fidelity_upgrade_condition: "Manim の updater 関数をそのまま記述して同挙動を再現できる時。"
 category: Manim Stable Examples
-status: blocker
-blocker_reason: Required primitives/effects are not fully mapped yet.
+status: partial
+gap_id: GAP-026
 order: 73
 ---
 scene width=960 height=540 fps=60
+value theta = 0
 rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "RotationUpdater" at 0,-20 size=42 fill="#e2e8f0"
-text note "Placeholder: not ported yet" at 0,46 size=24 fill="#f59e0b"
+text title "RotationUpdater" at 0,220 size=40 fill="#e2e8f0"
+circle ring r=120 at 0,-20 fill="none" stroke="#334155" strokeWidth=2
+line needle x1=0 y1=0 x2=120 y2=0 at 0,-20 stroke="#38bdf8" strokeWidth=4
+rect follower w=40 h=40 at 170,-20 fill="none" stroke="#f59e0b" strokeWidth=3
+always needle.rotation = expr=theta
+always follower.rotation = expr=-1.8*theta
+always follower.y = expr=-20 + 40*sin(theta)
 at 0s:
-  play FadeIn(title) duration=0.6s easing=easeOut
-  play FadeIn(note) duration=0.6s easing=easeOut
+  play FadeIn(title) duration=0.5s
+  play Create(ring) duration=0.6s
+  play Create(needle) duration=0.5s
+  play Create(follower) duration=0.5s
+wait 0.2s
+animate theta from 0 to 6.283 duration=3.5s easing=linear

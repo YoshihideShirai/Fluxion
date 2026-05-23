@@ -39,4 +39,5 @@ at 0s:
 wait 0.2s
 animate theta from 0 to 6.283 duration=3.2s easing=linear
 wait 0.2s
-play Circumscribe(dot) duration=0.7s color="#fbbf24"
+play FadeOut(dot) duration=0.35s
+play FadeIn(dot) duration=0.35s
