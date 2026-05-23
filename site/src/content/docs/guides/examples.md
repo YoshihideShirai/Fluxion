@@ -107,8 +107,8 @@ known_gaps:
 | opening-manim | ported | P1 | **要サンプル生成**; text + shape choreography | 主要シーケンスが drop なしで完走。 |
 | orbital-dot | ported | P1 | **要サンプル生成**; path-follow + rate function parity | 軌道追従点が同等速度感で再現。 |
 | sine-curve-unit-circle | partial | P1 | **要サンプル生成**; synchronized updater + tracing | partial 要因（同期/トレース欠損）が解消し ported 化。 |
-| moving-around | blocker | P1 | **要サンプル生成**; composite animate pipeline | blocker 解消後に `.animate` の複合変換を連続再生可能。 |
-| moving-angle | blocker | P1 | **要サンプル生成**; dynamic angle/arc updater | 角度更新とラベル同期が破綻しない。 |
+| moving-around | partial | P1 | camera frame high-level DSL の追加 | camera.x/y/scale の直接 animate ではなく frame API sugar で再現できる。 |
+| moving-angle | partial | P1 | Angle primitive（半径/象限/装飾）DSL の追加 | path/updater 近似ではなく Angle API 相当で弧とラベルを記述できる。 |
 | polygon-on-axes | blocker | P1 | **要サンプル生成**; axes coordinate transform parity | 座標変換と polygon 配置が一致。 |
 | point-with-trace | blocker | P1 | **要サンプル生成**; traced path primitive | 軌跡線が欠損なく描画・更新される。 |
 | moving-group-to-destination | ported | P1 | sample parity 完了（group transform animate） | `animate dots.x/y` で group 単位移動が再現される。 |
