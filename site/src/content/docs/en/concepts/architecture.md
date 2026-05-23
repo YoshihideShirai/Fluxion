@@ -135,14 +135,14 @@ Fluxion keeps animation output semantic. This makes it possible to:
 
 ## Scene-level camera
 
-`FluxionDocument` includes a root camera state: `camera: { x, y, scale, rotation }`. The default `{ x: 0, y: 0, scale: 1, rotation: 0 }` keeps scene coordinates unchanged. Timeline operations address the camera with `id: "camera"` and paths such as `camera.x` or `camera.scale`.
+`FluxionDocument` includes a root camera state: `camera: { x, y, scale, rotation }`. The default `{ x: 0, y: 0, scale: 1, rotation: 0 }` maps scene origin `(0,0)` to the viewport center. Timeline operations address the camera with `id: "camera"` and paths such as `camera.x` or `camera.scale`.
 
 The SVG renderer creates a root `<g>` for all scene nodes and applies camera before node transforms:
 
 ```text
 Screen = Camera * ParentNode * ChildNode * Geometry
-Camera = translate(centerX + camera.x, centerY + camera.y) rotate(camera.rotation) scale(camera.scale) translate(-centerX, -centerY)
+Camera = translate(centerX + camera.x, centerY + camera.y) rotate(camera.rotation) scale(camera.scale) translate(-focusX, -focusY)
 Node   = translate(node.x, node.y) rotate(node.rotation) scale(node.scale)
 ```
 
-This makes camera pan scene-level while zoom / rotation pivot around the scene center, and each node's transform remains local and composes under the camera.
+For `mode=center`, `focusX=0` and `focusY=0`; target modes use the target coordinate as focus. This makes camera pan scene-level while zoom / rotation pivot around the scene origin at the viewport center, and each node's transform remains local and composes under the camera.

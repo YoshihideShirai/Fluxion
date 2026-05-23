@@ -279,4 +279,4 @@ animate camera.scale from 1 to 1.6 duration=2s easing=easeInOut
 
 `camera` configures the document-level `camera: { x, y, scale, rotation }`. Defaults are `x=0`, `y=0`, `scale=1`, and `rotation=0`. `set` / `animate` can target `camera.x`, `camera.y`, `camera.scale`, and `camera.rotation`.
 
-The renderer applies camera pan after pivoting zoom / rotation around the scene center: `translate(centerX + camera.x, centerY + camera.y) rotate(camera.rotation) scale(camera.scale) translate(-centerX, -centerY)`. Composition order is `Camera * ParentNode * ChildNode`, so the camera pans / zooms / rotates the entire scene while node transforms stay local.
+The renderer maps the scene origin `(0,0)` to the viewport center, then applies camera pan / zoom / rotation: `translate(centerX + camera.x, centerY + camera.y) rotate(camera.rotation) scale(camera.scale) translate(0, 0)`. With `mode=target` / `mode=frame-fit`, the final translate centers the target coordinate instead. Composition order is `Camera * ParentNode * ChildNode`, so the camera pans / zooms / rotates the entire scene while node transforms stay local.

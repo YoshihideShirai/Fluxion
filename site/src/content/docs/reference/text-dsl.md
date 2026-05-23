@@ -412,4 +412,4 @@ animate camera.scale from 1 to 1.6 duration=2s easing=easeInOut
 
 `camera` は document-level の `camera: { x, y, scale, rotation }` を設定します。既定値は `x=0`, `y=0`, `scale=1`, `rotation=0` です。`set` / `animate` は `camera.x`, `camera.y`, `camera.scale`, `camera.rotation` を target にできます。
 
-Renderer は scene center を pivot にした zoom / rotation の後、pan を適用します: `translate(centerX + camera.x, centerY + camera.y) rotate(camera.rotation) scale(camera.scale) translate(-centerX, -centerY)`。合成順序は `Camera * ParentNode * ChildNode` です。つまり camera は scene 全体の pan / zoom / rotation、node transform は各 node の local transform として扱われます。
+Renderer は scene origin `(0,0)` を viewport center に移してから zoom / rotation / pan を適用します: `translate(centerX + camera.x, centerY + camera.y) rotate(camera.rotation) scale(camera.scale) translate(0, 0)`。`mode=target` / `mode=frame-fit` では最後の translate が target 座標を中心へ合わせます。合成順序は `Camera * ParentNode * ChildNode` です。つまり camera は scene 全体の pan / zoom / rotation、node transform は各 node の local transform として扱われます。
