@@ -12,10 +12,10 @@ status: ported
 order: 24
 ---
 scene width=960 height=540 fps=60
-math lhs "\frac{d}{dx}f(x)g(x)=" at -205,20 size=34 w=230 h=86 fill="#e2e8f0" renderer=katex
-math termA "f(x)\frac{d}{dx}g(x)" at 30,20 size=34 w=174 h=86 fill="#bae6fd" renderer=katex
-math plus "+" at 150,20 size=34 w=30 h=70 fill="#e2e8f0" renderer=katex
-math termB "g(x)\frac{d}{dx}f(x)" at 275,20 size=34 w=184 h=86 fill="#fde68a" renderer=katex
+math lhs "\frac{d}{dx}f(x)g(x)=" at -205,20 size=30 w=220 h=80 fill="#e2e8f0" renderer=katex
+math termA "f(x)\frac{d}{dx}g(x)" at 25,20 size=30 w=210 h=80 fill="#bae6fd" renderer=katex
+math plus "+" at 150,20 size=30 w=28 h=66 fill="#e2e8f0" renderer=katex
+math termB "g(x)\frac{d}{dx}f(x)" at 275,20 size=30 w=215 h=80 fill="#fde68a" renderer=katex
 group productRule lhs termA plus termB
 surroundingRect frameA target=termA buff=10 stroke="#fbbf24" strokeWidth=4
 surroundingRect frameB target=termB buff=10 stroke="#fbbf24" strokeWidth=4
