@@ -1504,8 +1504,7 @@ function latexToTokenNodes(
     child.style = { ...style };
     child.geometry.fontSize = fontSize;
     child.geometry.w = width;
-    child.geometry.baselineOffset = 0;
-    child.transform.x = cursor + width / 2;
+    child.transform.x = cursor;
     cursor += width;
     return child;
   });
@@ -1515,7 +1514,26 @@ function tokenWidth(token: string, fontSize: number): number {
   if (token.startsWith("\\") && token.length > 2) return fontSize * 0.9;
   if (token === "^" || token === "_" || token === "{" || token === "}")
     return fontSize * 0.35;
-  return Math.max(fontSize * 0.45, token.length * fontSize * 0.55);
+
+  const [base] = token.split(/[_^]/u);
+  const scriptMarkers = (token.match(/[_^]/gu) ?? []).length;
+  const baseText = base ?? token;
+  let baseWidthUnits = 0;
+  for (const char of baseText) {
+    if (/[A-Z]/u.test(char)) {
+      baseWidthUnits += 0.62;
+    } else if (/[a-z]/u.test(char)) {
+      baseWidthUnits += 0.52;
+    } else if (/[0-9]/u.test(char)) {
+      baseWidthUnits += 0.5;
+    } else {
+      baseWidthUnits += 0.55;
+    }
+  }
+
+  const scriptWidthUnits = scriptMarkers * 0.35;
+  const estimatedUnits = Math.max(0.45, baseWidthUnits + scriptWidthUnits);
+  return fontSize * estimatedUnits;
 }
 
 function createBaseNode(id: string, type: NodeType): SceneNode {
