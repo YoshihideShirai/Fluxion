@@ -22,6 +22,8 @@ Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション
 | `math` | Math equation node declaration | `math equation "e^{i\pi}+1=0" at 0,160 size=36 renderer=katex` |
 | `group` | Grouped node declaration | `group intro title equation` |
 | `surroundingRect` | Target-bounds rectangle declaration | `surroundingRect frame target=equation buff=10 stroke="#fbbf24"` |
+| `axes` | Axes helper declaration | `axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2` |
+| `plot` | Function plot path declaration | `plot curve fn=sin(t) range=-3.14,3.14 scaleX=80 scaleY=60` |
 | `at` | Start an indented block at a fixed time | `at 0s:` |
 | `show / hide` | Create or delete a node on the timeline | `show dot` |
 | `value` | Declare a scalar tracker | `value theta = 0` |
@@ -133,6 +135,8 @@ Supported node types:
 - `math <id> "<latex>"`
 - `group <id> [child-id...]`
 - `surroundingRect <id> target=<node-id>`
+- `axes <id>`
+- `plot <id> fn=<expr>`
 
 `id` は document 内で一意である必要があります。
 
@@ -157,6 +161,8 @@ Geometry options:
 - `math`: `size` or `fontSize`, `renderer=katex|mathjax`, `expandTokens=true|false`
 - `group`: child ids are copied into `children` and removed from top-level roots
 - `surroundingRect`: `target=<node-id>`, `buff=<number>`; target の宣言/推定 bounds に基づく frame-like な `rect` node として出力されます。`play Create(frame)` では `geometry.drawProgress` により Manim 風に外枠が描画されます。
+- `axes`: `xRange=<min,max>`, `yRange=<min,max>`, `width`, `height`; x/y 軸の line を持つ `group` node を生成します。
+- `plot`: `fn=<expr>`, `range=<min,max>`, `samples`, `scaleX`, `scaleY`, `close=true|false`; 関数をサンプリングした `path` geometry を生成します。
 
 Default values:
 

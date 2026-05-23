@@ -474,14 +474,29 @@ function parsePlot(tokens: string[], state: CompileState, lineNumber: number): v
   const [cx, cy] = at.split(",").map((v) => parseNumber(v, lineNumber));
   const scaleX = parseNumber(options.get("scaleX") ?? "76", lineNumber);
   const scaleY = parseNumber(options.get("scaleY") ?? "60", lineNumber);
-  const stroke = options.get("stroke") ?? "#38bdf8";
-  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "4", lineNumber);
-  const pathOp = readPathGeneratorAssignment(`path(x=t*${scaleX}, y=(${fnExpr})*-${scaleY}, from=${r0!}, to=${r1!}, samples=${samples})`, state, lineNumber);
+  const close = options.get("close")
+    ? parseBoolean(options.get("close")!, lineNumber)
+    : false;
+  const pathOp = readPathGeneratorAssignment(`path(x=t*${scaleX}, y=(${fnExpr})*-${scaleY}, from=${r0!}, to=${r1!}, samples=${samples}, close=${close})`, state, lineNumber);
   if (!pathOp) throw new DslCompileError("Failed to build plot path.", lineNumber);
 
   const node = createBaseNode(id, "path");
   node.transform.x = cx!; node.transform.y = cy!;
-  node.style.fill = "none"; node.style.stroke = stroke; node.style.strokeWidth = strokeWidth;
+  node.style.fill = "none";
+  node.style.stroke = "#38bdf8";
+  node.style.strokeWidth = 4;
+  for (const [key, value] of options) {
+    if (
+      key === "fn" ||
+      key === "range" ||
+      key === "samples" ||
+      key === "at" ||
+      key === "scaleX" ||
+      key === "scaleY" ||
+      key === "close"
+    ) continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
   node.metadata = { plot: { range: [r0!, r1!], samples } };
   const d = buildPathDataPreview(pathOp, state);
   node.geometry.d = d;
