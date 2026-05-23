@@ -6,7 +6,12 @@ source_example_path: examples/animations_using_animate.py
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - Rate function and transform interpolation may differ slightly from Manim defaults.
+  - symptom: "Rate function and transform interpolation may differ slightly from Manim defaults."
+    layer: runtime
+    impact: medium
+    workaround: "easing・duration・中間キーを調整して差を吸収する。"
+    closure_condition: "補間・レート関数の挙動がManim準拠になる。"
+    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Animations
 status: ported
 order: 20

@@ -55,6 +55,26 @@ PYTHONPATH=python python examples/special_camera_settings.py
 - `fidelity: faithful`（忠実移植）: Manim の流れ・意図をできるだけ保持。
 - `fidelity: visual_approximation`（視覚近似）: 見た目を優先し、内部実装や挙動の一部は近似。
 
+
+### known_gaps 記述規約
+
+`site/src/content/gallery/*.md` の frontmatter `known_gaps` は、次のテンプレートで統一します。
+
+```yaml
+known_gaps:
+  - symptom: "症状（何が違うか）"
+    layer: dsl # dsl / compiler / runtime / renderer
+    impact: medium # low / medium / high
+    workaround: "回避策（ある場合。なければ『なし』）"
+    closure_condition: "解消条件（どこが直れば閉じられるか）"
+    fidelity_upgrade_condition: "fidelity を faithful へ昇格できる条件"
+```
+
+補足:
+- `known_gaps` は **項目ごと**に独立して管理し、複数ギャップがある場合は配列で追加します。
+- `fidelity_upgrade_condition` は `closure_condition` と同一でも構いませんが、**昇格判定として読める文**で明記します。
+- `fidelity: faithful` の項目でも、残差分があれば `known_gaps` を残して追跡します。
+
 | Python example / source | Gallery demo | Porting strategy | Fidelity | Notes |
 | --- | --- | --- | --- | --- |
 | `examples/simple_circle.py` | `site/src/content/gallery/simple-circle.md` | `faithful` | `faithful` | Browserごとの差は最小限。 |

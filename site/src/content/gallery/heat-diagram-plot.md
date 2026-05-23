@@ -6,7 +6,12 @@ source_example_path: examples/gallery/heat-diagram-plot.fluxion.txt
 porting_strategy: omitted_parts
 fidelity: visual_approximation
 known_gaps:
-  - この Example はまだ Fluxion へ移植されていません（プレースホルダー表示のみ）。
+  - symptom: "この Example はまだ Fluxion へ移植されていません（プレースホルダー表示のみ）。"
+    layer: compiler
+    impact: high
+    workaround: "同テーマの移植済み Example を参照する。"
+    closure_condition: "当該 Example の DSL 実装とアニメーションシーケンスが追加される。"
+    fidelity_upgrade_condition: "プレースホルダーではなく元Example相当のシーンが再現され、主要差分が解消された時。"
 category: Manim Stable Examples
 status: blocker
 blocker_reason: Required primitives/effects are not fully mapped yet.

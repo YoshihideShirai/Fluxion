@@ -6,7 +6,12 @@ source_example_path: examples/gallery/brace_annotation.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - Brace contour is now size-aware, but mathtext label bounds are still estimated from fontSize for anchor spacing.
+  - symptom: "Brace contour is now size-aware, but mathtext label bounds are still estimated from fontSize for anchor spacing."
+    layer: renderer
+    impact: low
+    workaround: "必要に応じてスタイル値を手動調整する。"
+    closure_condition: "該当レンダリング差分が解消され、Manim 出力との視覚差が許容範囲に収まる。"
+    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Basic Concepts
 status: ported
 order: 13

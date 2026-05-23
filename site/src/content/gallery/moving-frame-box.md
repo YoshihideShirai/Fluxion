@@ -6,7 +6,12 @@ source_example_path: examples/gallery/moving_frame_box.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - MathTex part layout is approximated with separate math nodes, and the frame bounds use declared width/height metrics rather than Manim glyph boxes; Write reveal uses left-to-right clipping and frame Create uses stroke-dash drawing rather than exact Manim vector tracing.
+  - symptom: "MathTex part layout is approximated with separate math nodes, and the frame bounds use declared width/height metrics rather than Manim glyph boxes; Write reveal uses left-to-right clipping and frame Create uses stroke-dash drawing rather than exact Manim vector tracing."
+    layer: renderer
+    impact: low
+    workaround: "必要に応じてスタイル値を手動調整する。"
+    closure_condition: "該当レンダリング差分が解消され、Manim 出力との視覚差が許容範囲に収まる。"
+    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Animations
 status: ported
 order: 24

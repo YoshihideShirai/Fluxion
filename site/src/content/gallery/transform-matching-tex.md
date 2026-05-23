@@ -6,7 +6,12 @@ source_example_path: examples/gallery/transform_matching_tex.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - Token geometry interpolation is approximate because browser text shaping differs from Manim's TeX rasterization.
+  - symptom: "Token geometry interpolation is approximate because browser text shaping differs from Manim's TeX rasterization."
+    layer: runtime
+    impact: medium
+    workaround: "easing・duration・中間キーを調整して差を吸収する。"
+    closure_condition: "補間・レート関数の挙動がManim準拠になる。"
+    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Advanced Projects
 status: ported
 order: 50
