@@ -64,6 +64,50 @@ PYTHONPATH=python python examples/special_camera_settings.py
 | `examples/special_camera_settings.py` | `site/src/content/gallery/special-camera.md` | `visual_approximation` | `visual_approximation` | カメラモデルは現行実装で近似。 |
 | Manim `MovingFrameBox` | `site/src/content/gallery/moving-frame-box.md` | `visual_approximation` | `visual_approximation` | `SurroundingRectangle` は `surroundingRect` で表現。MathTex parts は宣言 bounds による近似。 |
 
+## 移植ロードマップ
+
+優先度ルール:
+
+- **P0**: 入門導線・主要API（Getting Started/Python DSL/Plotting/Camera で参照する導線）。
+- **P1**: 中級表現（合成アニメーション、図形注釈、座標系ベースの派生表現）。
+- **P2**: 特殊表現（3D、高度な updater、画像配列、ブーリアン演算など）。
+
+`source_example_path` がある項目を優先して整備し、`examples/*.py` / `*.fluxion.json` が揃っていないものは dependency に **要サンプル生成** と明記します。
+
+| demo slug | current status | priority | dependency | exit criteria |
+| --- | --- | --- | --- | --- |
+| simple-circle | ported | P0 | sample parity 完了（`examples/simple_circle.py` + `.fluxion.json`） | Gallery と examples の両方で再生でき、差分メモが許容範囲。 |
+| square-to-circle | ported | P0 | **要サンプル生成**（`examples/square_to_circle.py/.fluxion.json` の命名で追加） | slug 対応の examples から再生成可能で、Create→Transform→FadeOut が一致。 |
+| animations-using-animate | ported | P0 | sample parity 完了（`examples/animations_using_animate.py` + `.fluxion.json`） | `.animate` 連鎖（shift/fill/scale/rotate）が再現される。 |
+| plotting-sin-cos | ported | P0 | **要サンプル生成**（`examples/plotting_sin_cos.py/.fluxion.json`） | 軸+sin/cos プロットが slug 対応 sample から再現可能。 |
+| special-camera | ported | P0 | **要サンプル生成**（`examples/special_camera.py/.fluxion.json`）; camera runtime parity | カメラ追従/ズームが slug 対応 sample で再生可能。 |
+| moving-frame-box | ported | P1 | **要サンプル生成**; SurroundingRectangle/MathTex part bounds の安定化 | フレーム追従と注釈矩形の見た目差分が許容範囲。 |
+| transform-matching-tex | ported | P1 | **要サンプル生成**; tex token matching runtime | 文字列分割の対応付けが破綻せずに再生できる。 |
+| brace-annotation | ported | P1 | **要サンプル生成**; brace primitive + label anchoring | brace とラベル位置が主要ブラウザで安定。 |
+| opening-manim | ported | P1 | **要サンプル生成**; text + shape choreography | 主要シーケンスが drop なしで完走。 |
+| orbital-dot | ported | P1 | **要サンプル生成**; path-follow + rate function parity | 軌道追従点が同等速度感で再現。 |
+| sine-curve-unit-circle | partial | P1 | **要サンプル生成**; synchronized updater + tracing | partial 要因（同期/トレース欠損）が解消し ported 化。 |
+| moving-around | blocker | P1 | **要サンプル生成**; composite animate pipeline | blocker 解消後に `.animate` の複合変換を連続再生可能。 |
+| moving-angle | blocker | P1 | **要サンプル生成**; dynamic angle/arc updater | 角度更新とラベル同期が破綻しない。 |
+| polygon-on-axes | blocker | P1 | **要サンプル生成**; axes coordinate transform parity | 座標変換と polygon 配置が一致。 |
+| point-with-trace | blocker | P1 | **要サンプル生成**; traced path primitive | 軌跡線が欠損なく描画・更新される。 |
+| moving-group-to-destination | blocker | P1 | **要サンプル生成**; group transform origin handling | group 全体の移動/整列が意図どおり。 |
+| arg-min-example | blocker | P2 | **要サンプル生成**; graph query helper（argmin） | argmin ハイライトの導出と注釈が再現。 |
+| boolean-operations | blocker | P2 | **要サンプル生成**; boolean path ops（union/intersection/subtract） | 図形ブーリアン演算結果が正しくレンダリング。 |
+| gradient-image-from-array | blocker | P2 | **要サンプル生成**; image-from-array runtime | 配列由来 gradient が色ずれなく表示。 |
+| graph-area-plot | blocker | P2 | **要サンプル生成**; area-under-curve fill primitive | 曲線下面積の塗りが正しく更新。 |
+| heat-diagram-plot | blocker | P2 | **要サンプル生成**; heatmap grid + colormap | ヒートマップのセル色マッピングが正しい。 |
+| fixed-in-frame-m-object-test | blocker | P2 | **要サンプル生成**; fixed-in-frame layer support | カメラ変化中でも固定オブジェクト位置が不変。 |
+| moving-dots | blocker | P2 | **要サンプル生成**; multi-object updater performance | 複数dot更新でフレーム落ち・位置ズレなし。 |
+| rotation-updater | blocker | P2 | **要サンプル生成**; continuous updater dt parity | 連続回転 updater が時間依存で安定。 |
+| vector-arrow | blocker | P2 | **要サンプル生成**; vector field/arrow tip geometry | 矢印向きと tip 形状が正しく追従。 |
+| manim-ce-logo | ported | P2 | **要サンプル生成**; complex path composition | ロゴ形状合成が主要ブラウザで一致。 |
+| three-d-camera-rotation | blocker | P2 | **要サンプル生成**; 3D camera orbit controls | 3D 回転カメラで破綻なく再生。 |
+| three-d-camera-illusion-rotation | blocker | P2 | **要サンプル生成**; faux-3D transform stack | 疑似3D回転の遠近感が維持される。 |
+| three-d-light-source-position | blocker | P2 | **要サンプル生成**; light source/shading runtime | 光源位置変化がシェーディングに反映。 |
+| three-d-surface-plot | blocker | P2 | **要サンプル生成**; surface mesh primitive | surface が穴抜けなく描画される。 |
+| moving-zoomed-scene-around | blocker | P2 | **要サンプル生成**; zoomed scene inset camera support | inset とメイン視点の同期が成立。 |
+
 ## Browser example
 
 The Playground includes a Text DSL editor. Paste snippets from [Text DSL reference](../../reference/text-dsl/) or [Playground tour](../playground/) and compile them directly in the browser.
