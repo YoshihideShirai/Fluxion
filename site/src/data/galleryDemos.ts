@@ -9,6 +9,8 @@ export type GalleryDemo = {
   source_example_path: string;
   porting_strategy: 'faithful' | 'visual_approximation' | 'omitted_parts';
   fidelity: 'faithful' | 'visual_approximation';
+  priority?: string;
+  gap_id?: string;
   known_gaps: string[];
   missing_instructions?: string;
   blocker_reason?: string;

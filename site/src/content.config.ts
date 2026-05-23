@@ -15,6 +15,8 @@ const gallery = defineCollection({
     known_gaps: z.array(z.string()).min(1),
     category: z.string(),
     status: z.enum(['ported', 'partial', 'blocker']),
+    priority: z.string().optional(),
+    gap_id: z.string().optional(),
     missing_instructions: z.string().optional(),
     blocker_reason: z.string().optional(),
     order: z.number().default(0),

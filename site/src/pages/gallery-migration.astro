@@ -1,0 +1,104 @@
+---
+import { getGalleryDemos } from '../data/galleryDemos';
+
+const demos = await getGalleryDemos();
+const statuses = [...new Set(demos.map((demo) => demo.status))].sort();
+const fidelities = [...new Set(demos.map((demo) => demo.fidelity))].sort();
+const priorities = [...new Set(demos.map((demo) => demo.priority).filter((value): value is string => Boolean(value)))].sort();
+---
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gallery migration admin view</title>
+  </head>
+  <body>
+    <main style="max-width:1200px;margin:0 auto;padding:32px 20px;font-family:system-ui;">
+      <h1>Gallery migration admin view</h1>
+      <p>status / fidelity / priority で絞り込みながら移植状況を管理するためのビューです。</p>
+
+      <section style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:16px 0 20px;">
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+          Status
+          <select id="filter-status">
+            <option value="all">all</option>
+            {statuses.map((status) => <option value={status}>{status}</option>)}
+          </select>
+        </label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+          Fidelity
+          <select id="filter-fidelity">
+            <option value="all">all</option>
+            {fidelities.map((fidelity) => <option value={fidelity}>{fidelity}</option>)}
+          </select>
+        </label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+          Priority
+          <select id="filter-priority">
+            <option value="all">all</option>
+            {priorities.map((priority) => <option value={priority}>{priority}</option>)}
+          </select>
+        </label>
+      </section>
+
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <thead>
+          <tr style="background:#f1f5f9;">
+            <th style="text-align:left;padding:8px;border:1px solid #cbd5e1;">Title</th>
+            <th style="text-align:left;padding:8px;border:1px solid #cbd5e1;">Category</th>
+            <th style="text-align:left;padding:8px;border:1px solid #cbd5e1;">Status</th>
+            <th style="text-align:left;padding:8px;border:1px solid #cbd5e1;">Fidelity</th>
+            <th style="text-align:left;padding:8px;border:1px solid #cbd5e1;">Priority</th>
+            <th style="text-align:left;padding:8px;border:1px solid #cbd5e1;">gap_id</th>
+          </tr>
+        </thead>
+        <tbody>
+          {demos.map((demo) => (
+            <tr data-status={demo.status} data-fidelity={demo.fidelity} data-priority={demo.priority ?? ''}>
+              <td style="padding:8px;border:1px solid #cbd5e1;">{demo.title}</td>
+              <td style="padding:8px;border:1px solid #cbd5e1;">{demo.category}</td>
+              <td style="padding:8px;border:1px solid #cbd5e1;">{demo.status}</td>
+              <td style="padding:8px;border:1px solid #cbd5e1;">{demo.fidelity}</td>
+              <td style="padding:8px;border:1px solid #cbd5e1;">{demo.priority ?? '-'}</td>
+              <td style="padding:8px;border:1px solid #cbd5e1;">{demo.gap_id ?? '-'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p id="row-count" style="margin-top:8px;font-size:12px;color:#475569;"></p>
+    </main>
+
+    <script is:inline>
+      const rows = [...document.querySelectorAll('tbody tr')];
+      const statusSelect = document.getElementById('filter-status');
+      const fidelitySelect = document.getElementById('filter-fidelity');
+      const prioritySelect = document.getElementById('filter-priority');
+      const rowCount = document.getElementById('row-count');
+
+      const applyFilters = () => {
+        const status = statusSelect instanceof HTMLSelectElement ? statusSelect.value : 'all';
+        const fidelity = fidelitySelect instanceof HTMLSelectElement ? fidelitySelect.value : 'all';
+        const priority = prioritySelect instanceof HTMLSelectElement ? prioritySelect.value : 'all';
+        let visible = 0;
+        rows.forEach((row) => {
+          const rowStatus = row.getAttribute('data-status') ?? '';
+          const rowFidelity = row.getAttribute('data-fidelity') ?? '';
+          const rowPriority = row.getAttribute('data-priority') ?? '';
+          const match =
+            (status === 'all' || rowStatus === status) &&
+            (fidelity === 'all' || rowFidelity === fidelity) &&
+            (priority === 'all' || rowPriority === priority);
+          row.style.display = match ? '' : 'none';
+          if (match) visible += 1;
+        });
+        if (rowCount) rowCount.textContent = `visible ${visible} / total ${rows.length}`;
+      };
+
+      statusSelect?.addEventListener('change', applyFilters);
+      fidelitySelect?.addEventListener('change', applyFilters);
+      prioritySelect?.addEventListener('change', applyFilters);
+      applyFilters();
+    </script>
+  </body>
+</html>
