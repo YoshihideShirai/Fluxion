@@ -1510,30 +1510,58 @@ function latexToTokenNodes(
   });
 }
 
-function tokenWidth(token: string, fontSize: number): number {
-  if (token.startsWith("\\") && token.length > 2) return fontSize * 0.9;
-  if (token === "^" || token === "_" || token === "{" || token === "}")
-    return fontSize * 0.35;
+const TOKEN_PADDING_UNITS = 0.26;
 
-  const [base] = token.split(/[_^]/u);
-  const scriptMarkers = (token.match(/[_^]/gu) ?? []).length;
+function tokenWidth(token: string, fontSize: number): number {
+  if (token.startsWith("\\") && token.length > 2)
+    return fontSize * (0.9 + TOKEN_PADDING_UNITS);
+  if (token === "^" || token === "_" || token === "{" || token === "}")
+    return fontSize * (0.35 + TOKEN_PADDING_UNITS);
+
+  const [base, ...scriptParts] = token.split(/(?=[_^])/u);
+  const scriptPart = scriptParts.join("");
   const baseText = base ?? token;
-  let baseWidthUnits = 0;
-  for (const char of baseText) {
-    if (/[A-Z]/u.test(char)) {
-      baseWidthUnits += 0.62;
+  const baseWidthUnits = textWidthUnits(baseText);
+  const scriptWidthUnits = scriptPart
+    ? textWidthUnits(scriptPart.replace(/[_^{}]/gu, "")) * 0.45
+    : 0;
+
+  const estimatedUnits = Math.max(
+    0.45,
+    baseWidthUnits + scriptWidthUnits + TOKEN_PADDING_UNITS,
+  );
+  return fontSize * estimatedUnits;
+}
+
+function textWidthUnits(text: string): number {
+  let widthUnits = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index] ?? "";
+    if (char === "\\") {
+      const command = text.slice(index).match(/^\\[a-zA-Z]+\*?/u)?.[0];
+      if (command) {
+        widthUnits += 0.9;
+        index += command.length - 1;
+        continue;
+      }
+      widthUnits += 0.35;
+    } else if (/[+=<>-]/u.test(char)) {
+      widthUnits += 0.78;
+    } else if (/[()[\]]/u.test(char)) {
+      widthUnits += 0.42;
+    } else if (/[A-Z]/u.test(char)) {
+      widthUnits += 0.62;
     } else if (/[a-z]/u.test(char)) {
-      baseWidthUnits += 0.52;
+      widthUnits += 0.56;
     } else if (/[0-9]/u.test(char)) {
-      baseWidthUnits += 0.5;
+      widthUnits += 0.5;
+    } else if (/[,.;:]/u.test(char)) {
+      widthUnits += 0.28;
     } else {
-      baseWidthUnits += 0.55;
+      widthUnits += 0.55;
     }
   }
-
-  const scriptWidthUnits = scriptMarkers * 0.35;
-  const estimatedUnits = Math.max(0.45, baseWidthUnits + scriptWidthUnits);
-  return fontSize * estimatedUnits;
+  return widthUnits;
 }
 
 function createBaseNode(id: string, type: NodeType): SceneNode {

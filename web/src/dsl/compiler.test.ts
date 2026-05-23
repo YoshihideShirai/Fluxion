@@ -434,6 +434,22 @@ test("keeps superscript and subscript groups renderable when expanding math toke
   );
 });
 
+test("gives scripted math tokens enough layout width for TransformMatchingTex", () => {
+  const documentData = compileTextDsl(
+    `math equation "x^2+y^2=(r)^2" expandTokens=true size=58 renderer=katex`,
+  );
+
+  const equation = documentData.nodes.find((node) => node.id === "equation");
+  const widths = new Map(
+    equation?.children.map((child) => [child.latex, Number(child.geometry.w)]) ?? [],
+  );
+
+  assert.equal((widths.get("x^2") ?? 0) > 58, true);
+  assert.equal((widths.get("+") ?? 0) > 48, true);
+  assert.equal((widths.get("=") ?? 0) > 48, true);
+  assert.equal((widths.get(")^2") ?? 0) > 50, true);
+});
+
 test("does not auto-create a root group when a descendant is shown by TransformMatchingTex", () => {
   const documentData = compileTextDsl(`math equation "r" expandTokens=true
 math equation2 "R" expandTokens=true
