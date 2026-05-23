@@ -190,6 +190,17 @@ test("compiles path nodes with SVG d geometry", () => {
   );
 });
 
+test("places axes at the scene origin by default", () => {
+  const documentData = compileTextDsl("axes ax width=760 height=360");
+
+  const axes = documentData.nodes[0];
+  assert.equal(axes?.type, "group");
+  assert.equal(axes?.children[0]?.transform.x, 0);
+  assert.equal(axes?.children[0]?.transform.y, 0);
+  assert.equal(axes?.children[1]?.transform.x, 0);
+  assert.equal(axes?.children[1]?.transform.y, 0);
+});
+
 test("compiles surroundingRect nodes from target bounds", () => {
   const documentData = compileTextDsl(`math term "f(x)\\frac{d}{dx}g(x)" at 120,80 size=30 w=260 h=72
 surroundingRect frame target=term buff=10 stroke="#fbbf24" strokeWidth=4`);

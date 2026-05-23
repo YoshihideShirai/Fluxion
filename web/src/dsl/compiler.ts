@@ -435,7 +435,7 @@ function parseAxes(tokens: string[], state: CompileState, lineNumber: number): v
   if (!id) throw new DslCompileError("Expected id after axes.", lineNumber);
   if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
   const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
-  const at = options.get("at") ?? `${state.width / 2},${state.height / 2}`;
+  const at = options.get("at") ?? "0,0";
   const [cx, cy] = at.split(",").map((v) => parseNumber(v, lineNumber));
   const xRange = (options.get("xRange") ?? "-5,5").split(",").map((v) => parseNumber(v, lineNumber));
   const yRange = (options.get("yRange") ?? "-3,3").split(",").map((v) => parseNumber(v, lineNumber));
@@ -470,7 +470,7 @@ function parsePlot(tokens: string[], state: CompileState, lineNumber: number): v
   if (!fnExpr) throw new DslCompileError("plot requires fn=...", lineNumber);
   const [r0, r1] = (options.get("range") ?? "-5,5").split(",").map((v) => parseNumber(v, lineNumber));
   const samples = parseNumber(options.get("samples") ?? "200", lineNumber);
-  const at = options.get("at") ?? `${state.width / 2},${state.height / 2}`;
+  const at = options.get("at") ?? "0,0";
   const [cx, cy] = at.split(",").map((v) => parseNumber(v, lineNumber));
   const scaleX = parseNumber(options.get("scaleX") ?? "76", lineNumber);
   const scaleY = parseNumber(options.get("scaleY") ?? "60", lineNumber);

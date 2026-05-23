@@ -59,8 +59,12 @@ test("applies camera animation interpolation", () => {
 
 test("builds camera transforms around the scene center", () => {
   assert.equal(
+    buildCameraTransform({ x: 0, y: 0, scale: 1, rotation: 0 }, 1280, 720),
+    "translate(640 360) rotate(0) scale(1) translate(0 0)",
+  );
+  assert.equal(
     buildCameraTransform({ x: -24, y: 18, scale: 1.6, rotation: 15 }, 1280, 720),
-    "translate(616 378) rotate(15) scale(1.6) translate(-640 -360)",
+    "translate(616 378) rotate(15) scale(1.6) translate(0 0)",
   );
 });
 

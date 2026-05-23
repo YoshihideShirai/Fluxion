@@ -25,13 +25,13 @@ export function buildCameraTransform(
 ): string {
   const centerX = width / 2;
   const centerY = height / 2;
-  const targetX = camera.target?.x ?? centerX;
-  const targetY = camera.target?.y ?? centerY;
+  const targetX = camera.target?.x ?? 0;
+  const targetY = camera.target?.y ?? 0;
   const padding = camera.padding ?? 0;
   const mode = camera.mode ?? "center";
   const fitScale = mode === "frame-fit" ? Math.max(0.0001, camera.scale * ((Math.min(width, height) - padding * 2) / Math.min(width, height))) : camera.scale;
-  const focusX = mode === "center" ? centerX : targetX;
-  const focusY = mode === "center" ? centerY : targetY;
+  const focusX = mode === "center" ? 0 : targetX;
+  const focusY = mode === "center" ? 0 : targetY;
   return [
     `translate(${centerX + camera.x} ${centerY + camera.y})`,
     `rotate(${camera.rotation})`,
