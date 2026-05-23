@@ -12,11 +12,18 @@ status: ported
 order: 30
 ---
 scene width=960 height=540 fps=60
-axes ax xRange=-5,5 yRange=-3,3 at=0,30 width=760 height=360 stroke="#94a3b8" strokeWidth=3
-plot sinCurve fn="sin(t)" range=-5,5 samples=320 at=0,30 scaleX=76 scaleY=60 stroke="#38bdf8" strokeWidth=5
-plot cosCurve fn="cos(t)" range=-5,5 samples=320 at=0,30 scaleX=76 scaleY=60 stroke="#f97316" strokeWidth=5
-text sinLabel "sin(x)" at 290,-60 size=28 fill="#38bdf8"
-text cosLabel "cos(x)" at 290,-20 size=28 fill="#f97316"
+axes ax xRange=0,6.5 yRange=-1.5,1.5 at=-120,40 width=720 height=300 stroke="#94a3b8" strokeWidth=3
+plot sinCurve fn="sin(t)" range=0,6.2831853072 samples=420 at=-120,40 scaleX=111 scaleY=96 stroke="#22d3ee" strokeWidth=4
+plot cosCurve fn="cos(t)" range=0,6.2831853072 samples=420 at=-120,40 scaleX=111 scaleY=96 stroke="#f97316" strokeWidth=4
+text xLabel "x" at 262,56 size=24 fill="#e2e8f0"
+text yLabel "y" at -137,-124 size=24 fill="#e2e8f0"
+text sinLabel "sin(x)" at 238,-48 size=28 fill="#22d3ee"
+text cosLabel "cos(x)" at 238,38 size=28 fill="#f97316"
 at 0s:
-  play Create(ax) duration=0.9s easing=easeOut
-  play AnimationGroup(Create(sinCurve), Create(cosCurve), FadeIn(sinLabel), FadeIn(cosLabel), lagRatio=0.1) duration=1.8s easing=easeInOut
+  play AnimationGroup(Create(ax), FadeIn(xLabel), FadeIn(yLabel), lagRatio=0.0) duration=0.6s easing=easeOut
+at 0.6s:
+  play Create(sinCurve) duration=1.2s easing=linear
+at 1.8s:
+  play Create(cosCurve) duration=1.2s easing=linear
+at 3.0s:
+  play AnimationGroup(FadeIn(sinLabel), FadeIn(cosLabel), lagRatio=0.1) duration=0.8s easing=easeOut
