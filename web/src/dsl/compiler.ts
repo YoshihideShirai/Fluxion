@@ -754,7 +754,7 @@ function emitPlayCall(
     return;
   }
 
-  if (call.name === "Create" || call.name === "Write") {
+  if (call.name === "Create") {
     ensureNoPlayOptions(call, lineNumber);
     const id = expectPlayArg(call, 1, lineNumber);
     const node = requireNode(state, id, lineNumber);
@@ -767,11 +767,18 @@ function emitPlayCall(
       t: start,
       op: "effect",
       id,
-      effect: call.name === "Create" ? "create" : "write",
+      effect: "create",
       duration,
       easing,
     });
     state.shown.add(id);
+    return;
+  }
+
+  if (call.name === "Write") {
+    ensureNoPlayOptions(call, lineNumber);
+    const id = expectPlayArg(call, 1, lineNumber);
+    pushWrite(state, start, id, duration, easing, lineNumber);
     return;
   }
 
@@ -1496,6 +1503,68 @@ function hiddenClone(node: SceneNode): SceneNode {
   const clone = structuredClone(node);
   clone.transform.opacity = 0;
   return clone;
+}
+
+function hiddenWritableClone(node: SceneNode): SceneNode {
+  const clone = structuredClone(node);
+  hideWritableNodes(clone);
+  return clone;
+}
+
+function hideWritableNodes(node: SceneNode): void {
+  if ((node.children ?? []).length === 0) {
+    node.transform.opacity = 0;
+    return;
+  }
+  for (const child of node.children) hideWritableNodes(child);
+}
+
+function writableNodes(node: SceneNode): SceneNode[] {
+  if ((node.children ?? []).length === 0) return [node];
+  return node.children.flatMap((child) => writableNodes(child));
+}
+
+function pushWrite(
+  state: CompileState,
+  start: number,
+  id: string,
+  duration: number,
+  easing: string,
+  lineNumber: number,
+): void {
+  const node = requireNode(state, id, lineNumber);
+  const leaves = writableNodes(node);
+  const { childDuration, childOffset } = normalizeLaggedGroupTiming(
+    duration,
+    leaves.length,
+    0.18,
+  );
+  state.timeline.push({
+    t: start,
+    op: "create",
+    node: hiddenWritableClone(node),
+  });
+  state.timeline.push({
+    t: start,
+    op: "effect",
+    id,
+    effect: "write",
+    duration,
+    easing,
+  });
+  leaves.forEach((leaf, index) => {
+    state.timeline.push({
+      t: start + childOffset * index,
+      op: "animate",
+      id: leaf.id,
+      path: "transform.opacity",
+      from: 0,
+      to: leaf.transform.opacity,
+      duration: childDuration,
+      easing,
+    });
+  });
+  state.shown.add(id);
 }
 
 function pushTransformAnimations(

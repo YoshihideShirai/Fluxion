@@ -226,7 +226,7 @@ Supported primitives include:
 - `FadeIn(id)`: creates the node at hidden opacity, emits `effect=fadeIn`, and animates `transform.opacity`.
 - `FadeOut(id)`: emits `effect=fadeOut`, animates `transform.opacity` to `0`, and deletes the node when the duration ends.
 - `Create(id)`: creates the node and emits `effect=create`.
-- `Write(id)`: creates the node and emits `effect=write`.
+- `Write(id)`: creates the node with writable leaves hidden, emits `effect=write`, and reveals leaf opacity with a short stagger to approximate Manim's written-on appearance.
 - `Transform(source, target)`: animates the source node toward transform/style/geometry properties from the target node.
 - `TransformMatchingTex(source, target)`: matches expanded `math` token children by identical token text. Matched tokens expand to `Transform`, source-only tokens expand to `FadeOut`, and target-only tokens expand to `FadeIn`.
 - `ReplacementTransform(from, to)`: expands into a simultaneous `FadeOut(from)` and `FadeIn(to)`.

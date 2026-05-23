@@ -502,6 +502,36 @@ play TransformMatchingTex(equation, equation2) duration=0.5s`);
   );
 });
 
+test("expands Write on groups into staggered child opacity reveals", () => {
+  const documentData = compileTextDsl(`math a "a" at 0,0 opacity=0.8
+math b "b" at 40,0
+group text a b
+play Write(text) duration=1s easing=linear`);
+
+  const create = documentData.timeline.find(
+    (op) => op.op === "create" && op.node.id === "text",
+  );
+  assert.equal(create?.op, "create");
+  if (create?.op !== "create") throw new Error("Expected Write create op.");
+  equalJson(
+    create.node.children.map((child) => [child.id, child.transform.opacity]),
+    [
+      ["a", 0],
+      ["b", 0],
+    ],
+  );
+
+  equalJson(
+    documentData.timeline
+      .filter((op): op is AnimateOperation => op.op === "animate")
+      .map((op) => [op.id, op.path, op.from, op.to, op.t, op.duration]),
+    [
+      ["a", "transform.opacity", 0, 0.8, 0, 0.8474576271186441],
+      ["b", "transform.opacity", 0, 1, 0.15254237288135594, 0.8474576271186441],
+    ],
+  );
+});
+
 test("expands ReplacementTransform into simultaneous FadeOut and FadeIn", () => {
   const documentData = compileTextDsl(`circle from at 0,0 opacity=0.75
 rect to at 100,0 opacity=0.5
