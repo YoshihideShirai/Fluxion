@@ -436,22 +436,32 @@ test("keeps superscript and subscript groups renderable when expanding math toke
 
 test("gives scripted math tokens enough layout width for TransformMatchingTex", () => {
   const documentData = compileTextDsl(
-    `math equation "x^2+y^2=(r)^2" expandTokens=true size=58 renderer=katex`,
+    `math equation "x^2+y^2=(r)^2" expandTokens=true size=58 renderer=katex
+math target "x^2+y^2=(R)^2" expandTokens=true size=58 renderer=katex`,
   );
 
   const equation = documentData.nodes.find((node) => node.id === "equation");
+  const target = documentData.nodes.find((node) => node.id === "target");
   equalJson(
     equation?.children.map((child) => child.latex),
     ["x^2", "+", "y^2", "=", "(r)^2"],
   );
+  equalJson(
+    target?.children.map((child) => child.latex),
+    ["x^2", "+", "y^2", "=", "(R)^2"],
+  );
   const widths = new Map(
-    equation?.children.map((child) => [child.latex, Number(child.geometry.w)]) ?? [],
+    [...(equation?.children ?? []), ...(target?.children ?? [])].map((child) => [
+      child.latex,
+      Number(child.geometry.w),
+    ]),
   );
 
   assert.equal((widths.get("x^2") ?? 0) > 58, true);
   assert.equal((widths.get("+") ?? 0) > 48, true);
   assert.equal((widths.get("=") ?? 0) > 48, true);
-  assert.equal((widths.get("(r)^2") ?? 0) > 100, true);
+  assert.equal((widths.get("(r)^2") ?? 0) > 135, true);
+  assert.equal((widths.get("(R)^2") ?? 0) > 135, true);
 });
 
 test("does not auto-create a root group when a descendant is shown by TransformMatchingTex", () => {

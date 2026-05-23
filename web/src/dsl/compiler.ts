@@ -1541,6 +1541,7 @@ function latexToTokenNodes(
 }
 
 const TOKEN_PADDING_UNITS = 0.26;
+const SCRIPTED_DELIMITED_PADDING_UNITS = 0.5;
 
 function tokenWidth(token: string, fontSize: number): number {
   if (token.startsWith("\\") && token.length > 2)
@@ -1558,9 +1559,16 @@ function tokenWidth(token: string, fontSize: number): number {
 
   const estimatedUnits = Math.max(
     0.45,
-    baseWidthUnits + scriptWidthUnits + TOKEN_PADDING_UNITS,
+    baseWidthUnits +
+      scriptWidthUnits +
+      TOKEN_PADDING_UNITS +
+      (isScriptedDelimitedToken(token) ? SCRIPTED_DELIMITED_PADDING_UNITS : 0),
   );
   return fontSize * estimatedUnits;
+}
+
+function isScriptedDelimitedToken(token: string): boolean {
+  return /^(\(.+\)|\[.+\])[_^]/u.test(token);
 }
 
 function textWidthUnits(text: string): number {
