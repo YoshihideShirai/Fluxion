@@ -1,0 +1,32 @@
+scene width=960 height=540 fps=60
+
+rect bg w=960 h=540 at 0,0 fill="#0b1020"
+text title "MovingGroupToDestination" at 0,220 size=38 fill="#e2e8f0"
+rect panel w=760 h=320 at 0,-10 fill="#111827" stroke="#334155" strokeWidth=2
+
+circle c1 r=26 at -300,-40 fill="#38bdf8" stroke="#0f172a" strokeWidth=3
+circle c2 r=26 at -240,-40 fill="#22d3ee" stroke="#0f172a" strokeWidth=3
+circle c3 r=26 at -180,-40 fill="#14b8a6" stroke="#0f172a" strokeWidth=3
+text label "group source" at -240,-118 size=20 fill="#bae6fd"
+group dots c1 c2 c3
+
+rect target w=220 h=110 at 210,20 fill="none" stroke="#f59e0b" strokeWidth=3 opacity=0.9
+text targetLabel "destination" at 210,-70 size=20 fill="#fcd34d"
+
+at 0s:
+  play FadeIn(title) duration=0.5s
+  play FadeIn(panel) duration=0.5s
+  play FadeIn(c1) duration=0.45s
+  play FadeIn(c2) duration=0.45s
+  play FadeIn(c3) duration=0.45s
+  play FadeIn(label) duration=0.45s
+  play Create(target) duration=0.6s
+  play FadeIn(targetLabel) duration=0.4s
+
+wait 0.2s
+animate dots.x from 0 to 420 duration=1.2s easing=easeInOut
+animate dots.y from 0 to 60 duration=1.2s easing=easeInOut
+wait 0.2s
+play Circumscribe(dots) duration=0.9s color="#fbbf24"
+wait 0.2s
+play FadeOut(label) duration=0.4s

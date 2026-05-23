@@ -46,13 +46,13 @@
 | GAP-016 | graph-area-plot | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/dsl/compiler.ts` |
 | GAP-017 | gradient-image-from-array | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
 | GAP-018 | heat-diagram-plot | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
-| GAP-019 | moving-angle | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
-| GAP-020 | moving-around | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-019 | moving-angle | `Angle` 専用 primitive が未実装で、path/updater による近似実装に留まる。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts`, `python/fluxion/primitives/*` |
+| GAP-020 | moving-around | camera frame 向け高水準 DSL が未実装で、camera transform の直接 animate で近似している。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-021 | moving-dots | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
 | GAP-022 | moving-group-to-destination | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-023 | moving-zoomed-scene-around | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
-| GAP-024 | point-with-trace | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
-| GAP-025 | polygon-on-axes | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/dsl/compiler.ts` |
+| GAP-024 | point-with-trace | `TracedPath` 専用 primitive が未実装で、`always ... = path(...)` による近似で対応している。 | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-025 | polygon-on-axes | Axes の data座標→scene座標変換 helper が未実装で、polygon を scene 座標直指定で近似している。 | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
 | GAP-026 | rotation-updater | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
 | GAP-027 | three-d-camera-illusion-rotation | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-028 | three-d-camera-rotation | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
