@@ -1,11 +1,12 @@
-# Text DSL 移植ギャップ管理（暫定）
+# Text DSL 機能ギャップ台帳
 
 ## 目的
 
-この文書は、Text DSL の移植・拡張時に発生した不足機能を記録し、実装判断を遅延可能にするための運用メモである。
+この文書は、Text DSL の移植・拡張時に発生した不足機能を「機能ギャップ台帳」として一元管理する。
 
 - 命令カタログの正は `site/src/content/docs/en/reference/text-dsl.md` とする。
-- 本文書では「未実装/差分/互換方針」を管理し、仕様そのものは英語リファレンスに追従する。
+- 本文書では「未実装/差分/互換方針」に加え、gallery 単位の追跡キーを管理する。
+- `site/src/content/gallery/*.md` の `blocker_reason` / `missing_instructions` は、本台帳の `tracking_id`（=`gap_id`）で参照できる状態を目標とする。
 
 ## 参照元（SoT）
 
@@ -14,28 +15,86 @@
 
 ---
 
-## ギャップ記録テンプレート
+## Gallery ギャップ台帳（必須項目）
 
-不足機能を追加する場合は、以下4観点を必ず埋める。
+各 gallery 項目ごとに、以下を必ず持つ。
 
-1. **構文**: DSL上の表記と最小例
-2. **IR**: `fluxion.schema.json` と JSON 出力への影響
-3. **runtime実装**: 再生時挙動（タイミング、補間、副作用）
-4. **互換方針**: 既存DSL/既存IR/既存ランタイムとの後方互換
+1. `gallery_slug`
+2. `reason`（blocker / partial を短文で）
+3. `related_modules`（実装起点モジュール）
+4. `tracking_id`（一意キー）
 
-推奨フォーマット:
+### 台帳
+
+| tracking_id | gallery_slug | reason | related_modules |
+|---|---|---|---|
+| GAP-001 | animations-using-animate | parity確認のみ（追加ギャップ未特定） | `web/src/dsl/compiler.ts`, `web/src/runtime/*` |
+| GAP-002 | opening-manim | parity確認のみ（追加ギャップ未特定） | `web/src/dsl/compiler.ts`, `web/src/runtime/*` |
+| GAP-003 | simple-circle | parity確認のみ（追加ギャップ未特定） | `web/src/dsl/compiler.ts`, `web/src/runtime/*` |
+| GAP-004 | plotting-sin-cos | parity確認のみ（追加ギャップ未特定） | `web/src/dsl/compiler.ts`, `python/fluxion/primitives/*` |
+| GAP-005 | square-to-circle | parity確認のみ（追加ギャップ未特定） | `web/src/dsl/compiler.ts`, `web/src/runtime/*` |
+| GAP-006 | transform-matching-tex | parity確認のみ（追加ギャップ未特定） | `web/src/dsl/compiler.ts`, `python/fluxion/primitives/*` |
+| GAP-007 | orbital-dot | parity確認のみ（追加ギャップ未特定） | `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-008 | moving-frame-box | parity確認のみ（追加ギャップ未特定） | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-009 | manim-ce-logo | parity確認のみ（追加ギャップ未特定） | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-010 | brace-annotation | parity確認のみ（追加ギャップ未特定） | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-011 | sine-curve-unit-circle | parity確認のみ（追加ギャップ未特定） | `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-012 | special-camera | parity確認のみ（追加ギャップ未特定） | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-013 | arg-min-example | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-014 | boolean-operations | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-015 | fixed-in-frame-m-object-test | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-016 | graph-area-plot | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/dsl/compiler.ts` |
+| GAP-017 | gradient-image-from-array | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-018 | heat-diagram-plot | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-019 | moving-angle | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-020 | moving-around | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-021 | moving-dots | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-022 | moving-group-to-destination | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-023 | moving-zoomed-scene-around | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-024 | point-with-trace | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-025 | polygon-on-axes | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/dsl/compiler.ts` |
+| GAP-026 | rotation-updater | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-027 | three-d-camera-illusion-rotation | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-028 | three-d-camera-rotation | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-029 | three-d-light-source-position | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-030 | three-d-surface-plot | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-031 | vector-arrow | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+
+---
+
+## `gap_id` 導入方針（frontmatter）
+
+`site/src/content/gallery/*.md` の frontmatter へ `gap_id` を追加し、台帳 `tracking_id` と1:1対応させる。
+
+### ルール
+
+- `gap_id` の形式は `GAP-###`（3桁ゼロ埋め）とする。
+- `gap_id` は slug ごとに不変（理由文が変わってもIDは維持）。
+- `blocker_reason` が存在する項目は **必須**。
+- `missing_instructions` のみを持つ項目でも **必須**。
+- 実装完了後に blocker が解消しても、`gap_id` は履歴参照のため残す。
+
+### 記述例
 
 ```md
-## <feature-name>
-- status: proposal | planned | implemented
-- syntax: <DSLの最小構文>
-- ir: <追加/変更フィールド、バージョニング要否>
-- runtime: <挙動と制約>
-- compatibility:
-  - backward: <yes/no + 理由>
-  - fallback: <旧runtimeでの劣化動作>
-- notes: <実装判断メモ>
+---
+slug: three-d-surface-plot
+title: Three D Surface Plot
+status: blocked
+gap_id: GAP-030
+blocker_reason: Required primitives/effects are not fully mapped yet.
+missing_instructions:
+  - Implement 3D surface mesh primitive mapping.
+  - Add camera/light interpolation parity.
+---
 ```
+
+### 更新手順
+
+1. gallery 追加時: 新しい `tracking_id/gap_id` を本台帳に採番。
+2. 同PRで対象 `site/src/content/gallery/<slug>.md` に `gap_id` を追加。
+3. `blocker_reason` / `missing_instructions` の変更時は、同一 `gap_id` を使って台帳 `reason` を同期。
+4. 解消時は `reason` を「resolved（date）」に更新し、ID自体は保持。
 
 ---
 
@@ -53,69 +112,3 @@ Text DSL に新しい命令・構文・意味論を追加する場合、**最低
 - 仕様だけ先行し、実装が追随しない状態を禁止する。
 - 実装だけ先行し、日英ドキュメントが欠落する状態を禁止する。
 - 互換破壊の可能性がある場合は schema の変更理由と移行方針をPR本文に明記する。
-
----
-
-## 提案キュー（status=proposal）
-
-> 実需要が発生するまでは実装しない。ここでは候補と設計論点のみ管理する。
-
-### axis / graph 補助構文
-
-- status: `planned`
-- 構文（案）:
-  - `axes ax xRange=-5,5 yRange=-3,3 at 640,360`
-  - `plot g1 fn="sin(x)" range=-5,5 samples=200`
-- IR:
-  - 軸ノードの導入または既存 `group + line + text` 展開方針の明確化
-  - 関数プロットを `path` にコンパイルする規約定義
-- runtime実装:
-  - 目盛り・ラベル生成の責務を compiler で持つか runtime で持つか
-  - 高サンプル時の描画コスト管理
-- 互換方針:
-  - 初期は `path/line/text` への静的展開で後方互換を維持
-
-### proposal: カメラ制御の高級プリミティブ
-
-- status: `proposal`
-- 構文（案）:
-  - `play CameraMoveTo(640,360, zoom=1.4) duration=1.2s`
-  - `play CameraFrame(targetNode, padding=40) duration=1.0s`
-- IR:
-  - グローバルview transformの明示ノード/トラック追加
-  - 既存オブジェクト変換と分離した補間チャネル
-- runtime実装:
-  - camera transform 適用順序（scene -> camera -> node）
-  - 既存の hit testing / overlays への影響整理
-- 互換方針:
-  - 非対応runtimeでは no-op ではなく警告+フォールバック（固定カメラ）
-
-### proposal: 複合トランジション
-
-- status: `proposal`
-- 構文（案）:
-  - `play MorphIn(node, from=left, blur=8) duration=0.8s`
-  - `play CrossFade(a, b) duration=1.0s`
-- IR:
-  - `effect` の拡張とパラメータスキーマ化
-  - 複数プロパティ同時補間の宣言規約
-- runtime実装:
-  - effect combinator（fade + move + blur など）の順序定義
-  - easing の単一適用/個別適用ルール
-- 互換方針:
-  - 未対応effectは `FadeIn/FadeOut/Transform` へ段階的フォールバック
-
----
-
-## Gallery追加ルール
-
-新命令を導入したら、**命令ごとに最小DSLサンプルを gallery へ1件追加**する。
-
-- 目的: 命令の実用性を可視化し、回帰検証の実例を残す。
-- 最小要件:
-  - 命令単体の最短ケース（副作用の少ない構成）
-  - 期待挙動が視認できること
-  - 可能なら既存命令との差分が分かること
-- 推奨命名:
-  - `<command>-minimal`（例: `camera-move-minimal`）
-
