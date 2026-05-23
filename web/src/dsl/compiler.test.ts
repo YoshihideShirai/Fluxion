@@ -440,6 +440,10 @@ test("gives scripted math tokens enough layout width for TransformMatchingTex", 
   );
 
   const equation = documentData.nodes.find((node) => node.id === "equation");
+  equalJson(
+    equation?.children.map((child) => child.latex),
+    ["x^2", "+", "y^2", "=", "(r)^2"],
+  );
   const widths = new Map(
     equation?.children.map((child) => [child.latex, Number(child.geometry.w)]) ?? [],
   );
@@ -447,7 +451,7 @@ test("gives scripted math tokens enough layout width for TransformMatchingTex", 
   assert.equal((widths.get("x^2") ?? 0) > 58, true);
   assert.equal((widths.get("+") ?? 0) > 48, true);
   assert.equal((widths.get("=") ?? 0) > 48, true);
-  assert.equal((widths.get(")^2") ?? 0) > 50, true);
+  assert.equal((widths.get("(r)^2") ?? 0) > 100, true);
 });
 
 test("does not auto-create a root group when a descendant is shown by TransformMatchingTex", () => {

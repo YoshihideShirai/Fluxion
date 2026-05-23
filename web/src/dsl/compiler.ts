@@ -1449,6 +1449,11 @@ function tokenizeLatex(latex: string): string[] {
 
   for (let index = 0; index < rawTokens.length; index += 1) {
     let token = rawTokens[index] ?? "";
+    const grouped = maybeReadScriptedDelimitedGroup(rawTokens, index);
+    if (grouped) {
+      token = grouped.token;
+      index = grouped.nextIndex - 1;
+    }
 
     while (rawTokens[index + 1] === "^" || rawTokens[index + 1] === "_") {
       const marker = rawTokens[index + 1];
@@ -1462,6 +1467,31 @@ function tokenizeLatex(latex: string): string[] {
   }
 
   return tokens;
+}
+
+function maybeReadScriptedDelimitedGroup(
+  tokens: string[],
+  start: number,
+): { token: string; nextIndex: number } | undefined {
+  const opener = tokens[start];
+  const closer = opener === "(" ? ")" : opener === "[" ? "]" : undefined;
+  if (!closer) return undefined;
+
+  let depth = 0;
+  let token = "";
+  for (let index = start; index < tokens.length; index += 1) {
+    const current = tokens[index] ?? "";
+    if (current === opener) depth += 1;
+    if (current === closer) depth -= 1;
+    token += current;
+    if (depth === 0) {
+      const next = tokens[index + 1];
+      if (next === "^" || next === "_") return { token, nextIndex: index + 1 };
+      return undefined;
+    }
+  }
+
+  return undefined;
 }
 
 function readScriptArgument(
