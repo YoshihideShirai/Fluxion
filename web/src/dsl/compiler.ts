@@ -1522,11 +1522,7 @@ function pushWrite(
 ): void {
   const node = requireNode(state, id, lineNumber);
   const leaves = writableNodes(node);
-  const { childDuration, childOffset } = normalizeLaggedGroupTiming(
-    duration,
-    leaves.length,
-    0.18,
-  );
+  const segments = writeSegments(leaves, duration);
   state.timeline.push({
     t: start,
     op: "create",
@@ -1540,23 +1536,56 @@ function pushWrite(
     duration,
     easing,
   });
-  leaves.forEach((leaf, index) => {
+  segments.forEach(({ node: leaf, offset, segmentDuration }) => {
     const path = supportsWriteProgress(leaf)
       ? "geometry.writeProgress"
       : "transform.opacity";
     const to = supportsWriteProgress(leaf) ? 1 : leaf.transform.opacity;
     state.timeline.push({
-      t: start + childOffset * index,
+      t: start + offset,
       op: "animate",
       id: leaf.id,
       path,
       from: 0,
       to,
-      duration: childDuration,
+      duration: segmentDuration,
       easing,
     });
   });
   state.shown.add(id);
+}
+
+function writeSegments(
+  leaves: SceneNode[],
+  duration: number,
+): Array<{ node: SceneNode; offset: number; segmentDuration: number }> {
+  if (leaves.length === 0) return [];
+  const entries = leaves
+    .map((node) => {
+      const bounds = approximateNodeBounds(node);
+      return {
+        node,
+        bounds,
+        width: Math.max(1, bounds.maxX - bounds.minX),
+      };
+    })
+    .sort((left, right) => left.bounds.minX - right.bounds.minX);
+  const totalWidth = entries.reduce((sum, entry) => sum + entry.width, 0);
+  const overlap = duration * 0.08;
+  const offsetSpan = Math.max(0, duration - overlap);
+  let cursor = 0;
+
+  return entries.map((entry) => {
+    const offset = totalWidth <= 0 ? 0 : (cursor / totalWidth) * offsetSpan;
+    const proportionalDuration =
+      totalWidth <= 0 ? duration : (entry.width / totalWidth) * duration;
+    const segmentDuration = Math.max(
+      0,
+      Math.min(duration - offset, proportionalDuration + overlap),
+    );
+    cursor += entry.width;
+    return { node: entry.node, offset, segmentDuration };
+  });
 }
 
 function supportsWriteProgress(node: SceneNode): boolean {
