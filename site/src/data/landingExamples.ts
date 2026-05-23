@@ -226,6 +226,34 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     source: 'scene width=640 height=360 fps=60\nmath equation "f(x)g(x)" at 320,180 size=44 w=220 h=80 fill="#e2e8f0"\nsurroundingRect frame target=equation buff=12 stroke="#fbbf24" strokeWidth=5',
   },
   {
+    key: 'axes',
+    command: 'axes',
+    description: {
+      ja: '座標軸ガイドをまとめて生成します。',
+      en: 'Generate a coordinate-axes helper group.',
+    },
+    referencePurpose: {
+      ja: 'Axes helper declaration',
+      en: 'Axes helper declaration',
+    },
+    minimalExample: 'axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2',
+    source: 'scene width=960 height=540 fps=60\naxes ax at 480,270 width=700 height=300 xRange=-4,4 yRange=-2,2 stroke="#94a3b8" strokeWidth=3',
+  },
+  {
+    key: 'plot',
+    command: 'plot',
+    description: {
+      ja: '関数式から path をサンプリングして描画します。',
+      en: 'Sample a function expression into a plot path.',
+    },
+    referencePurpose: {
+      ja: 'Function plot path declaration',
+      en: 'Function plot path declaration',
+    },
+    minimalExample: 'plot curve fn=sin(t) range=-3.14,3.14 scaleX=80 scaleY=60',
+    source: 'scene width=960 height=540 fps=60\nplot curve fn=sin(t) range=-3.14,3.14 scaleX=90 scaleY=70 at 480,270 stroke="#38bdf8" strokeWidth=5 fill="none"',
+  },
+  {
     key: 'at',
     command: 'at',
     description: {
