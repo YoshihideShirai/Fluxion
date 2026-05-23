@@ -39,4 +39,5 @@ at 0s:
 wait 0.2s
 animate alpha from 0 to 6.283 duration=2.8s easing=easeInOut
 wait 0.2s
-play Circumscribe(poly) duration=0.8s color="#fbbf24"
+play FadeOut(poly) duration=0.4s
+play FadeIn(poly) duration=0.4s
