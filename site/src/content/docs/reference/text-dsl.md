@@ -289,7 +289,7 @@ Supported primitives:
 - `FadeIn(id)`: hidden opacity の `create`、semantic `effect=fadeIn`、`transform.opacity` animation を生成します。
 - `FadeOut(id)`: semantic `effect=fadeOut`、`transform.opacity` animation、duration 終了時の `delete` を生成します。
 - `Create(id)`: `create` と semantic `effect=create` を生成します。
-- `Write(id)`: writable leaf を hidden opacity で `create` し、semantic `effect=write` と、短い stagger 付きの opacity reveal を生成して Manim の書き出し表示を近似します。
+- `Write(id)`: writable leaf を `geometry.writeProgress=0` で `create` し、semantic `effect=write` と、短い stagger 付きの left-to-right reveal を生成して Manim の書き出し表示を近似します。
 - `Transform(a, b)`: `a` を target として、`b` と異なる transform/style/geometry property ごとに `animate` operation を生成します。
 - `TransformMatchingTex(a, b)`: `math` node の token child を同一 token 文字列で対応付け、対応 token は `Transform`、消える token は `FadeOut`、新規 token は `FadeIn` に展開します。
 - `ReplacementTransform(from, to)`: `from` の `FadeOut` と `to` の `FadeIn` を同時に生成します。

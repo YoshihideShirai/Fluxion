@@ -502,7 +502,7 @@ play TransformMatchingTex(equation, equation2) duration=0.5s`);
   );
 });
 
-test("expands Write on groups into staggered child opacity reveals", () => {
+test("expands Write on groups into staggered child write-progress reveals", () => {
   const documentData = compileTextDsl(`math a "a" at 0,0 opacity=0.8
 math b "b" at 40,0
 group text a b
@@ -514,7 +514,7 @@ play Write(text) duration=1s easing=linear`);
   assert.equal(create?.op, "create");
   if (create?.op !== "create") throw new Error("Expected Write create op.");
   equalJson(
-    create.node.children.map((child) => [child.id, child.transform.opacity]),
+    create.node.children.map((child) => [child.id, child.geometry.writeProgress]),
     [
       ["a", 0],
       ["b", 0],
@@ -526,8 +526,8 @@ play Write(text) duration=1s easing=linear`);
       .filter((op): op is AnimateOperation => op.op === "animate")
       .map((op) => [op.id, op.path, op.from, op.to, op.t, op.duration]),
     [
-      ["a", "transform.opacity", 0, 0.8, 0, 0.8474576271186441],
-      ["b", "transform.opacity", 0, 1, 0.15254237288135594, 0.8474576271186441],
+      ["a", "geometry.writeProgress", 0, 1, 0, 0.8474576271186441],
+      ["b", "geometry.writeProgress", 0, 1, 0.15254237288135594, 0.8474576271186441],
     ],
   );
 });

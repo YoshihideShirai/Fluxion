@@ -1513,7 +1513,8 @@ function hiddenWritableClone(node: SceneNode): SceneNode {
 
 function hideWritableNodes(node: SceneNode): void {
   if ((node.children ?? []).length === 0) {
-    node.transform.opacity = 0;
+    if (supportsWriteProgress(node)) node.geometry.writeProgress = 0;
+    else node.transform.opacity = 0;
     return;
   }
   for (const child of node.children) hideWritableNodes(child);
@@ -1553,18 +1554,26 @@ function pushWrite(
     easing,
   });
   leaves.forEach((leaf, index) => {
+    const path = supportsWriteProgress(leaf)
+      ? "geometry.writeProgress"
+      : "transform.opacity";
+    const to = supportsWriteProgress(leaf) ? 1 : leaf.transform.opacity;
     state.timeline.push({
       t: start + childOffset * index,
       op: "animate",
       id: leaf.id,
-      path: "transform.opacity",
+      path,
       from: 0,
-      to: leaf.transform.opacity,
+      to,
       duration: childDuration,
       easing,
     });
   });
   state.shown.add(id);
+}
+
+function supportsWriteProgress(node: SceneNode): boolean {
+  return node.type === "math" || node.type === "text";
 }
 
 function pushTransformAnimations(
