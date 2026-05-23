@@ -1,22 +1,3 @@
----
-title: ArgMinExample
-description: "Manim Example: `ArgMinExample` (`#argminexample`) の Fluxion 移植版。"
-source_manim_url: https://docs.manim.community/en/stable/examples.html#argminexample
-source_example_path: examples/gallery/arg-min-example.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
-known_gaps:
-  - symptom: "座標軸/グラフの正確なプロットは line/path で近似しており、Manim 本家の Axes API 完全互換ではない。"
-    layer: runtime
-    impact: medium
-    workaround: "線分とテキストで概念説明は可能。"
-    closure_condition: "Axes/NumberPlane 系プリミティブを導入し、ラベルと目盛りを自動生成できる。"
-    fidelity_upgrade_condition: "曲線サンプリングと軸ラベル配置が本家と同等になった時。"
-category: Manim Stable Examples
-status: partial
-order: 60
-gap_id: GAP-013
----
 scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#0b1020"
