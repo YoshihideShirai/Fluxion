@@ -6,7 +6,12 @@ source_example_path: examples/gallery/opening_manim.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - Text kerning still depends on browser font metrics and may differ slightly from Manim raster output.
+  - symptom: "Text kerning still depends on browser font metrics and may differ slightly from Manim raster output."
+    layer: renderer
+    impact: low
+    workaround: "必要に応じてスタイル値を手動調整する。"
+    closure_condition: "該当レンダリング差分が解消され、Manim 出力との視覚差が許容範囲に収まる。"
+    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Advanced Projects
 status: ported
 order: 51

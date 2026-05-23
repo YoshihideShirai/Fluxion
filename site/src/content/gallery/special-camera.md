@@ -6,7 +6,12 @@ source_example_path: examples/special_camera_settings.py
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - Camera DSL now supports target follow / frame-fit channels, but auto-bounds fitting from arbitrary node sets is still simplified.
+  - symptom: "Camera DSL now supports target follow / frame-fit channels, but auto-bounds fitting from arbitrary node sets is still simplified."
+    layer: dsl
+    impact: medium
+    workaround: "近似実装（既存 DSL/always 更新）で演出を代替する。"
+    closure_condition: "不足 DSL 機能が追加され、近似なしで同等記述が可能になる。"
+    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Special Camera Settings
 status: ported
 order: 40

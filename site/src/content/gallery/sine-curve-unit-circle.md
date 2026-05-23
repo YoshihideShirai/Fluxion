@@ -6,7 +6,12 @@ source_example_path: examples/gallery/sine_curve_unit_circle.fluxion.txt
 porting_strategy: omitted_parts
 fidelity: visual_approximation
 known_gaps:
-  - Path growth can now be sampled with `always ... = path(...)`, but true append-only stroke history parity is still simplified.
+  - symptom: "Path growth can now be sampled with `always ... = path(...)`, but true append-only stroke history parity is still simplified."
+    layer: dsl
+    impact: medium
+    workaround: "近似実装（既存 DSL/always 更新）で演出を代替する。"
+    closure_condition: "不足 DSL 機能が追加され、近似なしで同等記述が可能になる。"
+    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Advanced Projects
 status: partial
 order: 52

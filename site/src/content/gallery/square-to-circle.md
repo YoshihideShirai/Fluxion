@@ -6,7 +6,12 @@ source_example_path: examples/basic_concepts_square_to_circle.py
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - Transform path and easing defaults may not exactly match Manim internals.
+  - symptom: "Transform path and easing defaults may not exactly match Manim internals."
+    layer: runtime
+    impact: medium
+    workaround: "easing・duration・中間キーを調整して差を吸収する。"
+    closure_condition: "補間・レート関数の挙動がManim準拠になる。"
+    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Basic Concepts
 status: ported
 order: 11
