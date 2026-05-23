@@ -12,7 +12,21 @@ const gallery = defineCollection({
     source_example_path: z.string(),
     porting_strategy: z.enum(['faithful', 'visual_approximation', 'omitted_parts']),
     fidelity: z.enum(['faithful', 'visual_approximation']),
-    known_gaps: z.array(z.string()).min(1),
+    known_gaps: z
+      .array(
+        z.union([
+          z.string(),
+          z.object({
+            symptom: z.string(),
+            layer: z.enum(['dsl', 'compiler', 'runtime', 'renderer', 'docs']).optional(),
+            impact: z.enum(['low', 'medium', 'high']).optional(),
+            workaround: z.string().optional(),
+            closure_condition: z.string().optional(),
+            fidelity_upgrade_condition: z.string().optional(),
+          }),
+        ]),
+      )
+      .min(1),
     category: z.string(),
     status: z.enum(['ported', 'partial', 'blocker']),
     priority: z.string().optional(),
