@@ -64,6 +64,17 @@ test("builds camera transforms around the scene center", () => {
   );
 });
 
+test("builds camera transforms around explicit targets", () => {
+  assert.equal(
+    buildCameraTransform({ x: 0, y: 0, scale: 2, rotation: 0, target: { x: 100, y: 120 }, mode: "target" }, 1280, 720),
+    "translate(640 360) rotate(0) scale(2) translate(-100 -120)",
+  );
+  assert.equal(
+    buildCameraTransform({ x: 0, y: 0, scale: 2, rotation: 0, target: { x: 100, y: 120 }, padding: 90, mode: "frame-fit" }, 1280, 720),
+    "translate(640 360) rotate(0) scale(1.5) translate(-100 -120)",
+  );
+});
+
 test("applies create, set, and delete operations", () => {
   const graph = new SceneGraph([]);
   const timeline: TimelineOperation[] = [
@@ -177,6 +188,26 @@ test("player starts from an empty graph when documents contain create operations
 
   player.seek(0.5);
   assert.equal(rendered[0]?.id, "c1");
+});
+
+test("player preserves extended camera settings while seeking", () => {
+  let renderedCamera;
+  const renderer = { render: (_nodes: SceneNode[], camera: unknown) => (renderedCamera = camera) };
+  const documentData: FluxionDocument = {
+    version: "0.1",
+    width: 1280,
+    height: 720,
+    fps: 60,
+    duration: 1,
+    camera: { x: 0, y: 0, scale: 1, rotation: 0, target: { x: 100, y: 120 }, padding: 90, mode: "frame-fit" },
+    nodes: [node],
+    timeline: [],
+  };
+
+  const player = new Player(documentData, renderer as never);
+  player.seek(0);
+  assert.equal(JSON.stringify(renderedCamera), JSON.stringify(documentData.camera));
+  assert.equal(renderedCamera === documentData.camera, false);
 });
 
 test("ignores semantic effect operations while applying fallback animations", () => {
