@@ -1,6 +1,6 @@
 ---
-title: Moving Frame Box
-description: A frame box moves between two derivative-product-rule terms.
+title: MovingFrameBox
+description: "Manim Example: `MovingFrameBox` (`#movingframebox`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#movingframebox
 source_example_path: examples/gallery/moving_frame_box.fluxion.txt
 porting_strategy: visual_approximation

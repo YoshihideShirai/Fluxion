@@ -1,0 +1,21 @@
+---
+title: ThreeDCameraRotation
+description: "Manim Example: `ThreeDCameraRotation` (`#threedcamerarotation`) の未移植デモ（プレースホルダー）。"
+source_manim_url: https://docs.manim.community/en/stable/examples.html#threedcamerarotation
+source_example_path: examples/gallery/three-d-camera-rotation.fluxion.txt
+porting_strategy: omitted_parts
+fidelity: visual_approximation
+known_gaps:
+  - この Example はまだ Fluxion へ移植されていません（プレースホルダー表示のみ）。
+category: Manim Stable Examples
+status: blocker
+blocker_reason: Required primitives/effects are not fully mapped yet.
+order: 75
+---
+scene width=960 height=540 fps=60
+rect bg w=960 h=540 at 0,0 fill="#0b1020"
+text title "ThreeDCameraRotation" at 0,-20 size=42 fill="#e2e8f0"
+text note "Placeholder: not ported yet" at 0,46 size=24 fill="#f59e0b"
+at 0s:
+  play FadeIn(title) duration=0.6s easing=easeOut
+  play FadeIn(note) duration=0.6s easing=easeOut

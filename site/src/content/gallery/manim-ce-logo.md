@@ -1,6 +1,6 @@
 ---
 title: ManimCELogo
-description: Recreate logo composition with MathTex + circle/square/triangle primitives.
+description: "Manim Example: `ManimCELogo` (`#manimcelogo`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#manimcelogo
 source_example_path: examples/gallery/manim_ce_logo.fluxion.txt
 porting_strategy: visual_approximation
