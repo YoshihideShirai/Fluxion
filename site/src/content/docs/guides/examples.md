@@ -109,7 +109,7 @@ known_gaps:
 | sine-curve-unit-circle | partial | P1 | **要サンプル生成**; synchronized updater + tracing | partial 要因（同期/トレース欠損）が解消し ported 化。 |
 | moving-around | partial | P1 | camera frame high-level DSL の追加 | camera.x/y/scale の直接 animate ではなく frame API sugar で再現できる。 |
 | moving-angle | partial | P1 | Angle primitive（半径/象限/装飾）DSL の追加 | path/updater 近似ではなく Angle API 相当で弧とラベルを記述できる。 |
-| polygon-on-axes | blocker | P1 | **要サンプル生成**; axes coordinate transform parity | 座標変換と polygon 配置が一致。 |
+| polygon-on-axes | partial | P1 | axes data座標 helper（coords_to_point 相当）の追加 | scene座標の手指定ではなくデータ座標から polygon 配置できる。 |
 | point-with-trace | partial | P1 | TracedPath primitive DSL/runtime の追加 | `always path(...)` 近似ではなく追跡履歴ベースで軌跡生成できる。 |
 | moving-group-to-destination | ported | P1 | sample parity 完了（group transform animate） | `animate dots.x/y` で group 単位移動が再現される。 |
 | arg-min-example | blocker | P2 | **要サンプル生成**; graph query helper（argmin） | argmin ハイライトの導出と注釈が再現。 |
