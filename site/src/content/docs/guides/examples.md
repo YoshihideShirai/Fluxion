@@ -147,3 +147,35 @@ Status meanings:
 - `ported`: runnable in Fluxion DSL (差分メモは残る場合があります).
 - `partial`: partially ported; known gaps are larger or unresolved.
 - `blocker`: blocked by missing primitives/runtime capability.
+
+## Gallery Porting DoD（最低条件 / Review Checklist）
+
+レビュー時は、各 gallery エントリが以下を満たすことを **Definition of Done (DoD)** とします。
+
+- [ ] frontmatter 必須項目が埋まっている:
+  - `title`
+  - `source_manim_url`
+  - `status`
+  - `fidelity`
+  - `known_gaps`
+- [ ] Play でクラッシュしない（`GalleryPage.astro` 上で初期化可能）。
+- [ ] `known_gaps` が本ページの「known_gaps 記述規約」に沿っている。
+- [ ] 対応する source example（`source_example_path`）が存在する。
+  - [ ] もし未作成なら、理由が frontmatter かレビュー記録に明記されている。
+
+### status 遷移ルール（blocker → partial → ported）
+
+- `blocker`:
+  - 必須 primitive / runtime capability が欠け、シーン再生成立が阻害される状態。
+  - `known_gaps` には「何が不足して再生不能か」を明記する。
+- `partial`:
+  - 再生は可能だが、挙動差分や欠落機能が残る状態。
+  - `known_gaps` に症状・影響・回避策・解消条件を明記する。
+- `ported`:
+  - Play 上で安定再生でき、主要シーケンスが意図どおり完走する状態。
+  - 残差分がある場合も `known_gaps` で追跡可能（空にする必要はない）。
+
+遷移判定:
+- `blocker` → `partial`: クラッシュ/再生不能の主因が解消し、最低限の再生が可能になった時点。
+- `partial` → `ported`: DoD 最低条件をすべて満たし、主要シーケンス差分が許容範囲に収まった時点。
+- `ported` からの降格: 回帰で Play 初期化不能・主要シーケンス破綻・必須項目欠落が出た場合は `partial` もしくは `blocker` に戻す。
