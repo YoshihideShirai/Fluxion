@@ -21,6 +21,7 @@ The current Text DSL scope is intentionally small: place shapes, math, paths, an
 | `text` | Text label node declaration | `text title "Fluxion" at 0,240 size=32 fill="#e2e8f0"` |
 | `math` | Math equation node declaration | `math equation "e^{i\pi}+1=0" at 0,160 size=36 renderer=katex` |
 | `group` | Grouped node declaration | `group intro title equation` |
+| `surroundingRect` | Target-bounds rectangle declaration | `surroundingRect frame target=equation buff=10 stroke="#fbbf24"` |
 | `at` | Start an indented block at a fixed time | `at 0s:` |
 | `show / hide` | Create or delete a node on the timeline | `show dot` |
 | `value` | Declare a scalar tracker | `value theta = 0` |
@@ -119,6 +120,7 @@ path curve d="M 0 0 C 40 80 80 80 120 0" at 640,420 fill="none" stroke="#38bdf8"
 text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"
 math equation "e^{i\\pi}+1=0" at 640,200 size=36 expandTokens=true
 group intro title equation
+surroundingRect frame target=equation buff=10 stroke="#fbbf24"
 ```
 
 Supported node types:
@@ -131,6 +133,7 @@ Supported node types:
 - `text <id> "<text>"`
 - `math <id> "<latex>"`
 - `group <id> [child-id...]`
+- `surroundingRect <id> target=<node-id>`
 
 `id` values must be unique in a document.
 
@@ -144,6 +147,7 @@ Common options:
 - `fill`, `stroke`, `strokeWidth`
 - `size` / `fontSize`
 - `math` only: `renderer=katex|mathjax`, `expandTokens=true|false`
+- `surroundingRect` only: `target=<node-id>`, `buff=<number>`; emits a frame-like `rect` node sized from the target node's declared/estimated bounds. `play Create(frame)` animates its border with `geometry.drawProgress` for a Manim-like outline draw.
 
 
 ### Path morphing constraints
@@ -221,8 +225,8 @@ Supported primitives include:
 
 - `FadeIn(id)`: creates the node at hidden opacity, emits `effect=fadeIn`, and animates `transform.opacity`.
 - `FadeOut(id)`: emits `effect=fadeOut`, animates `transform.opacity` to `0`, and deletes the node when the duration ends.
-- `Create(id)`: creates the node and emits `effect=create`.
-- `Write(id)`: creates the node and emits `effect=write`.
+- `Create(id)`: creates the node and emits `effect=create`. For `surroundingRect` frames, it also animates `geometry.drawProgress` so the border is drawn on.
+- `Write(id)`: creates writable leaves with `geometry.writeProgress=0`, emits `effect=write`, and reveals each leaf with width-paced left-to-right timing to approximate Manim's written-on appearance.
 - `Transform(source, target)`: animates the source node toward transform/style/geometry properties from the target node.
 - `TransformMatchingTex(source, target)`: matches expanded `math` token children by identical token text. Matched tokens expand to `Transform`, source-only tokens expand to `FadeOut`, and target-only tokens expand to `FadeIn`.
 - `ReplacementTransform(from, to)`: expands into a simultaneous `FadeOut(from)` and `FadeIn(to)`.

@@ -182,6 +182,42 @@ test("compiles path nodes with SVG d geometry", () => {
   );
 });
 
+test("compiles surroundingRect nodes from target bounds", () => {
+  const documentData = compileTextDsl(`math term "f(x)\\frac{d}{dx}g(x)" at 120,80 size=30 w=260 h=72
+surroundingRect frame target=term buff=10 stroke="#fbbf24" strokeWidth=4`);
+
+  const frame = documentData.nodes.find((node) => node.id === "frame");
+  assert.equal(frame?.type, "rect");
+  assert.equal(frame?.transform.x, 120);
+  assert.equal(frame?.transform.y, 80);
+  assert.equal(frame?.geometry.w, 280);
+  assert.equal(frame?.geometry.h, 92);
+  assert.equal(frame?.geometry.shapeMatcher, "surroundingRect");
+  assert.equal(frame?.style.fill, "none");
+  assert.equal(frame?.style.stroke, "#fbbf24");
+  assert.equal(frame?.style.strokeWidth, 4);
+});
+
+test("expands Create on surroundingRect into border draw progress", () => {
+  const documentData = compileTextDsl(`math term "f(x)" at 120,80 size=30 w=100 h=72
+surroundingRect frame target=term buff=10 stroke="#fbbf24" strokeWidth=4
+play Create(frame) duration=0.75s easing=linear`);
+
+  const create = documentData.timeline.find(
+    (op) => op.op === "create" && op.node.id === "frame",
+  );
+  assert.equal(create?.op, "create");
+  if (create?.op !== "create") throw new Error("Expected frame create op.");
+  assert.equal(create.node.geometry.drawProgress, 0);
+
+  equalJson(
+    documentData.timeline
+      .filter((op): op is AnimateOperation => op.op === "animate")
+      .map((op) => [op.id, op.path, op.from, op.to, op.duration, op.easing]),
+    [["frame", "geometry.drawProgress", 0, 1, 0.75, "linear"]],
+  );
+});
+
 test("compiles math nodes with renderer and font size", () => {
   const documentData = compileTextDsl(
     `math equation "e^{i\\pi}+1=0" at 320,180 size=42 renderer=mathjax fill="#f8fafc"`,
@@ -484,6 +520,36 @@ play TransformMatchingTex(equation, equation2) duration=0.5s`);
       .filter((op) => op.t === 0)
       .map((op) => op.node.id),
     ["hero"],
+  );
+});
+
+test("expands Write on groups into width-paced child write-progress reveals", () => {
+  const documentData = compileTextDsl(`math a "a" at 0,0 opacity=0.8
+math b "b" at 40,0
+group text a b
+play Write(text) duration=1s easing=linear`);
+
+  const create = documentData.timeline.find(
+    (op) => op.op === "create" && op.node.id === "text",
+  );
+  assert.equal(create?.op, "create");
+  if (create?.op !== "create") throw new Error("Expected Write create op.");
+  equalJson(
+    create.node.children.map((child) => [child.id, child.geometry.writeProgress]),
+    [
+      ["a", 0],
+      ["b", 0],
+    ],
+  );
+
+  equalJson(
+    documentData.timeline
+      .filter((op): op is AnimateOperation => op.op === "animate")
+      .map((op) => [op.id, op.path, op.from, op.to, op.t, op.duration]),
+    [
+      ["a", "geometry.writeProgress", 0, 1, 0, 0.58],
+      ["b", "geometry.writeProgress", 0, 1, 0.46, 0.54],
+    ],
   );
 });
 

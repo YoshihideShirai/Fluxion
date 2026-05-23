@@ -21,6 +21,7 @@ Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション
 | `text` | Text label node declaration | `text title "Fluxion" at 0,240 size=32 fill="#e2e8f0"` |
 | `math` | Math equation node declaration | `math equation "e^{i\pi}+1=0" at 0,160 size=36 renderer=katex` |
 | `group` | Grouped node declaration | `group intro title equation` |
+| `surroundingRect` | Target-bounds rectangle declaration | `surroundingRect frame target=equation buff=10 stroke="#fbbf24"` |
 | `at` | Start an indented block at a fixed time | `at 0s:` |
 | `show / hide` | Create or delete a node on the timeline | `show dot` |
 | `value` | Declare a scalar tracker | `value theta = 0` |
@@ -118,6 +119,7 @@ path curve d="M 0 0 C 40 80 80 80 120 0" at 640,420 fill="none" stroke="#38bdf8"
 text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"
 math equation "e^{i\\pi}+1=0" at 640,200 size=36 expandTokens=true
 group intro title equation
+surroundingRect frame target=equation buff=10 stroke="#fbbf24"
 ```
 
 Supported node types:
@@ -130,6 +132,7 @@ Supported node types:
 - `text <id> "<text>"`
 - `math <id> "<latex>"`
 - `group <id> [child-id...]`
+- `surroundingRect <id> target=<node-id>`
 
 `id` は document 内で一意である必要があります。
 
@@ -153,6 +156,7 @@ Geometry options:
 - `text`: `size` or `fontSize`
 - `math`: `size` or `fontSize`, `renderer=katex|mathjax`, `expandTokens=true|false`
 - `group`: child ids are copied into `children` and removed from top-level roots
+- `surroundingRect`: `target=<node-id>`, `buff=<number>`; target の宣言/推定 bounds に基づく frame-like な `rect` node として出力されます。`play Create(frame)` では `geometry.drawProgress` により Manim 風に外枠が描画されます。
 
 Default values:
 
@@ -284,8 +288,8 @@ Supported primitives:
 
 - `FadeIn(id)`: hidden opacity の `create`、semantic `effect=fadeIn`、`transform.opacity` animation を生成します。
 - `FadeOut(id)`: semantic `effect=fadeOut`、`transform.opacity` animation、duration 終了時の `delete` を生成します。
-- `Create(id)`: `create` と semantic `effect=create` を生成します。
-- `Write(id)`: `create` と semantic `effect=write` を生成します。
+- `Create(id)`: `create` と semantic `effect=create` を生成します。`surroundingRect` frame では `geometry.drawProgress` も animation し、外枠を描き出します。
+- `Write(id)`: writable leaf を `geometry.writeProgress=0` で `create` し、semantic `effect=write` と、幅に応じた left-to-right reveal を生成して Manim の書き出し表示を近似します。
 - `Transform(a, b)`: `a` を target として、`b` と異なる transform/style/geometry property ごとに `animate` operation を生成します。
 - `TransformMatchingTex(a, b)`: `math` node の token child を同一 token 文字列で対応付け、対応 token は `Transform`、消える token は `FadeOut`、新規 token は `FadeIn` に展開します。
 - `ReplacementTransform(from, to)`: `from` の `FadeOut` と `to` の `FadeIn` を同時に生成します。

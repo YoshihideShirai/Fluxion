@@ -212,6 +212,20 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     source: 'scene width=640 height=360 fps=60\ntext label "Grouped" at 320,130 size=34 fill="#e2e8f0"\ncircle dot r=36 at 320,220 fill="#38bdf8"\ngroup badge label dot\nplay FadeIn(badge) duration=1s',
   },
   {
+    key: 'surroundingRect',
+    command: 'surroundingRect',
+    description: {
+      ja: '対象 node の周囲に枠用の矩形を作ります。',
+      en: 'Create a rectangular frame around a target node.',
+    },
+    referencePurpose: {
+      ja: 'Target-bounds rectangle declaration',
+      en: 'Target-bounds rectangle declaration',
+    },
+    minimalExample: 'surroundingRect frame target=equation buff=10 stroke="#fbbf24"',
+    source: 'scene width=640 height=360 fps=60\nmath equation "f(x)g(x)" at 320,180 size=44 w=220 h=80 fill="#e2e8f0"\nsurroundingRect frame target=equation buff=12 stroke="#fbbf24" strokeWidth=5',
+  },
+  {
     key: 'at',
     command: 'at',
     description: {

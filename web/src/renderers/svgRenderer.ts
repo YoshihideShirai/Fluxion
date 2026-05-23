@@ -75,6 +75,7 @@ export class SvgRenderer {
     element.dataset.nodeId = node.id;
     this.applyTransform(element, node.transform);
     this.applyStyle(element, node.style);
+    this.applyDrawProgress(element, node);
     for (const child of node.children ?? []) element.append(this.renderNode(child));
     return element;
   }
@@ -138,7 +139,7 @@ export class SvgRenderer {
     }
     if (node.type === "text") {
       const el = document.createElementNS(SVG_NS, "text");
-      el.textContent = node.text ?? "";
+      el.textContent = this.writeProgressText(node);
       el.setAttribute("font-size", String(node.geometry.fontSize ?? 32));
       el.setAttribute("text-anchor", "middle");
       el.setAttribute("dominant-baseline", "middle");
@@ -286,11 +287,11 @@ export class SvgRenderer {
 
     foreignObject.setAttribute("x", String(-width / 2));
     foreignObject.setAttribute("y", String(-height / 2 + baselineOffset));
-    foreignObject.setAttribute("width", String(width));
+    foreignObject.setAttribute("width", String(width * this.writeProgress(node)));
     foreignObject.setAttribute("height", String(height));
 
     const container = document.createElementNS(XHTML_NS, "div") as HTMLDivElement;
-    container.style.width = "100%";
+    container.style.width = `${width}px`;
     container.style.height = "100%";
     container.style.display = "flex";
     container.style.alignItems = "center";
@@ -304,6 +305,19 @@ export class SvgRenderer {
     group.append(foreignObject);
     this.renderLatex(container, latex, renderer);
     return group;
+  }
+
+  private writeProgress(node: SceneNode): number {
+    const value = Number(node.geometry.writeProgress ?? 1);
+    if (!Number.isFinite(value)) return 1;
+    return this.clamp(value, 0, 1);
+  }
+
+  private writeProgressText(node: SceneNode): string {
+    const text = node.text ?? "";
+    const progress = this.writeProgress(node);
+    if (progress >= 1) return text;
+    return text.slice(0, Math.ceil(text.length * progress));
   }
 
   private getBaselineOffset(latex: string, renderer: MathRendererName, fontSize: number): number {
@@ -407,5 +421,13 @@ export class SvgRenderer {
     element.setAttribute("fill", style.fill ?? "none");
     element.setAttribute("stroke", style.stroke ?? "none");
     element.setAttribute("stroke-width", String(style.strokeWidth ?? 0));
+  }
+
+  private applyDrawProgress(element: SVGElement, node: SceneNode): void {
+    if (!Object.hasOwn(node.geometry, "drawProgress")) return;
+    const progress = this.clamp(Number(node.geometry.drawProgress), 0, 1);
+    element.setAttribute("pathLength", "1");
+    element.setAttribute("stroke-dasharray", "1");
+    element.setAttribute("stroke-dashoffset", String(1 - progress));
   }
 }

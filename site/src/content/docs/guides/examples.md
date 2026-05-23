@@ -62,6 +62,7 @@ PYTHONPATH=python python examples/special_camera_settings.py
 | `examples/animations_using_animate.py` | `site/src/content/gallery/animations-using-animate.md` | `faithful` | `faithful` | easing既定値差分の可能性あり。 |
 | `examples/plotting_with_manim.py` | `site/src/content/gallery/plotting-sin-cos.md` | `visual_approximation` | `visual_approximation` | 軸スケールとサンプリングを簡略化。 |
 | `examples/special_camera_settings.py` | `site/src/content/gallery/special-camera.md` | `visual_approximation` | `visual_approximation` | カメラモデルは現行実装で近似。 |
+| Manim `MovingFrameBox` | `site/src/content/gallery/moving-frame-box.md` | `visual_approximation` | `visual_approximation` | `SurroundingRectangle` は `surroundingRect` で表現。MathTex parts は宣言 bounds による近似。 |
 
 ## Browser example
 

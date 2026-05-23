@@ -59,6 +59,7 @@ Use this table as the canonical mapping for migration tracking and regression ch
 | `examples/animations_using_animate.py` | `site/src/content/gallery/animations-using-animate.md` | `faithful` (忠実移植) | `faithful` | `.animate` sequence is preserved; default easing may differ slightly. |
 | `examples/plotting_with_manim.py` | `site/src/content/gallery/plotting-sin-cos.md` | `visual_approximation` (視覚近似) | `visual_approximation` | Curves/axes are approximated for web runtime parity. |
 | `examples/special_camera_settings.py` | `site/src/content/gallery/special-camera.md` | `visual_approximation` (視覚近似) | `visual_approximation` | Camera behavior is approximated to current camera model. |
+| Manim `MovingFrameBox` | `site/src/content/gallery/moving-frame-box.md` | `visual_approximation` (視覚近似) | `visual_approximation` | `SurroundingRectangle` is represented by `surroundingRect`; MathTex parts use declared bounds. |
 
 Interpretation rule: `fidelity=faithful` means behavior-oriented parity, while `fidelity=visual_approximation` means visual-first approximation with explicit known gaps.
 
