@@ -244,6 +244,23 @@ Tokenization splits LaTeX into commands such as `\pi` or `\frac`, escaped single
 
 Unsupported tokens are handled explicitly: source-only tokens fade out and are deleted at the end of the duration; target-only tokens are created at hidden opacity and fade in; matched tokens transform from the source token id toward the destination token state. The current token child positions are approximate semantic anchors, not precise glyph layout for complex TeX.
 
+For long-term visual stability, prefer a renderer-driven baseline alignment pipeline that measures glyph metrics (ascent/descent/baseline) and feeds corrective offsets back into token children. A minimal-diff implementation plan:
+
+1. Add a baseline field during token expansion in `web/src/dsl/compiler.ts` (about 3-6 lines).
+   - In `latexToTokenNodes(...)`, initialize `child.geometry.baselineOffset = 0`.
+2. Apply baseline correction in math rendering in `web/src/renderers/svgRenderer.ts` (about 8-15 lines).
+   - In `createMathElement(...)`, read `const baselineOffset = Number(node.geometry.baselineOffset ?? 0);` and shift foreignObject `y` to `-height/2 + baselineOffset`.
+3. Add a renderer-scoped cached measurement helper in `web/src/renderers/svgRenderer.ts` (about 25-45 lines).
+   - Example: `private readonly baselineCache = new Map<string, number>();`
+   - Example: `private getBaselineOffset(latex: string, renderer: MathRendererName, fontSize: number): number`
+   - Cache key: `renderer + "::" + fontSize + "::" + latex`.
+4. Add 1 call site in `createMathElement(...)` (about 1-3 lines).
+   - Use `getBaselineOffset(...)` only when `node.geometry.baselineOffset` is not explicitly set.
+5. Fallback behavior.
+   - Return `0` when KaTeX/MathJax is unavailable or measurement fails, preserving current deterministic behavior.
+
+This keeps compiler compatibility intact while incrementally reducing vertical drift (`r^2` vs `R^2`) in renderer-side token morphing for `TransformMatchingTex`.
+
 ## Safety model
 
 The Text DSL compiler runs in the browser and does not execute Python or arbitrary JavaScript from the input. It only parses the supported statements and emits Fluxion IR.

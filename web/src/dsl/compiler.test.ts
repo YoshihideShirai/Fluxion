@@ -412,6 +412,16 @@ test("copies math token styles after all node options are applied", () => {
   );
 });
 
+
+test("initializes baselineOffset for expanded math tokens", () => {
+  const documentData = compileTextDsl(`math equation "x+y" expandTokens=true size=42 renderer=katex`);
+  const equation = documentData.nodes.find((node) => node.id === "equation");
+  equalJson(
+    equation?.children.map((child) => child.geometry.baselineOffset),
+    [0, 0, 0],
+  );
+});
+
 test("keeps superscript and subscript groups renderable when expanding math tokens", () => {
   const documentData = compileTextDsl(
     `math equation "e^{i\\pi}+x_1^2" expandTokens=true size=42 renderer=katex`,

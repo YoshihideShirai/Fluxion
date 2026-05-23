@@ -4,6 +4,7 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
 type MathRendererName = "katex" | "mathjax";
+const MAX_BASELINE_OFFSET_EM = 0.45;
 
 const DEFAULT_CAMERA: Camera = { x: 0, y: 0, scale: 1, rotation: 0, target: { x: 0, y: 0 }, padding: 0, mode: "center" };
 
@@ -45,6 +46,7 @@ export class SvgRenderer {
   private readonly width: number;
   private readonly height: number;
   private readonly nodeById = new Map<string, SceneNode>();
+  private readonly baselineCache = new Map<string, number>();
 
   constructor(container: Element, width = 1280, height = 720) {
     this.width = width;
@@ -275,9 +277,15 @@ export class SvgRenderer {
     const latex = node.latex ?? "";
     const width = Number(node.geometry.w ?? Math.max(fontSize * 4, latex.length * fontSize * 0.65));
     const height = Number(node.geometry.h ?? fontSize * 2.5);
+    const renderer = this.normalizeMathRenderer(node.renderer);
+    const hasExplicitBaselineOffset = Object.hasOwn(node.geometry, "baselineOffset");
+    const explicitBaselineOffset = Number(node.geometry.baselineOffset);
+    const baselineOffset = hasExplicitBaselineOffset && Number.isFinite(explicitBaselineOffset)
+      ? explicitBaselineOffset
+      : this.getBaselineOffset(latex, renderer, fontSize);
 
     foreignObject.setAttribute("x", String(-width / 2));
-    foreignObject.setAttribute("y", String(-height / 2));
+    foreignObject.setAttribute("y", String(-height / 2 + baselineOffset));
     foreignObject.setAttribute("width", String(width));
     foreignObject.setAttribute("height", String(height));
 
@@ -290,12 +298,56 @@ export class SvgRenderer {
     container.style.fontSize = `${fontSize}px`;
     container.style.color = node.style.fill ?? "#ffffff";
     container.style.overflow = "visible";
-    container.dataset.mathRenderer = this.normalizeMathRenderer(node.renderer);
+    container.dataset.mathRenderer = renderer;
 
     foreignObject.append(container);
     group.append(foreignObject);
-    this.renderLatex(container, latex, this.normalizeMathRenderer(node.renderer));
+    this.renderLatex(container, latex, renderer);
     return group;
+  }
+
+  private getBaselineOffset(latex: string, renderer: MathRendererName, fontSize: number): number {
+    if (!latex || !document.body) return 0;
+    if (renderer === "katex" && !(globalThis as { katex?: KatexGlobal }).katex)
+      return 0;
+    if (renderer === "mathjax" && !(globalThis as { MathJax?: MathJaxGlobal }).MathJax)
+      return 0;
+
+    const key = `${renderer}::${fontSize}::${latex}`;
+    const cached = this.baselineCache.get(key);
+    if (cached !== undefined) return cached;
+
+    let offset = 0;
+    try {
+      const probe = document.createElement("span");
+      probe.style.display = "inline-flex";
+      probe.style.alignItems = "baseline";
+      probe.style.fontSize = `${fontSize}px`;
+      probe.style.position = "absolute";
+      probe.style.visibility = "hidden";
+      probe.style.pointerEvents = "none";
+      const marker = document.createElement("span");
+      marker.textContent = "x";
+      marker.style.display = "inline-block";
+      const math = document.createElement("span");
+      this.renderLatex(math, latex, renderer);
+      probe.append(math, marker);
+      document.body.append(probe);
+      const mathRect = math.getBoundingClientRect();
+      const markerRect = marker.getBoundingClientRect();
+      if (mathRect.height > 0 && markerRect.height > 0) {
+        offset = markerRect.bottom - mathRect.bottom;
+        if (!Number.isFinite(offset)) offset = 0;
+      }
+      probe.remove();
+    } catch {
+      offset = 0;
+    }
+
+    const maxAbsOffset = Math.max(1, fontSize * MAX_BASELINE_OFFSET_EM);
+    const clamped = Math.max(-maxAbsOffset, Math.min(maxAbsOffset, offset));
+    this.baselineCache.set(key, clamped);
+    return clamped;
   }
 
   private normalizeMathRenderer(renderer: string | undefined): MathRendererName {

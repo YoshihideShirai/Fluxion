@@ -1504,6 +1504,7 @@ function latexToTokenNodes(
     child.style = { ...style };
     child.geometry.fontSize = fontSize;
     child.geometry.w = width;
+    child.geometry.baselineOffset = 0;
     child.transform.x = cursor + width / 2;
     cursor += width;
     return child;

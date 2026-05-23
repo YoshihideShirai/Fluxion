@@ -312,6 +312,23 @@ Token 化は LaTeX 文字列を command（例: `\pi`, `\frac`）、escape 済み
 
 制約: `expandTokens=true` がない `math` node、または token child を持たない node には使えません。現在の token child の位置は近似的な semantic anchor であり、複雑な TeX layout の厳密な glyph 位置合わせは renderer の責務として未対応です。
 
+長期的に見た目を安定させたい場合は、renderer 側で glyph metrics（ascent / descent / baseline）を実測し、token child に baseline 補正を反映する実装を推奨します。最小差分の実装案（目安）:
+
+1. `web/src/dsl/compiler.ts` の token 生成で baseline フィールドを追加（約 3〜6 行）
+   - `latexToTokenNodes(...)` 内で `child.geometry.baselineOffset = 0` を初期化する。
+2. `web/src/renderers/svgRenderer.ts` の math 描画で baseline 補正を適用（約 8〜15 行）
+   - `createMathElement(...)` で `const baselineOffset = Number(node.geometry.baselineOffset ?? 0);` を読み、`foreignObject` の `y` を `-height/2 + baselineOffset` にする。
+3. `web/src/renderers/svgRenderer.ts` に renderer 単位キャッシュ付き計測 helper を追加（約 25〜45 行）
+   - 例: `private readonly baselineCache = new Map<string, number>();`
+   - 例: `private getBaselineOffset(latex: string, renderer: MathRendererName, fontSize: number): number`
+   - cache key は `renderer + "::" + fontSize + "::" + latex`。
+4. `createMathElement(...)` から helper を呼ぶ 1 行を追加（約 1〜3 行）
+   - `node.geometry.baselineOffset` が未指定の場合のみ `getBaselineOffset(...)` を使う。
+5. fallback 方針
+   - KaTeX/MathJax 未読込時・計測失敗時は `0` を返し、現行挙動を維持する。
+
+この構成なら compiler 側の後方互換を保ちながら、`TransformMatchingTex` の token morph で起きる `r^2` / `R^2` の上下ズレを renderer 側で段階的に抑制できます。
+
 ### animate
 
 ```text
