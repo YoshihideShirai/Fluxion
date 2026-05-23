@@ -1,6 +1,6 @@
 ---
-title: Opening Manim Community Banner
-description: Inspired by OpeningManim; staged title + subtitle reveal using LaggedStart.
+title: OpeningManim
+description: "Manim Example: `OpeningManim` (`#openingmanim`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#openingmanim
 source_example_path: examples/gallery/opening_manim.fluxion.txt
 porting_strategy: visual_approximation

@@ -1,6 +1,6 @@
 ---
-title: Plotting with Manim (Sin / Cos)
-description: Text DSL version of plotting example with axes and two curves.
+title: SinAndCosFunctionPlot
+description: "Manim Example: `SinAndCosFunctionPlot` (`#sinandcosfunctionplot`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#sinandcosfunctionplot
 source_example_path: examples/plotting_with_manim.py
 porting_strategy: visual_approximation

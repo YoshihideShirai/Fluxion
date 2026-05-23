@@ -1,6 +1,6 @@
 ---
-title: Transform Matching Tex
-description: Token-by-token math transform like Manim TransformMatchingTex.
+title: TexTransformExample
+description: "Manim Example: `TexTransformExample` (`#textransformexample`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#textransformexample
 source_example_path: examples/gallery/transform_matching_tex.fluxion.txt
 porting_strategy: visual_approximation

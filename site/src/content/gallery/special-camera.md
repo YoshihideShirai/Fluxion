@@ -1,6 +1,6 @@
 ---
-title: Special Camera Settings
-description: Text DSL version with camera pan and zoom.
+title: FollowingGraphCamera
+description: "Manim Example: `FollowingGraphCamera` (`#followinggraphcamera`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#followinggraphcamera
 source_example_path: examples/special_camera_settings.py
 porting_strategy: visual_approximation

@@ -1,6 +1,6 @@
 ---
-title: Animations Using .animate
-description: Text DSL version of examples/animations_using_animate.py.
+title: AnimationsUsingAnimate
+description: "Manim Example: `AnimationsUsingAnimate` (`#animationsusinganimate`) をそのまま移植したデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#animationsusinganimate
 source_example_path: examples/animations_using_animate.py
 porting_strategy: faithful

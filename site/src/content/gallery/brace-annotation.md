@@ -1,6 +1,6 @@
 ---
 title: BraceAnnotation
-description: Distance braces and labels between two dots.
+description: "Manim Example: `BraceAnnotation` (`#braceannotation`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#braceannotation
 source_example_path: examples/gallery/brace_annotation.fluxion.txt
 porting_strategy: visual_approximation
