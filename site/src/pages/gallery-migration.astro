@@ -5,6 +5,10 @@ const demos = await getGalleryDemos();
 const statuses = [...new Set(demos.map((demo) => demo.status))].sort();
 const fidelities = [...new Set(demos.map((demo) => demo.fidelity))].sort();
 const priorities = [...new Set(demos.map((demo) => demo.priority).filter((value): value is string => Boolean(value)))].sort();
+const statusCounts = statuses
+  .map((status) => ({ status, count: demos.filter((demo) => demo.status === status).length }))
+  .sort((a, b) => a.status.localeCompare(b.status));
+const totalCount = demos.length;
 ---
 <!doctype html>
 <html lang="ja">
@@ -17,6 +21,18 @@ const priorities = [...new Set(demos.map((demo) => demo.priority).filter((value)
     <main style="max-width:1200px;margin:0 auto;padding:32px 20px;font-family:system-ui;">
       <h1>Gallery migration admin view</h1>
       <p>status / fidelity / priority で絞り込みながら移植状況を管理するためのビューです。</p>
+      <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:14px 0 18px;">
+        <article style="border:1px solid #cbd5e1;border-radius:8px;padding:10px;background:#f8fafc;">
+          <p style="font-size:12px;color:#475569;margin:0;">Total demos</p>
+          <p style="margin:4px 0 0;font-size:24px;font-weight:700;">{totalCount}</p>
+        </article>
+        {statusCounts.map((item) => (
+          <article style="border:1px solid #cbd5e1;border-radius:8px;padding:10px;background:#f8fafc;">
+            <p style="font-size:12px;color:#475569;margin:0;">{item.status}</p>
+            <p style="margin:4px 0 0;font-size:24px;font-weight:700;">{item.count}</p>
+          </article>
+        ))}
+      </section>
 
       <section style="display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:16px 0 20px;">
         <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
@@ -51,6 +67,7 @@ const priorities = [...new Set(demos.map((demo) => demo.priority).filter((value)
             <th style="text-align:left;padding:8px;border:1px solid #cbd5e1;">Fidelity</th>
             <th style="text-align:left;padding:8px;border:1px solid #cbd5e1;">Priority</th>
             <th style="text-align:left;padding:8px;border:1px solid #cbd5e1;">gap_id</th>
+            <th style="text-align:left;padding:8px;border:1px solid #cbd5e1;">Source path</th>
           </tr>
         </thead>
         <tbody>
@@ -62,6 +79,7 @@ const priorities = [...new Set(demos.map((demo) => demo.priority).filter((value)
               <td style="padding:8px;border:1px solid #cbd5e1;">{demo.fidelity}</td>
               <td style="padding:8px;border:1px solid #cbd5e1;">{demo.priority ?? '-'}</td>
               <td style="padding:8px;border:1px solid #cbd5e1;">{demo.gap_id ?? '-'}</td>
+              <td style="padding:8px;border:1px solid #cbd5e1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">{demo.source_example_path}</td>
             </tr>
           ))}
         </tbody>
