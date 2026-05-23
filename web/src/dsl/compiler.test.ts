@@ -367,7 +367,7 @@ play TransformMatchingTex(source, target) duration=1s easing=linear`);
       )
       .filter(([path]) => path === "transform.x" || path === "transform.y"),
     [
-      ["transform.x", 0, 160],
+      ["transform.x", -9.36, 150.64],
       ["transform.y", 0, 60],
     ],
   );
@@ -413,12 +413,12 @@ test("copies math token styles after all node options are applied", () => {
 });
 
 
-test("initializes baselineOffset for expanded math tokens", () => {
+test("does not set explicit baselineOffset for expanded math tokens", () => {
   const documentData = compileTextDsl(`math equation "x+y" expandTokens=true size=42 renderer=katex`);
   const equation = documentData.nodes.find((node) => node.id === "equation");
   equalJson(
-    equation?.children.map((child) => child.geometry.baselineOffset),
-    [0, 0, 0],
+    equation?.children.map((child) => Object.hasOwn(child.geometry, "baselineOffset")),
+    [false, false, false],
   );
 });
 

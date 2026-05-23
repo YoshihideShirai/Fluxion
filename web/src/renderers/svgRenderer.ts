@@ -284,7 +284,8 @@ export class SvgRenderer {
       ? explicitBaselineOffset
       : this.getBaselineOffset(latex, renderer, fontSize);
 
-    foreignObject.setAttribute("x", String(-width / 2));
+    const isExpandedMathToken = /:tex:\d+$/u.test(node.id);
+    foreignObject.setAttribute("x", String(isExpandedMathToken ? 0 : -width / 2));
     foreignObject.setAttribute("y", String(-height / 2 + baselineOffset));
     foreignObject.setAttribute("width", String(width));
     foreignObject.setAttribute("height", String(height));
