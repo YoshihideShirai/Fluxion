@@ -22,6 +22,8 @@ The current Text DSL scope is intentionally small: place shapes, math, paths, an
 | `math` | Math equation node declaration | `math equation "e^{i\pi}+1=0" at 0,160 size=36 renderer=katex` |
 | `group` | Grouped node declaration | `group intro title equation` |
 | `surroundingRect` | Target-bounds rectangle declaration | `surroundingRect frame target=equation buff=10 stroke="#fbbf24"` |
+| `axes` | Axes helper declaration | `axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2` |
+| `plot` | Function plot path declaration | `plot curve fn=sin(t) range=-3.14,3.14 scaleX=80 scaleY=60` |
 | `at` | Start an indented block at a fixed time | `at 0s:` |
 | `show / hide` | Create or delete a node on the timeline | `show dot` |
 | `value` | Declare a scalar tracker | `value theta = 0` |
@@ -134,6 +136,8 @@ Supported node types:
 - `math <id> "<latex>"`
 - `group <id> [child-id...]`
 - `surroundingRect <id> target=<node-id>`
+- `axes <id>`
+- `plot <id> fn=<expr>`
 
 `id` values must be unique in a document.
 
@@ -148,6 +152,8 @@ Common options:
 - `size` / `fontSize`
 - `math` only: `renderer=katex|mathjax`, `expandTokens=true|false`
 - `surroundingRect` only: `target=<node-id>`, `buff=<number>`; emits a frame-like `rect` node sized from the target node's declared/estimated bounds. `play Create(frame)` animates its border with `geometry.drawProgress` for a Manim-like outline draw.
+- `axes` only: `xRange=<min,max>`, `yRange=<min,max>`, `width`, `height`; emits a `group` with x/y axis lines.
+- `plot` only: `fn=<expr>`, `range=<min,max>`, `samples`, `scaleX`, `scaleY`, `close=true|false`; emits a generated `path` geometry from the sampled function.
 
 
 ### Path morphing constraints

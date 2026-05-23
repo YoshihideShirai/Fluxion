@@ -201,6 +201,20 @@ test("places axes at the scene origin by default", () => {
   assert.equal(axes?.children[1]?.transform.y, 0);
 });
 
+test("compiles plot with close and style overrides", () => {
+  const documentData = compileTextDsl(
+    `plot area fn=sin(t) range=-3.14,3.14 samples=64 scaleX=60 scaleY=50 close=true fill="#38bdf8" opacity=0.3 stroke="#0ea5e9" strokeWidth=2`,
+  );
+
+  const area = documentData.nodes[0];
+  assert.equal(area?.type, "path");
+  assert.equal(area?.style.fill, "#38bdf8");
+  assert.equal(area?.transform.opacity, 0.3);
+  assert.equal(area?.style.stroke, "#0ea5e9");
+  assert.equal(area?.style.strokeWidth, 2);
+  assert.equal(String(area?.geometry.d).endsWith(" Z"), true);
+});
+
 test("compiles surroundingRect nodes from target bounds", () => {
   const documentData = compileTextDsl(`math term "f(x)\\frac{d}{dx}g(x)" at 120,80 size=30 w=260 h=72
 surroundingRect frame target=term buff=10 stroke="#fbbf24" strokeWidth=4`);

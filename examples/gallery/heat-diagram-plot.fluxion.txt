@@ -1,22 +1,3 @@
----
-title: HeatDiagramPlot
-description: "Manim Example: `HeatDiagramPlot` (`#heatdiagramplot`) の Fluxion 移植版。"
-source_manim_url: https://docs.manim.community/en/stable/examples.html#heatdiagramplot
-source_example_path: examples/gallery/heat-diagram-plot.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
-known_gaps:
-  - symptom: "本家の連続カラーマップ/数値軸連携は未対応で、矩形グリッドと色分けで近似している。"
-    layer: runtime
-    impact: medium
-    workaround: "cell を個別 rect として並べ、段階色でヒートマップ風に表現する。"
-    closure_condition: "image/heatmap 専用 primitive とカラーマップ補間を実装する。"
-    fidelity_upgrade_condition: "連続値のサンプリングと凡例連携が Manim 相当で再現できる時。"
-category: Manim Stable Examples
-status: partial
-order: 65
-gap_id: GAP-018
----
 scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#0b1020"

@@ -1,22 +1,3 @@
----
-title: MovingAround
-description: "Manim Example: `MovingAround` (`#movingaround`) の Fluxion 移植版。"
-source_manim_url: https://docs.manim.community/en/stable/examples.html#movingaround
-source_example_path: examples/gallery/moving-around.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
-known_gaps:
-  - symptom: "本家のカメラ API（frame updater / API sugar）完全互換ではなく、camera プロパティの直接 animate で近似している。"
-    layer: dsl
-    impact: medium
-    workaround: "camera.x/y/scale を同期 animate して視覚的な移動・ズームを再現する。"
-    closure_condition: "camera frame API に対応する高水準命令を DSL に追加する。"
-    fidelity_upgrade_condition: "Manim と同等の camera フレーミング記述で同等の挙動を表現できる時。"
-category: Manim Stable Examples
-status: partial
-order: 67
-gap_id: GAP-020
----
 scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#0b1020"

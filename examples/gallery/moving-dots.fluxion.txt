@@ -1,22 +1,3 @@
----
-title: MovingDots
-description: "Manim Example: `MovingDots` (`#movingdots`) の Fluxion 移植版。"
-source_manim_url: https://docs.manim.community/en/stable/examples.html#movingdots
-source_example_path: examples/gallery/moving-dots.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
-known_gaps:
-  - symptom: "本家の updater 駆動挙動は簡略化しており、位相差付き正弦運動で視覚近似している。"
-    layer: dsl
-    impact: medium
-    workaround: "`value` と `always expr` で複数 dot の同期運動を表現する。"
-    closure_condition: "updater 構文/API の互換レイヤーを拡張する。"
-    fidelity_upgrade_condition: "Manim の updater 記述をほぼ同形で移植できる時。"
-category: Manim Stable Examples
-status: partial
-order: 68
-gap_id: GAP-021
----
 scene width=960 height=540 fps=60
 
 value t = 0
