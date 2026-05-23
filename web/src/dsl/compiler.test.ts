@@ -73,7 +73,15 @@ test("compiles scene camera and camera animations", () => {
 animate camera.x from 10 to 110 duration=2s easing=linear
 animate camera.scale from 1.5 to 2 duration=2s`);
 
-  equalJson(documentData.camera, { x: 10, y: 20, scale: 1.5, rotation: 5 });
+  equalJson(documentData.camera, {
+    x: 10,
+    y: 20,
+    scale: 1.5,
+    rotation: 5,
+    target: { x: 0, y: 0 },
+    padding: 0,
+    mode: "center",
+  });
   equalJson(
     documentData.timeline.map((op) =>
       op.op === "animate" ? [op.id, op.path, op.from, op.to, op.duration, op.easing] : [],

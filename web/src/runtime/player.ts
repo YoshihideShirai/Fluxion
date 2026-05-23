@@ -78,5 +78,14 @@ function hasCreateOperations(documentData: FluxionDocument): boolean {
 
 
 function cloneCamera(camera: Camera | undefined): Camera {
-  return { x: camera?.x ?? 0, y: camera?.y ?? 0, scale: camera?.scale ?? 1, rotation: camera?.rotation ?? 0 };
+  const cloned: Camera = {
+    x: camera?.x ?? 0,
+    y: camera?.y ?? 0,
+    scale: camera?.scale ?? 1,
+    rotation: camera?.rotation ?? 0,
+  };
+  if (camera?.target) cloned.target = { ...camera.target };
+  if (camera?.padding !== undefined) cloned.padding = camera.padding;
+  if (camera?.mode !== undefined) cloned.mode = camera.mode;
+  return cloned;
 }
