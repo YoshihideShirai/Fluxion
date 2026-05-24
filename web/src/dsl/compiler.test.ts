@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import * as fs from "node:fs";
 import { compileTextDsl, DslCompileError } from "./compiler.js";
 import type { AnimateOperation } from "../types.js";
 
@@ -23,7 +23,7 @@ function messageMatches(source: string, pattern: RegExp): void {
 }
 
 function extractPlaygroundDemo(): string {
-  const html = readFileSync("index.html", "utf8");
+  const html = fs.readFileSync("index.html", "utf8");
   const match = html.match(
     /<textarea id="dsl" spellcheck="false">([\s\S]*?)<\/textarea>/u,
   );
@@ -66,6 +66,37 @@ test("compiles the playground demo without overlapping same-target animations", 
 
   assert.equal(documentData.duration, 9);
   assertNoOverlappingAnimations(documentData);
+});
+
+test("compiles every gallery Text DSL example", () => {
+  const galleryDir = "../examples/gallery";
+  const files = [
+    "arg-min-example.fluxion.txt",
+    "boolean-operations.fluxion.txt",
+    "fixed-in-frame-m-object-test.fluxion.txt",
+    "gradient-image-from-array.fluxion.txt",
+    "graph-area-plot.fluxion.txt",
+    "heat-diagram-plot.fluxion.txt",
+    "moving-angle.fluxion.txt",
+    "moving-around.fluxion.txt",
+    "moving-dots.fluxion.txt",
+    "moving-group-to-destination.fluxion.txt",
+    "moving-zoomed-scene-around.fluxion.txt",
+    "moving_frame_box.fluxion.txt",
+    "point-with-trace.fluxion.txt",
+    "polygon-on-axes.fluxion.txt",
+    "sine-curve-unit-circle.fluxion.txt",
+  ];
+
+  assert.equal(files.length > 0, true);
+  for (const file of files) {
+    const source = fs.readFileSync(`${galleryDir}/${file}`, "utf8");
+    try {
+      compileTextDsl(source);
+    } catch (error) {
+      throw new Error(`${file}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
 });
 
 test("compiles scene camera and camera animations", () => {
@@ -717,6 +748,18 @@ play ReplacementTransform(from, to) duration=1.25s easing=linear`);
       .filter((op) => op.op === "delete")
       .map((op) => [op.id, op.t]),
     [["from", 1.25]],
+  );
+});
+
+test("compiles Circumscribe with top-level color option", () => {
+  const documentData = compileTextDsl(`circle dot r=20 at 0,0
+play Circumscribe(dot) duration=0.7s color="#fbbf24"`);
+
+  equalJson(
+    documentData.timeline
+      .filter((op) => op.op === "effect")
+      .map((op) => [op.id, op.effect, op.t, op.duration, op.easing]),
+    [["dot", "circumscribe:#fbbf24", 0, 0.7, "smooth"]],
   );
 });
 

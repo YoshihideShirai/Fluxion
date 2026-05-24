@@ -255,6 +255,7 @@ Supported primitives include:
 - `Transform(source, target)`: animates the source node toward transform/style/geometry properties from the target node.
 - `TransformMatchingTex(source, target)`: matches expanded `math` token children by identical token text. Matched tokens expand to `Transform`, source-only tokens expand to `FadeOut`, and target-only tokens expand to `FadeIn`.
 - `ReplacementTransform(from, to)`: expands into a simultaneous `FadeOut(from)` and `FadeIn(to)`.
+- `Circumscribe(id)`: emits a semantic circumscribe effect for renderers that support highlight outlines. `color=<css-color>` is accepted on the play statement or inside the call.
 - `AnimationGroup(<animations...>, lagRatio=0)`: expands child animations in parallel. `lagRatio` offsets child starts by a ratio of child duration, and the group is normalized to fit the outer `duration`.
 - `LaggedStart(<animations...>, lagRatio=0.05)`: alias of `AnimationGroup` tuned for staggered starts (Manim-like naming).
 - `Succession(<animations...>)`: expands child animations from left to right. Each child receives an equal share of the outer `duration`.

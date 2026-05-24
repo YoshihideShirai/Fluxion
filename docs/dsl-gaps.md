@@ -49,8 +49,8 @@
 | GAP-019 | moving-angle | `angle` helper は追加済み。象限・直角マーク等の Manim `Angle` 詳細オプションは未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts`, `python/fluxion/primitives/*` |
 | GAP-020 | moving-around | `cameraFrame` / `animateFrame` helper は追加済み。frame updater と mobject tracking API は未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-021 | moving-dots | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
-| GAP-022 | moving-group-to-destination | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
-| GAP-023 | moving-zoomed-scene-around | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-022 | moving-group-to-destination | `Circumscribe` semantic effect は追加済み。group レイアウト sugar（arrange/next_to 相当）は未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-023 | moving-zoomed-scene-around | `tracedPath` helper は追加済み。ZoomedScene の独立 sub-camera / viewport primitive は未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-024 | point-with-trace | `tracedPath` helper は追加済み。対象 mobject の実履歴追跡・減衰オプションは未実装。 | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
 | GAP-025 | polygon-on-axes | `dataPolygon` helper は追加済み。汎用 `coords_to_point` 相当 API は未実装。 | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
 | GAP-026 | rotation-updater | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |

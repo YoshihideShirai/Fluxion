@@ -315,6 +315,7 @@ Supported primitives:
 - `Transform(a, b)`: `a` を target として、`b` と異なる transform/style/geometry property ごとに `animate` operation を生成します。
 - `TransformMatchingTex(a, b)`: `math` node の token child を同一 token 文字列で対応付け、対応 token は `Transform`、消える token は `FadeOut`、新規 token は `FadeIn` に展開します。
 - `ReplacementTransform(from, to)`: `from` の `FadeOut` と `to` の `FadeIn` を同時に生成します。
+- `Circumscribe(id)`: highlight outline 用の semantic circumscribe effect を生成します。`color=<css-color>` は play statement 側または call 内で指定できます。
 - `AnimationGroup(<animations...>, lagRatio=0)`: child animation を並列に展開します。`lagRatio` は child start のずれを child duration に対する比率で指定し、group 全体は `duration` に収まるように正規化されます。
 - `Succession(<animations...>)`: child animation を左から右へ逐次展開します。各 child の duration は `play` の `duration` を child 数で等分します。
 

@@ -984,13 +984,15 @@ function parsePlay(
   const [call, optionTokens] = readPlayCall(tokens, lineNumber);
   let duration = 1;
   let easing = "smooth";
+  let color: string | undefined;
   for (const [key, value] of readAssignments(optionTokens, lineNumber)) {
     if (key === "duration") duration = parseSeconds(value, lineNumber);
     else if (key === "easing") easing = parseEasing(value, lineNumber);
+    else if (key === "color") color = value;
     else throw new DslCompileError(`Unknown play option '${key}'.`, lineNumber);
   }
 
-  emitPlayCall(state, call, statementTime(state), duration, easing, lineNumber);
+  emitPlayCall(state, call, statementTime(state), duration, easing, lineNumber, color);
   if (state.blockTime === null) advanceStatementTime(state, duration);
 }
 
@@ -1001,6 +1003,7 @@ function emitPlayCall(
   duration: number,
   easing: string,
   lineNumber: number,
+  playColor?: string,
 ): void {
   if (call.name === "FadeIn") {
     ensureNoPlayOptions(call, lineNumber);
@@ -1075,6 +1078,21 @@ function emitPlayCall(
     return;
   }
 
+  if (call.name === "Circumscribe") {
+    const color = readCircumscribeColor(call, lineNumber, playColor);
+    const id = expectPlayArg(call, 1, lineNumber);
+    requireNode(state, id, lineNumber);
+    state.timeline.push({
+      t: start,
+      op: "effect",
+      id,
+      effect: color ? `circumscribe:${color}` : "circumscribe",
+      duration,
+      easing,
+    });
+    return;
+  }
+
   if (call.name === "AnimationGroup" || call.name === "LaggedStart") {
     const childCalls = expectPlayCallArgs(call, lineNumber);
     const lagRatio = readLagRatio(call, lineNumber);
@@ -1091,6 +1109,7 @@ function emitPlayCall(
         childDuration,
         easing,
         lineNumber,
+        playColor,
       );
     });
     return;
@@ -1108,6 +1127,7 @@ function emitPlayCall(
         childDuration,
         easing,
         lineNumber,
+        playColor,
       );
     });
     return;
@@ -1117,6 +1137,23 @@ function emitPlayCall(
     `Unknown play primitive '${call.name}'.`,
     lineNumber,
   );
+}
+
+function readCircumscribeColor(
+  call: PlayCall,
+  lineNumber: number,
+  playColor?: string,
+): string | undefined {
+  let color = playColor;
+  for (const [key, value] of call.options) {
+    if (key === "color") color = value;
+    else
+      throw new DslCompileError(
+        `Unknown ${call.name} option '${key}'.`,
+        lineNumber,
+      );
+  }
+  return color;
 }
 
 function pushTransformMatchingTex(
