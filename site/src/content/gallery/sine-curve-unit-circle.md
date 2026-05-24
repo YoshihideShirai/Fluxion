@@ -6,11 +6,11 @@ source_example_path: examples/gallery/sine-curve-unit-circle.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "`wave.d = path(...)` で軌跡生成は可能だが、Manim `TracedPath` の厳密な履歴サンプリング/追記挙動とは差分がある。"
+  - symptom: "Text DSL の `tracedPath` helper で sine trace は表現できるが、Manim `TracedPath` の厳密な履歴サンプリング/追記挙動とは差分がある。"
     layer: dsl
-    impact: medium
-    workaround: "近似実装（既存 DSL/always 更新）で演出を代替する。"
-    closure_condition: "不足 DSL 機能が追加され、近似なしで同等記述が可能になる。"
+    impact: low
+    workaround: "`tracedPath ... from=0 to=theta` と同期 updater を組み合わせて演出を代替する。"
+    closure_condition: "履歴ベースの TracedPath 追記/サンプリング API を追加する。"
     fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Advanced Projects
 status: partial
@@ -18,12 +18,39 @@ order: 52
 ---
 scene width=960 height=540 fps=60
 value theta = 0
+
+# Unit circle on left
 circle origin r=3 at -240,0 fill="#e2e8f0" stroke="none"
 circle unit r=96 at -240,0 fill="none" stroke="#334155" strokeWidth=2
-circle dot r=8 at -144,0 fill="#38bdf8" stroke="none"
 line radius x1=0 y1=0 x2=96 y2=0 at -240,0 stroke="#38bdf8" strokeWidth=2
+circle dot r=8 at -144,0 fill="#38bdf8" stroke="none"
+line projection x1=0 y1=0 x2=280 y2=0 at -80,0 stroke="#334155" strokeWidth=2
+
+# Sine wave area on right
+path axis d="M 0 0 L 320 0" at 0,0 stroke="#334155" strokeWidth=2 fill="none"
+tracedPath wave x=(t/(2*pi))*320 y=96*sin(t) from=0 to=theta samples=180 at 0,0 stroke="#22d3ee" strokeWidth=4
+line link x1=0 y1=0 x2=0 y2=0 at 0,0 stroke="#a78bfa" strokeWidth=2
+
 always dot.x = expr=-240 + 96*cos(theta)
-always dot.y = expr=0 + 96*sin(theta)
+always dot.y = expr=96*sin(theta)
 always radius.x2 = expr=96*cos(theta)
 always radius.y2 = expr=96*sin(theta)
-animate theta from 0 to 12.56 duration=8s easing=linear
+always projection.y1 = expr=96*sin(theta)
+always projection.y2 = expr=96*sin(theta)
+always projection.x1 = expr=-240 + 96*cos(theta)
+always projection.x2 = expr=0 + (theta/(2*3.141592653589793))*320
+always link.x1 = expr=-240 + 96*cos(theta)
+always link.y1 = expr=96*sin(theta)
+always link.x2 = expr=(theta/(2*3.141592653589793))*320
+always link.y2 = expr=96*sin(theta)
+
+at 0s:
+  play Create(unit) duration=0.5s
+  play FadeIn(dot) duration=0.4s
+  play Create(radius) duration=0.5s
+  play Create(axis) duration=0.4s
+  play Create(link) duration=0.3s
+  play Create(projection) duration=0.3s
+
+animate theta from 0 to 12.566370614359172 duration=8s easing=linear
+wait 0.3s

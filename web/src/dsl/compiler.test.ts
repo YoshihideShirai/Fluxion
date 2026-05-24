@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import * as fs from "node:fs";
 import { compileTextDsl, DslCompileError } from "./compiler.js";
 import type { AnimateOperation } from "../types.js";
 
@@ -23,7 +23,7 @@ function messageMatches(source: string, pattern: RegExp): void {
 }
 
 function extractPlaygroundDemo(): string {
-  const html = readFileSync("index.html", "utf8");
+  const html = fs.readFileSync("index.html", "utf8");
   const match = html.match(
     /<textarea id="dsl" spellcheck="false">([\s\S]*?)<\/textarea>/u,
   );
@@ -68,6 +68,38 @@ test("compiles the playground demo without overlapping same-target animations", 
   assertNoOverlappingAnimations(documentData);
 });
 
+test("compiles every gallery Text DSL example", () => {
+  const galleryDir = "../examples/gallery";
+  const files = [
+    "arg-min-example.fluxion.txt",
+    "boolean-operations.fluxion.txt",
+    "fixed-in-frame-m-object-test.fluxion.txt",
+    "gradient-image-from-array.fluxion.txt",
+    "graph-area-plot.fluxion.txt",
+    "heat-diagram-plot.fluxion.txt",
+    "moving-angle.fluxion.txt",
+    "moving-around.fluxion.txt",
+    "moving-dots.fluxion.txt",
+    "moving-group-to-destination.fluxion.txt",
+    "moving-zoomed-scene-around.fluxion.txt",
+    "moving_frame_box.fluxion.txt",
+    "point-with-trace.fluxion.txt",
+    "polygon-on-axes.fluxion.txt",
+    "sine-curve-unit-circle.fluxion.txt",
+    "vector-arrow.fluxion.txt",
+  ];
+
+  assert.equal(files.length > 0, true);
+  for (const file of files) {
+    const source = fs.readFileSync(`${galleryDir}/${file}`, "utf8");
+    try {
+      compileTextDsl(source);
+    } catch (error) {
+      throw new Error(`${file}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+});
+
 test("compiles scene camera and camera animations", () => {
   const documentData = compileTextDsl(`camera at 10,20 scale=1.5 rotation=5
 animate camera.x from 10 to 110 duration=2s easing=linear
@@ -89,6 +121,37 @@ animate camera.scale from 1.5 to 2 duration=2s`);
     [
       ["camera", "camera.x", 10, 110, 2, "linear"],
       ["camera", "camera.scale", 1.5, 2, 2, "smooth"],
+    ],
+  );
+});
+
+test("compiles cameraFrame and animateFrame sugar", () => {
+  const documentData = compileTextDsl(`cameraFrame at 10,20 scale=1.5 rotation=5
+animateFrame to 110,45 scale=2 rotation=15 duration=2s easing=linear
+animateFrame to -20,-30 scale=1.25 duration=1s easing=easeInOut`);
+
+  equalJson(documentData.camera, {
+    x: 10,
+    y: 20,
+    scale: 1.5,
+    rotation: 5,
+    target: { x: 0, y: 0 },
+    padding: 0,
+    mode: "center",
+  });
+  equalJson(
+    documentData.timeline
+      .filter((op): op is AnimateOperation => op.op === "animate")
+      .map((op) => [op.id, op.path, op.from, op.to, op.duration, op.easing]),
+    [
+      ["camera", "camera.x", 10, 110, 2, "linear"],
+      ["camera", "camera.y", 20, 45, 2, "linear"],
+      ["camera", "camera.scale", 1.5, 2, 2, "linear"],
+      ["camera", "camera.rotation", 5, 15, 2, "linear"],
+      ["camera", "camera.x", 110, -20, 1, "easeInOut"],
+      ["camera", "camera.y", 45, -30, 1, "easeInOut"],
+      ["camera", "camera.scale", 2, 1.25, 1, "easeInOut"],
+      ["camera", "camera.rotation", 15, 15, 1, "easeInOut"],
     ],
   );
 });
@@ -199,6 +262,51 @@ test("places axes at the scene origin by default", () => {
   assert.equal(axes?.children[0]?.transform.y, 0);
   assert.equal(axes?.children[1]?.transform.x, 0);
   assert.equal(axes?.children[1]?.transform.y, 0);
+  assert.equal(axes?.geometry.xMin, -5);
+  assert.equal(axes?.geometry.xMax, 5);
+  assert.equal(axes?.geometry.yMin, -3);
+  assert.equal(axes?.geometry.yMax, 3);
+  assert.equal(axes?.geometry.centerX, 0);
+  assert.equal(axes?.geometry.centerY, 0);
+});
+
+test("compiles dataPolygon points through axes coordinates", () => {
+  const documentData = compileTextDsl(`axes ax at 0,-30 width=760 height=340 xRange=-4,4 yRange=-2,2
+dataPolygon poly axes=ax points=-2,-0.5;-0.4,1.1;1.8,0.4 fill="#22d3ee" opacity=0.2`);
+
+  const polygon = documentData.nodes.find((node) => node.id === "poly");
+  assert.equal(polygon?.type, "path");
+  assert.equal(polygon?.transform.x, 0);
+  assert.equal(polygon?.transform.y, -30);
+  assert.equal(polygon?.geometry.dataPolygon, true);
+  assert.equal(polygon?.geometry.axes, "ax");
+  assert.equal(polygon?.style.fill, "#22d3ee");
+  assert.equal(polygon?.transform.opacity, 0.2);
+  assert.equal(
+    polygon?.geometry.d,
+    "M -190 -42.5 L -38 93.5 L 171 34 Z",
+  );
+});
+
+test("compiles arrow helper as grouped shaft and tip paths", () => {
+  const documentData = compileTextDsl(
+    `arrow vec x1=0 y1=0 x2=190 y2=80 at 0,-20 stroke="#22d3ee" strokeWidth=6 tipLength=20 tipWidth=18`,
+  );
+
+  const arrow = documentData.nodes[0];
+  assert.equal(arrow?.type, "group");
+  assert.equal(arrow?.geometry.arrow, true);
+  assert.equal(arrow?.transform.y, -20);
+  equalJson(
+    arrow?.children.map((child) => [child.id, child.type]),
+    [
+      ["vec:shaft", "line"],
+      ["vec:tip", "path"],
+    ],
+  );
+  assert.equal(arrow?.children[0]?.style.stroke, "#22d3ee");
+  assert.equal(arrow?.children[0]?.style.strokeWidth, 6);
+  assert.equal(String(arrow?.children[1]?.geometry.d).startsWith("M 190 80 L "), true);
 });
 
 test("compiles plot with close and style overrides", () => {
@@ -213,6 +321,44 @@ test("compiles plot with close and style overrides", () => {
   assert.equal(area?.style.stroke, "#0ea5e9");
   assert.equal(area?.style.strokeWidth, 2);
   assert.equal(String(area?.geometry.d).endsWith(" Z"), true);
+});
+
+test("compiles angle helper into an updating path", () => {
+  const documentData = compileTextDsl(`value theta = 0
+angle arc at 0,-20 radius=60 from=0 to=theta samples=72 stroke="#f59e0b" strokeWidth=5`);
+
+  const arc = documentData.nodes[0];
+  assert.equal(arc?.type, "path");
+  assert.equal(arc?.geometry.angle, true);
+  assert.equal(arc?.geometry.radius, 60);
+  assert.equal(arc?.transform.y, -20);
+  assert.equal(arc?.style.stroke, "#f59e0b");
+
+  const bind = documentData.timeline.find((op) => op.op === "bindPath");
+  assert.equal(bind?.op, "bindPath");
+  if (bind?.op !== "bindPath") throw new Error("Expected angle bindPath operation.");
+  assert.equal(bind.id, "arc");
+  assert.equal(bind.path, "geometry.d");
+  assert.equal(bind.tMaxExpr, "theta");
+  equalJson(bind.deps, ["theta"]);
+});
+
+test("compiles tracedPath helper into an updating path", () => {
+  const documentData = compileTextDsl(`value theta = 0
+tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120 at 0,-20 stroke="#22d3ee"`);
+
+  const trace = documentData.nodes[0];
+  assert.equal(trace?.type, "path");
+  assert.equal(trace?.geometry.tracedPath, true);
+  assert.equal(trace?.transform.y, -20);
+
+  const bind = documentData.timeline.find((op) => op.op === "bindPath");
+  assert.equal(bind?.op, "bindPath");
+  if (bind?.op !== "bindPath") throw new Error("Expected tracedPath bindPath operation.");
+  assert.equal(bind.id, "trace");
+  assert.equal(bind.xExpr, "150*cos(t)");
+  assert.equal(bind.yExpr, "150*sin(t)");
+  assert.equal(bind.samples, 120);
 });
 
 test("compiles surroundingRect nodes from target bounds", () => {
@@ -624,6 +770,18 @@ play ReplacementTransform(from, to) duration=1.25s easing=linear`);
       .filter((op) => op.op === "delete")
       .map((op) => [op.id, op.t]),
     [["from", 1.25]],
+  );
+});
+
+test("compiles Circumscribe with top-level color option", () => {
+  const documentData = compileTextDsl(`circle dot r=20 at 0,0
+play Circumscribe(dot) duration=0.7s color="#fbbf24"`);
+
+  equalJson(
+    documentData.timeline
+      .filter((op) => op.op === "effect")
+      .map((op) => [op.id, op.effect, op.t, op.duration, op.easing]),
+    [["dot", "circumscribe:#fbbf24", 0, 0.7, "smooth"]],
   );
 });
 

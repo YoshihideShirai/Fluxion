@@ -6,11 +6,11 @@ source_example_path: examples/gallery/point-with-trace.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "`TracedPath` 専用 primitive は未実装のため、`always ... = path(...)` で軌跡線を近似している。"
+  - symptom: "Text DSL の `tracedPath` helper で軌跡は表現できるが、Manim のような対象 mobject の実履歴追跡・減衰オプションは未対応。"
     layer: dsl
-    impact: medium
-    workaround: "value tracker と `always trace.d = path(...)` を組み合わせて軌跡を更新する。"
-    closure_condition: "TracedPath primitive（追跡対象/履歴長/減衰オプション）を DSL/runtime に追加する。"
+    impact: low
+    workaround: "value tracker と `tracedPath ... from=<expr> to=<expr>` を組み合わせて軌跡を更新する。"
+    closure_condition: "TracedPath primitive に追跡対象/履歴長/減衰オプションを追加する。"
     fidelity_upgrade_condition: "Manim と同様に対象 mobject の履歴を直接トレースできる時。"
 category: Manim Stable Examples
 status: partial
@@ -24,12 +24,11 @@ value theta = 0
 rect bg w=960 h=540 at 0,0 fill="#0b1020"
 text title "PointWithTrace" at 0,220 size=40 fill="#e2e8f0"
 circle guide r=150 at 0,-20 fill="none" stroke="#334155" strokeWidth=2
-path trace d="M 0 0" at 0,-20 fill="none" stroke="#22d3ee" strokeWidth=4
+tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120 at 0,-20 stroke="#22d3ee" strokeWidth=4
 circle dot r=12 at 150,-20 fill="#38bdf8" stroke="#0f172a" strokeWidth=3
 
 always dot.x = expr=150*cos(theta)
 always dot.y = expr=-20 + 150*sin(theta)
-always trace.d = path(x=150*cos(t),y=150*sin(t),from=0,to=theta,samples=120)
 
 at 0s:
   play FadeIn(title) duration=0.5s

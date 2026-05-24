@@ -24,11 +24,17 @@ Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション
 | `surroundingRect` | Target-bounds rectangle declaration | `surroundingRect frame target=equation buff=10 stroke="#fbbf24"` |
 | `axes` | Axes helper declaration | `axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2` |
 | `plot` | Function plot path declaration | `plot curve fn=sin(t) range=-3.14,3.14 scaleX=80 scaleY=60` |
+| `dataPolygon` | Axes data-coordinate polygon helper | `dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5` |
+| `arrow` | Arrow helper declaration | `arrow vec x1=0 y1=0 x2=190 y2=80` |
+| `angle` | Updating angle arc helper | `angle arc radius=60 from=0 to=theta samples=72` |
+| `tracedPath` | Updating trace path helper | `tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta` |
+| `cameraFrame` | Camera frame declaration | `cameraFrame at 0,0 scale=1` |
 | `at` | Start an indented block at a fixed time | `at 0s:` |
 | `show / hide` | Create or delete a node on the timeline | `show dot` |
 | `value` | Declare a scalar tracker | `value theta = 0` |
 | `set` | Apply an immediate property value or dependent expression | `set dot.x to expr="320 + 100 * cos(theta)"` |
 | `animate` | Interpolate one property or scalar tracker | `animate theta from 0 to 6.28 duration=2s` |
+| `animateFrame` | Interpolate the camera frame | `animateFrame to 120,40 scale=1.4 duration=1s` |
 | `play` | Run Manim-like primitives | `play FadeIn(dot) duration=0.8s` |
 | `wait` | Advance the current time cursor | `wait 0.4s` |
 
@@ -122,6 +128,12 @@ text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"
 math equation "e^{i\\pi}+1=0" at 640,200 size=36 expandTokens=true
 group intro title equation
 surroundingRect frame target=equation buff=10 stroke="#fbbf24"
+axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2
+dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5 fill="#22d3ee"
+arrow vec x1=0 y1=0 x2=190 y2=80 stroke="#22d3ee" fill="#22d3ee"
+angle arc radius=60 from=0 to=theta samples=72 stroke="#f59e0b"
+tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120
+cameraFrame at 0,0 scale=1
 ```
 
 Supported node types:
@@ -137,6 +149,10 @@ Supported node types:
 - `surroundingRect <id> target=<node-id>`
 - `axes <id>`
 - `plot <id> fn=<expr>`
+- `dataPolygon <id> axes=<axes-id> points=<x,y;...>`
+- `arrow <id> x1=<number> y1=<number> x2=<number> y2=<number>`
+- `angle <id> radius=<number> from=<expr> to=<expr>`
+- `tracedPath <id> x=<expr> y=<expr>`
 
 `id` は document 内で一意である必要があります。
 
@@ -163,6 +179,10 @@ Geometry options:
 - `surroundingRect`: `target=<node-id>`, `buff=<number>`; target の宣言/推定 bounds に基づく frame-like な `rect` node として出力されます。`play Create(frame)` では `geometry.drawProgress` により Manim 風に外枠が描画されます。
 - `axes`: `xRange=<min,max>`, `yRange=<min,max>`, `width`, `height`; x/y 軸の line を持つ `group` node を生成します。
 - `plot`: `fn=<expr>`, `range=<min,max>`, `samples`, `scaleX`, `scaleY`, `close=true|false`; 関数をサンプリングした `path` geometry を生成します。
+- `dataPolygon`: `axes=<axes-id>`, `points=<x,y;...>`; 3 点以上のデータ座標を参照先 `axes` helper で scene 座標に変換し、閉じた `path` を生成します。
+- `arrow`: `x1`, `y1`, `x2`, `y2`, `tipLength`, `tipWidth`; line shaft と filled path tip を持つ `group` を生成します。
+- `angle`: `radius` / `r`, `from`, `to`, `samples`, `close=true|false`; 円弧の `path` と `bindPath` updater を生成します。式は value tracker を参照できるため、`to=theta` のように animated tracker に追従できます。
+- `tracedPath`: `x`, `y`, `from`, `to`, `samples`, `close=true|false`; `path` と `bindPath` updater を生成します。現時点では parametric motion 用の declarative trace helper で、Manim `TracedPath` の履歴ベース追跡 clone ではありません。
 
 Default values:
 
@@ -299,6 +319,7 @@ Supported primitives:
 - `Transform(a, b)`: `a` を target として、`b` と異なる transform/style/geometry property ごとに `animate` operation を生成します。
 - `TransformMatchingTex(a, b)`: `math` node の token child を同一 token 文字列で対応付け、対応 token は `Transform`、消える token は `FadeOut`、新規 token は `FadeIn` に展開します。
 - `ReplacementTransform(from, to)`: `from` の `FadeOut` と `to` の `FadeIn` を同時に生成します。
+- `Circumscribe(id)`: highlight outline 用の semantic circumscribe effect を生成します。`color=<css-color>` は play statement 側または call 内で指定できます。
 - `AnimationGroup(<animations...>, lagRatio=0)`: child animation を並列に展開します。`lagRatio` は child start のずれを child duration に対する比率で指定し、group 全体は `duration` に収まるように正規化されます。
 - `Succession(<animations...>)`: child animation を左から右へ逐次展開します。各 child の duration は `play` の `duration` を child 数で等分します。
 
@@ -343,6 +364,7 @@ Token 化は LaTeX 文字列を command（例: `\pi`, `\frac`）、escape 済み
 
 ```text
 animate c1.x from 220 to 640 start=0s duration=1.5s easing=easeInOut
+animateFrame to 120,40 scale=1.4 duration=1s easing=easeInOut
 ```
 
 指定した property を `animate` operation に変換します。
@@ -352,7 +374,10 @@ Syntax:
 ```text
 animate <id>.<property> from <value> to <value> [start=<time>] [duration=<time>] [easing=<name>]
 animate <value-id> from <number> to <number> [start=<time>] [duration=<time>] [easing=<name>]
+animateFrame to <x,y> [scale=<number>] [rotation=<number>] [start=<time>] [duration=<time>] [easing=<name>]
 ```
+
+`animateFrame` は camera frame 用の sugar です。compiler が保持する現在の camera frame cursor から、同期した `camera.x`, `camera.y`, `camera.scale`, `camera.rotation` animation に展開します。初期 frame cursor は `cameraFrame at x,y scale=<number>` で設定できます。
 
 Options:
 
@@ -412,10 +437,14 @@ Compiler は `DslCompileError` を投げます。message は `Line <line>, colum
 
 ```text
 camera at 0,0 scale=1 rotation=0
+cameraFrame at 0,0 scale=1
 set camera.x to -120
 animate camera.scale from 1 to 1.6 duration=2s easing=easeInOut
+animateFrame to -120,20 scale=1.6 duration=2s easing=easeInOut
 ```
 
 `camera` は document-level の `camera: { x, y, scale, rotation }` を設定します。既定値は `x=0`, `y=0`, `scale=1`, `rotation=0` です。`set` / `animate` は `camera.x`, `camera.y`, `camera.scale`, `camera.rotation` を target にできます。
+
+`cameraFrame` は camera frame cursor を設定する Manim 風 alias です。`animateFrame` は通常の camera timeline operation を出力しつつ、gallery example では frame movement を単一の高水準 command として記述できます。
 
 Renderer は scene origin `(0,0)` を viewport center に移してから zoom / rotation / pan を適用します: `translate(centerX + camera.x, centerY + camera.y) rotate(camera.rotation) scale(camera.scale) translate(0, 0)`。`mode=target` / `mode=frame-fit` では最後の translate が target 座標を中心へ合わせます。合成順序は `Camera * ParentNode * ChildNode` です。つまり camera は scene 全体の pan / zoom / rotation、node transform は各 node の local transform として扱われます。

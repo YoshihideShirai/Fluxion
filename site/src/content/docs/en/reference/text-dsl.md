@@ -24,11 +24,17 @@ The current Text DSL scope is intentionally small: place shapes, math, paths, an
 | `surroundingRect` | Target-bounds rectangle declaration | `surroundingRect frame target=equation buff=10 stroke="#fbbf24"` |
 | `axes` | Axes helper declaration | `axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2` |
 | `plot` | Function plot path declaration | `plot curve fn=sin(t) range=-3.14,3.14 scaleX=80 scaleY=60` |
+| `dataPolygon` | Axes data-coordinate polygon helper | `dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5` |
+| `arrow` | Arrow helper declaration | `arrow vec x1=0 y1=0 x2=190 y2=80` |
+| `angle` | Updating angle arc helper | `angle arc radius=60 from=0 to=theta samples=72` |
+| `tracedPath` | Updating trace path helper | `tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta` |
+| `cameraFrame` | Camera frame declaration | `cameraFrame at 0,0 scale=1` |
 | `at` | Start an indented block at a fixed time | `at 0s:` |
 | `show / hide` | Create or delete a node on the timeline | `show dot` |
 | `value` | Declare a scalar tracker | `value theta = 0` |
 | `set` | Apply an immediate property value or dependent expression | `set dot.x to expr="320 + 100 * cos(theta)"` |
 | `animate` | Interpolate one property or scalar tracker | `animate theta from 0 to 6.28 duration=2s` |
+| `animateFrame` | Interpolate the camera frame | `animateFrame to 120,40 scale=1.4 duration=1s` |
 | `play` | Run Manim-like primitives | `play FadeIn(dot) duration=0.8s` |
 | `wait` | Advance the current time cursor | `wait 0.4s` |
 
@@ -123,6 +129,12 @@ text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"
 math equation "e^{i\\pi}+1=0" at 640,200 size=36 expandTokens=true
 group intro title equation
 surroundingRect frame target=equation buff=10 stroke="#fbbf24"
+axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2
+dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5 fill="#22d3ee"
+arrow vec x1=0 y1=0 x2=190 y2=80 stroke="#22d3ee" fill="#22d3ee"
+angle arc radius=60 from=0 to=theta samples=72 stroke="#f59e0b"
+tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120
+cameraFrame at 0,0 scale=1
 ```
 
 Supported node types:
@@ -138,6 +150,10 @@ Supported node types:
 - `surroundingRect <id> target=<node-id>`
 - `axes <id>`
 - `plot <id> fn=<expr>`
+- `dataPolygon <id> axes=<axes-id> points=<x,y;...>`
+- `arrow <id> x1=<number> y1=<number> x2=<number> y2=<number>`
+- `angle <id> radius=<number> from=<expr> to=<expr>`
+- `tracedPath <id> x=<expr> y=<expr>`
 
 `id` values must be unique in a document.
 
@@ -154,6 +170,10 @@ Common options:
 - `surroundingRect` only: `target=<node-id>`, `buff=<number>`; emits a frame-like `rect` node sized from the target node's declared/estimated bounds. `play Create(frame)` animates its border with `geometry.drawProgress` for a Manim-like outline draw.
 - `axes` only: `xRange=<min,max>`, `yRange=<min,max>`, `width`, `height`; emits a `group` with x/y axis lines.
 - `plot` only: `fn=<expr>`, `range=<min,max>`, `samples`, `scaleX`, `scaleY`, `close=true|false`; emits a generated `path` geometry from the sampled function.
+- `dataPolygon` only: `axes=<axes-id>`, `points=<x,y;...>`; maps at least three data-coordinate points through the referenced `axes` helper and emits a closed `path`.
+- `arrow` only: `x1`, `y1`, `x2`, `y2`, `tipLength`, `tipWidth`; emits a `group` with a line shaft and filled path tip.
+- `angle` only: `radius` / `r`, `from`, `to`, `samples`, `close=true|false`; emits a generated `path` arc and a `bindPath` updater. Expressions can reference value trackers, so `to=theta` follows an animated tracker.
+- `tracedPath` only: `x`, `y`, `from`, `to`, `samples`, `close=true|false`; emits a generated `path` and a `bindPath` updater. This is a declarative trace helper for parametric motion, not a full history-based Manim `TracedPath` clone yet.
 
 
 ### Path morphing constraints
@@ -201,9 +221,12 @@ always curve.d = path(x=240+96*cos(t),y=270+96*sin(t),from=0,to=2*pi,samples=128
 ```text
 animate c1.x from 220 to 640 duration=1.5s easing=easeInOut
 animate title.opacity from 0 to 1 start=0s duration=1s
+animateFrame to 120,40 scale=1.4 duration=1s easing=easeInOut
 ```
 
 `animate` interpolates a target property or a declared scalar value tracker. Numeric values interpolate; non-numeric node property values switch to `to` at completion.
+
+`animateFrame` is camera-frame sugar. It expands to synchronized `camera.x`, `camera.y`, `camera.scale`, and `camera.rotation` animations from the compiler's current camera frame cursor. Use `cameraFrame at x,y scale=<number>` to set the initial frame cursor. `animateFrame` supports `to x,y`, `scale`, `rotation`, `start`, `duration`, and `easing`.
 
 ### play and wait
 
@@ -236,6 +259,7 @@ Supported primitives include:
 - `Transform(source, target)`: animates the source node toward transform/style/geometry properties from the target node.
 - `TransformMatchingTex(source, target)`: matches expanded `math` token children by identical token text. Matched tokens expand to `Transform`, source-only tokens expand to `FadeOut`, and target-only tokens expand to `FadeIn`.
 - `ReplacementTransform(from, to)`: expands into a simultaneous `FadeOut(from)` and `FadeIn(to)`.
+- `Circumscribe(id)`: emits a semantic circumscribe effect for renderers that support highlight outlines. `color=<css-color>` is accepted on the play statement or inside the call.
 - `AnimationGroup(<animations...>, lagRatio=0)`: expands child animations in parallel. `lagRatio` offsets child starts by a ratio of child duration, and the group is normalized to fit the outer `duration`.
 - `LaggedStart(<animations...>, lagRatio=0.05)`: alias of `AnimationGroup` tuned for staggered starts (Manim-like naming).
 - `Succession(<animations...>)`: expands child animations from left to right. Each child receives an equal share of the outer `duration`.
@@ -279,10 +303,14 @@ The Text DSL compiler runs in the browser and does not execute Python or arbitra
 
 ```text
 camera at 0,0 scale=1 rotation=0
+cameraFrame at 0,0 scale=1
 set camera.x to -120
 animate camera.scale from 1 to 1.6 duration=2s easing=easeInOut
+animateFrame to -120,20 scale=1.6 duration=2s easing=easeInOut
 ```
 
 `camera` configures the document-level `camera: { x, y, scale, rotation }`. Defaults are `x=0`, `y=0`, `scale=1`, and `rotation=0`. `set` / `animate` can target `camera.x`, `camera.y`, `camera.scale`, and `camera.rotation`.
+
+`cameraFrame` is a Manim-style alias for configuring the camera frame cursor. `animateFrame` emits ordinary camera timeline operations, but lets gallery examples describe frame movement as a single high-level command.
 
 The renderer maps the scene origin `(0,0)` to the viewport center, then applies camera pan / zoom / rotation: `translate(centerX + camera.x, centerY + camera.y) rotate(camera.rotation) scale(camera.scale) translate(0, 0)`. With `mode=target` / `mode=frame-fit`, the final translate centers the target coordinate instead. Composition order is `Camera * ParentNode * ChildNode`, so the camera pans / zooms / rotates the entire scene while node transforms stay local.

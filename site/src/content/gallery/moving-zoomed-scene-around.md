@@ -6,10 +6,10 @@ source_example_path: examples/gallery/moving-zoomed-scene-around.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "ZoomedScene 専用カメラ（独立レンダリング面）ではなく、右側パネルを図形連動で近似している。"
+  - symptom: "ZoomedScene 専用カメラ（独立レンダリング面）ではなく、右側パネルを図形連動で近似している。追跡線は `tracedPath` helper で記述できる。"
     layer: runtime
     impact: medium
-    workaround: "`always` による追従更新で視覚的なズーム追尾を再現する。"
+    workaround: "`tracedPath` と `always` による追従更新で視覚的なズーム追尾を再現する。"
     closure_condition: "独立した sub-camera / viewport primitive を導入し、実シーンの拡大レンダリングを表示できる。"
     fidelity_upgrade_condition: "ズーム枠とズーム表示が同一ソース描画から生成され、本家と同等の追尾挙動になった時。"
 category: Manim Stable Examples
@@ -28,7 +28,7 @@ circle star_a r=10 at -270,-90 fill="#22d3ee" stroke="none"
 circle star_b r=10 at -30,80 fill="#a78bfa" stroke="none"
 circle star_c r=10 at 130,-40 fill="#f97316" stroke="none"
 circle focus r=14 at -220,-60 fill="#38bdf8" stroke="#0f172a" strokeWidth=3
-path focus_trace d="M -220 -60" fill="none" stroke="#22d3ee" strokeWidth=3
+tracedPath focus_trace x=-220+250*cos(t) y=-60+120*sin(t*1.2) from=0 to=phase samples=140 stroke="#22d3ee" strokeWidth=3
 
 rect zoom_frame w=170 h=106 at -220,-60 fill="none" stroke="#f59e0b" strokeWidth=4
 rect zoom_panel w=290 h=190 at 270,110 fill="#0f172a" stroke="#22d3ee" strokeWidth=3
@@ -41,7 +41,6 @@ always focus.x = expr=-220 + 250*cos(phase)
 always focus.y = expr=-60 + 120*sin(phase*1.2)
 always zoom_frame.x = expr=-220 + 250*cos(phase)
 always zoom_frame.y = expr=-60 + 120*sin(phase*1.2)
-always focus_trace.d = path(x=-220 + 250*cos(t),y=-60 + 120*sin(t*1.2),from=0,to=phase,samples=140)
 
 always zoom_link_1.x1 = expr=-220 + 250*cos(phase) - 85
 always zoom_link_1.y1 = expr=-60 + 120*sin(phase*1.2) + 53

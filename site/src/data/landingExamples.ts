@@ -254,6 +254,76 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     source: 'scene width=960 height=540 fps=60\nplot curve fn=sin(t) range=-3.14,3.14 scaleX=90 scaleY=70 at 480,270 stroke="#38bdf8" strokeWidth=5 fill="none"',
   },
   {
+    key: 'dataPolygon',
+    command: 'dataPolygon',
+    description: {
+      ja: 'axes のデータ座標から polygon path を生成します。',
+      en: 'Generate a polygon path from axes data coordinates.',
+    },
+    referencePurpose: {
+      ja: 'Axes data-coordinate polygon helper',
+      en: 'Axes data-coordinate polygon helper',
+    },
+    minimalExample: 'dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5',
+    source: 'scene width=960 height=540 fps=60\naxes ax at 480,270 width=700 height=300 xRange=-4,4 yRange=-2,2 stroke="#94a3b8" strokeWidth=3\ndataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5 fill="#22d3ee" opacity=0.25 stroke="#22d3ee" strokeWidth=4',
+  },
+  {
+    key: 'arrow',
+    command: 'arrow',
+    description: {
+      ja: 'shaft と tip を持つ矢印を生成します。',
+      en: 'Generate an arrow with a shaft and tip.',
+    },
+    referencePurpose: {
+      ja: 'Arrow helper declaration',
+      en: 'Arrow helper declaration',
+    },
+    minimalExample: 'arrow vec x1=0 y1=0 x2=190 y2=80',
+    source: 'scene width=640 height=360 fps=60\narrow vec x1=120 y1=220 x2=500 y2=120 stroke="#22d3ee" fill="#22d3ee" strokeWidth=8 tipLength=32 tipWidth=30',
+  },
+  {
+    key: 'angle',
+    command: 'angle',
+    description: {
+      ja: 'value tracker に追従する角度の円弧を生成します。',
+      en: 'Generate an angle arc that follows a value tracker.',
+    },
+    referencePurpose: {
+      ja: 'Updating angle arc helper',
+      en: 'Updating angle arc helper',
+    },
+    minimalExample: 'angle arc radius=60 from=0 to=theta samples=72',
+    source: 'scene width=640 height=360 fps=60\nvalue theta = 0\nangle arc radius=72 from=0 to=theta samples=72 at 320,180 stroke="#f59e0b" strokeWidth=6\nanimate theta from 0 to 2.4 duration=1.5s easing=easeInOut',
+  },
+  {
+    key: 'tracedPath',
+    command: 'tracedPath',
+    description: {
+      ja: 'パラメトリックな移動軌跡を path として生成します。',
+      en: 'Generate a parametric motion trace as a path.',
+    },
+    referencePurpose: {
+      ja: 'Updating trace path helper',
+      en: 'Updating trace path helper',
+    },
+    minimalExample: 'tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta',
+    source: 'scene width=640 height=360 fps=60\nvalue theta = 0\ntracedPath trace x=96*cos(t) y=96*sin(t) from=0 to=theta samples=96 at 320,180 stroke="#22d3ee" strokeWidth=5\ncircle dot r=16 at 416,180 fill="#38bdf8"\nset dot.x to expr="320 + 96 * cos(theta)"\nset dot.y to expr="180 + 96 * sin(theta)"\nanimate theta from 0 to 6.283 duration=2s easing=linear',
+  },
+  {
+    key: 'cameraFrame',
+    command: 'cameraFrame',
+    description: {
+      ja: 'カメラフレームの初期位置とズームを設定します。',
+      en: 'Set the initial camera frame position and zoom.',
+    },
+    referencePurpose: {
+      ja: 'Camera frame declaration',
+      en: 'Camera frame declaration',
+    },
+    minimalExample: 'cameraFrame at 0,0 scale=1',
+    source: 'scene width=640 height=360 fps=60\ncameraFrame at 0,0 scale=1\ncircle dot r=42 at 0,0 fill="#38bdf8"',
+  },
+  {
     key: 'at',
     command: 'at',
     description: {
@@ -322,6 +392,20 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     },
     minimalExample: 'animate theta from 0 to 6.28 duration=2s',
     source: 'scene width=640 height=360 fps=60\ncircle dot r=42 at 160,180 fill="#38bdf8"\nanimate dot.x from 160 to 480 duration=1.5s easing=easeInOut',
+  },
+  {
+    key: 'animateFrame',
+    command: 'animateFrame',
+    description: {
+      ja: 'カメラフレームを移動・ズームします。',
+      en: 'Move and zoom the camera frame.',
+    },
+    referencePurpose: {
+      ja: 'Interpolate the camera frame',
+      en: 'Interpolate the camera frame',
+    },
+    minimalExample: 'animateFrame to 120,40 scale=1.4 duration=1s',
+    source: 'scene width=640 height=360 fps=60\ncameraFrame at 0,0 scale=1\ncircle dot r=42 at 120,40 fill="#38bdf8"\nanimateFrame to 120,40 scale=1.4 duration=1s easing=easeInOut',
   },
   {
     key: 'play',

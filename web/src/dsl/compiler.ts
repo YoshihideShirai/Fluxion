@@ -49,6 +49,7 @@ interface CompileState {
   height: number;
   fps: number;
   camera: Camera;
+  cameraFrameCursor: CameraFrameCursor;
   nodes: Map<string, SceneNode>;
   values: Map<string, number>;
   timeline: TimelineOperation[];
@@ -58,12 +59,21 @@ interface CompileState {
   blockTime: number | null;
 }
 
+interface CameraFrameCursor {
+  x: number;
+  y: number;
+  scale: number;
+  rotation: number;
+}
+
 export function compileTextDsl(source: string): FluxionDocument {
+  const camera = defaultCamera();
   const state: CompileState = {
     width: 1280,
     height: 720,
     fps: 60,
-    camera: defaultCamera(),
+    camera,
+    cameraFrameCursor: cameraFrameCursorFromCamera(camera),
     nodes: new Map(),
     values: new Map(),
     timeline: [],
@@ -107,6 +117,11 @@ export function compileTextDsl(source: string): FluxionDocument {
       return;
     }
 
+    if (keyword === "cameraFrame") {
+      parseCameraFrame(tokens, state, lineNumber);
+      return;
+    }
+
     if (keyword === "value") {
       parseValueDeclaration(tokens, state, lineNumber);
       return;
@@ -147,6 +162,11 @@ export function compileTextDsl(source: string): FluxionDocument {
       return;
     }
 
+    if (keyword === "animateFrame") {
+      parseAnimateFrame(tokens, state, lineNumber, statementTime(state));
+      return;
+    }
+
     if (
       keyword === "circle" ||
       keyword === "rect" ||
@@ -174,6 +194,26 @@ export function compileTextDsl(source: string): FluxionDocument {
 
     if (keyword === "plot") {
       parsePlot(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "dataPolygon") {
+      parseDataPolygon(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "arrow") {
+      parseArrow(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "angle") {
+      parseAngle(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "tracedPath") {
+      parseTracedPath(tokens, state, lineNumber);
       return;
     }
 
@@ -281,6 +321,45 @@ function parseCamera(
 
     throw new DslCompileError(`Unknown camera option '${key}'.`, lineNumber);
   }
+  state.cameraFrameCursor = cameraFrameCursorFromCamera(state.camera);
+}
+
+function parseCameraFrame(
+  tokens: string[],
+  state: CompileState,
+  lineNumber: number,
+): void {
+  for (const [key, value] of readCameraArguments(tokens.slice(1), lineNumber)) {
+    if (key === "at") {
+      const [x, y] = value
+        .split(",")
+        .map((item) => parseNumber(item, lineNumber));
+      if (x === undefined || y === undefined || Number.isNaN(x) || Number.isNaN(y))
+        throw new DslCompileError("Expected cameraFrame at x,y.", lineNumber);
+      state.camera.x = x;
+      state.camera.y = y;
+      state.cameraFrameCursor.x = x;
+      state.cameraFrameCursor.y = y;
+      continue;
+    }
+    if (key === "x" || key === "y" || key === "scale" || key === "rotation") {
+      const numericValue = parseNumber(value, lineNumber);
+      state.camera[key] = numericValue;
+      state.cameraFrameCursor[key] = numericValue;
+      continue;
+    }
+
+    throw new DslCompileError(`Unknown cameraFrame option '${key}'.`, lineNumber);
+  }
+}
+
+function cameraFrameCursorFromCamera(camera: Camera): CameraFrameCursor {
+  return {
+    x: camera.x,
+    y: camera.y,
+    scale: camera.scale,
+    rotation: camera.rotation,
+  };
 }
 
 function parseValueDeclaration(
@@ -457,6 +536,139 @@ function parseAxes(tokens: string[], state: CompileState, lineNumber: number): v
   const group = createBaseNode(id, "group");
   group.children = [xAxis, yAxis];
   group.metadata = { plot: { range: [xRange[0]!, xRange[1]!] } };
+  group.geometry.xMin = xRange[0]!;
+  group.geometry.xMax = xRange[1]!;
+  group.geometry.yMin = yRange[0]!;
+  group.geometry.yMax = yRange[1]!;
+  group.geometry.width = width;
+  group.geometry.height = height;
+  group.geometry.centerX = cx!;
+  group.geometry.centerY = cy!;
+  state.nodes.set(id, group);
+  state.rootIds.add(id);
+}
+
+function parseDataPolygon(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after dataPolygon.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const axesId = options.get("axes");
+  if (!axesId) throw new DslCompileError("dataPolygon requires axes=<axesId>.", lineNumber);
+  const axes = requireNode(state, axesId, lineNumber);
+  if (axes.type !== "group" || axes.geometry.xMin === undefined || axes.geometry.yMin === undefined)
+    throw new DslCompileError(`dataPolygon axes '${axesId}' is not an axes helper.`, lineNumber);
+  const pointsRaw = options.get("points");
+  if (!pointsRaw) throw new DslCompileError("dataPolygon requires points=<x,y;...>.", lineNumber);
+
+  const xMin = Number(axes.geometry.xMin);
+  const xMax = Number(axes.geometry.xMax);
+  const yMin = Number(axes.geometry.yMin);
+  const yMax = Number(axes.geometry.yMax);
+  const width = Number(axes.geometry.width);
+  const height = Number(axes.geometry.height);
+  const centerX = Number(axes.geometry.centerX ?? axes.transform.x);
+  const centerY = Number(axes.geometry.centerY ?? axes.transform.y);
+  const points = parseDataPointList(pointsRaw, lineNumber).map(([x, y]) => ({
+    x: ((x - xMin) / (xMax - xMin) - 0.5) * width,
+    y: ((y - yMin) / (yMax - yMin) - 0.5) * height,
+  }));
+
+  const node = createBaseNode(id, "path");
+  node.transform.x = centerX;
+  node.transform.y = centerY;
+  node.geometry.d = points
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${formatPathNumber(point.x)} ${formatPathNumber(point.y)}`)
+    .concat("Z")
+    .join(" ");
+  node.geometry.dataPolygon = true;
+  node.geometry.axes = axesId;
+  node.style.fill = "#22d3ee";
+  node.style.stroke = "#22d3ee";
+  node.style.strokeWidth = 3;
+  for (const [key, value] of options) {
+    if (key === "axes" || key === "points") continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+}
+
+function parseDataPointList(raw: string, lineNumber: number): Array<[number, number]> {
+  const points = raw.split(";").map((point) => {
+    const [xRaw, yRaw] = point.split(",");
+    if (xRaw === undefined || yRaw === undefined)
+      throw new DslCompileError("Expected dataPolygon points as x,y;x,y;...", lineNumber);
+    return [parseNumber(xRaw, lineNumber), parseNumber(yRaw, lineNumber)] as [number, number];
+  });
+  if (points.length < 3)
+    throw new DslCompileError("dataPolygon requires at least three points.", lineNumber);
+  return points;
+}
+
+function formatPathNumber(value: number): string {
+  return String(Number(value.toFixed(6)));
+}
+
+function parseArrow(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after arrow.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const x1 = parseNumber(options.get("x1") ?? "0", lineNumber);
+  const y1 = parseNumber(options.get("y1") ?? "0", lineNumber);
+  const x2 = parseNumber(options.get("x2") ?? "100", lineNumber);
+  const y2 = parseNumber(options.get("y2") ?? "0", lineNumber);
+  const tipLength = parseNumber(options.get("tipLength") ?? "24", lineNumber);
+  const tipWidth = parseNumber(options.get("tipWidth") ?? "20", lineNumber);
+  const stroke = options.get("stroke") ?? "#ffffff";
+  const fill = options.get("fill") ?? stroke;
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "4", lineNumber);
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.hypot(dx, dy) || 1;
+  const ux = dx / length;
+  const uy = dy / length;
+  const px = -uy;
+  const py = ux;
+  const baseX = x2 - ux * tipLength;
+  const baseY = y2 - uy * tipLength;
+
+  const shaft = createBaseNode(`${id}:shaft`, "line");
+  shaft.geometry.x1 = x1;
+  shaft.geometry.y1 = y1;
+  shaft.geometry.x2 = baseX;
+  shaft.geometry.y2 = baseY;
+  shaft.style.fill = "none";
+  shaft.style.stroke = stroke;
+  shaft.style.strokeWidth = strokeWidth;
+
+  const tip = createBaseNode(`${id}:tip`, "path");
+  tip.geometry.d = [
+    `M ${formatPathNumber(x2)} ${formatPathNumber(y2)}`,
+    `L ${formatPathNumber(baseX + px * tipWidth / 2)} ${formatPathNumber(baseY + py * tipWidth / 2)}`,
+    `L ${formatPathNumber(baseX - px * tipWidth / 2)} ${formatPathNumber(baseY - py * tipWidth / 2)}`,
+    "Z",
+  ].join(" ");
+  tip.style.fill = fill;
+  tip.style.stroke = fill;
+  tip.style.strokeWidth = 0;
+
+  const group = createBaseNode(id, "group");
+  group.children = [shaft, tip];
+  group.geometry.arrow = true;
+  group.geometry.x1 = x1;
+  group.geometry.y1 = y1;
+  group.geometry.x2 = x2;
+  group.geometry.y2 = y2;
+  group.geometry.tipLength = tipLength;
+  group.geometry.tipWidth = tipWidth;
+  for (const [key, value] of options) {
+    if (["x1", "y1", "x2", "y2", "tipLength", "tipWidth", "stroke", "fill", "strokeWidth"].includes(key)) continue;
+    applyNodeOption(group, key, value, lineNumber);
+  }
+
   state.nodes.set(id, group);
   state.rootIds.add(id);
 }
@@ -504,6 +716,76 @@ function parsePlot(tokens: string[], state: CompileState, lineNumber: number): v
   state.rootIds.add(id);
 }
 
+function parseAngle(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after angle.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const radius = parseNumber(options.get("radius") ?? options.get("r") ?? "48", lineNumber);
+  const from = options.get("from") ?? "0";
+  const to = options.get("to") ?? "pi/2";
+  const samples = options.get("samples") ?? "48";
+  const close = options.get("close") ?? "false";
+  const pathGenerator = readPathGeneratorAssignment(
+    `path(x=${radius}*cos(t),y=${radius}*sin(t),from=${from},to=${to},samples=${samples},close=${close})`,
+    state,
+    lineNumber,
+  );
+  if (!pathGenerator) throw new DslCompileError("Failed to build angle path.", lineNumber);
+
+  const node = createBaseNode(id, "path");
+  node.style.fill = "none";
+  node.style.stroke = "#f59e0b";
+  node.style.strokeWidth = 4;
+  node.geometry.angle = true;
+  node.geometry.radius = radius;
+  node.geometry.d = buildPathDataPreview(pathGenerator, state);
+  for (const [key, value] of options) {
+    if (["radius", "r", "from", "to", "samples", "close"].includes(key)) continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+  pushBindPath(state, id, "geometry.d", pathGenerator, statementTime(state));
+}
+
+function parseTracedPath(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after tracedPath.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const xExpr = options.get("x");
+  const yExpr = options.get("y");
+  if (!xExpr || !yExpr)
+    throw new DslCompileError("tracedPath requires x=<expr> and y=<expr>.", lineNumber);
+  const from = options.get("from") ?? "0";
+  const to = options.get("to") ?? "2*pi";
+  const samples = options.get("samples") ?? "96";
+  const close = options.get("close") ?? "false";
+  const pathGenerator = readPathGeneratorAssignment(
+    `path(x=${xExpr},y=${yExpr},from=${from},to=${to},samples=${samples},close=${close})`,
+    state,
+    lineNumber,
+  );
+  if (!pathGenerator) throw new DslCompileError("Failed to build tracedPath path.", lineNumber);
+
+  const node = createBaseNode(id, "path");
+  node.style.fill = "none";
+  node.style.stroke = "#22d3ee";
+  node.style.strokeWidth = 4;
+  node.geometry.tracedPath = true;
+  node.geometry.d = buildPathDataPreview(pathGenerator, state);
+  for (const [key, value] of options) {
+    if (["x", "y", "from", "to", "samples", "close"].includes(key)) continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+  pushBindPath(state, id, "geometry.d", pathGenerator, statementTime(state));
+}
+
 function buildPathDataPreview(op: { samples:number; tMinExpr:string; tMaxExpr:string; xExpr:string; yExpr:string; close?:boolean }, state: CompileState): string {
   const vars = Object.fromEntries([...state.values].map(([k,v])=>[k,v]));
   const tMin = evaluateExpression(op.tMinExpr, vars);
@@ -520,6 +802,38 @@ function buildPathDataPreview(op: { samples:number; tMinExpr:string; tMaxExpr:st
   if (op.close) pts.push('Z');
   return pts.join(' ');
 }
+
+function pushBindPath(
+  state: CompileState,
+  id: string,
+  path: string,
+  pathGenerator: {
+    samples: number;
+    tMinExpr: string;
+    tMaxExpr: string;
+    xExpr: string;
+    yExpr: string;
+    close?: boolean;
+  },
+  time: number,
+): void {
+  state.timeline.push({
+    t: time,
+    op: "bindPath",
+    id,
+    path,
+    ...pathGenerator,
+    deps: [
+      ...new Set([
+        ...collectExpressionDependencies(pathGenerator.tMinExpr),
+        ...collectExpressionDependencies(pathGenerator.tMaxExpr),
+        ...collectExpressionDependencies(pathGenerator.xExpr),
+        ...collectExpressionDependencies(pathGenerator.yExpr),
+      ]),
+    ].filter((name) => state.values.has(name)),
+  });
+}
+
 function statementTime(state: CompileState): number {
   return state.blockTime ?? state.currentTime;
 }
@@ -617,21 +931,13 @@ function parseAlways(
   const rightHandSide = tokens.slice(3).join(" ");
   const pathGenerator = readPathGeneratorAssignment(rightHandSide, state, lineNumber);
   if (pathGenerator) {
-    state.timeline.push({
-      t: time,
-      op: "bindPath",
+    pushBindPath(
+      state,
       id,
-      path: isCameraTarget ? cameraPropertyPath(property) : propertyPath(property),
-      ...pathGenerator,
-      deps: [
-        ...new Set([
-          ...collectExpressionDependencies(pathGenerator.tMinExpr),
-          ...collectExpressionDependencies(pathGenerator.tMaxExpr),
-          ...collectExpressionDependencies(pathGenerator.xExpr),
-          ...collectExpressionDependencies(pathGenerator.yExpr),
-        ]),
-      ].filter((name) => state.values.has(name)),
-    });
+      isCameraTarget ? cameraPropertyPath(property) : propertyPath(property),
+      pathGenerator,
+      time,
+    );
     return;
   }
   const expression = readExpressionAssignment(rightHandSide, state, lineNumber);
@@ -745,13 +1051,15 @@ function parsePlay(
   const [call, optionTokens] = readPlayCall(tokens, lineNumber);
   let duration = 1;
   let easing = "smooth";
+  let color: string | undefined;
   for (const [key, value] of readAssignments(optionTokens, lineNumber)) {
     if (key === "duration") duration = parseSeconds(value, lineNumber);
     else if (key === "easing") easing = parseEasing(value, lineNumber);
+    else if (key === "color") color = value;
     else throw new DslCompileError(`Unknown play option '${key}'.`, lineNumber);
   }
 
-  emitPlayCall(state, call, statementTime(state), duration, easing, lineNumber);
+  emitPlayCall(state, call, statementTime(state), duration, easing, lineNumber, color);
   if (state.blockTime === null) advanceStatementTime(state, duration);
 }
 
@@ -762,6 +1070,7 @@ function emitPlayCall(
   duration: number,
   easing: string,
   lineNumber: number,
+  playColor?: string,
 ): void {
   if (call.name === "FadeIn") {
     ensureNoPlayOptions(call, lineNumber);
@@ -836,6 +1145,21 @@ function emitPlayCall(
     return;
   }
 
+  if (call.name === "Circumscribe") {
+    const color = readCircumscribeColor(call, lineNumber, playColor);
+    const id = expectPlayArg(call, 1, lineNumber);
+    requireNode(state, id, lineNumber);
+    state.timeline.push({
+      t: start,
+      op: "effect",
+      id,
+      effect: color ? `circumscribe:${color}` : "circumscribe",
+      duration,
+      easing,
+    });
+    return;
+  }
+
   if (call.name === "AnimationGroup" || call.name === "LaggedStart") {
     const childCalls = expectPlayCallArgs(call, lineNumber);
     const lagRatio = readLagRatio(call, lineNumber);
@@ -852,6 +1176,7 @@ function emitPlayCall(
         childDuration,
         easing,
         lineNumber,
+        playColor,
       );
     });
     return;
@@ -869,6 +1194,7 @@ function emitPlayCall(
         childDuration,
         easing,
         lineNumber,
+        playColor,
       );
     });
     return;
@@ -878,6 +1204,23 @@ function emitPlayCall(
     `Unknown play primitive '${call.name}'.`,
     lineNumber,
   );
+}
+
+function readCircumscribeColor(
+  call: PlayCall,
+  lineNumber: number,
+  playColor?: string,
+): string | undefined {
+  let color = playColor;
+  for (const [key, value] of call.options) {
+    if (key === "color") color = value;
+    else
+      throw new DslCompileError(
+        `Unknown ${call.name} option '${key}'.`,
+        lineNumber,
+      );
+  }
+  return color;
 }
 
 function pushTransformMatchingTex(
@@ -1194,6 +1537,83 @@ function parseAnimate(
     duration,
     easing,
   });
+}
+
+function parseAnimateFrame(
+  tokens: string[],
+  state: CompileState,
+  lineNumber: number,
+  fallbackStart: number,
+): void {
+  const toIndex = tokens.indexOf("to");
+  if (toIndex === -1 || !tokens[toIndex + 1])
+    throw new DslCompileError(
+      "Expected animateFrame syntax: animateFrame to x,y scale=1.5 duration=1s.",
+      lineNumber,
+    );
+
+  const [x, y] = tokens[toIndex + 1]!
+    .split(",")
+    .map((item) => parseNumber(item, lineNumber));
+  if (x === undefined || y === undefined || Number.isNaN(x) || Number.isNaN(y))
+    throw new DslCompileError("Expected animateFrame target x,y.", lineNumber);
+
+  let start = fallbackStart;
+  let duration = 1;
+  let easing = "smooth";
+  const target: CameraFrameCursor = {
+    ...state.cameraFrameCursor,
+    x,
+    y,
+  };
+
+  for (const [key, value] of readAssignments(
+    tokens.slice(toIndex + 2),
+    lineNumber,
+  )) {
+    if (key === "start") start = parseSeconds(value, lineNumber);
+    else if (key === "duration") duration = parseSeconds(value, lineNumber);
+    else if (key === "easing") easing = parseEasing(value, lineNumber);
+    else if (key === "scale" || key === "rotation")
+      target[key] = parseNumber(value, lineNumber);
+    else
+      throw new DslCompileError(
+        `Unknown animateFrame option '${key}'.`,
+        lineNumber,
+      );
+  }
+
+  pushCameraFrameAnimations(
+    state,
+    start,
+    state.cameraFrameCursor,
+    target,
+    duration,
+    easing,
+  );
+  state.cameraFrameCursor = target;
+}
+
+function pushCameraFrameAnimations(
+  state: CompileState,
+  start: number,
+  from: CameraFrameCursor,
+  to: CameraFrameCursor,
+  duration: number,
+  easing: string,
+): void {
+  for (const key of ["x", "y", "scale", "rotation"] as const) {
+    state.timeline.push({
+      t: start,
+      op: "animate",
+      id: "camera",
+      path: cameraPropertyPath(key),
+      from: from[key],
+      to: to[key],
+      duration,
+      easing,
+    });
+  }
 }
 
 function requireNode(

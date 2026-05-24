@@ -6,11 +6,11 @@ source_example_path: examples/gallery/moving-around.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "本家のカメラ API（frame updater / API sugar）完全互換ではなく、camera プロパティの直接 animate で近似している。"
+  - symptom: "Text DSL の `cameraFrame` / `animateFrame` helper で frame 移動は書けるが、Manim の frame updater 完全互換ではない。"
     layer: dsl
-    impact: medium
-    workaround: "camera.x/y/scale を同期 animate して視覚的な移動・ズームを再現する。"
-    closure_condition: "camera frame API に対応する高水準命令を DSL に追加する。"
+    impact: low
+    workaround: "`animateFrame to x,y scale=<number>` で視覚的な移動・ズームを再現する。"
+    closure_condition: "camera frame updater と mobject tracking API を追加する。"
     fidelity_upgrade_condition: "Manim と同等の camera フレーミング記述で同等の挙動を表現できる時。"
 category: Manim Stable Examples
 status: partial
@@ -25,7 +25,7 @@ rect panel w=720 h=360 at 0,-10 fill="#111827" stroke="#334155" strokeWidth=2
 circle dot r=18 at -260,-70 fill="#38bdf8" stroke="#0f172a" strokeWidth=3
 text label "camera target" at -260,-118 size=22 fill="#bae6fd"
 
-camera x=0 y=0 scale=1
+cameraFrame at 0,0 scale=1
 
 at 0s:
   play FadeIn(title) duration=0.5s
@@ -36,12 +36,8 @@ at 0s:
 wait 0.2s
 animate dot.x from -260 to 220 duration=1.4s easing=easeInOut
 animate dot.y from -70 to 90 duration=1.4s easing=easeInOut
-animate camera.x from 0 to 110 duration=1.4s easing=easeInOut
-animate camera.y from 0 to 45 duration=1.4s easing=easeInOut
-animate camera.scale from 1 to 1.35 duration=1.4s easing=easeInOut
+animateFrame to 110,45 scale=1.35 duration=1.4s easing=easeInOut
 wait 0.3s
 animate dot.x from 220 to -180 duration=1.2s easing=easeInOut
 animate dot.y from 90 to -120 duration=1.2s easing=easeInOut
-animate camera.x from 110 to -70 duration=1.2s easing=easeInOut
-animate camera.y from 45 to -55 duration=1.2s easing=easeInOut
-animate camera.scale from 1.35 to 1.05 duration=1.2s easing=easeInOut
+animateFrame to -70,-55 scale=1.05 duration=1.2s easing=easeInOut

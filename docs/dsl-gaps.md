@@ -38,7 +38,7 @@
 | GAP-008 | moving-frame-box | parity確認のみ（追加ギャップ未特定） | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-009 | manim-ce-logo | parity確認のみ（追加ギャップ未特定） | `python/fluxion/primitives/*`, `web/src/runtime/*` |
 | GAP-010 | brace-annotation | parity確認のみ（追加ギャップ未特定） | `python/fluxion/primitives/*`, `web/src/runtime/*` |
-| GAP-011 | sine-curve-unit-circle | parity確認のみ（追加ギャップ未特定） | `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-011 | sine-curve-unit-circle | `tracedPath` helper は追加済み。履歴ベースの厳密な Manim `TracedPath` 追記挙動は未実装。 | `web/src/runtime/*`, `python/fluxion/primitives/*`, `web/src/dsl/compiler.ts` |
 | GAP-012 | special-camera | parity確認のみ（追加ギャップ未特定） | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-013 | arg-min-example | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
 | GAP-014 | boolean-operations | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
@@ -46,19 +46,19 @@
 | GAP-016 | graph-area-plot | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/dsl/compiler.ts` |
 | GAP-017 | gradient-image-from-array | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
 | GAP-018 | heat-diagram-plot | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
-| GAP-019 | moving-angle | `Angle` 専用 primitive が未実装で、path/updater による近似実装に留まる。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts`, `python/fluxion/primitives/*` |
-| GAP-020 | moving-around | camera frame 向け高水準 DSL が未実装で、camera transform の直接 animate で近似している。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-019 | moving-angle | `angle` helper は追加済み。象限・直角マーク等の Manim `Angle` 詳細オプションは未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts`, `python/fluxion/primitives/*` |
+| GAP-020 | moving-around | `cameraFrame` / `animateFrame` helper は追加済み。frame updater と mobject tracking API は未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-021 | moving-dots | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
-| GAP-022 | moving-group-to-destination | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
-| GAP-023 | moving-zoomed-scene-around | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
-| GAP-024 | point-with-trace | `TracedPath` 専用 primitive が未実装で、`always ... = path(...)` による近似で対応している。 | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
-| GAP-025 | polygon-on-axes | Axes の data座標→scene座標変換 helper が未実装で、polygon を scene 座標直指定で近似している。 | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-022 | moving-group-to-destination | `Circumscribe` semantic effect は追加済み。group レイアウト sugar（arrange/next_to 相当）は未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-023 | moving-zoomed-scene-around | `tracedPath` helper は追加済み。ZoomedScene の独立 sub-camera / viewport primitive は未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-024 | point-with-trace | `tracedPath` helper は追加済み。対象 mobject の実履歴追跡・減衰オプションは未実装。 | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-025 | polygon-on-axes | `dataPolygon` helper は追加済み。汎用 `coords_to_point` 相当 API は未実装。 | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
 | GAP-026 | rotation-updater | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
 | GAP-027 | three-d-camera-illusion-rotation | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-028 | three-d-camera-rotation | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-029 | three-d-light-source-position | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
 | GAP-030 | three-d-surface-plot | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
-| GAP-031 | vector-arrow | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-031 | vector-arrow | `arrow` helper は追加済み。Manim Arrow の buff/tip shape 全オプションは未実装。 | `python/fluxion/primitives/*`, `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 
 ---
 
