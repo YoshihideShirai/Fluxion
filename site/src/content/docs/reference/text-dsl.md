@@ -25,6 +25,7 @@ Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション
 | `axes` | Axes helper declaration | `axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2` |
 | `plot` | Function plot path declaration | `plot curve fn=sin(t) range=-3.14,3.14 scaleX=80 scaleY=60` |
 | `dataPolygon` | Axes data-coordinate polygon helper | `dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5` |
+| `arrow` | Arrow helper declaration | `arrow vec x1=0 y1=0 x2=190 y2=80` |
 | `angle` | Updating angle arc helper | `angle arc radius=60 from=0 to=theta samples=72` |
 | `tracedPath` | Updating trace path helper | `tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta` |
 | `cameraFrame` | Camera frame declaration | `cameraFrame at 0,0 scale=1` |
@@ -129,6 +130,7 @@ group intro title equation
 surroundingRect frame target=equation buff=10 stroke="#fbbf24"
 axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2
 dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5 fill="#22d3ee"
+arrow vec x1=0 y1=0 x2=190 y2=80 stroke="#22d3ee" fill="#22d3ee"
 angle arc radius=60 from=0 to=theta samples=72 stroke="#f59e0b"
 tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120
 cameraFrame at 0,0 scale=1
@@ -148,6 +150,7 @@ Supported node types:
 - `axes <id>`
 - `plot <id> fn=<expr>`
 - `dataPolygon <id> axes=<axes-id> points=<x,y;...>`
+- `arrow <id> x1=<number> y1=<number> x2=<number> y2=<number>`
 - `angle <id> radius=<number> from=<expr> to=<expr>`
 - `tracedPath <id> x=<expr> y=<expr>`
 
@@ -177,6 +180,7 @@ Geometry options:
 - `axes`: `xRange=<min,max>`, `yRange=<min,max>`, `width`, `height`; x/y 軸の line を持つ `group` node を生成します。
 - `plot`: `fn=<expr>`, `range=<min,max>`, `samples`, `scaleX`, `scaleY`, `close=true|false`; 関数をサンプリングした `path` geometry を生成します。
 - `dataPolygon`: `axes=<axes-id>`, `points=<x,y;...>`; 3 点以上のデータ座標を参照先 `axes` helper で scene 座標に変換し、閉じた `path` を生成します。
+- `arrow`: `x1`, `y1`, `x2`, `y2`, `tipLength`, `tipWidth`; line shaft と filled path tip を持つ `group` を生成します。
 - `angle`: `radius` / `r`, `from`, `to`, `samples`, `close=true|false`; 円弧の `path` と `bindPath` updater を生成します。式は value tracker を参照できるため、`to=theta` のように animated tracker に追従できます。
 - `tracedPath`: `x`, `y`, `from`, `to`, `samples`, `close=true|false`; `path` と `bindPath` updater を生成します。現時点では parametric motion 用の declarative trace helper で、Manim `TracedPath` の履歴ベース追跡 clone ではありません。
 

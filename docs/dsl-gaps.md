@@ -58,7 +58,7 @@
 | GAP-028 | three-d-camera-rotation | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-029 | three-d-light-source-position | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
 | GAP-030 | three-d-surface-plot | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
-| GAP-031 | vector-arrow | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-031 | vector-arrow | `arrow` helper は追加済み。Manim Arrow の buff/tip shape 全オプションは未実装。 | `python/fluxion/primitives/*`, `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 
 ---
 

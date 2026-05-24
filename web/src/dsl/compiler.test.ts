@@ -86,6 +86,7 @@ test("compiles every gallery Text DSL example", () => {
     "point-with-trace.fluxion.txt",
     "polygon-on-axes.fluxion.txt",
     "sine-curve-unit-circle.fluxion.txt",
+    "vector-arrow.fluxion.txt",
   ];
 
   assert.equal(files.length > 0, true);
@@ -285,6 +286,27 @@ dataPolygon poly axes=ax points=-2,-0.5;-0.4,1.1;1.8,0.4 fill="#22d3ee" opacity=
     polygon?.geometry.d,
     "M -190 -42.5 L -38 93.5 L 171 34 Z",
   );
+});
+
+test("compiles arrow helper as grouped shaft and tip paths", () => {
+  const documentData = compileTextDsl(
+    `arrow vec x1=0 y1=0 x2=190 y2=80 at 0,-20 stroke="#22d3ee" strokeWidth=6 tipLength=20 tipWidth=18`,
+  );
+
+  const arrow = documentData.nodes[0];
+  assert.equal(arrow?.type, "group");
+  assert.equal(arrow?.geometry.arrow, true);
+  assert.equal(arrow?.transform.y, -20);
+  equalJson(
+    arrow?.children.map((child) => [child.id, child.type]),
+    [
+      ["vec:shaft", "line"],
+      ["vec:tip", "path"],
+    ],
+  );
+  assert.equal(arrow?.children[0]?.style.stroke, "#22d3ee");
+  assert.equal(arrow?.children[0]?.style.strokeWidth, 6);
+  assert.equal(String(arrow?.children[1]?.geometry.d).startsWith("M 190 80 L "), true);
 });
 
 test("compiles plot with close and style overrides", () => {

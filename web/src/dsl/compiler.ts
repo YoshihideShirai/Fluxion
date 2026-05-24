@@ -202,6 +202,11 @@ export function compileTextDsl(source: string): FluxionDocument {
       return;
     }
 
+    if (keyword === "arrow") {
+      parseArrow(tokens, state, lineNumber);
+      return;
+    }
+
     if (keyword === "angle") {
       parseAngle(tokens, state, lineNumber);
       return;
@@ -604,6 +609,68 @@ function parseDataPointList(raw: string, lineNumber: number): Array<[number, num
 
 function formatPathNumber(value: number): string {
   return String(Number(value.toFixed(6)));
+}
+
+function parseArrow(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after arrow.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const x1 = parseNumber(options.get("x1") ?? "0", lineNumber);
+  const y1 = parseNumber(options.get("y1") ?? "0", lineNumber);
+  const x2 = parseNumber(options.get("x2") ?? "100", lineNumber);
+  const y2 = parseNumber(options.get("y2") ?? "0", lineNumber);
+  const tipLength = parseNumber(options.get("tipLength") ?? "24", lineNumber);
+  const tipWidth = parseNumber(options.get("tipWidth") ?? "20", lineNumber);
+  const stroke = options.get("stroke") ?? "#ffffff";
+  const fill = options.get("fill") ?? stroke;
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "4", lineNumber);
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.hypot(dx, dy) || 1;
+  const ux = dx / length;
+  const uy = dy / length;
+  const px = -uy;
+  const py = ux;
+  const baseX = x2 - ux * tipLength;
+  const baseY = y2 - uy * tipLength;
+
+  const shaft = createBaseNode(`${id}:shaft`, "line");
+  shaft.geometry.x1 = x1;
+  shaft.geometry.y1 = y1;
+  shaft.geometry.x2 = baseX;
+  shaft.geometry.y2 = baseY;
+  shaft.style.fill = "none";
+  shaft.style.stroke = stroke;
+  shaft.style.strokeWidth = strokeWidth;
+
+  const tip = createBaseNode(`${id}:tip`, "path");
+  tip.geometry.d = [
+    `M ${formatPathNumber(x2)} ${formatPathNumber(y2)}`,
+    `L ${formatPathNumber(baseX + px * tipWidth / 2)} ${formatPathNumber(baseY + py * tipWidth / 2)}`,
+    `L ${formatPathNumber(baseX - px * tipWidth / 2)} ${formatPathNumber(baseY - py * tipWidth / 2)}`,
+    "Z",
+  ].join(" ");
+  tip.style.fill = fill;
+  tip.style.stroke = fill;
+  tip.style.strokeWidth = 0;
+
+  const group = createBaseNode(id, "group");
+  group.children = [shaft, tip];
+  group.geometry.arrow = true;
+  group.geometry.x1 = x1;
+  group.geometry.y1 = y1;
+  group.geometry.x2 = x2;
+  group.geometry.y2 = y2;
+  group.geometry.tipLength = tipLength;
+  group.geometry.tipWidth = tipWidth;
+  for (const [key, value] of options) {
+    if (["x1", "y1", "x2", "y2", "tipLength", "tipWidth", "stroke", "fill", "strokeWidth"].includes(key)) continue;
+    applyNodeOption(group, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, group);
+  state.rootIds.add(id);
 }
 
 function parsePlot(tokens: string[], state: CompileState, lineNumber: number): void {
