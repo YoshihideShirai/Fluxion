@@ -2,11 +2,11 @@
 title: SineCurveUnitCircle
 description: "Manim Example: `SineCurveUnitCircle` (`#sinecurveunitcircle`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#sinecurveunitcircle
-source_example_path: examples/gallery/sine_curve_unit_circle.fluxion.txt
-porting_strategy: omitted_parts
+source_example_path: examples/gallery/sine-curve-unit-circle.fluxion.txt
+porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "Path growth can now be sampled with `always ... = path(...)`, but true append-only stroke history parity is still simplified."
+  - symptom: "`wave.d = path(...)` で軌跡生成は可能だが、Manim `TracedPath` の厳密な履歴サンプリング/追記挙動とは差分がある。"
     layer: dsl
     impact: medium
     workaround: "近似実装（既存 DSL/always 更新）で演出を代替する。"
