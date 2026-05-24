@@ -6,29 +6,31 @@ source_example_path: examples/plotting_with_manim.py
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "Tick labels / advanced GraphScene theming are not yet implemented."
+  - symptom: "Tick labels / advanced GraphScene theming are not yet implemented; axes are drawn as explicit line primitives to match the source scene layout."
     layer: dsl
-    impact: medium
-    workaround: "近似実装（既存 DSL/always 更新）で演出を代替する。"
-    closure_condition: "不足 DSL 機能が追加され、近似なしで同等記述が可能になる。"
+    impact: low
+    workaround: "x/y axes and labels are positioned from the source example coordinates, while sin/cos curves use `plot` over `0..2*pi`."
+    closure_condition: "Axes tick labels and Manim-style axis theming are available directly in Text DSL."
     fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Plotting with Manim
 status: ported
 order: 30
 ---
 scene width=960 height=540 fps=60
-axes ax xRange=-1,10 yRange=-1.5,1.5 at=-80,20 width=760 height=330 stroke="#cbd5e1" strokeWidth=3
-plot sinCurve fn="sin(t)" range=0,7 samples=460 at=-80,20 scaleX=76 scaleY=110 stroke="#ef4444" strokeWidth=4
-plot cosCurve fn="cos(t)" range=0,7 samples=460 at=-80,20 scaleX=76 scaleY=110 stroke="#3b82f6" strokeWidth=4
-text xLabel "x" at 315,34 size=24 fill="#e2e8f0"
-text yLabel "y" at -95,-145 size=24 fill="#e2e8f0"
-text sinLabel "\\sin(x)" at 287,-88 size=28 fill="#ef4444"
-text cosLabel "\\cos(x)" at 287,-40 size=28 fill="#3b82f6"
+line xAxis x1=0 y1=0 x2=633.75 y2=0 at -285,120 stroke="#e2e8f0" strokeWidth=2
+line yAxis x1=0 y1=-148.5 x2=0 y2=148.5 at -285,120 stroke="#e2e8f0" strokeWidth=2
+text xLabel "x" at 368,135 size=28 fill="#e2e8f0"
+text yLabel "y" at -300,-39 size=28 fill="#e2e8f0"
+plot sinCurve fn="sin(t)" range=0,6.283185307179586 samples=260 at=-285,120 scaleX=97.5 scaleY=67.5 stroke="#22d3ee" strokeWidth=3
+plot cosCurve fn="cos(t)" range=0,6.283185307179586 samples=260 at=-285,120 scaleX=97.5 scaleY=67.5 stroke="#f97316" strokeWidth=3
+text sinLabel "sin(x)" at 271,46 size=28 fill="#e2e8f0"
+text cosLabel "cos(x)" at 271,-15 size=28 fill="#e2e8f0"
 at 0s:
-  play Create(ax) duration=1.4s easing=easeOut
-at 1.0s:
-  play Create(sinCurve) duration=2.0s easing=easeInOut
-at 1.5s:
-  play Create(cosCurve) duration=2.0s easing=easeInOut
-at 3.9s:
-  play AnimationGroup(FadeIn(xLabel), FadeIn(yLabel), FadeIn(sinLabel), FadeIn(cosLabel), lagRatio=0.1) duration=0.9s easing=easeOut
+  show xAxis
+  show yAxis
+  show xLabel
+  show yLabel
+
+play Create(sinCurve) duration=1.2s easing=easeInOut
+play Create(cosCurve) duration=1.2s easing=easeInOut
+play AnimationGroup(FadeIn(sinLabel), FadeIn(cosLabel), lagRatio=0.1) duration=0.8s easing=easeOut
