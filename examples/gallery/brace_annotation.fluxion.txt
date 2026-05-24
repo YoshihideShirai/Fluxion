@@ -4,7 +4,7 @@ circle dotB r=10 at 210,0 fill="#e2e8f0" stroke="none"
 text labelA "A" at -210,34 size=28 fill="#f8fafc"
 text labelB "B" at 210,34 size=28 fill="#f8fafc"
 line segment x1=-210 y1=0 x2=210 y2=0 at 0,0 stroke="#94a3b8" strokeWidth=3
-brace span target=segment direction=down buff=26 label="x - x_1" labelSize=30 labelColor="#f8fafc" stroke="#f8fafc" strokeWidth=3
+brace span target=segment direction=down buff=26 label="x - x_{1}" labelSize=30 labelColor="#f8fafc" stroke="#f8fafc" strokeWidth=3
 at 0s:
   play FadeIn(dotA, dotB, labelA, labelB) duration=0.8s easing=easeOut
 wait 0.2s
