@@ -17,8 +17,16 @@ status: ported
 order: 13
 ---
 scene width=960 height=540 fps=60
-circle a r=14 at -220,0 fill="#38bdf8" stroke="#e2e8f0" strokeWidth=2
-circle b r=14 at 220,0 fill="#38bdf8" stroke="#e2e8f0" strokeWidth=2
-line segment x1=-220 y1=0 x2=220 y2=0 at 0,0 stroke="#94a3b8" strokeWidth=2
-brace span target=segment direction=up buff=22 label="d(A,B)" labelSize=28 labelColor="#e2e8f0" stroke="#f8fafc" strokeWidth=3
-text caption "Brace annotation (preview)" at 0,-160 size=24 fill="#e2e8f0"
+circle dotA r=10 at -210,0 fill="#e2e8f0" stroke="none"
+circle dotB r=10 at 210,0 fill="#e2e8f0" stroke="none"
+text labelA "A" at -210,34 size=28 fill="#f8fafc"
+text labelB "B" at 210,34 size=28 fill="#f8fafc"
+line segment x1=-210 y1=0 x2=210 y2=0 at 0,0 stroke="#94a3b8" strokeWidth=3
+brace span target=segment direction=down buff=26 label="x - x_1" labelSize=30 labelColor="#f8fafc" stroke="#f8fafc" strokeWidth=3
+at 0s:
+  play FadeIn(dotA, dotB, labelA, labelB) duration=0.8s easing=easeOut
+wait 0.2s
+play Create(segment) duration=0.8s easing=easeOut
+wait 0.2s
+play FadeIn(span) duration=0.8s easing=easeOut
+wait 0.8s
