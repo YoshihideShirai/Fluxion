@@ -1,22 +1,3 @@
----
-title: MovingZoomedSceneAround
-description: "Manim Example: `MovingZoomedSceneAround` (`#movingzoomedscenearound`) の Fluxion 移植版（近似）。"
-source_manim_url: https://docs.manim.community/en/stable/examples.html#movingzoomedscenearound
-source_example_path: examples/gallery/moving-zoomed-scene-around.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
-known_gaps:
-  - symptom: "ZoomedScene 専用カメラ（独立レンダリング面）ではなく、右側パネルを図形連動で近似している。"
-    layer: runtime
-    impact: medium
-    workaround: "`always` による追従更新で視覚的なズーム追尾を再現する。"
-    closure_condition: "独立した sub-camera / viewport primitive を導入し、実シーンの拡大レンダリングを表示できる。"
-    fidelity_upgrade_condition: "ズーム枠とズーム表示が同一ソース描画から生成され、本家と同等の追尾挙動になった時。"
-category: Manim Stable Examples
-status: partial
-gap_id: GAP-023
-order: 70
----
 scene width=960 height=540 fps=60
 value phase = 0
 
