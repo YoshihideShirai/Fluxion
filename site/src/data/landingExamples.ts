@@ -254,6 +254,34 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     source: 'scene width=960 height=540 fps=60\nplot curve fn=sin(t) range=-3.14,3.14 scaleX=90 scaleY=70 at 480,270 stroke="#38bdf8" strokeWidth=5 fill="none"',
   },
   {
+    key: 'angle',
+    command: 'angle',
+    description: {
+      ja: 'value tracker に追従する角度の円弧を生成します。',
+      en: 'Generate an angle arc that follows a value tracker.',
+    },
+    referencePurpose: {
+      ja: 'Updating angle arc helper',
+      en: 'Updating angle arc helper',
+    },
+    minimalExample: 'angle arc radius=60 from=0 to=theta samples=72',
+    source: 'scene width=640 height=360 fps=60\nvalue theta = 0\nangle arc radius=72 from=0 to=theta samples=72 at 320,180 stroke="#f59e0b" strokeWidth=6\nanimate theta from 0 to 2.4 duration=1.5s easing=easeInOut',
+  },
+  {
+    key: 'tracedPath',
+    command: 'tracedPath',
+    description: {
+      ja: 'パラメトリックな移動軌跡を path として生成します。',
+      en: 'Generate a parametric motion trace as a path.',
+    },
+    referencePurpose: {
+      ja: 'Updating trace path helper',
+      en: 'Updating trace path helper',
+    },
+    minimalExample: 'tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta',
+    source: 'scene width=640 height=360 fps=60\nvalue theta = 0\ntracedPath trace x=96*cos(t) y=96*sin(t) from=0 to=theta samples=96 at 320,180 stroke="#22d3ee" strokeWidth=5\ncircle dot r=16 at 416,180 fill="#38bdf8"\nset dot.x to expr="320 + 96 * cos(theta)"\nset dot.y to expr="180 + 96 * sin(theta)"\nanimate theta from 0 to 6.283 duration=2s easing=linear',
+  },
+  {
     key: 'at',
     command: 'at',
     description: {

@@ -177,6 +177,16 @@ export function compileTextDsl(source: string): FluxionDocument {
       return;
     }
 
+    if (keyword === "angle") {
+      parseAngle(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "tracedPath") {
+      parseTracedPath(tokens, state, lineNumber);
+      return;
+    }
+
     throw new DslCompileError(
       `Unknown statement '${keyword}'.`,
       lineNumber,
@@ -504,6 +514,76 @@ function parsePlot(tokens: string[], state: CompileState, lineNumber: number): v
   state.rootIds.add(id);
 }
 
+function parseAngle(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after angle.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const radius = parseNumber(options.get("radius") ?? options.get("r") ?? "48", lineNumber);
+  const from = options.get("from") ?? "0";
+  const to = options.get("to") ?? "pi/2";
+  const samples = options.get("samples") ?? "48";
+  const close = options.get("close") ?? "false";
+  const pathGenerator = readPathGeneratorAssignment(
+    `path(x=${radius}*cos(t),y=${radius}*sin(t),from=${from},to=${to},samples=${samples},close=${close})`,
+    state,
+    lineNumber,
+  );
+  if (!pathGenerator) throw new DslCompileError("Failed to build angle path.", lineNumber);
+
+  const node = createBaseNode(id, "path");
+  node.style.fill = "none";
+  node.style.stroke = "#f59e0b";
+  node.style.strokeWidth = 4;
+  node.geometry.angle = true;
+  node.geometry.radius = radius;
+  node.geometry.d = buildPathDataPreview(pathGenerator, state);
+  for (const [key, value] of options) {
+    if (["radius", "r", "from", "to", "samples", "close"].includes(key)) continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+  pushBindPath(state, id, "geometry.d", pathGenerator, statementTime(state));
+}
+
+function parseTracedPath(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after tracedPath.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const xExpr = options.get("x");
+  const yExpr = options.get("y");
+  if (!xExpr || !yExpr)
+    throw new DslCompileError("tracedPath requires x=<expr> and y=<expr>.", lineNumber);
+  const from = options.get("from") ?? "0";
+  const to = options.get("to") ?? "2*pi";
+  const samples = options.get("samples") ?? "96";
+  const close = options.get("close") ?? "false";
+  const pathGenerator = readPathGeneratorAssignment(
+    `path(x=${xExpr},y=${yExpr},from=${from},to=${to},samples=${samples},close=${close})`,
+    state,
+    lineNumber,
+  );
+  if (!pathGenerator) throw new DslCompileError("Failed to build tracedPath path.", lineNumber);
+
+  const node = createBaseNode(id, "path");
+  node.style.fill = "none";
+  node.style.stroke = "#22d3ee";
+  node.style.strokeWidth = 4;
+  node.geometry.tracedPath = true;
+  node.geometry.d = buildPathDataPreview(pathGenerator, state);
+  for (const [key, value] of options) {
+    if (["x", "y", "from", "to", "samples", "close"].includes(key)) continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+  pushBindPath(state, id, "geometry.d", pathGenerator, statementTime(state));
+}
+
 function buildPathDataPreview(op: { samples:number; tMinExpr:string; tMaxExpr:string; xExpr:string; yExpr:string; close?:boolean }, state: CompileState): string {
   const vars = Object.fromEntries([...state.values].map(([k,v])=>[k,v]));
   const tMin = evaluateExpression(op.tMinExpr, vars);
@@ -520,6 +600,38 @@ function buildPathDataPreview(op: { samples:number; tMinExpr:string; tMaxExpr:st
   if (op.close) pts.push('Z');
   return pts.join(' ');
 }
+
+function pushBindPath(
+  state: CompileState,
+  id: string,
+  path: string,
+  pathGenerator: {
+    samples: number;
+    tMinExpr: string;
+    tMaxExpr: string;
+    xExpr: string;
+    yExpr: string;
+    close?: boolean;
+  },
+  time: number,
+): void {
+  state.timeline.push({
+    t: time,
+    op: "bindPath",
+    id,
+    path,
+    ...pathGenerator,
+    deps: [
+      ...new Set([
+        ...collectExpressionDependencies(pathGenerator.tMinExpr),
+        ...collectExpressionDependencies(pathGenerator.tMaxExpr),
+        ...collectExpressionDependencies(pathGenerator.xExpr),
+        ...collectExpressionDependencies(pathGenerator.yExpr),
+      ]),
+    ].filter((name) => state.values.has(name)),
+  });
+}
+
 function statementTime(state: CompileState): number {
   return state.blockTime ?? state.currentTime;
 }
@@ -617,21 +729,13 @@ function parseAlways(
   const rightHandSide = tokens.slice(3).join(" ");
   const pathGenerator = readPathGeneratorAssignment(rightHandSide, state, lineNumber);
   if (pathGenerator) {
-    state.timeline.push({
-      t: time,
-      op: "bindPath",
+    pushBindPath(
+      state,
       id,
-      path: isCameraTarget ? cameraPropertyPath(property) : propertyPath(property),
-      ...pathGenerator,
-      deps: [
-        ...new Set([
-          ...collectExpressionDependencies(pathGenerator.tMinExpr),
-          ...collectExpressionDependencies(pathGenerator.tMaxExpr),
-          ...collectExpressionDependencies(pathGenerator.xExpr),
-          ...collectExpressionDependencies(pathGenerator.yExpr),
-        ]),
-      ].filter((name) => state.values.has(name)),
-    });
+      isCameraTarget ? cameraPropertyPath(property) : propertyPath(property),
+      pathGenerator,
+      time,
+    );
     return;
   }
   const expression = readExpressionAssignment(rightHandSide, state, lineNumber);

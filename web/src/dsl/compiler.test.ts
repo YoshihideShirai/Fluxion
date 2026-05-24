@@ -215,6 +215,44 @@ test("compiles plot with close and style overrides", () => {
   assert.equal(String(area?.geometry.d).endsWith(" Z"), true);
 });
 
+test("compiles angle helper into an updating path", () => {
+  const documentData = compileTextDsl(`value theta = 0
+angle arc at 0,-20 radius=60 from=0 to=theta samples=72 stroke="#f59e0b" strokeWidth=5`);
+
+  const arc = documentData.nodes[0];
+  assert.equal(arc?.type, "path");
+  assert.equal(arc?.geometry.angle, true);
+  assert.equal(arc?.geometry.radius, 60);
+  assert.equal(arc?.transform.y, -20);
+  assert.equal(arc?.style.stroke, "#f59e0b");
+
+  const bind = documentData.timeline.find((op) => op.op === "bindPath");
+  assert.equal(bind?.op, "bindPath");
+  if (bind?.op !== "bindPath") throw new Error("Expected angle bindPath operation.");
+  assert.equal(bind.id, "arc");
+  assert.equal(bind.path, "geometry.d");
+  assert.equal(bind.tMaxExpr, "theta");
+  equalJson(bind.deps, ["theta"]);
+});
+
+test("compiles tracedPath helper into an updating path", () => {
+  const documentData = compileTextDsl(`value theta = 0
+tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120 at 0,-20 stroke="#22d3ee"`);
+
+  const trace = documentData.nodes[0];
+  assert.equal(trace?.type, "path");
+  assert.equal(trace?.geometry.tracedPath, true);
+  assert.equal(trace?.transform.y, -20);
+
+  const bind = documentData.timeline.find((op) => op.op === "bindPath");
+  assert.equal(bind?.op, "bindPath");
+  if (bind?.op !== "bindPath") throw new Error("Expected tracedPath bindPath operation.");
+  assert.equal(bind.id, "trace");
+  assert.equal(bind.xExpr, "150*cos(t)");
+  assert.equal(bind.yExpr, "150*sin(t)");
+  assert.equal(bind.samples, 120);
+});
+
 test("compiles surroundingRect nodes from target bounds", () => {
   const documentData = compileTextDsl(`math term "f(x)\\frac{d}{dx}g(x)" at 120,80 size=30 w=260 h=72
 surroundingRect frame target=term buff=10 stroke="#fbbf24" strokeWidth=4`);
