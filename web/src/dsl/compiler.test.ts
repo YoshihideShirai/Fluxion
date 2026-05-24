@@ -93,6 +93,37 @@ animate camera.scale from 1.5 to 2 duration=2s`);
   );
 });
 
+test("compiles cameraFrame and animateFrame sugar", () => {
+  const documentData = compileTextDsl(`cameraFrame at 10,20 scale=1.5 rotation=5
+animateFrame to 110,45 scale=2 rotation=15 duration=2s easing=linear
+animateFrame to -20,-30 scale=1.25 duration=1s easing=easeInOut`);
+
+  equalJson(documentData.camera, {
+    x: 10,
+    y: 20,
+    scale: 1.5,
+    rotation: 5,
+    target: { x: 0, y: 0 },
+    padding: 0,
+    mode: "center",
+  });
+  equalJson(
+    documentData.timeline
+      .filter((op): op is AnimateOperation => op.op === "animate")
+      .map((op) => [op.id, op.path, op.from, op.to, op.duration, op.easing]),
+    [
+      ["camera", "camera.x", 10, 110, 2, "linear"],
+      ["camera", "camera.y", 20, 45, 2, "linear"],
+      ["camera", "camera.scale", 1.5, 2, 2, "linear"],
+      ["camera", "camera.rotation", 5, 15, 2, "linear"],
+      ["camera", "camera.x", 110, -20, 1, "easeInOut"],
+      ["camera", "camera.y", 45, -30, 1, "easeInOut"],
+      ["camera", "camera.scale", 2, 1.25, 1, "easeInOut"],
+      ["camera", "camera.rotation", 15, 15, 1, "easeInOut"],
+    ],
+  );
+});
+
 test("compiles scene, nodes, styles, animation, and at blocks", () => {
   const documentData = compileTextDsl(`scene width=800 height=450 fps=30
 

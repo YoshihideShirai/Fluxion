@@ -26,11 +26,13 @@ The current Text DSL scope is intentionally small: place shapes, math, paths, an
 | `plot` | Function plot path declaration | `plot curve fn=sin(t) range=-3.14,3.14 scaleX=80 scaleY=60` |
 | `angle` | Updating angle arc helper | `angle arc radius=60 from=0 to=theta samples=72` |
 | `tracedPath` | Updating trace path helper | `tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta` |
+| `cameraFrame` | Camera frame declaration | `cameraFrame at 0,0 scale=1` |
 | `at` | Start an indented block at a fixed time | `at 0s:` |
 | `show / hide` | Create or delete a node on the timeline | `show dot` |
 | `value` | Declare a scalar tracker | `value theta = 0` |
 | `set` | Apply an immediate property value or dependent expression | `set dot.x to expr="320 + 100 * cos(theta)"` |
 | `animate` | Interpolate one property or scalar tracker | `animate theta from 0 to 6.28 duration=2s` |
+| `animateFrame` | Interpolate the camera frame | `animateFrame to 120,40 scale=1.4 duration=1s` |
 | `play` | Run Manim-like primitives | `play FadeIn(dot) duration=0.8s` |
 | `wait` | Advance the current time cursor | `wait 0.4s` |
 
@@ -127,6 +129,7 @@ group intro title equation
 surroundingRect frame target=equation buff=10 stroke="#fbbf24"
 angle arc radius=60 from=0 to=theta samples=72 stroke="#f59e0b"
 tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120
+cameraFrame at 0,0 scale=1
 ```
 
 Supported node types:
@@ -209,9 +212,12 @@ always curve.d = path(x=240+96*cos(t),y=270+96*sin(t),from=0,to=2*pi,samples=128
 ```text
 animate c1.x from 220 to 640 duration=1.5s easing=easeInOut
 animate title.opacity from 0 to 1 start=0s duration=1s
+animateFrame to 120,40 scale=1.4 duration=1s easing=easeInOut
 ```
 
 `animate` interpolates a target property or a declared scalar value tracker. Numeric values interpolate; non-numeric node property values switch to `to` at completion.
+
+`animateFrame` is camera-frame sugar. It expands to synchronized `camera.x`, `camera.y`, `camera.scale`, and `camera.rotation` animations from the compiler's current camera frame cursor. Use `cameraFrame at x,y scale=<number>` to set the initial frame cursor. `animateFrame` supports `to x,y`, `scale`, `rotation`, `start`, `duration`, and `easing`.
 
 ### play and wait
 
@@ -287,10 +293,14 @@ The Text DSL compiler runs in the browser and does not execute Python or arbitra
 
 ```text
 camera at 0,0 scale=1 rotation=0
+cameraFrame at 0,0 scale=1
 set camera.x to -120
 animate camera.scale from 1 to 1.6 duration=2s easing=easeInOut
+animateFrame to -120,20 scale=1.6 duration=2s easing=easeInOut
 ```
 
 `camera` configures the document-level `camera: { x, y, scale, rotation }`. Defaults are `x=0`, `y=0`, `scale=1`, and `rotation=0`. `set` / `animate` can target `camera.x`, `camera.y`, `camera.scale`, and `camera.rotation`.
+
+`cameraFrame` is a Manim-style alias for configuring the camera frame cursor. `animateFrame` emits ordinary camera timeline operations, but lets gallery examples describe frame movement as a single high-level command.
 
 The renderer maps the scene origin `(0,0)` to the viewport center, then applies camera pan / zoom / rotation: `translate(centerX + camera.x, centerY + camera.y) rotate(camera.rotation) scale(camera.scale) translate(0, 0)`. With `mode=target` / `mode=frame-fit`, the final translate centers the target coordinate instead. Composition order is `Camera * ParentNode * ChildNode`, so the camera pans / zooms / rotates the entire scene while node transforms stay local.

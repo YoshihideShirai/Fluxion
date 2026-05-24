@@ -49,6 +49,7 @@ interface CompileState {
   height: number;
   fps: number;
   camera: Camera;
+  cameraFrameCursor: CameraFrameCursor;
   nodes: Map<string, SceneNode>;
   values: Map<string, number>;
   timeline: TimelineOperation[];
@@ -58,12 +59,21 @@ interface CompileState {
   blockTime: number | null;
 }
 
+interface CameraFrameCursor {
+  x: number;
+  y: number;
+  scale: number;
+  rotation: number;
+}
+
 export function compileTextDsl(source: string): FluxionDocument {
+  const camera = defaultCamera();
   const state: CompileState = {
     width: 1280,
     height: 720,
     fps: 60,
-    camera: defaultCamera(),
+    camera,
+    cameraFrameCursor: cameraFrameCursorFromCamera(camera),
     nodes: new Map(),
     values: new Map(),
     timeline: [],
@@ -107,6 +117,11 @@ export function compileTextDsl(source: string): FluxionDocument {
       return;
     }
 
+    if (keyword === "cameraFrame") {
+      parseCameraFrame(tokens, state, lineNumber);
+      return;
+    }
+
     if (keyword === "value") {
       parseValueDeclaration(tokens, state, lineNumber);
       return;
@@ -144,6 +159,11 @@ export function compileTextDsl(source: string): FluxionDocument {
 
     if (keyword === "animate") {
       parseAnimate(tokens, state, lineNumber, statementTime(state));
+      return;
+    }
+
+    if (keyword === "animateFrame") {
+      parseAnimateFrame(tokens, state, lineNumber, statementTime(state));
       return;
     }
 
@@ -291,6 +311,45 @@ function parseCamera(
 
     throw new DslCompileError(`Unknown camera option '${key}'.`, lineNumber);
   }
+  state.cameraFrameCursor = cameraFrameCursorFromCamera(state.camera);
+}
+
+function parseCameraFrame(
+  tokens: string[],
+  state: CompileState,
+  lineNumber: number,
+): void {
+  for (const [key, value] of readCameraArguments(tokens.slice(1), lineNumber)) {
+    if (key === "at") {
+      const [x, y] = value
+        .split(",")
+        .map((item) => parseNumber(item, lineNumber));
+      if (x === undefined || y === undefined || Number.isNaN(x) || Number.isNaN(y))
+        throw new DslCompileError("Expected cameraFrame at x,y.", lineNumber);
+      state.camera.x = x;
+      state.camera.y = y;
+      state.cameraFrameCursor.x = x;
+      state.cameraFrameCursor.y = y;
+      continue;
+    }
+    if (key === "x" || key === "y" || key === "scale" || key === "rotation") {
+      const numericValue = parseNumber(value, lineNumber);
+      state.camera[key] = numericValue;
+      state.cameraFrameCursor[key] = numericValue;
+      continue;
+    }
+
+    throw new DslCompileError(`Unknown cameraFrame option '${key}'.`, lineNumber);
+  }
+}
+
+function cameraFrameCursorFromCamera(camera: Camera): CameraFrameCursor {
+  return {
+    x: camera.x,
+    y: camera.y,
+    scale: camera.scale,
+    rotation: camera.rotation,
+  };
 }
 
 function parseValueDeclaration(
@@ -1298,6 +1357,83 @@ function parseAnimate(
     duration,
     easing,
   });
+}
+
+function parseAnimateFrame(
+  tokens: string[],
+  state: CompileState,
+  lineNumber: number,
+  fallbackStart: number,
+): void {
+  const toIndex = tokens.indexOf("to");
+  if (toIndex === -1 || !tokens[toIndex + 1])
+    throw new DslCompileError(
+      "Expected animateFrame syntax: animateFrame to x,y scale=1.5 duration=1s.",
+      lineNumber,
+    );
+
+  const [x, y] = tokens[toIndex + 1]!
+    .split(",")
+    .map((item) => parseNumber(item, lineNumber));
+  if (x === undefined || y === undefined || Number.isNaN(x) || Number.isNaN(y))
+    throw new DslCompileError("Expected animateFrame target x,y.", lineNumber);
+
+  let start = fallbackStart;
+  let duration = 1;
+  let easing = "smooth";
+  const target: CameraFrameCursor = {
+    ...state.cameraFrameCursor,
+    x,
+    y,
+  };
+
+  for (const [key, value] of readAssignments(
+    tokens.slice(toIndex + 2),
+    lineNumber,
+  )) {
+    if (key === "start") start = parseSeconds(value, lineNumber);
+    else if (key === "duration") duration = parseSeconds(value, lineNumber);
+    else if (key === "easing") easing = parseEasing(value, lineNumber);
+    else if (key === "scale" || key === "rotation")
+      target[key] = parseNumber(value, lineNumber);
+    else
+      throw new DslCompileError(
+        `Unknown animateFrame option '${key}'.`,
+        lineNumber,
+      );
+  }
+
+  pushCameraFrameAnimations(
+    state,
+    start,
+    state.cameraFrameCursor,
+    target,
+    duration,
+    easing,
+  );
+  state.cameraFrameCursor = target;
+}
+
+function pushCameraFrameAnimations(
+  state: CompileState,
+  start: number,
+  from: CameraFrameCursor,
+  to: CameraFrameCursor,
+  duration: number,
+  easing: string,
+): void {
+  for (const key of ["x", "y", "scale", "rotation"] as const) {
+    state.timeline.push({
+      t: start,
+      op: "animate",
+      id: "camera",
+      path: cameraPropertyPath(key),
+      from: from[key],
+      to: to[key],
+      duration,
+      easing,
+    });
+  }
 }
 
 function requireNode(

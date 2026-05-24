@@ -282,6 +282,20 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     source: 'scene width=640 height=360 fps=60\nvalue theta = 0\ntracedPath trace x=96*cos(t) y=96*sin(t) from=0 to=theta samples=96 at 320,180 stroke="#22d3ee" strokeWidth=5\ncircle dot r=16 at 416,180 fill="#38bdf8"\nset dot.x to expr="320 + 96 * cos(theta)"\nset dot.y to expr="180 + 96 * sin(theta)"\nanimate theta from 0 to 6.283 duration=2s easing=linear',
   },
   {
+    key: 'cameraFrame',
+    command: 'cameraFrame',
+    description: {
+      ja: 'カメラフレームの初期位置とズームを設定します。',
+      en: 'Set the initial camera frame position and zoom.',
+    },
+    referencePurpose: {
+      ja: 'Camera frame declaration',
+      en: 'Camera frame declaration',
+    },
+    minimalExample: 'cameraFrame at 0,0 scale=1',
+    source: 'scene width=640 height=360 fps=60\ncameraFrame at 0,0 scale=1\ncircle dot r=42 at 0,0 fill="#38bdf8"',
+  },
+  {
     key: 'at',
     command: 'at',
     description: {
@@ -350,6 +364,20 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     },
     minimalExample: 'animate theta from 0 to 6.28 duration=2s',
     source: 'scene width=640 height=360 fps=60\ncircle dot r=42 at 160,180 fill="#38bdf8"\nanimate dot.x from 160 to 480 duration=1.5s easing=easeInOut',
+  },
+  {
+    key: 'animateFrame',
+    command: 'animateFrame',
+    description: {
+      ja: 'カメラフレームを移動・ズームします。',
+      en: 'Move and zoom the camera frame.',
+    },
+    referencePurpose: {
+      ja: 'Interpolate the camera frame',
+      en: 'Interpolate the camera frame',
+    },
+    minimalExample: 'animateFrame to 120,40 scale=1.4 duration=1s',
+    source: 'scene width=640 height=360 fps=60\ncameraFrame at 0,0 scale=1\ncircle dot r=42 at 120,40 fill="#38bdf8"\nanimateFrame to 120,40 scale=1.4 duration=1s easing=easeInOut',
   },
   {
     key: 'play',

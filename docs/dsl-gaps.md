@@ -47,7 +47,7 @@
 | GAP-017 | gradient-image-from-array | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
 | GAP-018 | heat-diagram-plot | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
 | GAP-019 | moving-angle | `angle` helper は追加済み。象限・直角マーク等の Manim `Angle` 詳細オプションは未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts`, `python/fluxion/primitives/*` |
-| GAP-020 | moving-around | camera frame 向け高水準 DSL が未実装で、camera transform の直接 animate で近似している。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-020 | moving-around | `cameraFrame` / `animateFrame` helper は追加済み。frame updater と mobject tracking API は未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-021 | moving-dots | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
 | GAP-022 | moving-group-to-destination | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-023 | moving-zoomed-scene-around | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
