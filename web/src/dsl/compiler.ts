@@ -57,6 +57,7 @@ interface CompileState {
   rootIds: Set<string>;
   currentTime: number;
   blockTime: number | null;
+  braceTargetRefs: Array<{ braceId: string; targetId: string; lineNumber: number }>;
 }
 
 interface CameraFrameCursor {
@@ -81,6 +82,7 @@ export function compileTextDsl(source: string): FluxionDocument {
     rootIds: new Set(),
     currentTime: 0,
     blockTime: null,
+    braceTargetRefs: [],
   };
 
   source.split(/\r?\n/).forEach((rawLine, index) => {
@@ -223,6 +225,7 @@ export function compileTextDsl(source: string): FluxionDocument {
       columnOf(withoutComment, keyword),
     );
   });
+  validateDeferredReferences(state);
 
   const autoCreates: TimelineOperation[] = [];
   for (const id of state.rootIds) {
@@ -256,6 +259,16 @@ export function compileTextDsl(source: string): FluxionDocument {
       : {}),
     timeline: state.timeline,
   };
+}
+
+function validateDeferredReferences(state: CompileState): void {
+  for (const ref of state.braceTargetRefs) {
+    if (!state.nodes.has(ref.targetId))
+      throw new DslCompileError(
+        `Brace target '${ref.targetId}' could not be resolved.`,
+        ref.lineNumber,
+      );
+  }
 }
 
 function isShownOrHasShownDescendant(
@@ -450,8 +463,7 @@ function parseNode(
     const target = String(node.geometry.target ?? "").trim();
     if (!target)
       throw new DslCompileError("Brace requires target=<nodeId>.", lineNumber);
-    if (!state.nodes.has(target))
-      throw new DslCompileError(`Brace target '${target}' could not be resolved.`, lineNumber);
+    state.braceTargetRefs.push({ braceId: id, targetId: target, lineNumber });
   }
 
   state.nodes.set(id, node);
