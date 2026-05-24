@@ -38,7 +38,7 @@
 | GAP-008 | moving-frame-box | parity確認のみ（追加ギャップ未特定） | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-009 | manim-ce-logo | parity確認のみ（追加ギャップ未特定） | `python/fluxion/primitives/*`, `web/src/runtime/*` |
 | GAP-010 | brace-annotation | parity確認のみ（追加ギャップ未特定） | `python/fluxion/primitives/*`, `web/src/runtime/*` |
-| GAP-011 | sine-curve-unit-circle | parity確認のみ（追加ギャップ未特定） | `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-011 | sine-curve-unit-circle | `tracedPath` helper は追加済み。履歴ベースの厳密な Manim `TracedPath` 追記挙動は未実装。 | `web/src/runtime/*`, `python/fluxion/primitives/*`, `web/src/dsl/compiler.ts` |
 | GAP-012 | special-camera | parity確認のみ（追加ギャップ未特定） | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-013 | arg-min-example | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
 | GAP-014 | boolean-operations | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |

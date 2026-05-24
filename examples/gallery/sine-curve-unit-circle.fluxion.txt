@@ -10,7 +10,7 @@ line projection x1=0 y1=0 x2=280 y2=0 at -80,0 stroke="#334155" strokeWidth=2
 
 # Sine wave area on right
 path axis d="M 0 0 L 320 0" at 0,0 stroke="#334155" strokeWidth=2 fill="none"
-path wave d="M 0 0" at 0,0 stroke="#22d3ee" strokeWidth=4 fill="none"
+tracedPath wave x=(t/(2*pi))*320 y=96*sin(t) from=0 to=theta samples=180 at 0,0 stroke="#22d3ee" strokeWidth=4
 line link x1=0 y1=0 x2=0 y2=0 at 0,0 stroke="#a78bfa" strokeWidth=2
 
 always dot.x = expr=-240 + 96*cos(theta)
@@ -25,7 +25,6 @@ always link.x1 = expr=-240 + 96*cos(theta)
 always link.y1 = expr=96*sin(theta)
 always link.x2 = expr=(theta/(2*3.141592653589793))*320
 always link.y2 = expr=96*sin(theta)
-always wave.d = path(x=(t/(2*3.141592653589793))*320,y=96*sin(t),from=0,to=theta,samples=180)
 
 at 0s:
   play Create(unit) duration=0.5s
