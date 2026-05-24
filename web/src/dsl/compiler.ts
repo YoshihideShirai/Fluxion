@@ -197,6 +197,11 @@ export function compileTextDsl(source: string): FluxionDocument {
       return;
     }
 
+    if (keyword === "dataPolygon") {
+      parseDataPolygon(tokens, state, lineNumber);
+      return;
+    }
+
     if (keyword === "angle") {
       parseAngle(tokens, state, lineNumber);
       return;
@@ -526,8 +531,79 @@ function parseAxes(tokens: string[], state: CompileState, lineNumber: number): v
   const group = createBaseNode(id, "group");
   group.children = [xAxis, yAxis];
   group.metadata = { plot: { range: [xRange[0]!, xRange[1]!] } };
+  group.geometry.xMin = xRange[0]!;
+  group.geometry.xMax = xRange[1]!;
+  group.geometry.yMin = yRange[0]!;
+  group.geometry.yMax = yRange[1]!;
+  group.geometry.width = width;
+  group.geometry.height = height;
+  group.geometry.centerX = cx!;
+  group.geometry.centerY = cy!;
   state.nodes.set(id, group);
   state.rootIds.add(id);
+}
+
+function parseDataPolygon(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after dataPolygon.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const axesId = options.get("axes");
+  if (!axesId) throw new DslCompileError("dataPolygon requires axes=<axesId>.", lineNumber);
+  const axes = requireNode(state, axesId, lineNumber);
+  if (axes.type !== "group" || axes.geometry.xMin === undefined || axes.geometry.yMin === undefined)
+    throw new DslCompileError(`dataPolygon axes '${axesId}' is not an axes helper.`, lineNumber);
+  const pointsRaw = options.get("points");
+  if (!pointsRaw) throw new DslCompileError("dataPolygon requires points=<x,y;...>.", lineNumber);
+
+  const xMin = Number(axes.geometry.xMin);
+  const xMax = Number(axes.geometry.xMax);
+  const yMin = Number(axes.geometry.yMin);
+  const yMax = Number(axes.geometry.yMax);
+  const width = Number(axes.geometry.width);
+  const height = Number(axes.geometry.height);
+  const centerX = Number(axes.geometry.centerX ?? axes.transform.x);
+  const centerY = Number(axes.geometry.centerY ?? axes.transform.y);
+  const points = parseDataPointList(pointsRaw, lineNumber).map(([x, y]) => ({
+    x: ((x - xMin) / (xMax - xMin) - 0.5) * width,
+    y: ((y - yMin) / (yMax - yMin) - 0.5) * height,
+  }));
+
+  const node = createBaseNode(id, "path");
+  node.transform.x = centerX;
+  node.transform.y = centerY;
+  node.geometry.d = points
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${formatPathNumber(point.x)} ${formatPathNumber(point.y)}`)
+    .concat("Z")
+    .join(" ");
+  node.geometry.dataPolygon = true;
+  node.geometry.axes = axesId;
+  node.style.fill = "#22d3ee";
+  node.style.stroke = "#22d3ee";
+  node.style.strokeWidth = 3;
+  for (const [key, value] of options) {
+    if (key === "axes" || key === "points") continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+}
+
+function parseDataPointList(raw: string, lineNumber: number): Array<[number, number]> {
+  const points = raw.split(";").map((point) => {
+    const [xRaw, yRaw] = point.split(",");
+    if (xRaw === undefined || yRaw === undefined)
+      throw new DslCompileError("Expected dataPolygon points as x,y;x,y;...", lineNumber);
+    return [parseNumber(xRaw, lineNumber), parseNumber(yRaw, lineNumber)] as [number, number];
+  });
+  if (points.length < 3)
+    throw new DslCompileError("dataPolygon requires at least three points.", lineNumber);
+  return points;
+}
+
+function formatPathNumber(value: number): string {
+  return String(Number(value.toFixed(6)));
 }
 
 function parsePlot(tokens: string[], state: CompileState, lineNumber: number): void {

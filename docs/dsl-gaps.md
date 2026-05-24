@@ -52,7 +52,7 @@
 | GAP-022 | moving-group-to-destination | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-023 | moving-zoomed-scene-around | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-024 | point-with-trace | `tracedPath` helper は追加済み。対象 mobject の実履歴追跡・減衰オプションは未実装。 | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
-| GAP-025 | polygon-on-axes | Axes の data座標→scene座標変換 helper が未実装で、polygon を scene 座標直指定で近似している。 | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-025 | polygon-on-axes | `dataPolygon` helper は追加済み。汎用 `coords_to_point` 相当 API は未実装。 | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
 | GAP-026 | rotation-updater | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
 | GAP-027 | three-d-camera-illusion-rotation | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-028 | three-d-camera-rotation | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |

@@ -230,6 +230,30 @@ test("places axes at the scene origin by default", () => {
   assert.equal(axes?.children[0]?.transform.y, 0);
   assert.equal(axes?.children[1]?.transform.x, 0);
   assert.equal(axes?.children[1]?.transform.y, 0);
+  assert.equal(axes?.geometry.xMin, -5);
+  assert.equal(axes?.geometry.xMax, 5);
+  assert.equal(axes?.geometry.yMin, -3);
+  assert.equal(axes?.geometry.yMax, 3);
+  assert.equal(axes?.geometry.centerX, 0);
+  assert.equal(axes?.geometry.centerY, 0);
+});
+
+test("compiles dataPolygon points through axes coordinates", () => {
+  const documentData = compileTextDsl(`axes ax at 0,-30 width=760 height=340 xRange=-4,4 yRange=-2,2
+dataPolygon poly axes=ax points=-2,-0.5;-0.4,1.1;1.8,0.4 fill="#22d3ee" opacity=0.2`);
+
+  const polygon = documentData.nodes.find((node) => node.id === "poly");
+  assert.equal(polygon?.type, "path");
+  assert.equal(polygon?.transform.x, 0);
+  assert.equal(polygon?.transform.y, -30);
+  assert.equal(polygon?.geometry.dataPolygon, true);
+  assert.equal(polygon?.geometry.axes, "ax");
+  assert.equal(polygon?.style.fill, "#22d3ee");
+  assert.equal(polygon?.transform.opacity, 0.2);
+  assert.equal(
+    polygon?.geometry.d,
+    "M -190 -42.5 L -38 93.5 L 171 34 Z",
+  );
 });
 
 test("compiles plot with close and style overrides", () => {

@@ -5,7 +5,7 @@ value alpha = 0
 rect bg w=960 h=540 at 0,0 fill="#0b1020"
 text title "PolygonOnAxes" at 0,220 size=40 fill="#e2e8f0"
 axes ax at 0,-30 width=760 height=340 xRange=-4,4 yRange=-2,2 stroke="#64748b" strokeWidth=2
-path poly d="M -180 -60 L -40 90 L 170 40 Z" at 0,-30 fill="#22d3ee" opacity=0.2 stroke="#22d3ee" strokeWidth=3
+dataPolygon poly axes=ax points=-1.9,-0.7;-0.4,1.1;1.8,0.45 fill="#22d3ee" opacity=0.2 stroke="#22d3ee" strokeWidth=3
 text label "polygon on axes" at 0,-190 size=22 fill="#bae6fd"
 
 always poly.rotation = expr=12*sin(alpha)

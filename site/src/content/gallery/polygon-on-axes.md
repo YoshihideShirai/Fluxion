@@ -6,11 +6,11 @@ source_example_path: examples/gallery/polygon-on-axes.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "Axes 上のデータ座標 API（`coords_to_point` 相当）は未実装で、polygon 頂点を scene 座標で直接指定している。"
+  - symptom: "Text DSL の `dataPolygon` helper で axes 上のデータ座標から polygon を配置できるが、Manim の `coords_to_point` 汎用 API は未実装。"
     layer: dsl
-    impact: medium
-    workaround: "`axes` は視覚ガイドとして使い、polygon/path 座標は手計算した scene 座標で与える。"
-    closure_condition: "Axes 座標変換 helper（data座標→scene座標）を DSL/runtime に追加する。"
+    impact: low
+    workaround: "`dataPolygon ... axes=<id> points=x,y;...` で polygon 頂点をデータ座標指定する。"
+    closure_condition: "line/path/point annotation でも使える汎用 axes coordinate helper を追加する。"
     fidelity_upgrade_condition: "Manim と同じデータ座標指定だけで polygon 配置を再現できる時。"
 category: Manim Stable Examples
 status: partial
@@ -24,7 +24,7 @@ value alpha = 0
 rect bg w=960 h=540 at 0,0 fill="#0b1020"
 text title "PolygonOnAxes" at 0,220 size=40 fill="#e2e8f0"
 axes ax at 0,-30 width=760 height=340 xRange=-4,4 yRange=-2,2 stroke="#64748b" strokeWidth=2
-path poly d="M -180 -60 L -40 90 L 170 40 Z" at 0,-30 fill="#22d3ee" opacity=0.2 stroke="#22d3ee" strokeWidth=3
+dataPolygon poly axes=ax points=-1.9,-0.7;-0.4,1.1;1.8,0.45 fill="#22d3ee" opacity=0.2 stroke="#22d3ee" strokeWidth=3
 text label "polygon on axes" at 0,-190 size=22 fill="#bae6fd"
 
 always poly.rotation = expr=12*sin(alpha)

@@ -254,6 +254,20 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     source: 'scene width=960 height=540 fps=60\nplot curve fn=sin(t) range=-3.14,3.14 scaleX=90 scaleY=70 at 480,270 stroke="#38bdf8" strokeWidth=5 fill="none"',
   },
   {
+    key: 'dataPolygon',
+    command: 'dataPolygon',
+    description: {
+      ja: 'axes のデータ座標から polygon path を生成します。',
+      en: 'Generate a polygon path from axes data coordinates.',
+    },
+    referencePurpose: {
+      ja: 'Axes data-coordinate polygon helper',
+      en: 'Axes data-coordinate polygon helper',
+    },
+    minimalExample: 'dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5',
+    source: 'scene width=960 height=540 fps=60\naxes ax at 480,270 width=700 height=300 xRange=-4,4 yRange=-2,2 stroke="#94a3b8" strokeWidth=3\ndataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5 fill="#22d3ee" opacity=0.25 stroke="#22d3ee" strokeWidth=4',
+  },
+  {
     key: 'angle',
     command: 'angle',
     description: {

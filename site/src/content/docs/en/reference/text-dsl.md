@@ -24,6 +24,7 @@ The current Text DSL scope is intentionally small: place shapes, math, paths, an
 | `surroundingRect` | Target-bounds rectangle declaration | `surroundingRect frame target=equation buff=10 stroke="#fbbf24"` |
 | `axes` | Axes helper declaration | `axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2` |
 | `plot` | Function plot path declaration | `plot curve fn=sin(t) range=-3.14,3.14 scaleX=80 scaleY=60` |
+| `dataPolygon` | Axes data-coordinate polygon helper | `dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5` |
 | `angle` | Updating angle arc helper | `angle arc radius=60 from=0 to=theta samples=72` |
 | `tracedPath` | Updating trace path helper | `tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta` |
 | `cameraFrame` | Camera frame declaration | `cameraFrame at 0,0 scale=1` |
@@ -127,6 +128,8 @@ text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"
 math equation "e^{i\\pi}+1=0" at 640,200 size=36 expandTokens=true
 group intro title equation
 surroundingRect frame target=equation buff=10 stroke="#fbbf24"
+axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2
+dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5 fill="#22d3ee"
 angle arc radius=60 from=0 to=theta samples=72 stroke="#f59e0b"
 tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120
 cameraFrame at 0,0 scale=1
@@ -145,6 +148,7 @@ Supported node types:
 - `surroundingRect <id> target=<node-id>`
 - `axes <id>`
 - `plot <id> fn=<expr>`
+- `dataPolygon <id> axes=<axes-id> points=<x,y;...>`
 - `angle <id> radius=<number> from=<expr> to=<expr>`
 - `tracedPath <id> x=<expr> y=<expr>`
 
@@ -163,6 +167,7 @@ Common options:
 - `surroundingRect` only: `target=<node-id>`, `buff=<number>`; emits a frame-like `rect` node sized from the target node's declared/estimated bounds. `play Create(frame)` animates its border with `geometry.drawProgress` for a Manim-like outline draw.
 - `axes` only: `xRange=<min,max>`, `yRange=<min,max>`, `width`, `height`; emits a `group` with x/y axis lines.
 - `plot` only: `fn=<expr>`, `range=<min,max>`, `samples`, `scaleX`, `scaleY`, `close=true|false`; emits a generated `path` geometry from the sampled function.
+- `dataPolygon` only: `axes=<axes-id>`, `points=<x,y;...>`; maps at least three data-coordinate points through the referenced `axes` helper and emits a closed `path`.
 - `angle` only: `radius` / `r`, `from`, `to`, `samples`, `close=true|false`; emits a generated `path` arc and a `bindPath` updater. Expressions can reference value trackers, so `to=theta` follows an animated tracker.
 - `tracedPath` only: `x`, `y`, `from`, `to`, `samples`, `close=true|false`; emits a generated `path` and a `bindPath` updater. This is a declarative trace helper for parametric motion, not a full history-based Manim `TracedPath` clone yet.
 
