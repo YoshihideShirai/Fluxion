@@ -26,3 +26,6 @@ jobs:
       - name: Run web tests
         run: npm test
         working-directory: web
+      - name: Verify gallery DSL compiles
+        run: npm run test:gallery-dsl
+        working-directory: web

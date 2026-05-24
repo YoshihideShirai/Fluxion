@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test dist/runtime/timeline.test.js dist/dsl/compiler.test.js"
+    "test": "npm run build && node --test dist/runtime/timeline.test.js dist/dsl/compiler.test.js",
+    "test:gallery-dsl": "npm run build && node scripts/check-gallery-dsl.mjs"
   },
   "devDependencies": {
     "typescript": "^6.0.3"
