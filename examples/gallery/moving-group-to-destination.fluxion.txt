@@ -4,11 +4,14 @@ rect bg w=960 h=540 at 0,0 fill="#0b1020"
 text title "MovingGroupToDestination" at 0,220 size=38 fill="#e2e8f0"
 rect panel w=760 h=320 at 0,-10 fill="#111827" stroke="#334155" strokeWidth=2
 
-circle c1 r=26 at -300,-40 fill="#38bdf8" stroke="#0f172a" strokeWidth=3
-circle c2 r=26 at -240,-40 fill="#22d3ee" stroke="#0f172a" strokeWidth=3
-circle c3 r=26 at -180,-40 fill="#14b8a6" stroke="#0f172a" strokeWidth=3
-text label "group source" at -240,-118 size=20 fill="#bae6fd"
+circle c1 r=26 at 0,-40 fill="#38bdf8" stroke="#0f172a" strokeWidth=3
+circle c2 r=26 at 0,-40 fill="#22d3ee" stroke="#0f172a" strokeWidth=3
+circle c3 r=26 at 0,-40 fill="#14b8a6" stroke="#0f172a" strokeWidth=3
+text label "group source" at 0,-118 size=20 fill="#bae6fd"
 group dots c1 c2 c3
+arrange dots direction=horizontal gap=8
+set dots.x to -240
+nextTo label dots direction=down buff=24
 
 rect target w=220 h=110 at 210,20 fill="none" stroke="#f59e0b" strokeWidth=3 opacity=0.9
 text targetLabel "destination" at 210,-70 size=20 fill="#fcd34d"

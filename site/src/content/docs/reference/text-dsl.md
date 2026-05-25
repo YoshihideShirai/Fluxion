@@ -28,6 +28,8 @@ Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション
 | `arrow` | Arrow helper declaration | `arrow vec x1=0 y1=0 x2=190 y2=80` |
 | `angle` | Updating angle arc helper | `angle arc radius=60 from=0 to=theta samples=72` |
 | `tracedPath` | Updating trace path helper | `tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta` |
+| `arrange` | Group auto-layout sugar | `arrange dots direction=horizontal gap=20` |
+| `nextTo` | Relative placement sugar | `nextTo label dot direction=right buff=12` |
 | `cameraFrame` | Camera frame declaration | `cameraFrame at 0,0 scale=1` |
 | `at` | Start an indented block at a fixed time | `at 0s:` |
 | `show / hide` | Create or delete a node on the timeline | `show dot` |

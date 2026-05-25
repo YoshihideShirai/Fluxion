@@ -219,6 +219,16 @@ export function compileTextDsl(source: string): FluxionDocument {
       return;
     }
 
+    if (keyword === "arrange") {
+      parseArrange(tokens, state, lineNumber, statementTime(state));
+      return;
+    }
+
+    if (keyword === "nextTo") {
+      parseNextTo(tokens, state, lineNumber, statementTime(state));
+      return;
+    }
+
     throw new DslCompileError(
       `Unknown statement '${keyword}'.`,
       lineNumber,
@@ -855,6 +865,87 @@ function advanceStatementTime(state: CompileState, duration: number): void {
   else state.blockTime += duration;
 }
 
+
+function parseArrange(tokens: string[], state: CompileState, lineNumber: number, time: number): void {
+  const groupId = tokens[1];
+  if (!groupId) throw new DslCompileError("arrange requires a group id.", lineNumber);
+  const group = state.nodes.get(groupId);
+  if (!group || group.type !== "group") throw new DslCompileError(`arrange target '${groupId}' must be a group.`, lineNumber);
+
+  let direction: "horizontal" | "vertical" = "horizontal";
+  let gap = 16;
+  for (const [key, value] of readAssignments(tokens.slice(2), lineNumber)) {
+    if (key === "direction") {
+      if (value !== "horizontal" && value !== "vertical") throw new DslCompileError("arrange direction must be horizontal or vertical.", lineNumber);
+      direction = value;
+      continue;
+    }
+    if (key === "gap") { gap = parseNumber(value, lineNumber); continue; }
+    throw new DslCompileError(`Unknown arrange option '${key}'.`, lineNumber);
+  }
+
+  const sizes = group.children.map((child) => ({ node: child, ...measureNode(child) }));
+  const total = sizes.reduce((sum, item, i) => sum + (direction === "horizontal" ? item.w : item.h) + (i > 0 ? gap : 0), 0);
+  let cursor = -total / 2;
+  for (const item of sizes) {
+    if (direction === "horizontal") {
+      const x = cursor + item.w / 2;
+      pushSet(state, time, item.node.id, "transform.x", x);
+      cursor += item.w + gap;
+    } else {
+      const y = cursor + item.h / 2;
+      pushSet(state, time, item.node.id, "transform.y", y);
+      cursor += item.h + gap;
+    }
+  }
+}
+
+function parseNextTo(tokens: string[], state: CompileState, lineNumber: number, time: number): void {
+  const id = tokens[1];
+  const targetId = tokens[2];
+  if (!id || !targetId) throw new DslCompileError("nextTo requires source and target ids.", lineNumber);
+  const node = state.nodes.get(id);
+  const target = state.nodes.get(targetId);
+  if (!node) throw new DslCompileError(`Unknown node '${id}'.`, lineNumber);
+  if (!target) throw new DslCompileError(`Unknown node '${targetId}'.`, lineNumber);
+
+  let direction: "up"|"down"|"left"|"right" = "right";
+  let buff = 12;
+  for (const [key, value] of readAssignments(tokens.slice(3), lineNumber)) {
+    if (key === "direction") {
+      if (!["up","down","left","right"].includes(value)) throw new DslCompileError("nextTo direction must be up/down/left/right.", lineNumber);
+      direction = value as any; continue;
+    }
+    if (key === "buff") { buff = parseNumber(value, lineNumber); continue; }
+    throw new DslCompileError(`Unknown nextTo option '${key}'.`, lineNumber);
+  }
+  const a = measureNode(node);
+  const b = measureNode(target);
+  if (direction === "right") pushSet(state, time, node.id, "transform.x", target.transform.x + b.w/2 + a.w/2 + buff);
+  else if (direction === "left") pushSet(state, time, node.id, "transform.x", target.transform.x - b.w/2 - a.w/2 - buff);
+  else if (direction === "up") pushSet(state, time, node.id, "transform.y", target.transform.y + b.h/2 + a.h/2 + buff);
+  else pushSet(state, time, node.id, "transform.y", target.transform.y - b.h/2 - a.h/2 - buff);
+}
+
+function pushSet(state: CompileState, time: number, id: string, path: string, value: number): void {
+  state.timeline.push({ t: time, op: "set", id, path, value });
+  const node = state.nodes.get(id);
+  if (!node) return;
+  if (path === "transform.x") node.transform.x = value;
+  if (path === "transform.y") node.transform.y = value;
+}
+
+function measureNode(node: SceneNode): { w: number; h: number } {
+  if (node.type === "circle") { const r = Number(node.geometry.r ?? 40); return { w: r * 2, h: r * 2 }; }
+  if (node.type === "rect" || node.type === "triangle") return { w: Number(node.geometry.w ?? 100), h: Number(node.geometry.h ?? 80) };
+  if (node.type === "line") return { w: Math.abs(Number(node.geometry.x2 ?? 100) - Number(node.geometry.x1 ?? 0)), h: Math.abs(Number(node.geometry.y2 ?? 0) - Number(node.geometry.y1 ?? 0)) };
+  if (node.type === "group") {
+    const child = node.children.map(measureNode);
+    return { w: child.reduce((a,c)=>a+c.w,0), h: child.reduce((a,c)=>Math.max(a,c.h),0) };
+  }
+  const size = Number(node.geometry.fontSize ?? 32);
+  return { w: size * 3, h: size * 1.2 };
+}
 function parseShow(
   tokens: string[],
   state: CompileState,
