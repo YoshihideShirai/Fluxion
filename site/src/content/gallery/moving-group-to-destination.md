@@ -6,12 +6,12 @@ source_example_path: examples/gallery/moving-group-to-destination.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "Manim の arrange/buff 等の高水準レイアウト sugar は未対応で、初期配置は明示座標で指定している。"
+  - symptom: "`arrange`/`nextTo` は導入済みだが、Manim `arrange(..., aligned_edge=...)` や微細な bounding-box 一致は未対応。"
     layer: dsl
     impact: low
-    workaround: "初期配置を `at x,y` で明示し、group 全体の移動は `animate dots.x/y` を使う。"
-    closure_condition: "group レイアウト sugar（arrange/next_to 相当）が導入される。"
-    fidelity_upgrade_condition: "高水準レイアウト命令だけで同等配置を再現できる時。"
+    workaround: "必要な微調整は `set` か `animate` の座標指定で補う。"
+    closure_condition: "aligned_edge などの追加レイアウト引数をサポートする。"
+    fidelity_upgrade_condition: "主要な Manim レイアウト引数を DSL で表現できる時。"
 category: Manim Stable Examples
 status: ported
 order: 69
@@ -23,11 +23,14 @@ rect bg w=960 h=540 at 0,0 fill="#0b1020"
 text title "MovingGroupToDestination" at 0,220 size=38 fill="#e2e8f0"
 rect panel w=760 h=320 at 0,-10 fill="#111827" stroke="#334155" strokeWidth=2
 
-circle c1 r=26 at -300,-40 fill="#38bdf8" stroke="#0f172a" strokeWidth=3
-circle c2 r=26 at -240,-40 fill="#22d3ee" stroke="#0f172a" strokeWidth=3
-circle c3 r=26 at -180,-40 fill="#14b8a6" stroke="#0f172a" strokeWidth=3
-text label "group source" at -240,-118 size=20 fill="#bae6fd"
+circle c1 r=26 at 0,-40 fill="#38bdf8" stroke="#0f172a" strokeWidth=3
+circle c2 r=26 at 0,-40 fill="#22d3ee" stroke="#0f172a" strokeWidth=3
+circle c3 r=26 at 0,-40 fill="#14b8a6" stroke="#0f172a" strokeWidth=3
+text label "group source" at 0,-118 size=20 fill="#bae6fd"
 group dots c1 c2 c3
+arrange dots direction=horizontal gap=8
+set dots.x to -240
+nextTo label dots direction=down buff=24
 
 rect target w=220 h=110 at 210,20 fill="none" stroke="#f59e0b" strokeWidth=3 opacity=0.9
 text targetLabel "destination" at 210,-70 size=20 fill="#fcd34d"

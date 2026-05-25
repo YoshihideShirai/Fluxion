@@ -1015,3 +1015,27 @@ always dot.x = expr=100*cos(t)`);
   assert.equal(bind.path, "transform.x");
   assert.equal(bind.expr, "100*cos(t)");
 });
+
+test("arrange places group children with equal gaps", () => {
+  const documentData = compileTextDsl(`circle a r=10
+circle b r=10
+group g a b
+arrange g direction=horizontal gap=20`);
+  const sets = documentData.timeline.filter((op) => op.op === "set");
+  equalJson(
+    sets.map((op) => [op.id, op.path, op.value]),
+    [
+      ["a", "transform.x", -20],
+      ["b", "transform.x", 20],
+    ],
+  );
+});
+
+test("nextTo places node next to target", () => {
+  const documentData = compileTextDsl(`rect target w=100 h=40 at 50,0
+circle c r=10
+nextTo c target direction=right buff=10`);
+  const set = documentData.timeline.find((op) => op.op === "set" && op.id === "c");
+  assert.equal(set?.op, "set");
+  if (set?.op === "set") assert.equal(set.value, 120);
+});
