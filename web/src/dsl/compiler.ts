@@ -914,7 +914,8 @@ function parseNextTo(tokens: string[], state: CompileState, lineNumber: number, 
   for (const [key, value] of readAssignments(tokens.slice(3), lineNumber)) {
     if (key === "direction") {
       if (!["up","down","left","right"].includes(value)) throw new DslCompileError("nextTo direction must be up/down/left/right.", lineNumber);
-      direction = value as any; continue;
+      direction = value as "up" | "down" | "left" | "right";
+      continue;
     }
     if (key === "buff") { buff = parseNumber(value, lineNumber); continue; }
     throw new DslCompileError(`Unknown nextTo option '${key}'.`, lineNumber);
