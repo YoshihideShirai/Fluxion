@@ -310,6 +310,34 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     source: 'scene width=640 height=360 fps=60\nvalue theta = 0\ntracedPath trace x=96*cos(t) y=96*sin(t) from=0 to=theta samples=96 at 320,180 stroke="#22d3ee" strokeWidth=5\ncircle dot r=16 at 416,180 fill="#38bdf8"\nset dot.x to expr="320 + 96 * cos(theta)"\nset dot.y to expr="180 + 96 * sin(theta)"\nanimate theta from 0 to 6.283 duration=2s easing=linear',
   },
   {
+    key: 'arrange',
+    command: 'arrange',
+    description: {
+      ja: 'group の子要素を等間隔で自動配置します。',
+      en: 'Auto-layout group children with equal spacing.',
+    },
+    referencePurpose: {
+      ja: 'Group auto-layout sugar',
+      en: 'Group auto-layout sugar',
+    },
+    minimalExample: 'arrange dots direction=horizontal gap=20',
+    source: 'scene width=640 height=360 fps=60\ncircle d1 r=22 at 0,0 fill="#38bdf8"\ncircle d2 r=22 at 0,0 fill="#f97316"\ncircle d3 r=22 at 0,0 fill="#22c55e"\ngroup dots d1 d2 d3\narrange dots direction=horizontal gap=40\nset dots.x to 320\nset dots.y to 180',
+  },
+  {
+    key: 'nextTo',
+    command: 'nextTo',
+    description: {
+      ja: '指定した対象の近くに node を相対配置します。',
+      en: 'Position a node relative to another node.',
+    },
+    referencePurpose: {
+      ja: 'Relative placement sugar',
+      en: 'Relative placement sugar',
+    },
+    minimalExample: 'nextTo label dot direction=right buff=12',
+    source: 'scene width=640 height=360 fps=60\ncircle dot r=28 at 280,180 fill="#38bdf8"\ntext label "nextTo" at 0,0 size=30 fill="#e2e8f0"\nnextTo label dot direction=right buff=24',
+  },
+  {
     key: 'cameraFrame',
     command: 'cameraFrame',
     description: {
