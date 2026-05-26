@@ -6,14 +6,15 @@ source_example_path: examples/gallery/three-d-camera-illusion-rotation.fluxion.t
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "この Example はまだ Fluxion へ移植されていません（プレースホルダー表示のみ）。"
-    layer: compiler
+  - symptom: "3Dレンダラ未実装のため、2D投影と cameraFrame の横振りで錯視回転を近似している。"
+    layer: runtime
     impact: high
-    workaround: "同テーマの移植済み Example を参照する。"
-    closure_condition: "当該 Example の DSL 実装とアニメーションシーケンスが追加される。"
-    fidelity_upgrade_condition: "プレースホルダーではなく元Example相当のシーンが再現され、主要差分が解消された時。"
+    workaround: "`animateFrame` と位相差付き `always` 運動で回転錯視を構成する。"
+    closure_condition: "3Dカメラ姿勢パラメータ（phi/theta/gamma）と透視投影を runtime へ実装する。"
+    fidelity_upgrade_condition: "Manim の illusion rotation を同等のカメラ軌道で再現できる時。"
 category: Manim Stable Examples
 status: partial
+priority: high
 gap_id: GAP-027
 order: 74
 ---

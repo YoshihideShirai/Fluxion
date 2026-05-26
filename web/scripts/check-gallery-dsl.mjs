@@ -28,6 +28,7 @@ const files = [
   'polygon-on-axes.fluxion.txt',
   'sine-curve-unit-circle.fluxion.txt',
   'three-d-camera-rotation.fluxion.txt',
+  'three-d-camera-illusion-rotation.fluxion.txt',
   'vector-arrow.fluxion.txt',
 ];
 

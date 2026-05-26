@@ -1,0 +1,42 @@
+scene width=960 height=540 fps=60
+
+value phase = 0
+
+rect bg w=960 h=540 at 0,0 fill="#020617"
+text title "ThreeDCameraIllusionRotation (approx)" at 0,220 size=32 fill="#e2e8f0"
+text note "camera swing + projected ring" at 0,-210 size=20 fill="#94a3b8"
+
+cameraFrame at 0,0 scale=1
+
+rect stage w=720 h=340 at 0,-20 fill="#0f172a" stroke="#334155" strokeWidth=2
+path ring d="M -250 -20 C -250 -120 250 -120 250 -20 C 250 80 -250 80 -250 -20" fill="none" stroke="#334155" strokeWidth=2
+line axis x1=-280 y1=0 x2=280 y2=0 at 0,-20 stroke="#1e293b" strokeWidth=2
+circle core r=20 at 0,-20 fill="#22d3ee" stroke="#0e7490" strokeWidth=2
+circle orb_a r=12 at 220,-20 fill="#38bdf8" stroke="#075985" strokeWidth=2
+circle orb_b r=10 at -220,-20 fill="#fbbf24" stroke="#78350f" strokeWidth=2
+line sweep x1=-180 y1=0 x2=180 y2=0 at 0,-20 stroke="#f59e0b" strokeWidth=3 opacity=0.8
+
+always orb_a.x = expr=220*cos(phase)
+always orb_a.y = expr=-20 + 95*sin(phase)
+always orb_b.x = expr=-220*cos(phase*1.1 + pi/2)
+always orb_b.y = expr=-20 + 75*sin(phase*1.1 + pi/2)
+always sweep.rotation = expr=55*sin(phase*0.8)
+always core.rotation = expr=-30*sin(phase*0.8)
+
+at 0s:
+  play FadeIn(title) duration=0.5s
+  play FadeIn(note) duration=0.4s
+  play FadeIn(stage) duration=0.5s
+  play Create(ring) duration=0.7s
+  play Create(axis) duration=0.4s
+  play FadeIn(core) duration=0.4s
+  play FadeIn(orb_a) duration=0.4s
+  play FadeIn(orb_b) duration=0.4s
+  play Create(sweep) duration=0.5s
+
+animate phase from 0 to 12.566 duration=6.5s easing=linear
+animateFrame to 120,-15 scale=1.16 start=0.7s duration=2.1s easing=easeInOut
+animateFrame to -120,-15 scale=1.16 start=2.9s duration=2.1s easing=easeInOut
+animateFrame to 0,0 scale=1 start=5.2s duration=1s easing=easeInOut
+wait 0.4s
+play FadeOut(note) duration=0.4s
