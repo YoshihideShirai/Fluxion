@@ -1,11 +1,12 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const webRoot = resolve(__dirname, '..');
 const root = resolve(webRoot, '..');
-const galleryDir = resolve(root, 'examples/gallery');
+const examplesGalleryDir = resolve(root, 'examples/gallery');
+const siteGalleryDir = resolve(root, 'site/src/content/gallery');
 
 const compilerModule = await import(pathToFileURL(resolve(webRoot, 'dist/dsl/compiler.js')).href);
 const { compileTextDsl } = compilerModule;
@@ -32,13 +33,33 @@ const files = [
   'vector-arrow.fluxion.txt',
 ];
 
-for (const file of files) {
-  const source = readFileSync(resolve(galleryDir, file), 'utf8');
+const markdownFiles = readdirSync(siteGalleryDir)
+  .filter((file) => file.endsWith('.md'))
+  .sort();
+
+function readMarkdownBody(path) {
+  const source = readFileSync(path, 'utf8');
+  const match = /^---\r?\n[\s\S]*?\r?\n---\r?\n?([\s\S]*)$/u.exec(source);
+  if (!match) throw new Error('Missing frontmatter block.');
+  return match[1].trim();
+}
+
+function compileExample(label, source) {
   try {
     compileTextDsl(source);
   } catch (error) {
-    throw new Error(`${file}: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`${label}: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
-console.log(`Compiled ${files.length} gallery DSL examples successfully.`);
+for (const file of files) {
+  const source = readFileSync(resolve(examplesGalleryDir, file), 'utf8');
+  compileExample(`examples/gallery/${file}`, source);
+}
+
+for (const file of markdownFiles) {
+  const source = readMarkdownBody(resolve(siteGalleryDir, file));
+  compileExample(`site/src/content/gallery/${file}`, source);
+}
+
+console.log(`Compiled ${files.length} example gallery DSL files and ${markdownFiles.length} site gallery pages successfully.`);
