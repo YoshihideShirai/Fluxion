@@ -6,14 +6,15 @@ source_example_path: examples/gallery/three-d-camera-rotation.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "この Example はまだ Fluxion へ移植されていません（プレースホルダー表示のみ）。"
-    layer: compiler
+  - symptom: "3D renderer 非搭載のため、2D投影 + cameraFrame sweep で視覚近似している。"
+    layer: runtime
     impact: high
-    workaround: "同テーマの移植済み Example を参照する。"
-    closure_condition: "当該 Example の DSL 実装とアニメーションシーケンスが追加される。"
-    fidelity_upgrade_condition: "プレースホルダーではなく元Example相当のシーンが再現され、主要差分が解消された時。"
+    workaround: "`always` と `animateFrame` を併用してカメラ回転感を演出する。"
+    closure_condition: "3D座標系/カメラ回転（phi/theta/gamma）を runtime でネイティブ実装する。"
+    fidelity_upgrade_condition: "Manim の 3D camera rotation を同等パラメータで再現できる時。"
 category: Manim Stable Examples
 status: partial
+priority: high
 gap_id: GAP-028
 order: 75
 ---
