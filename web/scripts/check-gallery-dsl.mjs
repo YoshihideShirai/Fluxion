@@ -24,8 +24,11 @@ const files = [
   'moving-zoomed-scene-around.fluxion.txt',
   'moving_frame_box.fluxion.txt',
   'point-with-trace.fluxion.txt',
+  'rotation-updater.fluxion.txt',
   'polygon-on-axes.fluxion.txt',
   'sine-curve-unit-circle.fluxion.txt',
+  'three-d-camera-rotation.fluxion.txt',
+  'three-d-camera-illusion-rotation.fluxion.txt',
   'vector-arrow.fluxion.txt',
 ];
 

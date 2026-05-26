@@ -14,6 +14,7 @@ known_gaps:
     fidelity_upgrade_condition: "Manim の updater 関数をそのまま記述して同挙動を再現できる時。"
 category: Manim Stable Examples
 status: partial
+priority: high
 gap_id: GAP-026
 order: 73
 ---

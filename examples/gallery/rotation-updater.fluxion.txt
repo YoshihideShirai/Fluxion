@@ -1,0 +1,31 @@
+scene width=960 height=540 fps=60
+
+value t = 0
+
+rect bg w=960 h=540 at 0,0 fill="#0b1020"
+text title "RotationUpdater" at 0,220 size=40 fill="#e2e8f0"
+circle ring r=120 at 0,-20 fill="none" stroke="#334155" strokeWidth=2
+line spoke x1=0 y1=0 x2=120 y2=0 at 0,-20 stroke="#38bdf8" strokeWidth=4
+circle tip r=10 at 120,-20 fill="#22d3ee" stroke="#0e7490" strokeWidth=2
+rect follower w=56 h=36 at 180,-20 fill="none" stroke="#f59e0b" strokeWidth=3
+text note "value + always で updater を近似" at 0,-210 size=20 fill="#94a3b8"
+
+always spoke.rotation = expr=t
+always tip.x = expr=120*cos(t)
+always tip.y = expr=-20 + 120*sin(t)
+always follower.rotation = expr=-1.8*t
+always follower.x = expr=180 + 34*cos(2*t)
+always follower.y = expr=-20 + 34*sin(2*t)
+
+at 0s:
+  play FadeIn(title) duration=0.5s
+  play Create(ring) duration=0.6s
+  play Create(spoke) duration=0.5s
+  play FadeIn(tip) duration=0.4s
+  play Create(follower) duration=0.5s
+  play FadeIn(note) duration=0.4s
+
+wait 0.2s
+animate t from 0 to 12.566 duration=6s easing=linear
+wait 0.4s
+play FadeOut(note) duration=0.5s
