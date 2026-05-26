@@ -19,24 +19,62 @@ gap_id: GAP-027
 order: 74
 ---
 scene width=960 height=540 fps=60
-value t = 0
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "ThreeDCameraIllusionRotation" at 0,220 size=38 fill="#e2e8f0"
-rect plane w=620 h=300 at 0,-20 fill="none" stroke="#334155" strokeWidth=2
-path orbit d="M -220 -20 C -60 -150 60 110 220 -20" fill="none" stroke="#475569" strokeWidth=2
-circle obj r=16 at -220,-20 fill="#38bdf8"
-circle light r=12 at 220,-20 fill="#fbbf24"
-line beam x1=220 y1=0 x2=-220 y2=0 at 0,-20 stroke="#f59e0b" strokeWidth=3
-always obj.x = expr=-220 + 440*(t/6.283)
-always obj.y = expr=-20 + 130*sin(t)
-always light.x = expr=220*cos(t*0.7)
-always light.y = expr=-20 + 90*sin(t*0.7)
-always beam.rotation = expr=12*sin(t*0.7)
+
+value phase = 0
+
+rect bg w=960 h=540 at 0,0 fill="#020617"
+text title "ThreeDCameraIllusionRotation (approx)" at 0,220 size=32 fill="#e2e8f0"
+text note "camera swing + projected ring" at 0,-210 size=20 fill="#94a3b8"
+text illusionLabel "fixed objects, moving viewpoint illusion" at 0,176 size=20 fill="#c4b5fd" opacity=0
+
+cameraFrame at 0,0 scale=1
+
+rect stage w=720 h=340 at 0,-20 fill="#0f172a" stroke="#334155" strokeWidth=2
+path floor d="M -300 -120 L 300 -120 L 350 82 L -350 82 Z" at 0,-20 fill="#020617" stroke="#1e293b" strokeWidth=2 opacity=0.8
+line floor_h1 x1=-324 y1=48 x2=324 y2=48 at 0,-20 stroke="#1e293b" strokeWidth=1
+line floor_h2 x1=-306 y1=-8 x2=306 y2=-8 at 0,-20 stroke="#1e293b" strokeWidth=1
+line floor_h3 x1=-286 y1=-66 x2=286 y2=-66 at 0,-20 stroke="#1e293b" strokeWidth=1
+path ring_shadow d="M -250 -20 C -250 -120 250 -120 250 -20 C 250 80 -250 80 -250 -20" fill="#1d4ed8" opacity=0.08 stroke="#1d4ed8" strokeWidth=9
+path ring_back d="M -250 -20 C -250 -120 250 -120 250 -20" fill="none" stroke="#1e40af" strokeWidth=5 opacity=0.35
+path ring_front d="M 250 -20 C 250 80 -250 80 -250 -20" fill="none" stroke="#93c5fd" strokeWidth=4
+path ring d="M -250 -20 C -250 -120 250 -120 250 -20 C 250 80 -250 80 -250 -20" fill="none" stroke="#334155" strokeWidth=1.5 opacity=0.55
+line axis x1=-280 y1=0 x2=280 y2=0 at 0,-20 stroke="#1e293b" strokeWidth=2
+line vertical x1=0 y1=-118 x2=0 y2=116 at 0,-20 stroke="#1e293b" strokeWidth=2
+circle core r=20 at 0,-20 fill="#22d3ee" stroke="#0e7490" strokeWidth=2
+circle core_glow r=58 at 0,-20 fill="#22d3ee" opacity=0.08 stroke="#67e8f9" strokeWidth=2
+circle orb_a r=12 at 220,-20 fill="#38bdf8" stroke="#075985" strokeWidth=2
+circle orb_b r=10 at -220,-20 fill="#fbbf24" stroke="#78350f" strokeWidth=2
+circle orb_a_glow r=32 at 220,-20 fill="#38bdf8" opacity=0.1 stroke="#7dd3fc" strokeWidth=2
+circle orb_b_glow r=30 at -220,-20 fill="#fbbf24" opacity=0.1 stroke="#fde68a" strokeWidth=2
+line sweep x1=-180 y1=0 x2=180 y2=0 at 0,-20 stroke="#f59e0b" strokeWidth=3 opacity=0.8
+line sweep_glow x1=-200 y1=0 x2=200 y2=0 at 0,-20 stroke="#fbbf24" strokeWidth=10 opacity=0.12
+
+always orb_a.x = expr=220*cos(phase)
+always orb_a.y = expr=-20 + 95*sin(phase)
+always orb_b.x = expr=-220*cos(phase*1.1 + pi/2)
+always orb_b.y = expr=-20 + 75*sin(phase*1.1 + pi/2)
+always orb_a_glow.x = expr=220*cos(phase)
+always orb_a_glow.y = expr=-20 + 95*sin(phase)
+always orb_b_glow.x = expr=-220*cos(phase*1.1 + pi/2)
+always orb_b_glow.y = expr=-20 + 75*sin(phase*1.1 + pi/2)
+always sweep.rotation = expr=55*sin(phase*0.8)
+always sweep_glow.rotation = expr=55*sin(phase*0.8)
+always core.rotation = expr=-30*sin(phase*0.8)
+
 at 0s:
   play FadeIn(title) duration=0.5s
-  play Create(plane) duration=0.6s
-  play Create(orbit) duration=0.5s
-  play FadeIn(obj) duration=0.4s
-  play FadeIn(light) duration=0.4s
-  play Create(beam) duration=0.5s
-animate t from 0 to 6.283 duration=4s easing=linear
+  play AnimationGroup(FadeIn(note), FadeIn(illusionLabel), lagRatio=0.08) duration=0.5s
+  play FadeIn(stage) duration=0.5s
+  play FadeIn(floor) duration=0.35s
+  play AnimationGroup(Create(floor_h1), Create(floor_h2), Create(floor_h3), lagRatio=0.08) duration=0.55s
+  play AnimationGroup(Create(ring_shadow), Create(ring_back), Create(ring_front), Create(ring), lagRatio=0.08) duration=1.0s
+  play AnimationGroup(Create(axis), Create(vertical), lagRatio=0.08) duration=0.55s
+  play AnimationGroup(FadeIn(core_glow), FadeIn(core), FadeIn(orb_a_glow), FadeIn(orb_a), FadeIn(orb_b_glow), FadeIn(orb_b), lagRatio=0.08) duration=0.8s
+  play AnimationGroup(Create(sweep_glow), Create(sweep), lagRatio=0.06) duration=0.6s
+
+animate phase from 0 to 12.566 duration=6.5s easing=linear
+animateFrame to 120,-15 scale=1.16 start=0.7s duration=2.1s easing=easeInOut
+animateFrame to -120,-15 scale=1.16 start=2.9s duration=2.1s easing=easeInOut
+animateFrame to 0,0 scale=1 start=5.2s duration=1s easing=easeInOut
+wait 0.4s
+play FadeOut(note) duration=0.4s

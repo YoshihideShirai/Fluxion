@@ -773,6 +773,71 @@ play ReplacementTransform(from, to) duration=1.25s easing=linear`);
   );
 });
 
+test("fades hidden nodes in to visible opacity", () => {
+  const documentData = compileTextDsl(`text title "Intro" at 100,80 opacity=0
+
+play FadeIn(title) duration=1s easing=linear`);
+
+  const fadeInOpacity = documentData.timeline.find(
+    (op): op is AnimateOperation =>
+      op.op === "animate" &&
+      op.id === "title" &&
+      op.path === "transform.opacity",
+  );
+  assert.equal(fadeInOpacity?.from, 0);
+  assert.equal(fadeInOpacity?.to, 1);
+});
+
+test("writes hidden text nodes at visible opacity", () => {
+  const documentData = compileTextDsl(`math title "x^2" opacity=0
+
+play Write(title) duration=1s`);
+
+  const create = documentData.timeline.find(
+    (op) => op.op === "create" && op.node.id === "title",
+  );
+  assert.equal(create?.op, "create");
+  if (create?.op !== "create") throw new Error("Expected Write create op.");
+  assert.equal(create.node.transform.opacity, 1);
+  assert.equal(create.node.geometry.writeProgress, 0);
+});
+
+test("creates hidden group children as visible targets", () => {
+  const documentData = compileTextDsl(`path h d="M 0 0 L 20 0" opacity=0
+path v d="M 0 0 L 0 20" opacity=0
+group grid h v
+
+play Create(grid) duration=1s`);
+
+  const create = documentData.timeline.find(
+    (op) => op.op === "create" && op.node.id === "grid",
+  );
+  assert.equal(create?.op, "create");
+  if (create?.op !== "create") throw new Error("Expected group create op.");
+  equalJson(
+    create.node.children.map((child) => [child.id, child.transform.opacity]),
+    [
+      ["h", 1],
+      ["v", 1],
+    ],
+  );
+});
+
+test("transforms toward visible hidden targets", () => {
+  const documentData = compileTextDsl(`text source "A" opacity=1
+text target "B" at 40,0 opacity=0
+
+play Transform(source, target) duration=1s`);
+
+  const opacityAnimation = documentData.timeline.find(
+    (op): op is AnimateOperation =>
+      op.op === "animate" &&
+      op.id === "source" &&
+      op.path === "transform.opacity",
+  );
+  assert.equal(opacityAnimation, undefined);
+});
+
 test("compiles Circumscribe with top-level color option", () => {
   const documentData = compileTextDsl(`circle dot r=20 at 0,0
 play Circumscribe(dot) duration=0.7s color="#fbbf24"`);

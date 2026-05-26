@@ -1,21 +1,3 @@
----
-title: ManimCELogo
-description: "Manim Example: `ManimCELogo` (`#manimcelogo`) に対応するデモ。"
-source_manim_url: https://docs.manim.community/en/stable/examples.html#manimcelogo
-source_example_path: examples/gallery/manim_ce_logo.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
-known_gaps:
-  - symptom: "Exact font metrics and layer blending differ from Manim output."
-    layer: renderer
-    impact: low
-    workaround: "必要に応じてスタイル値を手動調整する。"
-    closure_condition: "該当レンダリング差分が解消され、Manim 出力との視覚差が許容範囲に収まる。"
-    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
-category: Basic Concepts
-status: ported
-order: 12
----
 scene width=960 height=540 fps=60
 rect bg w=960 h=540 at 0,0 fill="#ece6e2"
 rect backdrop_shadow w=632 h=342 at 44,0 fill="#cfc7c1" stroke="#cfc7c1" strokeWidth=0 opacity=0

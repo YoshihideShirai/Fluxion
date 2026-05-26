@@ -2,25 +2,42 @@ scene width=960 height=540 fps=60
 
 value t = 0
 
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "MovingDots" at 0,220 size=40 fill="#e2e8f0"
-line track x1=-320 y1=0 x2=320 y2=0 at 0,-40 stroke="#334155" strokeWidth=3
-circle dot_a r=12 at -240,-40 fill="#38bdf8" stroke="#0f172a" strokeWidth=2
-circle dot_b r=12 at -120,-40 fill="#f97316" stroke="#7c2d12" strokeWidth=2
-circle dot_c r=12 at 0,-40 fill="#22c55e" stroke="#14532d" strokeWidth=2
-text note "phase-shifted harmonic motion (approx.)" at 0,-210 size=20 fill="#94a3b8"
+rect bg w=960 h=540 at 0,0 fill="#080b14"
+rect panel w=760 h=340 at 0,-18 fill="#0f172a" stroke="#1e293b" strokeWidth=2
+text title "MovingDots" at -312,196 size=40 fill="#f8fafc"
+text formula "x_i(t)=x_i(0)+A\\sin(t+\\phi_i)" at 168,196 size=23 fill="#bae6fd"
+line axis x1=-330 y1=0 x2=330 y2=0 at 0,-46 stroke="#475569" strokeWidth=3
+line zero_tick x1=0 y1=-14 x2=0 y2=14 at 0,-46 stroke="#64748b" strokeWidth=2
+text zero_label "0" at 0,-84 size=18 fill="#94a3b8"
+path wave_a d="M -320 -46 C -250 -130 -170 38 -100 -46 C -30 -130 50 38 120 -46 C 190 -130 260 38 330 -46" fill="none" stroke="#38bdf8" strokeWidth=2 opacity=0.34
+path wave_b d="M -320 -46 C -250 38 -170 -130 -100 -46 C -30 38 50 -130 120 -46 C 190 38 260 -130 330 -46" fill="none" stroke="#fb923c" strokeWidth=2 opacity=0.28
+circle dot_a r=15 at -240,-46 fill="#38bdf8" stroke="#e0f2fe" strokeWidth=3
+circle dot_b r=15 at -120,-46 fill="#fb923c" stroke="#ffedd5" strokeWidth=3
+circle dot_c r=15 at 0,-46 fill="#22c55e" stroke="#dcfce7" strokeWidth=3
+circle ghost_a r=10 at -240,-46 fill="#38bdf8" opacity=0.2
+circle ghost_b r=10 at -120,-46 fill="#fb923c" opacity=0.18
+circle ghost_c r=10 at 0,-46 fill="#22c55e" opacity=0.18
+text label_a "phase 0" at -274,84 size=18 fill="#7dd3fc"
+text label_b "phase pi/2" at -52,78 size=18 fill="#fdba74"
+text label_c "phase pi" at 208,84 size=18 fill="#86efac"
+text note "updater driven motion approximated with value trackers" at 0,-210 size=20 fill="#94a3b8"
 
-always dot_a.x = expr=-240 + 200*sin(t)
-always dot_b.x = expr=-120 + 200*sin(t + pi/2)
-always dot_c.x = expr=0 + 200*sin(t + pi)
+always dot_a.x = expr=-240 + 210*sin(t)
+always dot_b.x = expr=-120 + 210*sin(t + pi/2)
+always dot_c.x = expr=0 + 210*sin(t + pi)
+always ghost_a.x = expr=-240 + 210*sin(t - 0.55)
+always ghost_b.x = expr=-120 + 210*sin(t + pi/2 - 0.55)
+always ghost_c.x = expr=0 + 210*sin(t + pi - 0.55)
 
 at 0s:
+  play FadeIn(panel) duration=0.35s
   play FadeIn(title) duration=0.5s
-  play Create(track) duration=0.6s
-  play FadeIn(dot_a) duration=0.4s
-  play FadeIn(dot_b) duration=0.4s
-  play FadeIn(dot_c) duration=0.4s
+  play FadeIn(formula) duration=0.5s
+  play Create(axis) duration=0.6s
+  play AnimationGroup(Create(wave_a), Create(wave_b), FadeIn(zero_tick), FadeIn(zero_label), lagRatio=0.08) duration=0.9s easing=easeOut
+  play AnimationGroup(FadeIn(ghost_a), FadeIn(ghost_b), FadeIn(ghost_c), FadeIn(dot_a), FadeIn(dot_b), FadeIn(dot_c), lagRatio=0.08) duration=0.8s easing=easeOut
+  play AnimationGroup(FadeIn(label_a), FadeIn(label_b), FadeIn(label_c), lagRatio=0.08) duration=0.5s
   play FadeIn(note) duration=0.4s
 
 wait 0.2s
-animate t from 0 to 12.56 duration=5s easing=linear
+animate t from 0 to 12.566 duration=5.8s easing=linear

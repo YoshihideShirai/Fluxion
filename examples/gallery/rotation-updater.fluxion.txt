@@ -2,28 +2,64 @@ scene width=960 height=540 fps=60
 
 value t = 0
 
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "RotationUpdater" at 0,220 size=40 fill="#e2e8f0"
-circle ring r=120 at 0,-20 fill="none" stroke="#334155" strokeWidth=2
-line spoke x1=0 y1=0 x2=120 y2=0 at 0,-20 stroke="#38bdf8" strokeWidth=4
-circle tip r=10 at 120,-20 fill="#22d3ee" stroke="#0e7490" strokeWidth=2
-rect follower w=56 h=36 at 180,-20 fill="none" stroke="#f59e0b" strokeWidth=3
-text note "value + always で updater を近似" at 0,-210 size=20 fill="#94a3b8"
+rect bg w=960 h=540 at 0,0 fill="#080b14"
+rect panel w=760 h=350 at 0,-20 fill="#0f172a" stroke="#1e293b" strokeWidth=2
+text title "RotationUpdater" at -270,198 size=40 fill="#f8fafc"
+text formula "mobject.add_updater(lambda m, dt: ...)" at 150,198 size=22 fill="#fde68a"
+text tracker_label "ValueTracker t drives every frame" at -118,150 size=20 fill="#bae6fd" opacity=0
+path driver_sector d="M 0 0 L 116 0 A 116 116 0 0 1 58 100 Z" at -118,-34 fill="#38bdf8" opacity=0.08 stroke="none"
+circle outer r=132 at -118,-34 fill="none" stroke="#334155" strokeWidth=2
+circle inner r=82 at -118,-34 fill="none" stroke="#1e293b" strokeWidth=2
+circle tick_a r=5 at 14,-34 fill="#64748b" stroke="none"
+circle tick_b r=5 at -118,98 fill="#64748b" stroke="none"
+circle tick_c r=5 at -250,-34 fill="#64748b" stroke="none"
+circle tick_d r=5 at -118,-166 fill="#64748b" stroke="none"
+line spoke x1=0 y1=0 x2=132 y2=0 at -118,-34 stroke="#38bdf8" strokeWidth=5
+circle hub r=10 at -118,-34 fill="#e0f2fe" stroke="#38bdf8" strokeWidth=3
+circle tip r=13 at 14,-34 fill="#22d3ee" stroke="#cffafe" strokeWidth=3
+circle tip_glow r=36 at 14,-34 fill="#22d3ee" opacity=0.1 stroke="#7dd3fc" strokeWidth=2
+circle ghost_0 r=8 at 14,-34 fill="#22d3ee" opacity=0.16 stroke="#7dd3fc" strokeWidth=2
+circle ghost_90 r=8 at -118,98 fill="#22d3ee" opacity=0.14 stroke="#7dd3fc" strokeWidth=2
+circle ghost_180 r=8 at -250,-34 fill="#22d3ee" opacity=0.12 stroke="#7dd3fc" strokeWidth=2
+circle ghost_270 r=8 at -118,-166 fill="#22d3ee" opacity=0.1 stroke="#7dd3fc" strokeWidth=2
+path orbit d="M -118 -34 C -118 -107 -59 -166 14 -166 C 87 -166 146 -107 146 -34 C 146 39 87 98 14 98 C -59 98 -118 39 -118 -34" fill="none" stroke="#164e63" strokeWidth=3 opacity=0.65
+path follower_orbit d="M 208 -34 C 208 -53 223 -68 242 -68 C 261 -68 276 -53 276 -34 C 276 -15 261 0 242 0 C 223 0 208 -15 208 -34" fill="none" stroke="#78350f" strokeWidth=3 opacity=0.35
+rect follower w=66 h=42 at 242,-34 fill="#111827" stroke="#f59e0b" strokeWidth=4
+circle follower_dot r=8 at 242,-34 fill="#fbbf24" stroke="#fffbeb" strokeWidth=2
+circle follower_glow r=28 at 242,-34 fill="#fbbf24" opacity=0.1 stroke="#fde68a" strokeWidth=2
+line tether x1=0 y1=0 x2=0 y2=0 at 0,0 stroke="#475569" strokeWidth=2 opacity=0.75
+line update_bus x1=-4 y1=0 x2=96 y2=0 at 82,118 stroke="#fbbf24" strokeWidth=3 opacity=0.45
+text bus_label "updater propagates t" at 124,142 size=18 fill="#fde68a" opacity=0
+text phase_label "rotation = -1.8t" at 242,-112 size=18 fill="#fdba74" opacity=0
+text label_drive "driver" at -218,118 size=18 fill="#7dd3fc"
+text label_follow "follower" at 242,48 size=18 fill="#fdba74"
+text note "rotation and position are recomputed every frame" at 0,-222 size=20 fill="#94a3b8"
 
 always spoke.rotation = expr=t
-always tip.x = expr=120*cos(t)
-always tip.y = expr=-20 + 120*sin(t)
+always tip.x = expr=-118 + 132*cos(t)
+always tip.y = expr=-34 + 132*sin(t)
+always tip_glow.x = expr=-118 + 132*cos(t)
+always tip_glow.y = expr=-34 + 132*sin(t)
 always follower.rotation = expr=-1.8*t
-always follower.x = expr=180 + 34*cos(2*t)
-always follower.y = expr=-20 + 34*sin(2*t)
+always follower.x = expr=242 + 34*cos(2*t)
+always follower.y = expr=-34 + 34*sin(2*t)
+always follower_dot.x = expr=242 + 34*cos(2*t)
+always follower_dot.y = expr=-34 + 34*sin(2*t)
+always follower_glow.x = expr=242 + 34*cos(2*t)
+always follower_glow.y = expr=-34 + 34*sin(2*t)
+always tether.x1 = expr=-118 + 132*cos(t)
+always tether.y1 = expr=-34 + 132*sin(t)
+always tether.x2 = expr=242 + 34*cos(2*t)
+always tether.y2 = expr=-34 + 34*sin(2*t)
 
 at 0s:
+  play FadeIn(panel) duration=0.35s
   play FadeIn(title) duration=0.5s
-  play Create(ring) duration=0.6s
-  play Create(spoke) duration=0.5s
-  play FadeIn(tip) duration=0.4s
-  play Create(follower) duration=0.5s
-  play FadeIn(note) duration=0.4s
+  play FadeIn(formula) duration=0.45s
+  play AnimationGroup(FadeIn(driver_sector), Create(outer), Create(inner), Create(orbit), FadeIn(tick_a), FadeIn(tick_b), FadeIn(tick_c), FadeIn(tick_d), FadeIn(tracker_label), lagRatio=0.06) duration=1s easing=easeOut
+  play AnimationGroup(Create(spoke), FadeIn(hub), FadeIn(tip_glow), FadeIn(tip), FadeIn(ghost_0), FadeIn(ghost_90), FadeIn(ghost_180), FadeIn(ghost_270), lagRatio=0.08) duration=0.85s
+  play AnimationGroup(Create(follower_orbit), Create(follower), FadeIn(follower_glow), FadeIn(follower_dot), Create(tether), Create(update_bus), lagRatio=0.1) duration=0.9s
+  play AnimationGroup(FadeIn(label_drive), FadeIn(label_follow), FadeIn(bus_label), FadeIn(phase_label), FadeIn(note), lagRatio=0.1) duration=0.65s
 
 wait 0.2s
 animate t from 0 to 12.566 duration=6s easing=linear

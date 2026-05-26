@@ -11,7 +11,17 @@ export type GalleryDemo = {
   fidelity: 'faithful' | 'visual_approximation';
   priority?: string;
   gap_id?: string;
-  known_gaps: string[];
+  known_gaps: Array<
+    | string
+    | {
+        symptom: string;
+        layer?: 'dsl' | 'compiler' | 'runtime' | 'renderer' | 'docs';
+        impact?: 'low' | 'medium' | 'high';
+        workaround?: string;
+        closure_condition?: string;
+        fidelity_upgrade_condition?: string;
+      }
+  >;
   missing_instructions?: string;
   blocker_reason?: string;
   source: string;

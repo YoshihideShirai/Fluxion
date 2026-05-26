@@ -77,9 +77,9 @@ known_gaps:
 
 | Python example / source | Gallery demo | Porting strategy | Fidelity | Notes |
 | --- | --- | --- | --- | --- |
-| `examples/simple_circle.py` | `site/src/content/gallery/simple-circle.md` | `faithful` | `faithful` | Browserごとの差は最小限。 |
-| `examples/basic_concepts_square_to_circle.py` | `site/src/content/gallery/square-to-circle.md` | `faithful` | `faithful` | Transform内部の補間は近似を含む。 |
-| `examples/animations_using_animate.py` | `site/src/content/gallery/animations-using-animate.md` | `faithful` | `faithful` | easing既定値差分の可能性あり。 |
+| `examples/simple_circle.py` | `site/src/content/gallery/simple-circle.md` | `visual_approximation` | `visual_approximation` | 主題の Circle 作成を保ちつつ、ギャラリー表示用の背景・半径ガイドを追加。 |
+| `examples/basic_concepts_square_to_circle.py` | `site/src/content/gallery/square-to-circle.md` | `visual_approximation` | `visual_approximation` | Transform内部の補間は近似を含み、ギャラリー表示用の変換前後ガイドを追加。 |
+| `examples/animations_using_animate.py` | `site/src/content/gallery/animations-using-animate.md` | `visual_approximation` | `visual_approximation` | `.animate` の主題を保ちつつ、モーションパスと property label を追加。 |
 | `examples/plotting_with_manim.py` | `site/src/content/gallery/plotting-sin-cos.md` | `visual_approximation` | `visual_approximation` | 軸スケールとサンプリングを簡略化。 |
 | `examples/special_camera_settings.py` | `site/src/content/gallery/special-camera.md` | `visual_approximation` | `visual_approximation` | カメラモデルは現行実装で近似。 |
 | Manim `MovingFrameBox` | `site/src/content/gallery/moving-frame-box.md` | `visual_approximation` | `visual_approximation` | `SurroundingRectangle` は `surroundingRect` で表現。MathTex parts は宣言 bounds による近似。 |
@@ -96,37 +96,37 @@ known_gaps:
 
 | demo slug | current status | priority | dependency | exit criteria |
 | --- | --- | --- | --- | --- |
-| simple-circle | ported | P0 | sample parity 完了（`examples/simple_circle.py` + `.fluxion.json`） | Gallery と examples の両方で再生でき、差分メモが許容範囲。 |
-| square-to-circle | ported | P0 | **要サンプル生成**（`examples/square_to_circle.py/.fluxion.json` の命名で追加） | slug 対応の examples から再生成可能で、Create→Transform→FadeOut が一致。 |
-| animations-using-animate | ported | P0 | sample parity 完了（`examples/animations_using_animate.py` + `.fluxion.json`） | `.animate` 連鎖（shift/fill/scale/rotate）が再現される。 |
-| plotting-sin-cos | ported | P0 | **要サンプル生成**（`examples/plotting_sin_cos.py/.fluxion.json`） | 軸+sin/cos プロットが slug 対応 sample から再現可能。 |
-| special-camera | ported | P0 | **要サンプル生成**（`examples/special_camera.py/.fluxion.json`）; camera runtime parity | カメラ追従/ズームが slug 対応 sample で再生可能。 |
-| moving-frame-box | ported | P1 | **要サンプル生成**; SurroundingRectangle/MathTex part bounds の安定化 | フレーム追従と注釈矩形の見た目差分が許容範囲。 |
-| transform-matching-tex | ported | P1 | **要サンプル生成**; tex token matching runtime | 文字列分割の対応付けが破綻せずに再生できる。 |
-| brace-annotation | ported | P1 | **要サンプル生成**; brace primitive + label anchoring | brace とラベル位置が主要ブラウザで安定。 |
-| opening-manim | ported | P1 | **要サンプル生成**; text + shape choreography | 主要シーケンスが drop なしで完走。 |
-| orbital-dot | ported | P1 | **要サンプル生成**; path-follow + rate function parity | 軌道追従点が同等速度感で再現。 |
-| sine-curve-unit-circle | partial | P1 | **要サンプル生成**; synchronized updater + tracing | partial 要因（同期/トレース欠損）が解消し ported 化。 |
-| moving-around | partial | P1 | camera frame high-level DSL の追加 | camera.x/y/scale の直接 animate ではなく frame API sugar で再現できる。 |
-| moving-angle | partial | P1 | Angle primitive（半径/象限/装飾）DSL の追加 | path/updater 近似ではなく Angle API 相当で弧とラベルを記述できる。 |
-| polygon-on-axes | partial | P1 | axes data座標 helper（coords_to_point 相当）の追加 | scene座標の手指定ではなくデータ座標から polygon 配置できる。 |
-| point-with-trace | partial | P1 | TracedPath primitive DSL/runtime の追加 | `always path(...)` 近似ではなく追跡履歴ベースで軌跡生成できる。 |
+| simple-circle | ported | P0 | sample parity 完了（`examples/simple_circle.py` + `.fluxion.json`）; gallery view は装飾追加 | Circle 作成の主題を維持しつつ、ギャラリー表示で見やすい半径ガイドまで再生できる。 |
+| square-to-circle | ported | P0 | sample parity 完了（`examples/basic_concepts_square_to_circle.py` + `.fluxion.json`）; gallery view は装飾追加 | Create→Transform→FadeOut の主題を維持し、変換前後ガイド込みで再生できる。 |
+| animations-using-animate | ported | P0 | sample parity 完了（`examples/animations_using_animate.py` + `.fluxion.json`）; gallery view は装飾追加 | `.animate` 連鎖（move/fill/scale/rotate）が視覚ガイド付きで再現される。 |
+| plotting-sin-cos | ported | P0 | sample parity 完了（`examples/plotting_with_manim.py` + `.fluxion.json`）; gallery view は装飾追加 | 軸+sin/cos プロットが grid/tick label 付きで再生可能。 |
+| special-camera | ported | P0 | sample parity 完了（`examples/special_camera_settings.py` + `.fluxion.json`）; camera runtime parity | カメラ追従/ズームが frame guide 付きで再生可能。 |
+| moving-frame-box | ported | P1 | Text DSL sample 完了（`examples/gallery/moving_frame_box.fluxion.txt`）; SurroundingRectangle/MathTex part bounds の安定化 | フレーム追従と注釈矩形の見た目差分が許容範囲。 |
+| transform-matching-tex | ported | P1 | Text DSL sample 完了（`examples/gallery/transform_matching_tex.fluxion.txt`）; tex token matching runtime | 文字列分割の対応付けが破綻せずに再生できる。 |
+| brace-annotation | ported | P1 | Text DSL sample 完了（`examples/gallery/brace_annotation.fluxion.txt`）; brace primitive + label anchoring | brace とラベル位置が主要ブラウザで安定。 |
+| opening-manim | ported | P1 | Text DSL sample 完了（`examples/gallery/opening_manim.fluxion.txt`）; text + grid choreography | LaTeX → transform → grid → non-linear grid の主要シーケンスが drop なしで完走。 |
+| orbital-dot | ported | P1 | Text DSL sample 完了（`examples/gallery/orbital_dot.fluxion.txt`）; path-follow + rate function parity | 軌道追従点が同等速度感で再現。 |
+| sine-curve-unit-circle | partial | P1 | Text DSL sample 完了（`examples/gallery/sine-curve-unit-circle.fluxion.txt`）; synchronized updater + tracing | unit circle と sine trace が同期し、専用 tracing parity 実装後に fidelity を上げる。 |
+| moving-around | partial | P1 | Text DSL sample 完了（`examples/gallery/moving-around.fluxion.txt`）; camera frame high-level DSL の追加 | camera frame guide と target movement で視覚近似し、frame API sugar 実装後に fidelity を上げる。 |
+| moving-angle | partial | P1 | Text DSL sample 完了（`examples/gallery/moving-angle.fluxion.txt`）; Angle primitive（半径/象限/装飾）DSL の追加 | Angle helper と tracker で弧とラベルを視覚近似し、Angle API parity 実装後に fidelity を上げる。 |
+| polygon-on-axes | partial | P1 | Text DSL sample 完了（`examples/gallery/polygon-on-axes.fluxion.txt`）; axes data座標 helper（coords_to_point 相当）の追加 | dataPolygon helper で配置し、汎用 coords_to_point 実装後に fidelity を上げる。 |
+| point-with-trace | partial | P1 | Text DSL sample 完了（`examples/gallery/point-with-trace.fluxion.txt`）; TracedPath primitive DSL/runtime の追加 | tracedPath helper で視覚近似し、履歴追跡 parity 実装後に fidelity を上げる。 |
 | moving-group-to-destination | ported | P1 | sample parity 完了（group transform animate） | `animate dots.x/y` で group 単位移動が再現される。 |
-| arg-min-example | blocker | P2 | **要サンプル生成**; graph query helper（argmin） | argmin ハイライトの導出と注釈が再現。 |
-| boolean-operations | blocker | P2 | **要サンプル生成**; boolean path ops（union/intersection/subtract） | 図形ブーリアン演算結果が正しくレンダリング。 |
-| gradient-image-from-array | blocker | P2 | **要サンプル生成**; image-from-array runtime | 配列由来 gradient が色ずれなく表示。 |
-| graph-area-plot | blocker | P2 | **要サンプル生成**; area-under-curve fill primitive | 曲線下面積の塗りが正しく更新。 |
-| heat-diagram-plot | blocker | P2 | **要サンプル生成**; heatmap grid + colormap | ヒートマップのセル色マッピングが正しい。 |
-| fixed-in-frame-m-object-test | blocker | P2 | **要サンプル生成**; fixed-in-frame layer support | カメラ変化中でも固定オブジェクト位置が不変。 |
-| moving-dots | blocker | P2 | **要サンプル生成**; multi-object updater performance | 複数dot更新でフレーム落ち・位置ズレなし。 |
-| rotation-updater | blocker | P2 | **要サンプル生成**; continuous updater dt parity | 連続回転 updater が時間依存で安定。 |
-| vector-arrow | blocker | P2 | **要サンプル生成**; vector field/arrow tip geometry | 矢印向きと tip 形状が正しく追従。 |
-| manim-ce-logo | ported | P2 | **要サンプル生成**; complex path composition | ロゴ形状合成が主要ブラウザで一致。 |
-| three-d-camera-rotation | blocker | P2 | **要サンプル生成**; 3D camera orbit controls | 3D 回転カメラで破綻なく再生。 |
-| three-d-camera-illusion-rotation | blocker | P2 | **要サンプル生成**; faux-3D transform stack | 疑似3D回転の遠近感が維持される。 |
-| three-d-light-source-position | blocker | P2 | **要サンプル生成**; light source/shading runtime | 光源位置変化がシェーディングに反映。 |
-| three-d-surface-plot | blocker | P2 | **要サンプル生成**; surface mesh primitive | surface が穴抜けなく描画される。 |
-| moving-zoomed-scene-around | blocker | P2 | **要サンプル生成**; zoomed scene inset camera support | inset とメイン視点の同期が成立。 |
+| arg-min-example | partial | P2 | Text DSL sample 完了（`examples/gallery/arg-min-example.fluxion.txt`）; graph query helper（argmin） | 手描き曲線と注釈で argmin/argmax を視覚近似し、query helper 実装後に fidelity を上げる。 |
+| boolean-operations | partial | P2 | Text DSL sample 完了（`examples/gallery/boolean-operations.fluxion.txt`）; boolean path ops（union/intersection/subtract） | レイヤー表現で概念を視覚近似し、path boolean 実装後に fidelity を上げる。 |
+| gradient-image-from-array | partial | P2 | Text DSL sample 完了（`examples/gallery/gradient-image-from-array.fluxion.txt`）; image-from-array runtime | colored cell grid と拡大表示で視覚近似し、image array primitive 実装後に fidelity を上げる。 |
+| graph-area-plot | partial | P2 | Text DSL sample 完了（`examples/gallery/graph-area-plot.fluxion.txt`）; area-under-curve fill primitive | closed path fill と境界線で面積を視覚近似し、専用 area primitive 実装後に fidelity を上げる。 |
+| heat-diagram-plot | partial | P2 | Text DSL sample 完了（`examples/gallery/heat-diagram-plot.fluxion.txt`）; heatmap grid + colormap | stepped colormap のセルグリッドで heatmap を視覚近似し、連続 colormap 実装後に fidelity を上げる。 |
+| fixed-in-frame-m-object-test | partial | P2 | Text DSL sample 完了（`examples/gallery/fixed-in-frame-m-object-test.fluxion.txt`）; fixed-in-frame layer support | HUD 風レイヤーで視覚近似し、camera 分離レンダリング実装後に fidelity を上げる。 |
+| moving-dots | partial | P2 | Text DSL sample 完了（`examples/gallery/moving-dots.fluxion.txt`）; multi-object updater performance | 位相差付き tracker で複数 dot 更新を視覚近似し、updater parity 実装後に fidelity を上げる。 |
+| rotation-updater | partial | P2 | Text DSL sample 完了（`examples/gallery/rotation-updater.fluxion.txt`）; continuous updater dt parity | value/always で回転 updater を視覚近似し、dt updater 実装後に fidelity を上げる。 |
+| vector-arrow | partial | P2 | Text DSL sample 完了（`examples/gallery/vector-arrow.fluxion.txt`）; vector field/arrow tip geometry | arrow helper と成分補助線で視覚近似し、tip geometry parity 実装後に fidelity を上げる。 |
+| manim-ce-logo | ported | P2 | Text DSL sample 完了（`examples/gallery/manim_ce_logo.fluxion.txt`）; complex path composition | ロゴ形状合成が主要ブラウザで一致。 |
+| three-d-camera-rotation | partial | P2 | Text DSL sample 完了（`examples/gallery/three-d-camera-rotation.fluxion.txt`）; 3D camera orbit controls | 2D投影 + cameraFrame sweep で視覚近似し、3D camera runtime 実装後に fidelity を上げる。 |
+| three-d-camera-illusion-rotation | partial | P2 | Text DSL sample 完了（`examples/gallery/three-d-camera-illusion-rotation.fluxion.txt`）; faux-3D transform stack | projected ring と camera swing で視覚近似し、3D transform stack 実装後に fidelity を上げる。 |
+| three-d-light-source-position | partial | P2 | Text DSL sample 完了（`examples/gallery/three-d-light-source-position.fluxion.txt`）; light source/shading runtime | 2D疑似球体・ハイライト・光線で光源移動を視覚近似し、3D runtime 実装後に fidelity を上げる。 |
+| three-d-surface-plot | partial | P2 | Text DSL sample 完了（`examples/gallery/three-d-surface-plot.fluxion.txt`）; surface mesh primitive | 投影済み checkerboard patch で Gaussian surface を視覚近似し、surface mesh 実装後に fidelity を上げる。 |
+| moving-zoomed-scene-around | partial | P2 | Text DSL sample 完了（`examples/gallery/moving-zoomed-scene-around.fluxion.txt`）; zoomed scene inset camera support | inset panel と link line で視覚近似し、独立 inset camera 実装後に fidelity を上げる。 |
 
 ## Browser example
 

@@ -21,23 +21,57 @@ scene width=960 height=540 fps=60
 
 value alpha = 0
 
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "PolygonOnAxes" at 0,220 size=40 fill="#e2e8f0"
-axes ax at 0,-30 width=760 height=340 xRange=-4,4 yRange=-2,2 stroke="#64748b" strokeWidth=2
-dataPolygon poly axes=ax points=-1.9,-0.7;-0.4,1.1;1.8,0.45 fill="#22d3ee" opacity=0.2 stroke="#22d3ee" strokeWidth=3
-text label "polygon on axes" at 0,-190 size=22 fill="#bae6fd"
+rect bg w=960 h=540 at 0,0 fill="#080b14"
+rect panel w=790 h=360 at 0,-22 fill="#0f172a" stroke="#1e293b" strokeWidth=2
+text title "PolygonOnAxes" at -280,198 size=40 fill="#f8fafc"
+text formula "coords_to_point -> Polygon" at 176,198 size=24 fill="#bae6fd"
+axes ax at 0,-42 width=740 height=310 xRange=-4,4 yRange=-2,2 stroke="#64748b" strokeWidth=2
+line grid_xm2 x1=0 y1=-130 x2=0 y2=130 at -185,-42 stroke="#1e293b" strokeWidth=1
+line grid_x0 x1=0 y1=-130 x2=0 y2=130 at 0,-42 stroke="#243044" strokeWidth=1.5
+line grid_x2 x1=0 y1=-130 x2=0 y2=130 at 185,-42 stroke="#1e293b" strokeWidth=1
+line grid_ym1 x1=-330 y1=0 x2=330 y2=0 at 0,-119 stroke="#1e293b" strokeWidth=1
+line grid_y0 x1=-330 y1=0 x2=330 y2=0 at 0,-42 stroke="#243044" strokeWidth=1.5
+line grid_y1 x1=-330 y1=0 x2=330 y2=0 at 0,36 stroke="#1e293b" strokeWidth=1
+text tick_xm2 "-2" at -185,-76 size=15 fill="#94a3b8" opacity=0
+text tick_x2 "2" at 185,-76 size=15 fill="#94a3b8" opacity=0
+text tick_ym1 "-1" at -26,-119 size=15 fill="#94a3b8" opacity=0
+text tick_y1 "1" at -22,36 size=15 fill="#94a3b8" opacity=0
+dataPolygon poly axes=ax points=-1.9,-0.7;-0.4,1.1;1.8,0.45 fill="#22d3ee" opacity=0.24 stroke="#22d3ee" strokeWidth=4
+dataPolygon poly_shadow axes=ax points=-1.9,-0.7;-0.4,1.1;1.8,0.45 fill="#22d3ee" opacity=0.08 stroke="#67e8f9" strokeWidth=10
+line guide_a x1=-181 y1=-96 x2=-38 y2=43 at 0,-42 stroke="#38bdf8" strokeWidth=2 opacity=0.35
+line guide_b x1=-38 y1=43 x2=166 y2=-7 at 0,-42 stroke="#38bdf8" strokeWidth=2 opacity=0.35
+line guide_c x1=166 y1=-7 x2=-181 y2=-96 at 0,-42 stroke="#38bdf8" strokeWidth=2 opacity=0.35
+line proj1_x x1=-181 y1=-96 x2=-181 y2=0 at 0,-42 stroke="#fbbf24" strokeWidth=2 opacity=0.35
+line proj1_y x1=-181 y1=-96 x2=0 y2=-96 at 0,-42 stroke="#fbbf24" strokeWidth=2 opacity=0.25
+line proj2_x x1=-38 y1=43 x2=-38 y2=0 at 0,-42 stroke="#fbbf24" strokeWidth=2 opacity=0.35
+line proj2_y x1=-38 y1=43 x2=0 y2=43 at 0,-42 stroke="#fbbf24" strokeWidth=2 opacity=0.25
+line proj3_x x1=166 y1=-7 x2=166 y2=0 at 0,-42 stroke="#fbbf24" strokeWidth=2 opacity=0.35
+line proj3_y x1=166 y1=-7 x2=0 y2=-7 at 0,-42 stroke="#fbbf24" strokeWidth=2 opacity=0.25
+circle v1 r=9 at -181,-138 fill="#f8fafc" stroke="#22d3ee" strokeWidth=3
+circle v2 r=9 at -38,1 fill="#f8fafc" stroke="#22d3ee" strokeWidth=3
+circle v3 r=9 at 166,-49 fill="#f8fafc" stroke="#22d3ee" strokeWidth=3
+circle centroid r=8 at -18,-62 fill="#fbbf24" stroke="#713f12" strokeWidth=2 opacity=0
+text centroid_label "centroid" at 58,-96 size=16 fill="#fde68a" opacity=0
+text area_label "filled polygon in axes coordinates" at 216,126 size=18 fill="#67e8f9" opacity=0
+text coord1 "(-1.9, -0.7)" at -232,-176 size=17 fill="#cbd5e1"
+text coord2 "(-0.4, 1.1)" at -2,38 size=17 fill="#cbd5e1"
+text coord3 "(1.8, 0.45)" at 236,-44 size=17 fill="#cbd5e1"
+text label "data-space vertices remain attached to the axes" at 0,-224 size=20 fill="#94a3b8"
 
-always poly.rotation = expr=12*sin(alpha)
-always poly.scale = expr=1 + 0.08*cos(alpha)
+always poly.opacity = expr=0.18 + 0.12*(1+sin(alpha))/2
 
 at 0s:
+  play FadeIn(panel) duration=0.35s
   play FadeIn(title) duration=0.5s
+  play FadeIn(formula) duration=0.45s
   play Create(ax) duration=0.8s
-  play FadeIn(poly) duration=0.6s
+  play AnimationGroup(Create(grid_xm2), Create(grid_x0), Create(grid_x2), Create(grid_ym1), Create(grid_y0), Create(grid_y1), FadeIn(tick_xm2), FadeIn(tick_x2), FadeIn(tick_ym1), FadeIn(tick_y1), lagRatio=0.04) duration=0.8s
+  play AnimationGroup(FadeIn(poly_shadow), FadeIn(poly), Create(guide_a), Create(guide_b), Create(guide_c), lagRatio=0.08) duration=0.85s easing=easeOut
+  play AnimationGroup(Create(proj1_x), Create(proj1_y), Create(proj2_x), Create(proj2_y), Create(proj3_x), Create(proj3_y), lagRatio=0.05) duration=0.75s easing=easeOut
+  play AnimationGroup(FadeIn(v1), FadeIn(v2), FadeIn(v3), FadeIn(coord1), FadeIn(coord2), FadeIn(coord3), FadeIn(centroid), FadeIn(centroid_label), FadeIn(area_label), lagRatio=0.08) duration=0.85s
   play FadeIn(label) duration=0.4s
 
 wait 0.2s
-animate alpha from 0 to 6.283 duration=2.8s easing=easeInOut
+animate alpha from 0 to 6.283 duration=2.8s easing=linear
 wait 0.2s
-play FadeOut(poly) duration=0.4s
-play FadeIn(poly) duration=0.4s
+play Circumscribe(poly) duration=0.8s color="#fbbf24"

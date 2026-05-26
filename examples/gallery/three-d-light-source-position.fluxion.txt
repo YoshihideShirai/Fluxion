@@ -1,22 +1,3 @@
----
-title: ThreeDLightSourcePosition
-description: "Manim Example: `ThreeDLightSourcePosition` (`#threedlightsourceposition`) の Fluxion 移植版。"
-source_manim_url: https://docs.manim.community/en/stable/examples.html#threedlightsourceposition
-source_example_path: examples/gallery/three-d-light-source-position.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
-known_gaps:
-  - symptom: "3D renderer と光源シェーディングが未実装のため、2Dの球面ハイライトと移動する光源/光線で視覚近似している。"
-    layer: runtime
-    impact: high
-    workaround: "現状は concentric circles と always updater でライト位置の変化を表現する。"
-    closure_condition: "Surface/Sphere と light_source を runtime で扱い、光源位置が実シェーディングに反映される。"
-    fidelity_upgrade_condition: "Manim の sphere + light_source.move_to 相当のハイライト変化を同等パラメータで再現できる時。"
-category: Manim Stable Examples
-status: partial
-gap_id: GAP-029
-order: 76
----
 scene width=960 height=540 fps=60
 value t = 0
 rect bg w=960 h=540 at 0,0 fill="#050816"

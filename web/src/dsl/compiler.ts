@@ -1446,7 +1446,8 @@ function pushFadeInNode(
   duration: number,
   easing: string,
 ): void {
-  const createNode = hiddenClone(node);
+  const targetNode = visibleZeroOpacityClone(node);
+  const createNode = hiddenClone(targetNode);
   state.timeline.push({ t: start, op: "create", node: createNode });
   state.timeline.push({
     t: start,
@@ -1462,7 +1463,7 @@ function pushFadeInNode(
     id: node.id,
     path: "transform.opacity",
     from: 0,
-    to: node.transform.opacity,
+    to: fadeInTargetOpacity(targetNode),
     duration,
     easing,
   });
@@ -1504,7 +1505,8 @@ function pushFadeIn(
   easing: string,
   lineNumber: number,
 ): void {
-  const node = hiddenClone(requireNode(state, id, lineNumber));
+  const sourceNode = visibleZeroOpacityClone(requireNode(state, id, lineNumber));
+  const node = hiddenClone(sourceNode);
   state.timeline.push({ t: start, op: "create", node });
   state.timeline.push({
     t: start,
@@ -1520,11 +1522,15 @@ function pushFadeIn(
     id,
     path: "transform.opacity",
     from: 0,
-    to: requireNode(state, id, lineNumber).transform.opacity,
+    to: fadeInTargetOpacity(sourceNode),
     duration,
     easing,
   });
   state.shown.add(id);
+}
+
+function fadeInTargetOpacity(node: SceneNode): number {
+  return node.transform.opacity > 0 ? node.transform.opacity : 1;
 }
 
 function pushFadeOut(
@@ -1826,8 +1832,19 @@ function hiddenClone(node: SceneNode): SceneNode {
   return clone;
 }
 
-function hiddenWritableClone(node: SceneNode): SceneNode {
+function visibleZeroOpacityClone(node: SceneNode): SceneNode {
   const clone = structuredClone(node);
+  revealZeroOpacityNodes(clone);
+  return clone;
+}
+
+function revealZeroOpacityNodes(node: SceneNode): void {
+  node.transform.opacity = fadeInTargetOpacity(node);
+  for (const child of node.children ?? []) revealZeroOpacityNodes(child);
+}
+
+function hiddenWritableClone(node: SceneNode): SceneNode {
+  const clone = visibleZeroOpacityClone(node);
   hideWritableNodes(clone);
   return clone;
 }
@@ -1838,6 +1855,7 @@ function hideWritableNodes(node: SceneNode): void {
     else node.transform.opacity = 0;
     return;
   }
+  node.transform.opacity = fadeInTargetOpacity(node);
   for (const child of node.children) hideWritableNodes(child);
 }
 
@@ -1935,7 +1953,7 @@ function pushCreate(
   lineNumber: number,
 ): void {
   const node = requireNode(state, id, lineNumber);
-  const createNode = structuredClone(node);
+  const createNode = visibleZeroOpacityClone(node);
   if (supportsDrawProgress(node)) createNode.geometry.drawProgress = 0;
   state.timeline.push({
     t: start,
@@ -1977,15 +1995,16 @@ function pushTransformAnimations(
   duration: number,
   easing: string,
 ): void {
+  const visibleToNode = visibleZeroOpacityClone(toNode);
   for (const key of ["x", "y", "scale", "rotation", "opacity"] as const) {
-    if (fromNode.transform[key] !== toNode.transform[key]) {
+    if (fromNode.transform[key] !== visibleToNode.transform[key]) {
       state.timeline.push({
         t: start,
         op: "animate",
         id: fromNode.id,
         path: `transform.${key}`,
         from: fromNode.transform[key],
-        to: toNode.transform[key],
+        to: visibleToNode.transform[key],
         duration,
         easing,
       });
@@ -1994,10 +2013,10 @@ function pushTransformAnimations(
 
   for (const key of new Set([
     ...Object.keys(fromNode.style),
-    ...Object.keys(toNode.style),
+    ...Object.keys(visibleToNode.style),
   ])) {
     const from = fromNode.style[key as keyof Style];
-    const to = toNode.style[key as keyof Style];
+    const to = visibleToNode.style[key as keyof Style];
     if (from !== to)
       state.timeline.push({
         t: start,
@@ -2013,10 +2032,10 @@ function pushTransformAnimations(
 
   for (const key of new Set([
     ...Object.keys(fromNode.geometry),
-    ...Object.keys(toNode.geometry),
+    ...Object.keys(visibleToNode.geometry),
   ])) {
     const from = fromNode.geometry[key];
-    const to = toNode.geometry[key];
+    const to = visibleToNode.geometry[key];
     if (JSON.stringify(from) !== JSON.stringify(to))
       state.timeline.push({
         t: start,

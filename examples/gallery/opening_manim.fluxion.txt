@@ -1,21 +1,3 @@
----
-title: OpeningManim
-description: "Manim Example: `OpeningManim` (`#openingmanim`) に対応するデモ。"
-source_manim_url: https://docs.manim.community/en/stable/examples.html#openingmanim
-source_example_path: examples/gallery/opening_manim.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
-known_gaps:
-  - symptom: "Text kerning still depends on browser font metrics and may differ slightly from Manim raster output."
-    layer: renderer
-    impact: low
-    workaround: "必要に応じてスタイル値を手動調整する。"
-    closure_condition: "該当レンダリング差分が解消され、Manim 出力との視覚差が許容範囲に収まる。"
-    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
-category: Advanced Projects
-status: ported
-order: 51
----
 scene width=960 height=540 fps=60
 rect bg w=960 h=540 at 0,0 fill="#020617"
 math title "\\text{This is some }\\LaTeX" at 0,58 size=54 fill="#f8fafc" renderer=katex opacity=0
