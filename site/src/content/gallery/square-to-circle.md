@@ -17,7 +17,7 @@ status: ported
 order: 11
 ---
 scene width=1280 height=720 fps=60
-rect square w=120 h=120 at 640,360 fill="#ffffff" stroke="#111827" strokeWidth=2 rotate=45
+rect square w=120 h=120 at 640,360 fill="#ffffff" stroke="#111827" strokeWidth=2 rotation=45
 circle circle r=56 at 640,360 fill="#facc15" stroke="#facc15" opacity=0.8
 at 0s:
   play Create(square) duration=1.0s easing=easeOut
