@@ -16,13 +16,12 @@ category: Basic Concepts
 status: ported
 order: 11
 ---
-scene width=960 height=540 fps=60
-rect square w=170 h=170 at 0,0 fill="none" stroke="#38bdf8" strokeWidth=8
-circle circle r=85 at 0,0 fill="#38bdf8" stroke="#bae6fd" strokeWidth=6 opacity=0
+scene width=1280 height=720 fps=60
+rect square w=120 h=120 at 640,360 fill="#ffffff" stroke="#111827" strokeWidth=2 rotate=45
+circle circle r=56 at 640,360 fill="#facc15" stroke="#facc15" opacity=0.8
 at 0s:
   play Create(square) duration=1.0s easing=easeOut
-wait 0.3s
-show circle
-play Transform(square, circle) duration=1.1s easing=easeInOut
-wait 0.3s
+wait 0.2s
+play Transform(square, circle) duration=1.2s easing=linear
+wait 0.2s
 play FadeOut(square) duration=0.8s easing=easeInOut
