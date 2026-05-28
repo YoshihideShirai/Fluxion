@@ -191,7 +191,7 @@ Common options:
 - `fill`, `fillOpacity`, `stroke`, `strokeOpacity`, `strokeWidth`, `strokeLinecap=butt|round|square`, `strokeLinejoin=miter|round|bevel`
 - `size` / `fontSize`
 - `math` only: `renderer=katex|mathjax`, `expandTokens=true|false`
-- `image` only: `w`, `h`, `data=<row;row;...>`; `data` is a grayscale value matrix such as `0,128,255;...`, producing a pixel image similar to Manim `ImageMobject(np.uint8(...))`.
+- `image` only: `w`, `h`, `data=<row;row;...>`, `dataRows`; `data` is a grayscale value matrix such as `0,128,255;...`, producing a pixel image similar to Manim `ImageMobject(np.uint8(...))`. Repeated one-row images can be compressed with `dataRows=<rows>`.
 - `group` only: `clipTarget=<rect-or-image-id>` clips the group's children to the referenced node's current bounds; `clip=rect clipW=<number> clipH=<number> [clipX] [clipY]` clips to an explicit centered rectangle.
 - `surroundingRect` only: `target=<node-id>`, `buff=<number>`; emits a frame-like `rect` node sized from the target node's declared/estimated bounds. `play Create(frame)` animates its border with `geometry.drawProgress` for a Manim-like outline draw.
 - `brace` only: `target=<node-id>`, `direction=up|down|left|right|perpendicular`, `buff`, `sharpness`, `label`, `labelRenderer=text|katex|mathjax`, `labelSize`, `labelColor`, `labelOffset`, `labelAlignment=start|center|end`, `labelW`, `labelH`; emits a Manim `Brace(...)`-style filled brace using the source SVG template model and can place `get_text` / `get_tex`-style labels at the computed brace tip.

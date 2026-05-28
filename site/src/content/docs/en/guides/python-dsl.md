@@ -36,7 +36,7 @@ The generated `examples/simple_circle.fluxion.json` is Fluxion IR that can be lo
 - `self.add()`: adds nodes to the scene and contributes to the initial graph / create operations.
 - `self.play()`: turns `.animate` builders and animation helpers into Timeline operations.
 
-`ImageMobject` mirrors Manim's `ImageMobject(np.uint8(...))` use case by exporting a 2D grayscale matrix as an `image` node with `geometry.data`.
+`ImageMobject` mirrors Manim's `ImageMobject(np.uint8(...))` use case by exporting a 2D grayscale matrix as an `image` node with `geometry.data`. Repeated one-row arrays can be compressed with `data_rows`.
 
 ```python
 from fluxion import ImageMobject

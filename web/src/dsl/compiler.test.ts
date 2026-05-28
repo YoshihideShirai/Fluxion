@@ -969,7 +969,7 @@ test("compiles arrow helper with Manim-like buff and length-ratio clamps", () =>
 
 test("compiles image helper with grayscale array data", () => {
   const documentData = compileTextDsl(
-    `image img w=160 h=80 data="0,128,255;255,128,0"`,
+    `image img w=160 h=80 data="0,128,255;255,128,0" dataRows=2`,
   );
 
   const image = documentData.nodes[0];
@@ -977,6 +977,7 @@ test("compiles image helper with grayscale array data", () => {
   assert.equal(image?.geometry.w, 160);
   assert.equal(image?.geometry.h, 80);
   assert.equal(image?.geometry.data, "0,128,255;255,128,0");
+  assert.equal(image?.geometry.dataRows, 2);
 });
 
 test("compiles plot with close and style overrides", () => {

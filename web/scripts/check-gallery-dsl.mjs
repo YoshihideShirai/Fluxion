@@ -649,7 +649,7 @@ function serializedNodeClipBounds(node) {
 }
 
 function serializeImageNode(node, opacity, transform) {
-  const pixels = parseImagePixels(String(node.geometry?.data ?? ''));
+  const pixels = parseImagePixels(String(node.geometry?.data ?? ''), Number(node.geometry?.dataRows ?? 0));
   if (pixels.length === 0 || pixels[0]?.length === 0) {
     const w = Number(node.geometry?.w ?? 0);
     const h = Number(node.geometry?.h ?? 0);
@@ -824,15 +824,18 @@ function serializedBraceLabelGap(tipDepth, targetLength, node) {
   return Math.max(0, tipDepth * 0.52 + 10 + stretch * 3.5 + rawOffset * stretch);
 }
 
-function parseImagePixels(raw) {
-  return raw
+function parseImagePixels(raw, dataRows = 0) {
+  const rows = raw
     .split(';')
     .map((row) => row.split(',').map((value) => Number(value.trim())))
     .filter((row) => row.length > 0 && row.every((value) => Number.isFinite(value)));
+  const repeatRows = Math.max(0, Math.floor(dataRows));
+  if (rows.length === 1 && repeatRows > 1) return Array.from({ length: repeatRows }, () => [...rows[0]]);
+  return rows;
 }
 
 function imagePixelCount(node) {
-  const pixels = parseImagePixels(String(node.geometry?.data ?? ''));
+  const pixels = parseImagePixels(String(node.geometry?.data ?? ''), Number(node.geometry?.dataRows ?? 0));
   return pixels.reduce((count, row) => count + row.length, 0);
 }
 
@@ -944,7 +947,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, image?.type === 'image', 'expected ImageMobject-like image node.');
     assertGalleryCondition(label, image?.geometry?.sampling === 'nearest', 'expected nearest sampling for array image pixels.');
     assertGalleryCondition(label, image?.geometry?.w === 256 && image?.geometry?.h === 256, 'expected 256x256 grayscale image display.');
-    assertGalleryCondition(label, rows.length === 64 && rows.every((row) => row.split(',').length === 64), 'expected 64x64 grayscale array data.');
+    assertGalleryCondition(label, image?.geometry?.dataRows === 256 && rows.length === 1 && firstRow.length === 256, 'expected official 256x256 grayscale array data via repeated source row.');
     assertGalleryCondition(label, firstRow[0] === 0 && firstRow.at(-1) === 255, 'expected horizontal grayscale gradient from black to white.');
     assertGalleryCondition(label, frame?.type === 'rect' && approximatelyEqual(frame.geometry?.w ?? 0, 269.5) && approximatelyEqual(frame.geometry?.h ?? 0, 269.5), 'expected Manim GREEN frame around image with MED_SMALL_BUFF.');
     assertGalleryCondition(label, frame?.style?.stroke === '#83C167' && approximatelyEqual(frame.style?.strokeWidth ?? 0, 4), 'expected GREEN image border.');

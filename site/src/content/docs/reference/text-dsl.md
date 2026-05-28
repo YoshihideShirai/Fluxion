@@ -199,7 +199,7 @@ Geometry options:
 - `path`: `d` (SVG path data string)
 - `text`: `size` or `fontSize`
 - `math`: `size` or `fontSize`, `renderer=katex|mathjax`, `expandTokens=true|false`
-- `image`: `w`, `h`, `data=<row;row;...>`; `data` は `0,128,255;...` のようなグレースケール値行列で、Manim `ImageMobject(np.uint8(...))` 風の pixel image を生成します。
+- `image`: `w`, `h`, `data=<row;row;...>`, `dataRows`; `data` は `0,128,255;...` のようなグレースケール値行列で、Manim `ImageMobject(np.uint8(...))` 風の pixel image を生成します。1 行だけの繰り返し画像は `dataRows=<rows>` で圧縮して表現できます。
 - `group`: child ids are copied into `children` and removed from top-level roots. `clipTarget=<rect-or-image-id>` clips children to the referenced node's current bounds; `clip=rect clipW=<number> clipH=<number> [clipX] [clipY]` clips to an explicit centered rectangle.
 - `surroundingRect`: `target=<node-id>`, `buff=<number>`; target の宣言/推定 bounds に基づく frame-like な `rect` node として出力されます。`play Create(frame)` では `geometry.drawProgress` により Manim 風に外枠が描画されます。
 - `brace`: `target=<node-id>`, `direction=up|down|left|right|perpendicular`, `buff`, `sharpness`, `label`, `labelRenderer=text|katex|mathjax`, `labelSize`, `labelColor`, `labelOffset`, `labelAlignment=start|center|end`, `labelW`, `labelH`; Manim `Brace(...)` 風に source SVG template model から塗りつぶし brace を生成し、`get_text` / `get_tex` 相当の label を計算済み tip 近傍に配置できます。

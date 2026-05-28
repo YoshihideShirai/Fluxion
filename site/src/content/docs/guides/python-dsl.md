@@ -36,7 +36,7 @@ PYTHONPATH=python python examples/simple_circle.py
 - `self.add()`: node を scene に追加し、Runtime の初期 graph / create operation に反映する。
 - `self.play()`: `.animate` builder や animation helper から Timeline operation を生成する。
 
-`ImageMobject` は Manim の `ImageMobject(np.uint8(...))` と同じ用途の primitive で、2D のグレースケール行列を `image` node の `geometry.data` として export します。
+`ImageMobject` は Manim の `ImageMobject(np.uint8(...))` と同じ用途の primitive で、2D のグレースケール行列を `image` node の `geometry.data` として export します。1 行だけを繰り返す配列は `data_rows` で圧縮できます。
 
 ```python
 from fluxion import ImageMobject

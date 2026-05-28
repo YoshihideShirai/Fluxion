@@ -16,10 +16,13 @@ class ImageMobject(Mobject):
         data: PixelRows | str,
         w: float = 100,
         h: float = 100,
+        data_rows: int | None = None,
         sampling: str = "nearest",
         **kwargs,
     ) -> None:
         geometry = {"w": w, "h": h, "data": _serialize_pixels(data), "sampling": sampling}
+        if data_rows is not None:
+            geometry["dataRows"] = max(0, int(data_rows))
         super().__init__(id=id, type="image", geometry=geometry, **kwargs)
 
 

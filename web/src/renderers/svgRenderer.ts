@@ -266,7 +266,7 @@ export class SvgRenderer {
     const group = document.createElementNS(SVG_NS, "g");
     const width = Number(node.geometry.w ?? 100);
     const height = Number(node.geometry.h ?? 100);
-    const pixels = this.parseImagePixels(String(node.geometry.data ?? ""));
+    const pixels = this.parseImagePixels(String(node.geometry.data ?? ""), Number(node.geometry.dataRows ?? 0));
     if (pixels.length === 0 || pixels[0]?.length === 0) {
       const fallback = document.createElementNS(SVG_NS, "rect");
       fallback.setAttribute("x", String(-width / 2));
@@ -320,8 +320,8 @@ export class SvgRenderer {
     return first.map((value) => this.pixelToColor(value));
   }
 
-  private parseImagePixels(data: string): number[][] {
-    return data
+  private parseImagePixels(data: string, dataRows = 0): number[][] {
+    const rows = data
       .split(";")
       .map((row) =>
         row
@@ -330,6 +330,9 @@ export class SvgRenderer {
           .filter((value) => Number.isFinite(value)),
       )
       .filter((row) => row.length > 0);
+    const repeatRows = Math.max(0, Math.floor(dataRows));
+    if (rows.length === 1 && repeatRows > 1) return Array.from({ length: repeatRows }, () => [...rows[0]!]);
+    return rows;
   }
 
   private pixelToColor(value: number): string {

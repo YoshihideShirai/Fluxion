@@ -147,7 +147,7 @@ export function applyNodeOption(
     return;
   }
 
-  if (["r", "w", "h", "x1", "y1", "x2", "y2", "clipX", "clipY", "clipW", "clipH"].includes(key)) {
+  if (["r", "w", "h", "x1", "y1", "x2", "y2", "clipX", "clipY", "clipW", "clipH", "dataRows"].includes(key)) {
     node.geometry[key] = parseNumber(value, lineNumber);
     return;
   }
@@ -192,7 +192,7 @@ export function propertyPath(property: string): string {
   if (["fill", "fillOpacity", "stroke", "strokeOpacity", "strokeWidth", "strokeLinecap", "strokeLinejoin"].includes(property))
     return `style.${property}`;
   if (
-    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "data", "sampling", "target", "direction", "buff", "sharpness", "curvature", "tip", "label", "labelSize", "labelColor", "labelOffset", "labelAlignment", "labelRenderer", "labelW", "labelH", "fillRule", "clip", "clipTarget", "clipX", "clipY", "clipW", "clipH", "fixedInFrame"].includes(property)
+    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "data", "dataRows", "sampling", "target", "direction", "buff", "sharpness", "curvature", "tip", "label", "labelSize", "labelColor", "labelOffset", "labelAlignment", "labelRenderer", "labelW", "labelH", "fillRule", "clip", "clipTarget", "clipX", "clipY", "clipW", "clipH", "fixedInFrame"].includes(property)
   )
     return `geometry.${property}`;
   if (property === "renderer") return "renderer";
@@ -214,6 +214,6 @@ function defaultGeometry(type: NodeType): Record<string, number | string> {
   if (type === "math") return { fontSize: 36 };
   if (type === "brace")
     return { target: "", direction: "down", buff: 8, sharpness: 2, label: "", labelSize: 24, labelColor: "#ffffff", labelRenderer: "text" };
-  if (type === "image") return { w: 100, h: 100, data: "", sampling: "nearest" };
+  if (type === "image") return { w: 100, h: 100, data: "", dataRows: 0, sampling: "nearest" };
   return {};
 }
