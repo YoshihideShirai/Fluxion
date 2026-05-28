@@ -9,7 +9,7 @@ known_gaps:
   - symptom: "Manim の VGroup 履歴追記式 sine curve updater は、既知の dot 軌道を `tracedPath` と `value` binding に展開して再現している。"
     layer: dsl
     impact: low
-    workaround: "公式の `t_offset` 進行を `theta` value に変換し、円上の dot、半径線、curve 接続線、sine trace を同じ value から再計算する。sine trace はサンプル点を滑らかな cubic path に変換し、`MathTex` label は既定 font size 48、dot/line/trace は Manim の `YELLOW` / `YELLOW_A` / `YELLOW_D` 色定数に合わせる。"
+    workaround: "公式の `t_offset` 進行を `theta` value に変換し、円上の dot、半径線、curve 接続線、sine trace を同じ value から再計算する。sine trace はサンプル点を滑らかな cubic path に変換し、`MathTex` label は既定 font size 48、dot/line/trace は Manim の `YELLOW` / `YELLOW_A` / `YELLOW_D` 色定数に合わせる。公式の `self.add(dot)` 後に `self.add(orbit, origin_to_circle_line, dot_to_curve_line, sine_curve_line)` する描画順を保持し、dot は円・線・軌跡の下に置く。"
     closure_condition: "VGroup への逐次 Line 追加や `always_redraw` callback を DSL/runtime に追加する。"
     fidelity_upgrade_condition: "追加対応不要。"
 category: Advanced Projects
@@ -29,11 +29,11 @@ math two_pi_label "2\\pi" at 67.5,42 size=48 fill="#FFFFFF"
 math three_pi_label "3\\pi" at 202.5,42 size=48 fill="#FFFFFF"
 math four_pi_label "4\\pi" at 337.5,42 size=48 fill="#FFFFFF"
 
+circle dot r=5.4 at -202.5,0 fill="#F7D96F" stroke="#F7D96F" strokeWidth=0
 circle unit r=67.5 at -270,0 fill="none" stroke="#FFFFFF" strokeWidth=4
 line origin_to_circle x1=0 y1=0 x2=67.5 y2=0 at -270,0 stroke="#58C4DD" strokeWidth=4
 line dot_to_curve x1=-202.5 y1=0 x2=-202.5 y2=0 stroke="#FFF1B6" strokeWidth=2
 tracedPath sine_curve x=-202.5+(t/(2*pi))*270 y=-67.5*sin(t) from=0 to=theta samples=320 stroke="#F4D345" strokeWidth=4
-circle dot r=5.4 at -202.5,0 fill="#F7D96F" stroke="#F7D96F" strokeWidth=0
 
 always dot.x = expr=-270+67.5*cos(theta)
 always dot.y = expr=-67.5*sin(theta)

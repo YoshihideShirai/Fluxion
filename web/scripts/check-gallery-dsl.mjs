@@ -1791,6 +1791,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, unit?.type === 'circle' && approximatelyEqual(unit.geometry?.r ?? 0, 67.5) && unit.transform?.x === -270, 'expected unit circle at left axis origin.');
     assertGalleryCondition(label, sineCurve?.geometry?.tracedPath === true && sineCurve.style?.stroke === '#F4D345', 'expected traced sine curve path.');
     assertGalleryCondition(label, dot?.geometry?.r === 5.4 && dot.style?.fill === '#F7D96F' && approximatelyEqual(dot.style?.strokeWidth ?? -1, 0), 'expected yellow moving Dot with Manim default stroke width.');
+    assertGalleryCondition(label, ['dot', 'unit', 'origin_to_circle', 'dot_to_curve', 'sine_curve'].every((id, index, ids) => index === 0 || documentData.nodes.findIndex((node) => node.id === ids[index - 1]) < documentData.nodes.findIndex((node) => node.id === id)), 'expected official self.add(dot) then self.add(orbit, radius line, projection line, curve) z-order.');
     assertGalleryCondition(label, originToCircle?.style?.stroke === '#58C4DD' && dotToCurve?.style?.stroke === '#FFF1B6', 'expected blue radius line and pale vertical projection line.');
     assertGalleryCondition(label, ['pi_label', 'two_pi_label', 'three_pi_label', 'four_pi_label'].every((id) => findNode(documentData, id)?.type === 'math'), 'expected pi labels along sine axis.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindPath' && op.id === 'sine_curve' && op.samples === 320 && op.tMaxExpr === 'theta'), 'expected sine curve path bound to theta.');
@@ -1830,6 +1831,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, /id="origin_to_circle"[^>]*x2="-67\.5"[^>]*y2="0"[^>]*stroke="#58C4DD"/u.test(halfTurnSvg), 'expected half-turn SVG blue radius line.');
     assertGalleryCondition(label, /id="dot_to_curve"[^>]*x1="-222\.270292"[^>]*y1="-47\.729708"[^>]*x2="371\.25"[^>]*y2="-47\.729708"[^>]*stroke="#FFF1B6"/u.test(finalSvg), 'expected final SVG projection line to the sine trace.');
     assertGalleryCondition(label, finalSvgTracePath.startsWith('M -202.5 0 C ') && finalSvgTracePath.endsWith(' 371.2500000104585 -47.72970774170837'), 'expected final smooth SVG sine trace path from curve_start to the 4.25pi endpoint.');
+    assertGalleryCondition(label, finalSvg.indexOf('id="dot"') < finalSvg.indexOf('id="unit"') && finalSvg.indexOf('id="dot"') < finalSvg.indexOf('id="sine_curve"'), 'expected SVG dot to render below orbit and sine curve like the official add order.');
     assertGalleryCondition(label, /id="sine_curve"[^>]*><path [^>]*stroke-linecap="round"[^>]*stroke-linejoin="round"/u.test(finalSvg), 'expected final sine trace to use round VMobject stroke caps and joins.');
   }
 
