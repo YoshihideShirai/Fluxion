@@ -1435,16 +1435,21 @@ function checkGallerySpecificStructure(label, documentData) {
     const zoomDisplay = findNode(documentData, 'zoom_display');
     const zoomDisplayContent = findNode(documentData, 'zoom_display_content');
     const zoomDisplayFrame = findNode(documentData, 'zoom_display_frame');
+    const zoomSample = findNode(documentData, 'zoom_sample');
+    const zoomDot = findNode(documentData, 'zoom_dot');
     assertGalleryCondition(label, approximatelyEqual(frame?.geometry?.w ?? 0, 121.5) && approximatelyEqual(frame?.geometry?.h ?? 0, 20.25), 'expected zoomed camera frame to match zoom_factor=0.3 and 6x1 display ratio.');
     assertGalleryCondition(label, frame?.style?.stroke === '#9A72AC' && approximatelyEqual(frame?.style?.strokeWidth ?? 0, 3), 'expected purple zoomed camera frame with official stroke width 3.');
     assertGalleryCondition(label, approximatelyEqual(zoomDisplay?.geometry?.w ?? 0, 121.5) && approximatelyEqual(zoomDisplay?.geometry?.h ?? 0, 20.25), 'expected zoom display to pop out from the camera frame geometry.');
     assertGalleryCondition(label, zoomDisplayContent?.type === 'group' && zoomDisplayContent.geometry?.clipTarget === 'zoom_display', 'expected zoomed display content to clip against the zoom display frame.');
-    assertGalleryCondition(label, (zoomDisplayContent?.children ?? []).length === 5, 'expected clipped zoomed display content to contain display background plus four sampled pixels.');
+    assertGalleryCondition(label, (zoomDisplayContent?.children ?? []).length === 3, 'expected clipped zoomed display content to contain display background, sampled camera crop, and the magnified dot.');
     assertGalleryCondition(label, approximatelyEqual(zoomBg?.geometry?.w ?? 0, 155.25) && approximatelyEqual(zoomBg?.geometry?.h ?? 0, 54), 'expected BackgroundRectangle buff around the collapsed zoom display.');
     assertGalleryCondition(label, zoomDisplayFrame?.style?.stroke === '#FC6255' && approximatelyEqual(zoomDisplayFrame?.style?.strokeWidth ?? 0, 20), 'expected red zoomed display frame with official image_frame_stroke_width=20.');
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'px_') === 8, 'expected original 2x4 image pixel grid.');
-    assertGalleryCondition(label, countNodesWithPrefix(documentData, 'zoom_px_') === 4, 'expected zoomed 1x4 display pixel strip.');
+    assertGalleryCondition(label, zoomSample?.type === 'rect' && zoomSample.style?.fill === '#646464', 'expected zoomed camera crop to sample the single source pixel under Dot().shift(UL*2).');
+    assertGalleryCondition(label, zoomDot?.type === 'circle' && approximatelyEqual(zoomDot.geometry?.r ?? 0, 5.4), 'expected zoomed camera crop to include the dot before pop-out.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'geometry.w', from: 121.5, to: 405, t: 1, duration: 1 }), 'expected pop-out to official 6-unit zoom display width.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_sample', path: 'geometry.w', from: 121.5, to: 405, t: 1, duration: 1 }), 'expected sampled zoom crop to scale with the pop-out display.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_dot', path: 'geometry.r', from: 5.4, to: 18, t: 1, duration: 1 }), 'expected dot radius to magnify by the inverse zoom factor.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_bg', path: 'geometry.w', from: 155.25, to: 438.75, t: 1, duration: 1 }), 'expected pop-out BackgroundRectangle to include MED_SMALL_BUFF.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'frame', path: 'transform.scaleX', from: 1, to: 0.5, t: 3, duration: 1 }), 'expected anisotropic frame scale x=0.5.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'frame', path: 'transform.scaleY', from: 1, to: 1.5, t: 3, duration: 1 }), 'expected anisotropic frame scale y=1.5.');
@@ -1453,17 +1458,18 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'transform.x', from: 244, to: -135, t: 9, duration: 1 }), 'expected reverse pop-out collapse to shifted frame x.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'transform.y', from: -135, to: 33.75, t: 9, duration: 1 }), 'expected reverse pop-out collapse to shifted frame y.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'transform.scale', from: 2, to: 0.3, t: 9, duration: 1 }), 'expected reverse pop-out to collapse the zoom display back to the frame size.');
-    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_px_0', path: 'style.fill', from: '#000000', to: '#FFFFFF', t: 7, duration: 1 }), 'expected zoom display content to retarget after frame shift.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_sample', path: 'style.fill', from: '#646464', to: '#000000', t: 7, duration: 1 }), 'expected zoom display content to retarget to the bottom-row pixel after frame shift.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_dot', path: 'transform.opacity', from: 1, to: 0, t: 7, duration: 1 }), 'expected magnified dot to leave the zoomed camera crop after frame shift.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'effect' && op.id === 'zoom_display_frame' && op.effect === 'uncreate'), 'expected final Uncreate on zoomed display frame.');
     const initialSvg = svgSampleAt(documentData, 0);
     const poppedSvg = svgSampleAt(documentData, 2);
     const shiftedSvg = svgSampleAt(documentData, 8);
     const collapsedDisplay = renderedNodeAt(documentData, 10, 'zoom_display');
     assertGalleryCondition(label, countSvgOccurrences(initialSvg, /id="px_/gu) === 8, 'expected original image pixels to serialize into initial SVG.');
-    assertGalleryCondition(label, countSvgOccurrences(poppedSvg, /id="zoom_px_/gu) === 4, 'expected zoomed image pixels to serialize into SVG after pop out.');
+    assertGalleryCondition(label, poppedSvg.includes('id="zoom_sample"') && poppedSvg.includes('id="zoom_dot"'), 'expected zoomed camera crop and magnified dot to serialize into SVG after pop out.');
     assertGalleryCondition(label, /id="zoom_display_content"[^>]*clip-path=/u.test(poppedSvg), 'expected popped-out zoom display content to serialize with a clip path.');
     assertGalleryCondition(label, /id="zoom_display"[^>]*width="405"/u.test(poppedSvg), 'expected popped-out zoom display SVG width 405.');
-    assertGalleryCondition(label, /id="zoom_px_0"[^>]*fill="(?:#FFFFFF|rgb\(255, 255, 255\))"/u.test(shiftedSvg), 'expected retargeted zoom display pixel color in SVG after frame shift.');
+    assertGalleryCondition(label, /id="zoom_sample"[^>]*fill="(?:#000000|rgb\(0, 0, 0\))"/u.test(shiftedSvg) && !shiftedSvg.includes('id="zoom_dot"'), 'expected retargeted zoom display crop without the dot in SVG after frame shift.');
     assertGalleryCondition(label, approximatelyEqual(collapsedDisplay?.transform?.scale ?? 0, 0.3) && approximatelyEqual((collapsedDisplay?.geometry?.w ?? 0) * (collapsedDisplay?.transform?.scaleX ?? 1) * (collapsedDisplay?.transform?.scale ?? 1), 60.75), 'expected reverse pop-out endpoint to match the anisotropically scaled zoom frame width.');
   }
 

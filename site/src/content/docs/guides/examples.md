@@ -126,7 +126,7 @@ Gallery の `source_example_path` は `examples/gallery/*.fluxion.txt` を正と
 | three-d-camera-illusion-rotation | ported | P2 | Text DSL sample 完了（`examples/gallery/three-d-camera-illusion-rotation.fluxion.txt`）; `projectedCircle` + faux-3D transform stack | default `Circle(radius=1)` を投影済み circle として描き、ThreeDCamera 風の axes と illusion wobble で視覚近似する。 |
 | three-d-light-source-position | ported | P2 | Text DSL sample 完了（`examples/gallery/three-d-light-source-position.fluxion.txt`）; `threeDAxes` + `sphereSurface` 15x32 shaded checkerboard mesh | 公式 `ThreeDAxes()`、半径 1.5 の `Surface(... checkerboard_colors=[RED_D, RED_E])`、`light_source.move_to(3*IN)` の主題を helper 生成 geometry で視覚近似する。 |
 | three-d-surface-plot | ported | P2 | Text DSL sample 完了（`examples/gallery/three-d-surface-plot.fluxion.txt`）; `threeDAxes` + `gaussianSurface` 24x24 projected mesh | 公式 `ThreeDAxes()` の tick/tip と `Surface(param_gauss)` の checkerboard/peak を Manim light/normal-shaded helper path で再現する。 |
-| moving-zoomed-scene-around | ported | P2 | Text DSL sample 完了（`examples/gallery/moving-zoomed-scene-around.fluxion.txt`）; zoomed scene inset camera support | 公式 2x4 grayscale image、default Dot 半径、zoom display、1s 既定 cadence、frame shift 後の表示内容変化、reverse pop-out の frame 位置への畳み込みを手動展開して視覚近似する。 |
+| moving-zoomed-scene-around | ported | P2 | Text DSL sample 完了（`examples/gallery/moving-zoomed-scene-around.fluxion.txt`）; zoomed scene inset camera support | 公式 2x4 grayscale image、default Dot 半径、zoom display、1s 既定 cadence、Dot 周辺の単一 pixel crop と拡大 Dot、frame shift 後の表示内容変化、reverse pop-out の frame 位置への畳み込みを手動展開して視覚近似する。 |
 
 ## Browser example
 
