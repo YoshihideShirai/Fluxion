@@ -468,16 +468,17 @@ Compiler は `DslCompileError` を投げます。message は `Line <line>, colum
 ```text
 camera at 0,0 scale=1 rotation=0
 cameraFrame at 0,0 scale=1
+cameraFrame frame at 0,0 scale=1 opacity=0
 set camera.x to -120
 animate camera.scale from 1 to 1.6 duration=2s easing=easeInOut
 animateFrame to -120,20 scale=1.6 duration=2s easing=easeInOut
-followCamera dot start=1s duration=2s
+followCamera dot frame=frame start=1s duration=2s
 ```
 
 `camera` は document-level の `camera: { x, y, scale, rotation }` を設定します。既定値は `x=0`, `y=0`, `scale=1`, `rotation=0` です。`set` / `animate` は `camera.x`, `camera.y`, `camera.scale`, `camera.rotation`, `camera.target.x`, `camera.target.y` を target にできます。
 
-`cameraFrame` は camera frame cursor を設定する Manim 風 alias です。`animateFrame` は通常の camera timeline operation を出力しつつ、gallery example では frame movement を単一の高水準 command として記述できます。
+`cameraFrame` は camera frame cursor を設定する Manim 風 alias です。id を付けた `cameraFrame frame ...` は `geometry.cameraFrame=true` の不可視 `rect` mobject も作成し、Manim の `self.camera.frame` 状態を追跡する用途に使えます。`animateFrame` は通常の camera timeline operation を出力しつつ、gallery example では frame movement を単一の高水準 command として記述できます。
 
-`followCamera <node-id> [start=<time>] [duration=<time>]` は animation を適用した後の node center を `camera.target` に反映します。Manim の `self.camera.frame.add_updater(lambda mob: mob.move_to(target.get_center()))` に近い camera follow を表すための updater sugar です。`duration` を省略すると、start 以降ずっと追従します。
+`followCamera <node-id> [frame=<frame-id>] [start=<time>] [duration=<time>]` は animation を適用した後の node center を `camera.target` に反映します。`frame` を指定すると、参照した frame node の `transform.x/y` も同時に更新します。Manim の `self.camera.frame.add_updater(lambda mob: mob.move_to(target.get_center()))` に近い camera follow を表すための updater sugar です。`duration` を省略すると、start 以降ずっと追従します。
 
 Renderer は scene origin `(0,0)` を viewport center に移してから zoom / rotation / pan を適用します: `translate(centerX + camera.x, centerY + camera.y) rotate(camera.rotation) scale(camera.scale) translate(0, 0)`。`mode=target` / `mode=frame-fit` では最後の translate が target 座標を中心へ合わせます。合成順序は `Camera * ParentNode * ChildNode` です。つまり camera は scene 全体の pan / zoom / rotation、node transform は各 node の local transform として扱われます。

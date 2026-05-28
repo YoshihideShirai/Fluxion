@@ -75,6 +75,10 @@ export function applyInstantOp(
     if (target && camera) {
       camera.target = { x: target.transform.x, y: target.transform.y };
       camera.mode = camera.mode ?? "target";
+      if (op.frameId) {
+        graph.setPath(op.frameId, "transform.x", target.transform.x);
+        graph.setPath(op.frameId, "transform.y", target.transform.y);
+      }
     }
   }
   // Effect operations are semantic hints for future renderers; fallback

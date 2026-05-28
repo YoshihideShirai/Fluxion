@@ -1462,15 +1462,19 @@ function checkGallerySpecificStructure(label, documentData) {
     const axes = findNode(documentData, 'ax');
     const graph = findNode(documentData, 'graph');
     const movingDot = findNode(documentData, 'moving_dot');
+    const cameraFrame = findNode(documentData, 'camera_frame');
     assertGalleryCondition(label, axes?.geometry?.width === 810 && axes.geometry?.height === 405, 'expected camera demo axes to match the Manim frame-scaled geometry.');
     assertGalleryCondition(label, graph?.geometry?.fn === 'sin(t)' && approximatelyEqual(graph?.geometry?.scaleX ?? 0, 73.636) && approximatelyEqual(graph?.geometry?.scaleY ?? 0, 36.818), 'expected sampled sine graph with Manim-style coordinate scaling.');
     assertGalleryCondition(label, movingDot?.type === 'circle' && approximatelyEqual(movingDot?.geometry?.r ?? 0, 5.4) && movingDot?.style?.fill === '#ff862f', 'expected orange moving Dot with Manim default radius.');
+    assertGalleryCondition(label, cameraFrame?.geometry?.cameraFrame === true && cameraFrame?.type === 'rect' && approximatelyEqual(cameraFrame?.geometry?.w ?? 0, 960) && approximatelyEqual(cameraFrame?.geometry?.h ?? 0, 540), 'expected invisible MovingCamera frame mobject.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'camera', path: 'camera.target.x', from: 0, to: -331.364, t: 0, duration: 1, easing: 'easeInOut' }), 'expected initial camera pan to the graph start.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'camera', path: 'camera.target.y', from: 0, to: 165.682, t: 0, duration: 1, easing: 'easeInOut' }), 'expected initial camera pan y to the graph start.');
-    assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'followCamera' && op.id === 'moving_dot' && op.t === 1 && op.duration === 1), 'expected camera to follow the moving dot during path animation.');
+    assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'followCamera' && op.id === 'moving_dot' && op.frameId === 'camera_frame' && op.t === 1 && op.duration === 1), 'expected camera frame mobject to follow the moving dot during path animation.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'camera', path: 'camera.scale', from: 1, to: 2, t: 0, duration: 1, easing: 'easeInOut' }), 'expected camera zoom-in animation.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'camera_frame', path: 'transform.scale', from: 1, to: 0.5, t: 0, duration: 1, easing: 'easeInOut' }), 'expected camera frame mobject to scale down for zoom-in.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'camera', path: 'camera.target.x', from: 362.643, to: 0, t: 2, duration: 1, easing: 'easeInOut' }), 'expected camera restore from graph end x.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'camera', path: 'camera.scale', from: 2, to: 1, t: 2, duration: 1, easing: 'easeInOut' }), 'expected camera zoom restore.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'camera_frame', path: 'transform.scale', from: 0.5, to: 1, t: 2, duration: 1, easing: 'easeInOut' }), 'expected camera frame mobject scale restore.');
 
     const startDot = renderedNodeAt(documentData, 0, 'moving_dot');
     const zoomStart = visualSample(documentData, 1);
@@ -1479,10 +1483,12 @@ function checkGallerySpecificStructure(label, documentData) {
     const restored = visualSample(documentData, 3);
     const midDot = flattenNodes(followMid.nodes).find((node) => node.id === 'moving_dot');
     const endDot = flattenNodes(followEnd.nodes).find((node) => node.id === 'moving_dot');
+    const midFrame = flattenNodes(followMid.nodes).find((node) => node.id === 'camera_frame');
     assertGalleryCondition(label, approximatelyEqual(startDot?.transform?.x ?? 0, -331.364) && approximatelyEqual(startDot?.transform?.y ?? 0, 165.682), 'expected moving dot to remain at the graph start before MoveAlongPath begins.');
     assertGalleryCondition(label, approximatelyEqual(zoomStart.camera?.target?.x ?? 0, -331.364) && approximatelyEqual(zoomStart.camera?.target?.y ?? 0, 165.682) && approximatelyEqual(zoomStart.camera?.scale ?? 0, 2), 'expected camera to finish zooming into the graph start at 1s.');
     assertGalleryCondition(label, approximatelyEqual(midDot?.transform?.x ?? 0, 15.637475) && approximatelyEqual(midDot?.transform?.y ?? 0, 202.5), 'expected moving dot to follow the smooth sine path midpoint by arc length.');
     assertGalleryCondition(label, approximatelyEqual(followMid.camera?.target?.x ?? 0, midDot?.transform?.x ?? 0) && approximatelyEqual(followMid.camera?.target?.y ?? 0, midDot?.transform?.y ?? 0), 'expected camera target to match the moving dot while following.');
+    assertGalleryCondition(label, approximatelyEqual(midFrame?.transform?.x ?? 0, midDot?.transform?.x ?? 0) && approximatelyEqual(midFrame?.transform?.y ?? 0, midDot?.transform?.y ?? 0), 'expected invisible camera frame mobject to match the moving dot while following.');
     assertGalleryCondition(label, approximatelyEqual(endDot?.transform?.x ?? 0, 362.63895) && approximatelyEqual(endDot?.transform?.y ?? 0, 165.682), 'expected moving dot to reach the graph end after MoveAlongPath.');
     assertGalleryCondition(label, approximatelyEqual(restored.camera?.target?.x ?? 1, 0) && approximatelyEqual(restored.camera?.target?.y ?? 1, 0) && approximatelyEqual(restored.camera?.scale ?? 0, 1), 'expected camera to restore to the original frame by 3s.');
 

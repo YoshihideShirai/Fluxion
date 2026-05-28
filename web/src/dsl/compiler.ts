@@ -451,7 +451,23 @@ function parseCameraFrame(
   state: CompileState,
   lineNumber: number,
 ): void {
-  for (const [key, value] of readCameraArguments(tokens.slice(1), lineNumber)) {
+  const maybeId = tokens[1];
+  const frameId = maybeId && !maybeId.includes("=") && maybeId !== "at" ? maybeId : undefined;
+  if (frameId && state.nodes.has(frameId))
+    throw new DslCompileError(`Duplicate node id '${frameId}'.`, lineNumber);
+
+  const frameNode = frameId ? createBaseNode(frameId, "rect") : undefined;
+  if (frameNode) {
+    frameNode.geometry.w = state.width;
+    frameNode.geometry.h = state.height;
+    frameNode.geometry.cameraFrame = true;
+    frameNode.style.fill = "none";
+    frameNode.style.stroke = "none";
+    frameNode.style.strokeWidth = 0;
+    frameNode.transform.opacity = 0;
+  }
+
+  for (const [key, value] of readCameraArguments(tokens.slice(frameId ? 2 : 1), lineNumber)) {
     if (key === "at") {
       const [x, y] = value
         .split(",")
@@ -462,16 +478,31 @@ function parseCameraFrame(
       state.camera.y = y;
       state.cameraFrameCursor.x = x;
       state.cameraFrameCursor.y = y;
+      if (frameNode) {
+        frameNode.transform.x = x;
+        frameNode.transform.y = y;
+      }
       continue;
     }
     if (key === "x" || key === "y" || key === "scale" || key === "rotation") {
       const numericValue = parseNumber(value, lineNumber);
       state.camera[key] = numericValue;
       state.cameraFrameCursor[key] = numericValue;
+      if (frameNode) frameNode.transform[key] = numericValue;
+      continue;
+    }
+
+    if (frameNode) {
+      applyNodeOption(frameNode, key, value, lineNumber);
       continue;
     }
 
     throw new DslCompileError(`Unknown cameraFrame option '${key}'.`, lineNumber);
+  }
+
+  if (frameNode && frameId) {
+    state.nodes.set(frameId, frameNode);
+    state.rootIds.add(frameId);
   }
 }
 
@@ -4687,12 +4718,14 @@ function parseFollowCamera(
   fallbackStart: number,
 ): void {
   let targetId = tokens[1];
+  let frameId: string | undefined;
   let start = fallbackStart;
   let duration: number | undefined;
   const optionStart = targetId?.includes("=") ? 1 : 2;
 
   for (const [key, value] of readAssignments(tokens.slice(optionStart), lineNumber)) {
     if (key === "target") targetId = value;
+    else if (key === "frame") frameId = value;
     else if (key === "start") start = parseSeconds(value, lineNumber);
     else if (key === "duration") duration = parseSeconds(value, lineNumber);
     else
@@ -4706,11 +4739,14 @@ function parseFollowCamera(
     throw new DslCompileError("Expected followCamera target id.", lineNumber);
   if (!findNode(state, targetId))
     throw new DslCompileError(`Unknown followCamera target '${targetId}'.`, lineNumber);
+  if (frameId && !findNode(state, frameId))
+    throw new DslCompileError(`Unknown followCamera frame '${frameId}'.`, lineNumber);
 
   state.timeline.push({
     t: start,
     op: "followCamera",
     id: targetId,
+    ...(frameId === undefined ? {} : { frameId }),
     ...(duration === undefined ? {} : { duration }),
   });
   state.camera.mode = "target";

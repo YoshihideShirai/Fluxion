@@ -69,20 +69,26 @@ test("applies camera animation interpolation", () => {
 });
 
 test("updates camera target from followed node after animations", () => {
-  const graph = new SceneGraph([node]);
+  const frame = structuredClone(node);
+  frame.id = "frame";
+  frame.transform.x = 0;
+  frame.transform.y = 0;
+  const graph = new SceneGraph([node, frame]);
   const camera = { x: 0, y: 0, scale: 1, rotation: 0, target: { x: 0, y: 0 }, mode: "target" as const };
   applyTimelineAt(
     graph,
     [
       { t: 0, op: "animate", id: "c1", path: "transform.x", from: 0, to: 100, duration: 2, easing: "linear" },
       { t: 0, op: "animate", id: "c1", path: "transform.y", from: 0, to: -40, duration: 2, easing: "linear" },
-      { t: 0, op: "followCamera", id: "c1", duration: 2 },
+      { t: 0, op: "followCamera", id: "c1", frameId: "frame", duration: 2 },
     ],
     1,
     [],
     camera,
   );
   assert.equal(JSON.stringify(camera.target), JSON.stringify({ x: 50, y: -20 }));
+  assert.equal(graph.get("frame")?.transform.x, 50);
+  assert.equal(graph.get("frame")?.transform.y, -20);
 });
 
 test("builds camera transforms around the scene center", () => {

@@ -1,6 +1,6 @@
 scene width=960 height=540 fps=60
 camera mode=target target=0,0 scale=1
-cameraFrame at 0,0 scale=1
+cameraFrame camera_frame at 0,0 scale=1 opacity=0
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 axes ax at 0,0 width=810 height=405 xRange=-1,10 yRange=-1,10 stroke="#8a8a8a" strokeWidth=2 xTicks=-1,0,1,2,3,4,5,6,7,8,9,10 yTicks=-1,0,1,2,3,4,5,6,7,8,9,10 tickLength=12 tickStrokeWidth=2
@@ -11,9 +11,15 @@ circle moving_dot r=5.4 at -331.364,165.682 fill="#ff862f" stroke="none"
 animate camera.target.x from 0 to -331.364 start=0s duration=1s easing=easeInOut
 animate camera.target.y from 0 to 165.682 start=0s duration=1s easing=easeInOut
 animate camera.scale from 1 to 2 start=0s duration=1s easing=easeInOut
+animate camera_frame.x from 0 to -331.364 start=0s duration=1s easing=easeInOut
+animate camera_frame.y from 0 to 165.682 start=0s duration=1s easing=easeInOut
+animate camera_frame.scale from 1 to 0.5 start=0s duration=1s easing=easeInOut
 at 1s:
   play MoveAlongPath(moving_dot, graph) duration=1s easing=linear
-followCamera moving_dot start=1s duration=1s
+followCamera moving_dot frame=camera_frame start=1s duration=1s
 animate camera.target.x from 362.643 to 0 start=2s duration=1s easing=easeInOut
 animate camera.target.y from 165.682 to 0 start=2s duration=1s easing=easeInOut
 animate camera.scale from 2 to 1 start=2s duration=1s easing=easeInOut
+animate camera_frame.x from 362.643 to 0 start=2s duration=1s easing=easeInOut
+animate camera_frame.y from 165.682 to 0 start=2s duration=1s easing=easeInOut
+animate camera_frame.scale from 0.5 to 1 start=2s duration=1s easing=easeInOut

@@ -275,14 +275,14 @@ always curve.d = path(x=240+96*cos(t),y=270+96*sin(t),from=0,to=2*pi,samples=128
 animate c1.x from 220 to 640 duration=1.5s easing=easeInOut
 animate title.opacity from 0 to 1 start=0s duration=1s
 animateFrame to 120,40 scale=1.4 duration=1s easing=easeInOut
-followCamera dot start=1s duration=2s
+followCamera dot frame=frame start=1s duration=2s
 ```
 
 `animate` interpolates a target property or a declared scalar value tracker. Numeric values interpolate; non-numeric node property values switch to `to` at completion.
 
-`animateFrame` is camera-frame sugar. It expands to synchronized `camera.x`, `camera.y`, `camera.scale`, and `camera.rotation` animations from the compiler's current camera frame cursor. Use `cameraFrame at x,y scale=<number>` to set the initial frame cursor. `animateFrame` supports `to x,y`, `scale`, `rotation`, `start`, `duration`, and `easing`.
+`animateFrame` is camera-frame sugar. It expands to synchronized `camera.x`, `camera.y`, `camera.scale`, and `camera.rotation` animations from the compiler's current camera frame cursor. Use `cameraFrame at x,y scale=<number>` to set the initial frame cursor. With an id (`cameraFrame frame ...`), it also creates an invisible `rect` mobject with `geometry.cameraFrame=true` to track Manim `self.camera.frame` state. `animateFrame` supports `to x,y`, `scale`, `rotation`, `start`, `duration`, and `easing`.
 
-`followCamera <node-id> [start=<time>] [duration=<time>]` applies after animations and writes the node center to `camera.target`. It is updater sugar for Manim-like `self.camera.frame.add_updater(lambda mob: mob.move_to(target.get_center()))` camera following. If `duration` is omitted, following remains active after `start`.
+`followCamera <node-id> [frame=<frame-id>] [start=<time>] [duration=<time>]` applies after animations and writes the node center to `camera.target`. When `frame` is provided, the referenced frame node's `transform.x/y` are updated too. It is updater sugar for Manim-like `self.camera.frame.add_updater(lambda mob: mob.move_to(target.get_center()))` camera following. If `duration` is omitted, following remains active after `start`.
 
 ### play and wait
 
@@ -348,14 +348,17 @@ The Text DSL compiler runs in the browser and does not execute Python or arbitra
 ```text
 camera at 0,0 scale=1 rotation=0
 cameraFrame at 0,0 scale=1
+cameraFrame frame at 0,0 scale=1 opacity=0
 set camera.x to -120
 animate camera.scale from 1 to 1.6 duration=2s easing=easeInOut
 animateFrame to -120,20 scale=1.6 duration=2s easing=easeInOut
-followCamera dot start=1s duration=2s
+followCamera dot frame=frame start=1s duration=2s
 ```
 
 `camera` configures the document-level `camera: { x, y, scale, rotation }`. Defaults are `x=0`, `y=0`, `scale=1`, and `rotation=0`. `set` / `animate` can target `camera.x`, `camera.y`, `camera.scale`, `camera.rotation`, `camera.target.x`, and `camera.target.y`.
 
-`cameraFrame` is a Manim-style alias for configuring the camera frame cursor. `animateFrame` emits ordinary camera timeline operations, but lets gallery examples describe frame movement as a single high-level command.
+`cameraFrame` is a Manim-style alias for configuring the camera frame cursor. With an id (`cameraFrame frame ...`), it also creates an invisible `rect` mobject with `geometry.cameraFrame=true` to track Manim `self.camera.frame` state. `animateFrame` emits ordinary camera timeline operations, but lets gallery examples describe frame movement as a single high-level command.
+
+`followCamera <node-id> [frame=<frame-id>] [start=<time>] [duration=<time>]` applies after animations and writes the node center to `camera.target`. When `frame` is provided, the referenced frame node's `transform.x/y` are updated too.
 
 The renderer maps the scene origin `(0,0)` to the viewport center, then applies camera pan / zoom / rotation: `translate(centerX + camera.x, centerY + camera.y) rotate(camera.rotation) scale(camera.scale) translate(0, 0)`. With `mode=target` / `mode=frame-fit`, the final translate centers the target coordinate instead. Composition order is `Camera * ParentNode * ChildNode`, so the camera pans / zooms / rotates the entire scene while node transforms stay local.

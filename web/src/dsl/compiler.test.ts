@@ -207,14 +207,21 @@ animate theta from 0 to 3.141592654 duration=1s`);
 test("compiles followCamera updater operation", () => {
   const documentData = compileTextDsl(`camera mode=target target=0,0 scale=1
 circle dot r=5 at 10,-20
-followCamera dot start=1s duration=2s`);
+cameraFrame frame at 0,0 scale=1 opacity=0
+followCamera dot frame=frame start=1s duration=2s`);
 
   const follow = documentData.timeline.find((op) => op.op === "followCamera");
   if (follow?.op !== "followCamera") throw new Error("Expected followCamera operation.");
   assert.equal(follow.id, "dot");
+  assert.equal(follow.frameId, "frame");
   assert.equal(follow.t, 1);
   assert.equal(follow.duration, 2);
   assert.equal(documentData.camera.mode, "target");
+  const frame = documentData.nodes.find((node) => node.id === "frame");
+  assert.equal(frame?.geometry.cameraFrame, true);
+  assert.equal(frame?.geometry.w, 1280);
+  assert.equal(frame?.geometry.h, 720);
+  assert.equal(frame?.transform.opacity, 0);
 });
 
 test("compiles cameraFrame and animateFrame sugar", () => {

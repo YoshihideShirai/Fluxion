@@ -153,6 +153,7 @@ export interface EffectOperation extends BaseOperation {
 export interface FollowCameraOperation extends BaseOperation {
   op: "followCamera";
   id: string;
+  frameId?: string;
   duration?: number;
 }
 
