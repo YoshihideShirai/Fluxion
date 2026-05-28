@@ -1618,10 +1618,11 @@ function checkGallerySpecificStructure(label, documentData) {
     const dot = findNode(documentData, 'dot');
     const guide = findNode(documentData, 'guide');
     assertGalleryCondition(label, orbit?.type === 'circle' && approximatelyEqual(orbit.geometry?.r ?? 0, 67.5), 'expected one-unit orbit circle.');
-    assertGalleryCondition(label, orbit?.style?.stroke === '#58C4DD' && orbit.transform?.opacity === 0 && orbit.transform?.scale === 0, 'expected orbit to Create from hidden scale.');
+    assertGalleryCondition(label, orbit?.style?.stroke === '#58C4DD' && (orbit.transform?.opacity ?? 1) === 1 && orbit.transform?.scale === 0, 'expected GrowFromCenter orbit to start at full opacity and zero scale.');
     assertGalleryCondition(label, dot?.type === 'circle' && approximatelyEqual(dot.geometry?.r ?? 0, 5.4), 'expected default moving dot.');
     assertGalleryCondition(label, guide?.type === 'line' && guide.geometry?.x1 === 202.5 && guide.geometry?.x2 === 337.5, 'expected offset guide line for Rotating phase.');
-    assertGalleryCondition(label, hasAnimation(documentData, { id: 'orbit', path: 'transform.opacity', from: 0, to: 1, t: 0, duration: 1, easing: 'smooth' }), 'expected orbit fade-in.');
+    assertGalleryCondition(label, !documentData.timeline.some((op) => op.op === 'animate' && op.id === 'orbit' && op.path === 'transform.opacity'), 'expected GrowFromCenter to avoid fade-in opacity animation.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'orbit', path: 'transform.scale', from: 0, to: 1, t: 0, duration: 1, easing: 'smooth' }), 'expected orbit GrowFromCenter scale animation.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'dot', path: 'transform.x', from: 0, to: 67.5, t: 1, duration: 1, easing: 'smooth' }), 'expected dot move to circle start.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'animateValue' && String(op.id).startsWith('__moveAlongPath_dot_orbit') && approximatelyEqual(op.to, Math.PI * 2) && op.t === 2 && op.duration === 2), 'expected MoveAlongPath around orbit.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'animateValue' && String(op.id).startsWith('__rotating_dot') && approximatelyEqual(op.to, Math.PI * 2) && op.t === 4 && op.duration === 1.5), 'expected Rotating phase about offset point.');
