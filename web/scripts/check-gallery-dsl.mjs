@@ -1437,6 +1437,8 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, axes?.transform?.x === 0 && axes?.transform?.y === 0 && circle?.transform?.x === 0 && circle?.transform?.y === 0, 'expected circle and ThreeDAxes to stay at the unshifted Manim scene origin.');
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === 30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
+    assertGalleryCondition(label, findNode(documentData, 'axes:x:axis')?.style?.stroke === '#FFFFFF' && findNode(documentData, 'axes:x:axis')?.style?.strokeWidth === 2, 'expected Manim default white 2px ThreeDAxes strokes.');
+    assertGalleryCondition(label, findNode(documentData, 'axes:x:tick:m1')?.style?.strokeWidth === 2 && approximatelyEqual(findNode(documentData, 'axes:x:tick:m1')?.geometry?.x1 ?? 0, 32.579284), 'expected Manim default ThreeDAxes tick size and stroke.');
     assertGalleryCondition(label, circle?.geometry?.projectedCircle === true, 'expected projected default Circle(radius=1).');
     assertGalleryCondition(label, circle?.geometry?.cameraProjection === 'manim' && circle.geometry?.phi === 75 && circle.geometry?.theta === 30, 'expected Circle(radius=1) to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, findNode(documentData, 'axes:x:tip')?.type === 'path', 'expected projected x-axis arrow tip.');
@@ -1466,6 +1468,8 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, axes?.transform?.x === 0 && axes?.transform?.y === 0 && circle?.transform?.x === 0 && circle?.transform?.y === 0, 'expected circle and ThreeDAxes to stay at the unshifted Manim scene origin.');
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === 30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
+    assertGalleryCondition(label, findNode(documentData, 'axes:x:axis')?.style?.stroke === '#FFFFFF' && findNode(documentData, 'axes:x:axis')?.style?.strokeWidth === 2, 'expected Manim default white 2px ThreeDAxes strokes.');
+    assertGalleryCondition(label, findNode(documentData, 'axes:x:tick:m1')?.style?.strokeWidth === 2 && approximatelyEqual(findNode(documentData, 'axes:x:tick:m1')?.geometry?.x1 ?? 0, 32.579284), 'expected Manim default ThreeDAxes tick size and stroke.');
     assertGalleryCondition(label, circle?.geometry?.projectedCircle === true, 'expected projected default Circle(radius=1).');
     assertGalleryCondition(label, circle?.geometry?.cameraProjection === 'manim' && circle.geometry?.phi === 75 && circle.geometry?.theta === 30, 'expected Circle(radius=1) to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'axes:x:tick:') === 12, 'expected projected x-axis ticks.');
