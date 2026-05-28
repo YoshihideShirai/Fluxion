@@ -194,6 +194,19 @@ function checkMarkdownFrontmatter(label, frontmatter) {
   if (!/^\s*-\s+/m.test(knownGapsBlock)) {
     throw new Error(`${label}: known_gaps must contain at least one item.`);
   }
+
+  if (label.includes('vector-arrow')) {
+    const requiredVectorArrowNotes = [
+      'default の tick / coordinate label なし',
+      'filled triangle tip',
+      'play animation は追加しない',
+    ];
+    for (const note of requiredVectorArrowNotes) {
+      if (!knownGapsBlock.includes(note)) {
+        throw new Error(`${label}: vector-arrow known_gaps must mention '${note}'.`);
+      }
+    }
+  }
 }
 
 function compileExample(label, source) {

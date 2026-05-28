@@ -6,7 +6,7 @@ source_example_path: examples/gallery/vector-arrow.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "NumberPlane は `numberPlane` helper で Manim 16:9 frame の 1 unit = 67.5px に展開し、`background_line_style` / `faded_line_style`、境界 grid line を含めない Manim の背景線生成、x/y axis の主要 stroke style、任意の tick/coordinate label を扱えるが、label direction など axis style の全オプションまでは未実装。Arrow は default `stroke_width=6`、`tip_length=0.35`、buff と tip/stroke length clamp を反映し、Manim の predefined tip_shape 名も DSL の `tipShape` として扱える。Text labels は `next_to(..., buff=SMALL_BUFF)` 相当の `nextTo` に展開し、公式 `self.add(numberplane, dot, arrow, origin_text, tip_text)` の静止フレーム z-order を保持する。"
+  - symptom: "NumberPlane は `numberPlane` helper で Manim 16:9 frame の 1 unit = 67.5px に展開し、default の tick / coordinate label なし、`background_line_style` / `faded_line_style`、境界 grid line を含めない Manim の背景線生成、x/y axis の主要 stroke style、任意の tick/coordinate label を扱えるが、label direction など axis style の全オプションまでは未実装。Arrow は default `stroke_width=6`、filled triangle tip、`tip_length=0.35`、buff と tip/stroke length clamp を反映し、Manim の predefined tip_shape 名も DSL の `tipShape` として扱える。Text labels は `next_to(..., buff=SMALL_BUFF)` 相当の `nextTo` に展開し、公式の静止 `self.add(numberplane, dot, arrow, origin_text, tip_text)` z-order を保持し、play animation は追加しない。"
     layer: dsl
     impact: low
     workaround: "`NumberPlane()` は frame radius、`BLUE_D` / white axes、境界を除く背景線配置に合わせ、`Arrow(ORIGIN, [2, 2, 0], buff=0)` は dot より後に描画し、67.5px/unit、default white、tip length 23.625px として展開する。"
