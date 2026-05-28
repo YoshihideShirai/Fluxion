@@ -636,12 +636,12 @@ function parseAxes(tokens: string[], state: CompileState, lineNumber: number): v
   const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
   const at = options.get("at") ?? "0,0";
   const [cx, cy] = at.split(",").map((v) => parseNumber(v, lineNumber));
-  const xRange = (options.get("xRange") ?? "-5,5").split(",").map((v) => parseNumber(v, lineNumber));
-  const yRange = (options.get("yRange") ?? "-3,3").split(",").map((v) => parseNumber(v, lineNumber));
-  const width = parseNumber(options.get("width") ?? "760", lineNumber);
-  const height = parseNumber(options.get("height") ?? "360", lineNumber);
-  const stroke = options.get("stroke") ?? "#94a3b8";
-  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "3", lineNumber);
+  const xRange = (options.get("xRange") ?? "-7,7").split(",").map((v) => parseNumber(v, lineNumber));
+  const yRange = (options.get("yRange") ?? "-4,4").split(",").map((v) => parseNumber(v, lineNumber));
+  const width = parseNumber(options.get("width") ?? "810", lineNumber);
+  const height = parseNumber(options.get("height") ?? "405", lineNumber);
+  const stroke = options.get("stroke") ?? "#FFFFFF";
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "2", lineNumber);
   const axesGeometryValue = { xMin: xRange[0]!, xMax: xRange[1]!, yMin: yRange[0]!, yMax: yRange[1]!, width, height };
   const origin = axesDataToPoint({ x: 0, y: 0 }, axesGeometryValue);
 
@@ -752,18 +752,18 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
   if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
   const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
   const [cx, cy] = parsePointOption(options.get("at") ?? "0,0", "at", lineNumber);
-  const [xMin, xMax] = parseRangeOption(options.get("xRange") ?? "-7,7", "xRange", lineNumber);
+  const [xMin, xMax] = parseRangeOption(options.get("xRange") ?? "-7.111111,7.111111", "xRange", lineNumber);
   const [yMin, yMax] = parseRangeOption(options.get("yRange") ?? "-4,4", "yRange", lineNumber);
   const xStep = parseNumber(options.get("xStep") ?? "1", lineNumber);
   const yStep = parseNumber(options.get("yStep") ?? "1", lineNumber);
-  const xUnit = parseNumber(options.get("xUnit") ?? options.get("unit") ?? "60", lineNumber);
-  const yUnit = parseNumber(options.get("yUnit") ?? options.get("unit") ?? "60", lineNumber);
-  const color = options.get("stroke") ?? options.get("color") ?? "#00bcd4";
-  const axisColor = options.get("axisStroke") ?? options.get("axisColor") ?? "#dff9ff";
-  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "1.4", lineNumber);
-  const axisStrokeWidth = parseNumber(options.get("axisStrokeWidth") ?? "1.8", lineNumber);
-  const opacity = parseNumber(options.get("opacity") ?? "0.9", lineNumber);
-  const axisOpacity = parseNumber(options.get("axisOpacity") ?? "0.95", lineNumber);
+  const xUnit = parseNumber(options.get("xUnit") ?? options.get("unit") ?? "67.5", lineNumber);
+  const yUnit = parseNumber(options.get("yUnit") ?? options.get("unit") ?? "67.5", lineNumber);
+  const color = options.get("stroke") ?? options.get("color") ?? "#29ABCA";
+  const axisColor = options.get("axisStroke") ?? options.get("axisColor") ?? "#FFFFFF";
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "2", lineNumber);
+  const axisStrokeWidth = parseNumber(options.get("axisStrokeWidth") ?? "2", lineNumber);
+  const opacity = parseNumber(options.get("opacity") ?? "1", lineNumber);
+  const axisOpacity = parseNumber(options.get("axisOpacity") ?? "1", lineNumber);
   const fadedLineRatio = Math.max(
     0,
     Math.round(parseNumber(options.get("fadedLineRatio") ?? "1", lineNumber)),
@@ -1016,7 +1016,7 @@ function parseDataLineGraph(tokens: string[], state: CompileState, lineNumber: n
   const lineColor = options.get("lineColor") ?? options.get("stroke") ?? "#FFFF00";
   const vertexColor = options.get("vertexColor") ?? lineColor;
   const strokeWidth = parseNumber(options.get("strokeWidth") ?? "4", lineNumber);
-  const vertexRadius = parseNumber(options.get("vertexRadius") ?? "5", lineNumber);
+  const vertexRadius = parseNumber(options.get("vertexRadius") ?? "5.4", lineNumber);
 
   const line = createBaseNode(`${id}:line_graph`, "path");
   line.geometry.d = points
@@ -1121,13 +1121,13 @@ function parseDataDot(tokens: string[], state: CompileState, lineNumber: number)
   const node = createBaseNode(id, "circle");
   node.transform.x = evaluateDslExpression(xExpr, state, lineNumber);
   node.transform.y = evaluateDslExpression(yExpr, state, lineNumber);
-  node.geometry.r = parseNumber(options.get("r") ?? "8", lineNumber);
+  node.geometry.r = parseNumber(options.get("r") ?? "5.4", lineNumber);
   node.geometry.dataDot = true;
   node.geometry.axes = axesId;
   node.geometry.point = `${point.x},${point.y}`;
   node.style.fill = "#ffffff";
   node.style.stroke = "#ffffff";
-  node.style.strokeWidth = 2;
+  node.style.strokeWidth = 0;
   for (const [key, value] of options) {
     if (["axes", "point", "r"].includes(key)) continue;
     applyNodeOption(node, key, value, lineNumber);
@@ -1499,9 +1499,8 @@ function parseSphereSurface(tokens: string[], state: CompileState, lineNumber: n
   const strokeWidth = parseNumber(options.get("strokeWidth") ?? "0.5", lineNumber);
   const fillOpacity = parseNumber(options.get("fillOpacity") ?? "1", lineNumber);
   const shade = parseBoolean(options.get("shade") ?? "true", lineNumber);
-  const [lightX, lightY, lightZ] = parseVector3Option(options.get("light") ?? "0,-0.35,1", "light", lineNumber);
-  const lightLength = Math.hypot(lightX, lightY, lightZ) || 1;
-  const light = { x: lightX / lightLength, y: lightY / lightLength, z: lightZ / lightLength };
+  const [lightX, lightY, lightZ] = parseVector3Option(options.get("light") ?? "0,0,-3", "light", lineNumber);
+  const light = { x: lightX, y: lightY, z: lightZ };
 
   const project = (u: number, v: number): { x: number; y: number; z: number; depth: number } => {
     const cu = Math.cos(u);
@@ -1551,11 +1550,19 @@ function parseSphereSurface(tokens: string[], state: CompileState, lineNumber: n
       const midV = (va + vb) / 2;
       const cm = Math.cos(midU);
       const normal = { x: cm * Math.cos(midV), y: cm * Math.sin(midV), z: Math.sin(midU) };
-      const lightAmount = Math.max(0, normal.x * light.x + normal.y * light.y + normal.z * light.z);
+      const point = { x: normal.x * worldRadius, y: normal.y * worldRadius, z: normal.z * worldRadius };
+      const toLight = normalize3d({
+        x: light.x - point.x,
+        y: light.y - point.y,
+        z: light.z - point.z,
+      });
+      const lightDot = normal.x * toLight.x + normal.y * toLight.y + normal.z * toLight.z;
+      let lightAmount = 0.5 * lightDot ** 3;
+      if (lightAmount < 0) lightAmount *= 0.5;
       faces.push({
         row,
         col,
-        shade: shade ? 0.38 + lightAmount * 0.62 : 1,
+        shade: shade ? lightAmount : 0,
         depth: points3d.reduce((sum, point) => sum + point.depth, 0) / points3d.length,
         points: points3d,
       });
@@ -1575,6 +1582,7 @@ function parseSphereSurface(tokens: string[], state: CompileState, lineNumber: n
   group.geometry.vResolution = vResolution;
   group.geometry.radius = radius;
   group.geometry.worldRadius = worldRadius;
+  group.geometry.light = [light.x, light.y, light.z];
   if (hasProjectionBasis) {
     group.geometry.xBasis = [basisXX, basisXY];
     group.geometry.yBasis = [basisYX, basisYY];
@@ -1600,7 +1608,7 @@ function parseSphereSurface(tokens: string[], state: CompileState, lineNumber: n
       .concat("Z")
       .join(" ");
     const baseFill = (face.row + face.col) % 2 === 0 ? fillA : fillB;
-    node.style.fill = shade ? shadeHexColor(baseFill, face.shade) : baseFill;
+    node.style.fill = shade ? shadeHexColorByDelta(baseFill, face.shade) : baseFill;
     node.style.fillOpacity = fillOpacity;
     node.style.stroke = stroke;
     node.style.strokeWidth = strokeWidth;
@@ -1655,13 +1663,16 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
   const [yBasisX, yBasisY] = parsePointOption(options.get("yBasis") ?? "-47.6,23.6", "yBasis", lineNumber);
   const [zBasisX, zBasisY] = parsePointOption(options.get("zBasis") ?? "0,-60", "zBasis", lineNumber);
   const stroke = options.get("stroke") ?? "#FFFFFF";
-  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "4", lineNumber);
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "2", lineNumber);
   const tickSize = parseNumber(options.get("tickSize") ?? "10", lineNumber);
   const tickStrokeWidth = parseNumber(options.get("tickStrokeWidth") ?? "2", lineNumber);
   const includeTicks = parseBoolean(options.get("includeTicks") ?? "true", lineNumber);
   const includeTips = parseBoolean(options.get("includeTips") ?? "true", lineNumber);
   const tipLength = parseNumber(options.get("tipLength") ?? "18", lineNumber);
   const tipWidth = parseNumber(options.get("tipWidth") ?? "14", lineNumber);
+  const xLength = parseNumber(options.get("xLength") ?? String(xMax - xMin), lineNumber);
+  const yLength = parseNumber(options.get("yLength") ?? String(yMax - yMin), lineNumber);
+  const zLength = parseNumber(options.get("zLength") ?? String(zMax - zMin), lineNumber);
   const hasCameraProjection = options.has("phi") || options.has("theta") || options.has("gamma");
 
   const children: SceneNode[] = [];
@@ -1674,7 +1685,7 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
       focalDistance: parseNumber(options.get("focalDistance") ?? "20", lineNumber),
       zoom: parseNumber(options.get("zoom") ?? "1", lineNumber),
     };
-    addManimCameraProjectedAxis(children, id, "x", xMin, xMax, xStep, cameraOptions, {
+    addManimCameraProjectedAxis(children, id, "x", xMin, xMax, xStep, xLength, cameraOptions, {
       stroke,
       strokeWidth,
       tickSize,
@@ -1684,7 +1695,7 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
       tipLength,
       tipWidth,
     });
-    addManimCameraProjectedAxis(children, id, "y", yMin, yMax, yStep, cameraOptions, {
+    addManimCameraProjectedAxis(children, id, "y", yMin, yMax, yStep, yLength, cameraOptions, {
       stroke,
       strokeWidth,
       tickSize,
@@ -1694,7 +1705,7 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
       tipLength,
       tipWidth,
     });
-    addManimCameraProjectedAxis(children, id, "z", zMin, zMax, zStep, cameraOptions, {
+    addManimCameraProjectedAxis(children, id, "z", zMin, zMax, zStep, zLength, cameraOptions, {
       stroke,
       strokeWidth,
       tickSize,
@@ -1750,6 +1761,9 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
   group.geometry.xRange = [xMin, xMax, xStep];
   group.geometry.yRange = [yMin, yMax, yStep];
   group.geometry.zRange = [zMin, zMax, zStep];
+  group.geometry.xLength = xLength;
+  group.geometry.yLength = yLength;
+  group.geometry.zLength = zLength;
   if (hasCameraProjection) {
     group.geometry.cameraProjection = "manim";
     group.geometry.phi = parseNumber(options.get("phi") ?? "75", lineNumber);
@@ -1775,6 +1789,9 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
         "includeTips",
         "tipLength",
         "tipWidth",
+        "xLength",
+        "yLength",
+        "zLength",
         "phi",
         "theta",
         "gamma",
@@ -2324,6 +2341,7 @@ function addManimCameraProjectedAxis(
   min: number,
   max: number,
   step: number,
+  length: number,
   cameraOptions: { phi: number; theta: number; gamma: number; unitScale: number; focalDistance: number; zoom: number },
   style: {
     stroke: string;
@@ -2336,10 +2354,15 @@ function addManimCameraProjectedAxis(
     tipWidth: number;
   },
 ): void {
+  const axisPoint = (value: number): number => {
+    if (Math.abs(max - min) < 1e-9) return 0;
+    return ((value - min) / (max - min) - 0.5) * length;
+  };
   const pointAt = (value: number): { x: number; y: number } => {
-    if (axis === "x") return projectManimCameraPoint({ x: value, y: 0, z: 0 }, cameraOptions);
-    if (axis === "y") return projectManimCameraPoint({ x: 0, y: value, z: 0 }, cameraOptions);
-    return projectManimCameraPoint({ x: 0, y: 0, z: value }, cameraOptions);
+    const coordinate = axisPoint(value);
+    if (axis === "x") return projectManimCameraPoint({ x: coordinate, y: 0, z: 0 }, cameraOptions);
+    if (axis === "y") return projectManimCameraPoint({ x: 0, y: coordinate, z: 0 }, cameraOptions);
+    return projectManimCameraPoint({ x: 0, y: 0, z: coordinate }, cameraOptions);
   };
   const tangentAt = (value: number): { x: number; y: number } => {
     const delta = Math.max(Math.abs(step || 1) * 0.001, 0.001);
@@ -2417,6 +2440,11 @@ function normalize2d(vector: { x: number; y: number }): { x: number; y: number }
   return { x: vector.x / length, y: vector.y / length };
 }
 
+function normalize3d(vector: { x: number; y: number; z: number }): { x: number; y: number; z: number } {
+  const length = Math.hypot(vector.x, vector.y, vector.z) || 1;
+  return { x: vector.x / length, y: vector.y / length, z: vector.z / length };
+}
+
 function shadeHexColor(hex: string, amount: number): string {
   const match = /^#?([0-9a-f]{6})$/iu.exec(hex);
   if (!match) return hex;
@@ -2428,6 +2456,19 @@ function shadeHexColor(hex: string, amount: number): string {
     .map((component) => {
       const mixed = Math.round(component + (target - component) * weight);
       return mixed.toString(16).padStart(2, "0");
+    })
+    .join("")}`;
+}
+
+function shadeHexColorByDelta(hex: string, delta: number): string {
+  const match = /^#?([0-9a-f]{6})$/iu.exec(hex);
+  if (!match) return hex;
+  const value = match[1]!;
+  const rgb = [0, 2, 4].map((offset) => Number.parseInt(value.slice(offset, offset + 2), 16));
+  return `#${rgb
+    .map((component) => {
+      const shaded = Math.round(Math.max(0, Math.min(255, component + delta * 255)));
+      return shaded.toString(16).padStart(2, "0");
     })
     .join("")}`;
 }
@@ -2456,7 +2497,7 @@ function parseArrow(tokens: string[], state: CompileState, lineNumber: number): 
   const y1 = parseNumber(options.get("y1") ?? "0", lineNumber);
   const x2 = parseNumber(options.get("x2") ?? "100", lineNumber);
   const y2 = parseNumber(options.get("y2") ?? "0", lineNumber);
-  const stroke = options.get("stroke") ?? "#ffffff";
+  const stroke = options.get("stroke") ?? "#FFFFFF";
   const fill = options.get("fill") ?? stroke;
   const requestedStrokeWidth = parseNumber(options.get("strokeWidth") ?? "6", lineNumber);
   const dx = x2 - x1;
@@ -2472,7 +2513,7 @@ function parseArrow(tokens: string[], state: CompileState, lineNumber: number): 
   const startY = y1 + uy * buff;
   const endX = x2 - ux * buff;
   const endY = y2 - uy * buff;
-  const requestedTipLength = parseNumber(options.get("tipLength") ?? "21", lineNumber);
+  const requestedTipLength = parseNumber(options.get("tipLength") ?? "23.625", lineNumber);
   const tipLength = Math.max(0, Math.min(requestedTipLength, drawableLength * maxTipRatio));
   const tipWidth = parseNumber(options.get("tipWidth") ?? String(tipLength), lineNumber);
   const strokeWidth = Math.max(0, Math.min(requestedStrokeWidth, drawableLength * maxStrokeRatio));

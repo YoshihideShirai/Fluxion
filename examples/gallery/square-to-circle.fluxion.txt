@@ -1,8 +1,8 @@
-scene width=1280 height=720 fps=60
+scene width=960 height=540 fps=60
 
-rect bg w=1280 h=720 at 640,360 fill="#000000"
-path square d="M 0 -95.459 C 0 -95.459 95.459 0 95.459 0 C 95.459 0 0 95.459 0 95.459 C 0 95.459 -95.459 0 -95.459 0 C -95.459 0 0 -95.459 0 -95.459 Z" at 640,360 fill="#ffffff" fillOpacity=0 stroke="#ffffff" strokeWidth=4
-path circle d="M 0 -67.5 C 37.279 -67.5 67.5 -37.279 67.5 0 C 67.5 37.279 37.279 67.5 0 67.5 C -37.279 67.5 -67.5 37.279 -67.5 0 C -67.5 -37.279 -37.279 -67.5 0 -67.5 Z" at 640,360 fill="#D147BD" fillOpacity=0.5 stroke="#ffffff" strokeWidth=4
+rect bg w=960 h=540 at 0,0 fill="#000000"
+path square d="M 0 -95.459 C 0 -95.459 95.459 0 95.459 0 C 95.459 0 0 95.459 0 95.459 C 0 95.459 -95.459 0 -95.459 0 C -95.459 0 0 -95.459 0 -95.459 Z" at 0,0 fill="#ffffff" fillOpacity=0 stroke="#ffffff" strokeWidth=4
+path circle d="M 0 -67.5 C 37.279 -67.5 67.5 -37.279 67.5 0 C 67.5 37.279 37.279 67.5 0 67.5 C -37.279 67.5 -67.5 37.279 -67.5 0 C -67.5 -37.279 -37.279 -67.5 0 -67.5 Z" at 0,0 fill="#D147BD" fillOpacity=0.5 stroke="#ffffff" strokeWidth=4
 
 play Create(square) duration=1s easing=easeInOut
 play Transform(square, circle) duration=1s easing=easeInOut

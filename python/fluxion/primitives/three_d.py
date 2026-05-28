@@ -31,6 +31,22 @@ def _shade_hex_color(hex_color: str, amount: float) -> str:
     return "#" + "".join(f"{round(component + (target - component) * weight):02x}" for component in rgb)
 
 
+def _shade_hex_color_by_delta(hex_color: str, delta: float) -> str:
+    value = hex_color[1:] if hex_color.startswith("#") else hex_color
+    if len(value) != 6:
+        return hex_color
+    try:
+        rgb = [int(value[offset : offset + 2], 16) for offset in (0, 2, 4)]
+    except ValueError:
+        return hex_color
+    return "#" + "".join(f"{round(max(0, min(255, component + delta * 255))):02x}" for component in rgb)
+
+
+def _normalize3d(vector: Point3) -> Point3:
+    length = math.sqrt(sum(component * component for component in vector)) or 1
+    return tuple(component / length for component in vector)  # type: ignore[return-value]
+
+
 def _face_path(points: Iterable[Point2]) -> str:
     commands = []
     for index, (x, y) in enumerate(points):
@@ -218,13 +234,16 @@ class ThreeDAxes(Mobject):
         y_basis: Point2 = (-47.6, 23.6),
         z_basis: Point2 = (0, -60),
         stroke: str = "#FFFFFF",
-        stroke_width: float = 4,
+        stroke_width: float = 2,
         tick_size: float = 10,
         tick_stroke_width: float = 2,
         include_ticks: bool = True,
         include_tips: bool = True,
         tip_length: float = 18,
         tip_width: float = 14,
+        x_length: float | None = None,
+        y_length: float | None = None,
+        z_length: float | None = None,
         phi: float | None = None,
         theta: float | None = None,
         gamma: float = 0,
@@ -235,6 +254,9 @@ class ThreeDAxes(Mobject):
     ) -> None:
         children = []
         has_camera_projection = phi is not None or theta is not None
+        x_length = x_range[1] - x_range[0] if x_length is None else x_length
+        y_length = y_range[1] - y_range[0] if y_length is None else y_length
+        z_length = z_range[1] - z_range[0] if z_length is None else z_length
         if has_camera_projection:
             camera_kwargs = {
                 "phi": 75 if phi is None else phi,
@@ -244,12 +266,13 @@ class ThreeDAxes(Mobject):
                 "focal_distance": focal_distance,
                 "zoom": zoom,
             }
-            for axis, axis_range in (("x", x_range), ("y", y_range), ("z", z_range)):
+            for axis, axis_range, axis_length in (("x", x_range, x_length), ("y", y_range, y_length), ("z", z_range, z_length)):
                 children.extend(
                     _manim_camera_projected_axis_children(
                         id,
                         axis,
                         axis_range,
+                        axis_length,
                         stroke,
                         stroke_width,
                         tick_size,
@@ -314,7 +337,15 @@ class ThreeDAxes(Mobject):
                 )
             )
         super().__init__(id=id, type="group", children=children, **kwargs)
-        self.node.geometry.update({"threeDAxes": True, "xRange": list(x_range), "yRange": list(y_range), "zRange": list(z_range)})
+        self.node.geometry.update({
+            "threeDAxes": True,
+            "xRange": list(x_range),
+            "yRange": list(y_range),
+            "zRange": list(z_range),
+            "xLength": x_length,
+            "yLength": y_length,
+            "zLength": z_length,
+        })
         if has_camera_projection:
             self.node.geometry.update({"cameraProjection": "manim", "phi": 75 if phi is None else phi, "theta": 30 if theta is None else theta})
 
@@ -385,6 +416,7 @@ def _manim_camera_projected_axis_children(
     group_id: str,
     axis: str,
     axis_range: tuple[float, float, float],
+    axis_length: float,
     stroke: str,
     stroke_width: float,
     tick_size: float,
@@ -403,13 +435,19 @@ def _manim_camera_projected_axis_children(
 ) -> list[Mobject]:
     min_value, max_value, step = axis_range
 
+    def axis_point(value: float) -> float:
+        if abs(max_value - min_value) < 1e-9:
+            return 0
+        return ((value - min_value) / (max_value - min_value) - 0.5) * axis_length
+
     def point_at(value: float) -> Point2:
+        coordinate = axis_point(value)
         if axis == "x":
-            point = (value, 0, 0)
+            point = (coordinate, 0, 0)
         elif axis == "y":
-            point = (0, value, 0)
+            point = (0, coordinate, 0)
         else:
-            point = (0, 0, value)
+            point = (0, 0, coordinate)
         return _project_manim_camera_point(
             point,
             phi=phi,
@@ -661,7 +699,7 @@ class SphereSurface(Mobject):
         stroke_width: float = 0.5,
         fill_opacity: float = 1,
         shade: bool = True,
-        light: Point3 = (0, -0.35, 1),
+        light: Point3 = (0, 0, -3),
         phi: float | None = None,
         theta: float | None = None,
         gamma: float = 0,
@@ -674,8 +712,6 @@ class SphereSurface(Mobject):
         v_resolution = max(1, round(resolution[1]))
         u0, u1 = u_range
         v0, v1 = v_range
-        light_length = math.sqrt(sum(component * component for component in light)) or 1
-        normalized_light = tuple(component / light_length for component in light)
         has_projection_basis = x_basis is not None or y_basis is not None or z_basis is not None
         has_camera_projection = phi is not None or theta is not None
         camera_kwargs = {
@@ -725,12 +761,17 @@ class SphereSurface(Mobject):
                 mid_v = (va + vb) / 2
                 cm = math.cos(mid_u)
                 normal = (cm * math.cos(mid_v), cm * math.sin(mid_v), math.sin(mid_u))
-                light_amount = max(0, sum(normal[index] * normalized_light[index] for index in range(3)))
+                point = tuple(component * world_radius for component in normal)
+                to_light = _normalize3d(tuple(light[index] - point[index] for index in range(3)))  # type: ignore[arg-type]
+                light_dot = sum(normal[index] * to_light[index] for index in range(3))
+                light_amount = 0.5 * light_dot**3
+                if light_amount < 0:
+                    light_amount *= 0.5
                 faces.append(
                     _Face(
                         row=row,
                         col=col,
-                        shade=0.38 + light_amount * 0.62 if shade else 1,
+                        shade=light_amount if shade else 0,
                         depth=sum(point[3] for point in points3d) / len(points3d),
                         points=tuple((point[0], point[1]) for point in points3d),  # type: ignore[arg-type]
                     )
@@ -740,7 +781,7 @@ class SphereSurface(Mobject):
         children = []
         for index, face in enumerate(faces):
             base_fill = fill_a if (face.row + face.col) % 2 == 0 else fill_b
-            fill = _shade_hex_color(base_fill, face.shade) if shade else base_fill
+            fill = _shade_hex_color_by_delta(base_fill, face.shade) if shade else base_fill
             children.append(
                 Path(
                     id=f"{id}:face:{index}",
@@ -761,6 +802,7 @@ class SphereSurface(Mobject):
                 "vResolution": v_resolution,
                 "radius": radius,
                 "worldRadius": world_radius,
+                "light": list(light),
             }
         )
         if has_projection_basis:

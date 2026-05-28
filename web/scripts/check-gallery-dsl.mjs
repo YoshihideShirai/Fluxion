@@ -165,10 +165,17 @@ function checkMarkdownFrontmatter(label, frontmatter) {
 function compileExample(label, source) {
   try {
     const documentData = compileTextDsl(source);
+    checkManimPreviewFrame(label, documentData);
     checkRenderableTimeline(label, documentData);
     checkGallerySpecificStructure(label, documentData);
   } catch (error) {
     throw new Error(`${label}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+function checkManimPreviewFrame(label, documentData) {
+  if (documentData.width !== 960 || documentData.height !== 540) {
+    throw new Error(`${label}: expected 960x540 Manim preview frame, got ${documentData.width}x${documentData.height}.`);
   }
 }
 
@@ -807,6 +814,7 @@ function clamp(value, min, max) {
 
 function checkGallerySpecificStructure(label, documentData) {
   if (label.includes('simple-circle')) {
+    assertGalleryCondition(label, documentData.width === 960 && documentData.height === 540, 'expected 960x540 frame so Circle(radius=1) maps to 67.5px.');
     const circle = findNode(documentData, 'circle');
     assertGalleryCondition(label, circle?.type === 'circle', 'expected Circle mobject.');
     assertGalleryCondition(label, approximatelyEqual(circle?.geometry?.r ?? 0, 67.5), 'expected Manim default Circle radius at frame scale.');
@@ -816,6 +824,7 @@ function checkGallerySpecificStructure(label, documentData) {
   }
 
   if (label.includes('square-to-circle')) {
+    assertGalleryCondition(label, documentData.width === 960 && documentData.height === 540, 'expected 960x540 frame so Square side length maps to 135px.');
     const square = findNode(documentData, 'square');
     const targetCircle = findNode(documentData, 'circle');
     assertGalleryCondition(label, square?.type === 'path' && targetCircle?.type === 'path', 'expected same-topology path square and circle for Transform.');
@@ -891,11 +900,12 @@ function checkGallerySpecificStructure(label, documentData) {
     const text = findNode(documentData, 'text3d');
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected ThreeDAxes helper.');
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === -45, 'expected fixed-frame example axes to use Manim ThreeDCamera projection.');
+    assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
     assertGalleryCondition(label, text?.type === 'text' && text.text === 'This is a 3D text', 'expected fixed-in-frame text label.');
     assertGalleryCondition(label, approximatelyEqual(text?.transform?.x ?? 0, -270) && approximatelyEqual(text?.transform?.y ?? 0, -212), 'expected text to stay pinned at the upper-left screen corner.');
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="axes:[xyz]:tick:/gu) === 30, 'expected all fixed-frame projected axis ticks to serialize into SVG.');
-    assertGalleryCondition(label, svg.includes('id="text3d"') && /id="axes:x:axis"[^>]*x2="360\.18063"/u.test(svg), 'expected SVG fixed-frame text and projected x-axis endpoint.');
+    assertGalleryCondition(label, svg.includes('id="text3d"') && /id="axes:x:axis"[^>]*x2="305\.322489"/u.test(svg), 'expected SVG fixed-frame text and projected x-axis endpoint.');
   }
 
   if (label.includes('manim-ce-logo') || label.includes('manim_ce_logo')) {
@@ -1008,8 +1018,8 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, String(warpedTitle?.latex).includes('non-linear function') && String(warpedTitle?.latex).includes('applied to the grid'), 'expected nonlinear transform title.');
     assertGalleryCondition(label, grid?.children?.length === 24, 'expected full-frame NumberPlane-like grid with 24 paths.');
     assertGalleryCondition(label, horizontalGrid.every((node) => node?.type === 'path') && verticalGrid.every((node) => node?.type === 'path'), 'expected 9 horizontal and 15 vertical grid paths.');
-    assertGalleryCondition(label, horizontalGrid[4]?.style?.stroke === '#dff9ff' && approximatelyEqual(horizontalGrid[4]?.style?.strokeWidth ?? 0, 1.8), 'expected highlighted x-axis grid line.');
-    assertGalleryCondition(label, verticalGrid[7]?.style?.stroke === '#dff9ff' && approximatelyEqual(verticalGrid[7]?.style?.strokeWidth ?? 0, 1.8), 'expected highlighted y-axis grid line.');
+    assertGalleryCondition(label, horizontalGrid[4]?.style?.stroke === '#FFFFFF' && approximatelyEqual(horizontalGrid[4]?.style?.strokeWidth ?? 0, 2), 'expected white NumberPlane x-axis grid line.');
+    assertGalleryCondition(label, verticalGrid[7]?.style?.stroke === '#FFFFFF' && approximatelyEqual(verticalGrid[7]?.style?.strokeWidth ?? 0, 2), 'expected white NumberPlane y-axis grid line.');
     assertGalleryCondition(label, codeCard?.type === 'rect' && codeCard.transform?.opacity === 0 && codeCard.style?.fill === '#0b1220', 'expected hidden source-code callout card.');
     assertGalleryCondition(label, warpEq?.text === 'p -> p + [sin(y), sin(x), 0]' && warpEq.transform?.opacity === 0, 'expected nonlinear transform formula callout.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'effect' && op.id === 'title' && op.effect === 'write' && approximatelyEqual(op.duration, 1.294642857142857)), 'expected opening Write(title) segment from AnimationGroup timing.');
@@ -1060,7 +1070,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const gridStartSvg = svgSampleAt(documentData, 5.5);
     const warpMidSvg = svgSampleAt(documentData, 9.75);
     const finalSvg = svgSampleAt(documentData, 11.25);
-    assertGalleryCondition(label, /<g id="grid_h4"[^>]*><path [^>]*stroke="#dff9ff"[^>]*stroke-dashoffset="0"/u.test(gridStartSvg) && /<g id="grid_v7"[^>]*><path [^>]*stroke="#dff9ff"[^>]*stroke-dashoffset="1"/u.test(gridStartSvg), 'expected SVG lagged grid draw state at create midpoint.');
+    assertGalleryCondition(label, /<g id="grid_h4"[^>]*><path [^>]*stroke="#FFFFFF"[^>]*stroke-dashoffset="0"/u.test(gridStartSvg) && /<g id="grid_v7"[^>]*><path [^>]*stroke="#FFFFFF"[^>]*stroke-dashoffset="1"/u.test(gridStartSvg), 'expected SVG lagged grid draw state at create midpoint.');
     assertGalleryCondition(label, svgGroupPathData(warpMidSvg, 'grid_h4').includes('L -445.44 22.0794') && svgGroupPathData(warpMidSvg, 'grid_v7').includes('L 21.1067 253.4307'), 'expected SVG nonlinear grid halfway paths.');
     assertGalleryCondition(label, finalSvg.includes('That was a non-linear function') && svgGroupPathData(finalSvg, 'grid_h0').startsWith('M -523.6 -225.7'), 'expected final SVG warped grid and nonlinear title.');
   }
@@ -1107,7 +1117,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, graph?.style?.stroke === '#C55F73' && approximatelyEqual(graph?.style?.strokeWidth ?? 0, 4), 'expected official graph color.');
     assertGalleryCondition(label, dot?.geometry?.dataDot === true && dot.geometry?.axes === 'ax', 'expected dataDot tied to axes.');
     assertGalleryCondition(label, dot?.geometry?.point === 't,2*(t-5)*(t-5)', 'expected dot to track the animated function point.');
-    assertGalleryCondition(label, approximatelyEqual(dot?.geometry?.r ?? 0, 5.4) && dot?.style?.fill === '#FFFFFF', 'expected white tracked dot.');
+    assertGalleryCondition(label, approximatelyEqual(dot?.geometry?.r ?? 0, 5.4) && dot?.style?.fill === '#FFFFFF' && approximatelyEqual(dot?.style?.strokeWidth ?? -1, 0), 'expected white tracked Dot with Manim default stroke width.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'animateValue' && op.id === 't' && op.from === 0 && approximatelyEqual(op.to, 4.974874372) && (op.t ?? 0) === 0 && op.duration === 1), 'expected t ValueTracker animation to the sampled argmin.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindExpr' && op.id === 'dot' && op.path === 'transform.x' && op.deps?.includes('t')), 'expected dot x binding to animated t.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindExpr' && op.id === 'dot' && op.path === 'transform.y' && op.deps?.includes('t')), 'expected dot y binding to animated t.');
@@ -1204,12 +1214,14 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, axes?.geometry?.xRange?.join(',') === '-4.4,6,1', 'expected xRange framing the scaled gaussian surface.');
     assertGalleryCondition(label, axes?.geometry?.yRange?.join(',') === '-3.16,4.6,1', 'expected yRange framing the scaled gaussian surface.');
     assertGalleryCondition(label, axes?.geometry?.zRange?.join(',') === '-0.6,2.353846,1', 'expected zRange framing the gaussian peak.');
-    assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === 30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
+    assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
+    assertGalleryCondition(label, findNode(documentData, 'axes:x:axis')?.style?.strokeWidth === 2, 'expected ThreeDAxes axis stroke width to match NumberLine default.');
+    assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === -30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, surface?.geometry?.gaussianSurface === true, 'expected gaussianSurface group gauss.');
     assertGalleryCondition(label, surface?.geometry?.uMin === -2 && surface?.geometry?.uMax === 2 && surface?.geometry?.vMin === -2 && surface?.geometry?.vMax === 2, 'expected official u/v range -2..2.');
     assertGalleryCondition(label, surface?.geometry?.resolution === 24 && surface?.geometry?.sigma === 0.4 && surface?.geometry?.scale === 2, 'expected official gaussian resolution, sigma, and scale.');
     assertGalleryCondition(label, surface?.geometry?.mu?.join(',') === '0,0', 'expected official gaussian mu=[0,0].');
-    assertGalleryCondition(label, surface?.geometry?.cameraProjection === 'manim' && surface.geometry?.phi === 75 && surface.geometry?.theta === 30, 'expected gaussianSurface to use Manim ThreeDCamera projection.');
+    assertGalleryCondition(label, surface?.geometry?.cameraProjection === 'manim' && surface.geometry?.phi === 75 && surface.geometry?.theta === -30, 'expected gaussianSurface to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, surfaceFaces.length === 24 * 24, `expected 576 gaussian surface faces, got ${surfaceFaces.length}.`);
     assertGalleryCondition(label, surfaceFaces.every((face) => face.metadata?.surfaceFace), 'expected gaussian faces to retain source row/column/depth metadata for Manim-style painter ordering.');
     assertGalleryCondition(label, surfaceFaces.every((face, index, faces) => index === 0 || Number(faces[index - 1]?.metadata?.surfaceFace?.depth) <= Number(face.metadata?.surfaceFace?.depth)), 'expected gaussian faces to be serialized in increasing camera-depth order.');
@@ -1239,19 +1251,22 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, axes?.geometry?.xRange?.join(',') === '-2.555,4,1', 'expected xRange matching sphere framing.');
     assertGalleryCondition(label, axes?.geometry?.yRange?.join(',') === '-3.1,4,1', 'expected yRange matching sphere framing.');
     assertGalleryCondition(label, axes?.geometry?.zRange?.join(',') === '-3.675,4,1', 'expected zRange matching sphere framing.');
+    assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
+    assertGalleryCondition(label, findNode(documentData, 'axes:x:axis')?.style?.strokeWidth === 2, 'expected ThreeDAxes axis stroke width to match NumberLine default.');
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === 30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, sphereGroup?.children?.length === 10 && approximatelyEqual(sphereGroup?.transform?.scale ?? 0, 0.973558), 'expected composed lit sphere overlay group with Manim radius scaling.');
     assertGalleryCondition(label, sphere?.geometry?.sphereSurface === true, 'expected sphereSurface mesh.');
     assertGalleryCondition(label, sphere?.geometry?.uResolution === 15 && sphere?.geometry?.vResolution === 32, 'expected official sphere surface resolution 15x32.');
     assertGalleryCondition(label, approximatelyEqual(sphere?.geometry?.radius ?? 0, 104), 'expected sphere mesh radius near official 1.5 Manim units.');
     assertGalleryCondition(label, approximatelyEqual(sphere?.geometry?.worldRadius ?? 0, 1.5), 'expected official sphere world radius 1.5.');
+    assertGalleryCondition(label, sphere?.geometry?.light?.join(',') === '0,0,-3', 'expected light_source.move_to(3*IN) as a positional light source.');
     assertGalleryCondition(label, sphere?.geometry?.cameraProjection === 'manim' && sphere.geometry?.phi === 75 && sphere.geometry?.theta === 30, 'expected sphereSurface to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, sphereFaces.length === 15 * 32, `expected 480 sphere faces, got ${sphereFaces.length}.`);
     assertGalleryCondition(label, sphereFaces.every((face) => face.metadata?.surfaceFace), 'expected sphere faces to retain source row/column/depth metadata for Manim-style painter ordering.');
     assertGalleryCondition(label, sphereFaces.every((face, index, faces) => index === 0 || Number(faces[index - 1]?.metadata?.surfaceFace?.depth) <= Number(face.metadata?.surfaceFace?.depth)), 'expected sphere faces to be serialized in increasing camera-depth order.');
-    assertGalleryCondition(label, Math.max(...sphereFaces.map((face) => Number(face.metadata?.surfaceFace?.shade ?? 0))) > 0.9 && Math.min(...sphereFaces.map((face) => Number(face.metadata?.surfaceFace?.shade ?? 1))) < 0.4, 'expected sphere metadata to preserve strong light-source shading contrast.');
+    assertGalleryCondition(label, Math.max(...sphereFaces.map((face) => Number(face.metadata?.surfaceFace?.shade ?? 0))) > 0.4 && Math.min(...sphereFaces.map((face) => Number(face.metadata?.surfaceFace?.shade ?? 0))) < -0.2, 'expected sphere metadata to preserve Manim get_shaded_rgb light and shadow deltas.');
     assertGalleryCondition(label, sphereFaces.every((child) => child.style?.stroke === '#BBBBBB' && approximatelyEqual(child.style?.strokeWidth ?? 0, 0.5)), 'expected LIGHT_GREY 0.5px sphere face strokes.');
-    assertGalleryCondition(label, sphereFills.size >= 80, `expected light-shaded checkerboard sphere faces, got ${sphereFills.size}.`);
+    assertGalleryCondition(label, sphereFills.size >= 24, `expected light-shaded checkerboard sphere faces, got ${sphereFills.size}.`);
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="sphere_mesh:face:/gu) === 15 * 32, 'expected all sphere mesh faces to serialize into SVG.');
     assertGalleryCondition(label, svg.includes('id="highlight_core"') && svg.includes('id="terminator_left"'), 'expected SVG lit sphere highlight and terminator overlays.');
@@ -1386,7 +1401,7 @@ function checkGallerySpecificStructure(label, documentData) {
   if (label.includes('point-with-trace')) {
     const trace = findNode(documentData, 'trace');
     const dot = findNode(documentData, 'dot');
-    assertGalleryCondition(label, dot?.type === 'circle' && approximatelyEqual(dot?.geometry?.r ?? 0, 5.4), 'expected default Dot radius for traced point.');
+    assertGalleryCondition(label, dot?.type === 'circle' && approximatelyEqual(dot?.geometry?.r ?? 0, 5.4) && approximatelyEqual(dot?.style?.strokeWidth ?? -1, 0), 'expected default Dot radius and stroke width for traced point.');
     assertGalleryCondition(label, trace?.style?.stroke === '#FFFFFF' && approximatelyEqual(trace?.style?.strokeWidth ?? 0, 4), 'expected white VMobject trace stroke.');
     assertGalleryCondition(label, trace?.geometry?.tracedTarget === 'dot', 'expected trace to follow dot target history.');
     assertGalleryCondition(label, trace?.geometry?.traceSamples === 240 && trace?.geometry?.traceStart === 0, 'expected high-sample trace history from scene start.');
@@ -1581,7 +1596,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, area?.geometry?.dataRect === true, 'expected dataRect area tied to axes coordinates.');
     assertGalleryCondition(label, dot?.geometry?.dataDot === true, 'expected dataDot tied to axes coordinates.');
     assertGalleryCondition(label, area?.style?.fill === '#58C4DD' && approximatelyEqual(area.style?.fillOpacity ?? 0, 0.5) && area.style?.stroke === '#FFEA94', 'expected BLUE rectangle fill and YELLOW_B stroke.');
-    assertGalleryCondition(label, dot?.geometry?.point === 't,25/t' && approximatelyEqual(dot.geometry?.r ?? 0, 5.4), 'expected default Dot tracking k/t on the axes.');
+    assertGalleryCondition(label, dot?.geometry?.point === 't,25/t' && approximatelyEqual(dot.geometry?.r ?? 0, 5.4) && approximatelyEqual(dot.style?.strokeWidth ?? -1, 0), 'expected default Dot tracking k/t on the axes.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindExpr' && op.id === 'area'), 'expected area updater bindings.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindExpr' && op.id === 'dot'), 'expected dot updater bindings.');
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'animateValue' && op.id === 't').map((op) => op.to).join(',') === '10,2.5,5', 'expected official ValueTracker keyframes 5 -> 10 -> k/10 -> 5.');
@@ -1609,7 +1624,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const dotToCurve = findNode(documentData, 'dot_to_curve');
     assertGalleryCondition(label, unit?.type === 'circle' && approximatelyEqual(unit.geometry?.r ?? 0, 67.5) && unit.transform?.x === -270, 'expected unit circle at left axis origin.');
     assertGalleryCondition(label, sineCurve?.geometry?.tracedPath === true && sineCurve.style?.stroke === '#F4D345', 'expected traced sine curve path.');
-    assertGalleryCondition(label, dot?.geometry?.r === 5.4 && dot.style?.fill === '#F7D96F', 'expected yellow moving dot.');
+    assertGalleryCondition(label, dot?.geometry?.r === 5.4 && dot.style?.fill === '#F7D96F' && approximatelyEqual(dot.style?.strokeWidth ?? -1, 0), 'expected yellow moving Dot with Manim default stroke width.');
     assertGalleryCondition(label, originToCircle?.style?.stroke === '#58C4DD' && dotToCurve?.style?.stroke === '#FFF1B6', 'expected blue radius line and pale vertical projection line.');
     assertGalleryCondition(label, ['pi_label', 'two_pi_label', 'three_pi_label', 'four_pi_label'].every((id) => findNode(documentData, id)?.type === 'math'), 'expected pi labels along sine axis.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindPath' && op.id === 'sine_curve' && op.samples === 320 && op.tMaxExpr === 'theta'), 'expected sine curve path bound to theta.');
@@ -1856,14 +1871,17 @@ print(json.dumps(node.to_dict(), separators=(",", ":")))`,
 
   assertParity(
     'threeDAxes manim camera projection',
-    'threeDAxes axes xRange=-2,2,1 yRange=-2,2,1 zRange=-1,1,1 phi=75 theta=30 unitScale=108.75 includeTips=true',
+    'threeDAxes axes xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 xLength=10.5 yLength=10.5 zLength=6.5 phi=75 theta=30 unitScale=108.75 includeTips=true',
     `import json
 from fluxion import ThreeDAxes
 node = ThreeDAxes(
     id="axes",
-    x_range=(-2, 2, 1),
-    y_range=(-2, 2, 1),
-    z_range=(-1, 1, 1),
+    x_range=(-6, 6, 1),
+    y_range=(-5, 5, 1),
+    z_range=(-4, 4, 1),
+    x_length=10.5,
+    y_length=10.5,
+    z_length=6.5,
     phi=75,
     theta=30,
     unit_scale=108.75,
@@ -1916,7 +1934,7 @@ print(json.dumps(node.to_dict(), separators=(",", ":")))`,
 
   assertParity(
     'sphereSurface',
-    'sphereSurface sphere radius=104 worldRadius=1.5 xBasis=67.5,0 yBasis=0,12.15 zBasis=0,-67.5 resolution=3,4 fillA="#E65A4C" fillB="#CF5044" stroke="#BBBBBB" strokeWidth=0.5 light=0,-0.35,1',
+    'sphereSurface sphere radius=104 worldRadius=1.5 xBasis=67.5,0 yBasis=0,12.15 zBasis=0,-67.5 resolution=3,4 fillA="#E65A4C" fillB="#CF5044" stroke="#BBBBBB" strokeWidth=0.5 light=0,0,-3',
     `import json
 from fluxion import SphereSurface
 node = SphereSurface(
@@ -1927,14 +1945,14 @@ node = SphereSurface(
     x_basis=(67.5, 0),
     y_basis=(0, 12.15),
     z_basis=(0, -67.5),
-    light=(0, -0.35, 1),
+    light=(0, 0, -3),
 )
 print(json.dumps(node.to_dict(), separators=(",", ":")))`,
   );
 
   assertParity(
     'sphereSurface manim camera projection',
-    'sphereSurface sphere radius=104 worldRadius=1.5 resolution=2,4 phi=75 theta=30 unitScale=108.75 fillA="#E65A4C" fillB="#CF5044" stroke="#BBBBBB" strokeWidth=0.5 light=0,-0.35,1',
+    'sphereSurface sphere radius=104 worldRadius=1.5 resolution=2,4 phi=75 theta=30 unitScale=108.75 fillA="#E65A4C" fillB="#CF5044" stroke="#BBBBBB" strokeWidth=0.5 light=0,0,-3',
     `import json
 from fluxion import SphereSurface
 node = SphereSurface(
@@ -1945,7 +1963,7 @@ node = SphereSurface(
     phi=75,
     theta=30,
     unit_scale=108.75,
-    light=(0, -0.35, 1),
+    light=(0, 0, -3),
 )
 print(json.dumps(node.to_dict(), separators=(",", ":")))`,
   );

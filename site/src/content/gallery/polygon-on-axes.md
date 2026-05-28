@@ -23,10 +23,10 @@ value t = 5
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 
-axes ax at 0,0 width=405 height=405 xRange=0,10 yRange=0,10 stroke="#FFFFFF" strokeWidth=3 xTicks=0,1,2,3,4,5,6,7,8,9,10 yTicks=0,1,2,3,4,5,6,7,8,9,10 tickLength=12 tickStrokeWidth=2
+axes ax at 0,0 width=405 height=405 xRange=0,10 yRange=0,10 stroke="#FFFFFF" strokeWidth=2 xTicks=0,1,2,3,4,5,6,7,8,9,10 yTicks=0,1,2,3,4,5,6,7,8,9,10 tickLength=12 tickStrokeWidth=2
 plot graph fn=25/t range=2.5,10 samples=220 scaleX=40.5 scaleY=40.5 at -202.5,202.5 stroke="#F4D345" strokeWidth=4 fill="none"
 dataRect area axes=ax from=0,0 to=t,25/t fill="#58C4DD" fillOpacity=0.5 stroke="#FFEA94" strokeWidth=1
-dataDot dot axes=ax point=t,25/t r=5.4 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=2
+dataDot dot axes=ax point=t,25/t fill="#FFFFFF"
 
 at 0s:
   play Create(area) duration=1s

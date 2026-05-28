@@ -251,7 +251,7 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
       en: 'NumberPlane grid helper',
     },
     minimalExample: 'numberPlane plane xRange=-7,7 yRange=-4,4 unit=60',
-    source: 'scene width=960 height=540 fps=60\nnumberPlane plane at 480,270 xRange=-7,7 yRange=-4,4 unit=60 stroke="#00bcd4" axisStroke="#dff9ff" strokeWidth=1.4 axisStrokeWidth=1.8',
+    source: 'scene width=960 height=540 fps=60\nnumberPlane plane at 480,270 xRange=-7,7 yRange=-4,4 unit=60',
   },
   {
     key: 'axisLabels',

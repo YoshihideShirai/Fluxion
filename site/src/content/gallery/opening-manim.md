@@ -35,31 +35,31 @@ text phaseGridLabel "NumberPlane" at -234,-218 size=15 fill="#cffafe" opacity=0
 rect phaseWarp w=142 h=26 at -86,-218 fill="#78350f" stroke="#f59e0b" strokeWidth=1.2 opacity=0
 text phaseWarpLabel "non-linear transform" at -86,-218 size=15 fill="#fed7aa" opacity=0
 
-path grid_h0 d="M -480 -270 L 480 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_h1 d="M -480 -202.5 L 480 -202.5" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_h2 d="M -480 -135 L 480 -135" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_h3 d="M -480 -67.5 L 480 -67.5" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_h4 d="M -480 0 L 480 0" at 0,0 fill="none" stroke="#dff9ff" strokeWidth=1.8 opacity=0
-path grid_h5 d="M -480 67.5 L 480 67.5" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_h6 d="M -480 135 L 480 135" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_h7 d="M -480 202.5 L 480 202.5" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_h8 d="M -480 270 L 480 270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_h0 d="M -480 -270 L 480 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h1 d="M -480 -202.5 L 480 -202.5" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h2 d="M -480 -135 L 480 -135" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h3 d="M -480 -67.5 L 480 -67.5" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h4 d="M -480 0 L 480 0" at 0,0 fill="none" stroke="#FFFFFF" strokeWidth=2 opacity=0
+path grid_h5 d="M -480 67.5 L 480 67.5" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h6 d="M -480 135 L 480 135" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h7 d="M -480 202.5 L 480 202.5" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h8 d="M -480 270 L 480 270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
 
-path grid_v0 d="M -472.5 270 L -472.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_v1 d="M -405 270 L -405 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_v2 d="M -337.5 270 L -337.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_v3 d="M -270 270 L -270 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_v4 d="M -202.5 270 L -202.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_v5 d="M -135 270 L -135 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_v6 d="M -67.5 270 L -67.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_v7 d="M 0 270 L 0 -270" at 0,0 fill="none" stroke="#dff9ff" strokeWidth=1.8 opacity=0
-path grid_v8 d="M 67.5 270 L 67.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_v9 d="M 135 270 L 135 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_v10 d="M 202.5 270 L 202.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_v11 d="M 270 270 L 270 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_v12 d="M 337.5 270 L 337.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_v13 d="M 405 270 L 405 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
-path grid_v14 d="M 472.5 270 L 472.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v0 d="M -472.5 270 L -472.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v1 d="M -405 270 L -405 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v2 d="M -337.5 270 L -337.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v3 d="M -270 270 L -270 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v4 d="M -202.5 270 L -202.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v5 d="M -135 270 L -135 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v6 d="M -67.5 270 L -67.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v7 d="M 0 270 L 0 -270" at 0,0 fill="none" stroke="#FFFFFF" strokeWidth=2 opacity=0
+path grid_v8 d="M 67.5 270 L 67.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v9 d="M 135 270 L 135 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v10 d="M 202.5 270 L 202.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v11 d="M 270 270 L 270 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v12 d="M 337.5 270 L 337.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v13 d="M 405 270 L 405 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v14 d="M 472.5 270 L 472.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
 group grid grid_h0 grid_h1 grid_h2 grid_h3 grid_h4 grid_h5 grid_h6 grid_h7 grid_h8 grid_v0 grid_v1 grid_v2 grid_v3 grid_v4 grid_v5 grid_v6 grid_v7 grid_v8 grid_v9 grid_v10 grid_v11 grid_v12 grid_v13 grid_v14
 line xAxis x1=-430 y1=-38 x2=430 y2=-38 at 0,0 stroke="#f8fafc" strokeWidth=2.4 opacity=0
 line yAxis x1=0 y1=-214 x2=0 y2=136 at 0,0 stroke="#f8fafc" strokeWidth=2.4 opacity=0

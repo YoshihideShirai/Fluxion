@@ -462,17 +462,18 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
     </script>
     <style>
       :root {
-        color-scheme: light;
-        --ink: #111111;
-        --muted: #66615b;
-        --paper: #f6f2ea;
-        --panel: #fffaf2;
-        --line: #d8cec0;
+        color-scheme: dark;
+        --ink: #f6f7fb;
+        --muted: #aab0bf;
+        --paper: #090a0f;
+        --panel: #11131b;
+        --panel-strong: #171a24;
+        --line: #2d3342;
         --stage: #050505;
         --green: #87c2a5;
-        --blue: #525893;
-        --red: #e07a5f;
-        --gold: #d69e2e;
+        --blue: #58c4dd;
+        --red: #ff5f87;
+        --gold: #ffea94;
       }
 
       * {
@@ -483,9 +484,8 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
         margin: 0;
         min-width: 320px;
         background:
-          linear-gradient(180deg, rgba(246, 242, 234, 0.96), rgba(255, 250, 242, 0.98)),
-          radial-gradient(circle at 20% 0%, rgba(135, 194, 165, 0.18), transparent 34%),
-          radial-gradient(circle at 80% 16%, rgba(224, 122, 95, 0.16), transparent 30%);
+          linear-gradient(180deg, #090a0f 0%, #11131b 46%, #090a0f 100%),
+          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 96px);
         color: var(--ink);
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
@@ -509,16 +509,17 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
       }
 
       .gallery-hero {
-        min-height: min(72vh, 760px);
+        min-height: min(64vh, 700px);
         display: grid;
         grid-template-rows: auto 1fr auto;
         gap: 38px;
         padding: clamp(22px, 4vw, 52px);
         border: 1px solid var(--line);
         background:
-          linear-gradient(135deg, rgba(255, 250, 242, 0.94), rgba(236, 230, 226, 0.88)),
-          linear-gradient(90deg, rgba(135, 194, 165, 0.22), rgba(82, 88, 147, 0.14), rgba(224, 122, 95, 0.18));
-        box-shadow: 0 24px 70px rgba(49, 43, 34, 0.14);
+          linear-gradient(135deg, rgba(23, 26, 36, 0.96), rgba(9, 10, 15, 0.98)),
+          repeating-linear-gradient(0deg, rgba(88, 196, 221, 0.08) 0 1px, transparent 1px 72px),
+          repeating-linear-gradient(90deg, rgba(135, 194, 165, 0.07) 0 1px, transparent 1px 72px);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
       }
 
       .top-links,
@@ -545,8 +546,8 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid rgba(17, 17, 17, 0.18);
-        background: rgba(255, 250, 242, 0.72);
+        border: 1px solid rgba(246, 247, 251, 0.16);
+        background: rgba(17, 19, 27, 0.76);
         padding: 0 12px;
         color: var(--ink);
         text-decoration: none;
@@ -593,8 +594,8 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
         display: inline-flex;
         align-items: baseline;
         gap: 8px;
-        border-left: 4px solid var(--ink);
-        background: rgba(255, 250, 242, 0.68);
+        border-left: 4px solid var(--blue);
+        background: rgba(17, 19, 27, 0.78);
         padding: 12px 16px;
         color: var(--muted);
         font-size: 13px;
@@ -615,7 +616,7 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
         margin: 18px 0;
         padding: 14px;
         border: 1px solid var(--line);
-        background: rgba(255, 250, 242, 0.92);
+        background: rgba(9, 10, 15, 0.86);
         backdrop-filter: blur(12px);
       }
 
@@ -628,9 +629,9 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
       }
 
       .filter-chip.active {
-        border-color: var(--ink);
-        background: var(--ink);
-        color: var(--panel);
+        border-color: var(--blue);
+        background: var(--blue);
+        color: #061014;
       }
 
       .study-controls {
@@ -650,7 +651,7 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
       .study-controls select {
         min-height: 34px;
         border: 1px solid var(--line);
-        background: var(--panel);
+        background: var(--panel-strong);
         color: var(--ink);
       }
 
@@ -667,9 +668,9 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
         gap: 12px;
         min-width: 0;
         border: 1px solid var(--line);
-        background: var(--panel);
+        background: linear-gradient(180deg, rgba(23, 26, 36, 0.98), rgba(17, 19, 27, 0.98));
         padding: 14px;
-        box-shadow: 0 16px 44px rgba(49, 43, 34, 0.08);
+        box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
       }
 
       .demo-card.featured {
@@ -718,8 +719,8 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
       .status-pill,
       .meta-line span {
         align-self: flex-start;
-        border: 1px solid rgba(17, 17, 17, 0.16);
-        background: #ece6e2;
+        border: 1px solid rgba(246, 247, 251, 0.15);
+        background: #202432;
         padding: 6px 10px;
         color: var(--muted);
         font-size: 12px;
@@ -728,31 +729,32 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
       }
 
       .status-pill.ported {
-        color: #23624a;
+        color: var(--green);
       }
 
       .status-pill.partial {
-        color: #8a5a05;
+        color: var(--gold);
       }
 
       .status-pill.blocker {
-        color: #a13d30;
+        color: var(--red);
       }
 
       .gallery-stage-wrap {
         overflow: hidden;
-        border: 1px solid #202020;
+        border: 1px solid #303544;
         background: var(--stage);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 18px 46px rgba(0, 0, 0, 0.38);
       }
 
       .stage-chrome {
         display: flex;
         gap: 6px;
         align-items: center;
-        height: 28px;
+        height: 24px;
         padding: 0 10px;
-        border-bottom: 1px solid #222;
-        background: #0d0d0d;
+        border-bottom: 1px solid #202432;
+        background: #0a0b10;
       }
 
       .stage-chrome span {
@@ -798,9 +800,9 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
       .primary-action,
       .icon-action {
         min-height: 38px;
-        border: 1px solid var(--ink);
-        background: var(--ink);
-        color: var(--panel);
+        border: 1px solid var(--blue);
+        background: var(--blue);
+        color: #061014;
         padding: 0 16px;
         cursor: pointer;
         font-weight: 800;
@@ -808,7 +810,7 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
 
       .icon-action {
         background: transparent;
-        color: var(--ink);
+        color: var(--blue);
       }
 
       .loop-toggle {
@@ -850,7 +852,7 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
 
       .gap-panel {
         border-left: 4px solid var(--red);
-        background: #f1e9dd;
+        background: #1d202b;
         padding: 12px 14px;
       }
 
@@ -869,14 +871,14 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
 
       .gap-panel p {
         margin: 8px 0 0;
-        color: #8a5a05;
+        color: var(--gold);
         font-size: 13px;
       }
 
       .source-panel {
         border: 1px solid var(--line);
-        background: #111;
-        color: #f7f0e5;
+        background: #07080c;
+        color: #f6f7fb;
       }
 
       .source-panel summary {

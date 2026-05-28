@@ -20,7 +20,7 @@ gap_id: GAP-024
 scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
-circle dot r=5.4 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=2
+circle dot r=5.4 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=0
 tracedPath trace target=dot start=0s samples=240 stroke="#FFFFFF" strokeWidth=4
 
 at 0s:

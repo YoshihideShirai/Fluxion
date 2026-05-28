@@ -750,8 +750,6 @@ export class SvgRenderer {
     element.setAttribute("stroke-width", String(style.strokeWidth ?? 0));
     if (style.fillOpacity !== undefined) element.setAttribute("fill-opacity", String(style.fillOpacity));
     if (style.strokeOpacity !== undefined) element.setAttribute("stroke-opacity", String(style.strokeOpacity));
-    element.setAttribute("stroke-linejoin", "round");
-    element.setAttribute("stroke-linecap", "round");
   }
 
   private resolveFill(fill: string): string {

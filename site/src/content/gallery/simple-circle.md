@@ -17,10 +17,10 @@ status: ported
 gap_id: GAP-003
 order: 10
 ---
-scene width=1280 height=720 fps=60
+scene width=960 height=540 fps=60
 
-rect bg w=1280 h=720 at 640,360 fill="#000000"
-circle circle r=67.5 at 640,360 fill="#D147BD" fillOpacity=0.5 stroke="#ffffff" strokeWidth=4
+rect bg w=960 h=540 at 0,0 fill="#000000"
+circle circle r=67.5 at 0,0 fill="#D147BD" fillOpacity=0.5 stroke="#ffffff" strokeWidth=4
 
 play Create(circle) duration=1s easing=easeInOut
 wait 1s

@@ -21,7 +21,7 @@ scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 
-axes ax at 0,0 width=810 height=405 xRange=0,5 yRange=0,6 stroke="#FFFFFF" strokeWidth=3 xTicks=0,1,2,3,4,5 yTicks=1,2,3,4,5,6 xNumbers=2,3 tickLength=12 tickStrokeWidth=2 numberSize=22 numberColor="#FFFFFF" xNumberOffset=28
+axes ax at 0,0 width=810 height=405 xRange=0,5 yRange=0,6 stroke="#FFFFFF" strokeWidth=2 xTicks=0,1,2,3,4,5 yTicks=1,2,3,4,5,6 xNumbers=2,3 tickLength=12 tickStrokeWidth=2 numberSize=22 numberColor="#FFFFFF" xNumberOffset=28
 axisLabels axis_labels axes=ax x="x" y="y" size=28 fill="#FFFFFF" buff=20
 
 dataRiemannRects riemann axes=ax fn=4*t-t*t range=0.3,0.6 dx=0.03 fill="#0000FF" stroke="#000000" strokeWidth=1 fillOpacity=0.5

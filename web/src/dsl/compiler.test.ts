@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import { compileTextDsl, DslCompileError } from "./compiler.js";
-import type { AnimateOperation, CreateOperation, SetOperation } from "../types.js";
+import type { AnimateOperation, CreateOperation, SceneNode, SetOperation } from "../types.js";
 
 function mustFail(source: string): DslCompileError {
   try {
@@ -61,6 +61,10 @@ function assertNoOverlappingAnimations(
   }
 }
 
+function flattenNodes(nodes: SceneNode[]): SceneNode[] {
+  return nodes.flatMap((node) => [node, ...flattenNodes(node.children ?? [])]);
+}
+
 test("compiles the playground demo without overlapping same-target animations", () => {
   const documentData = compileTextDsl(extractPlaygroundDemo());
 
@@ -70,24 +74,10 @@ test("compiles the playground demo without overlapping same-target animations", 
 
 test("compiles every gallery Text DSL example", () => {
   const galleryDir = "../examples/gallery";
-  const files = [
-    "arg-min-example.fluxion.txt",
-    "boolean-operations.fluxion.txt",
-    "fixed-in-frame-m-object-test.fluxion.txt",
-    "gradient-image-from-array.fluxion.txt",
-    "graph-area-plot.fluxion.txt",
-    "heat-diagram-plot.fluxion.txt",
-    "moving-angle.fluxion.txt",
-    "moving-around.fluxion.txt",
-    "moving-dots.fluxion.txt",
-    "moving-group-to-destination.fluxion.txt",
-    "moving-zoomed-scene-around.fluxion.txt",
-    "moving_frame_box.fluxion.txt",
-    "point-with-trace.fluxion.txt",
-    "polygon-on-axes.fluxion.txt",
-    "sine-curve-unit-circle.fluxion.txt",
-    "vector-arrow.fluxion.txt",
-  ];
+  const files = fs
+    .readdirSync(galleryDir)
+    .filter((file) => file.endsWith(".fluxion.txt"))
+    .sort();
 
   assert.equal(files.length > 0, true);
   for (const file of files) {
@@ -98,6 +88,60 @@ test("compiles every gallery Text DSL example", () => {
       throw new Error(`${file}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
+});
+
+test("gallery full-frame backgrounds use Manim-centered coordinates", () => {
+  const galleryDir = "../examples/gallery";
+  const files = fs
+    .readdirSync(galleryDir)
+    .filter((file) => file.endsWith(".fluxion.txt"))
+    .sort();
+
+  for (const file of files) {
+    const source = fs.readFileSync(`${galleryDir}/${file}`, "utf8");
+    const documentData = compileTextDsl(source);
+    for (const node of flattenNodes(documentData.nodes)) {
+      const isFullFrameBackground =
+        node.id === "bg" &&
+        node.type === "rect" &&
+        Number(node.geometry.w) === documentData.width &&
+        Number(node.geometry.h) === documentData.height;
+      if (!isFullFrameBackground) continue;
+      assert.equal(node.transform.x, 0, `${file}: full-frame bg.x should be centered at 0.`);
+      assert.equal(node.transform.y, 0, `${file}: full-frame bg.y should be centered at 0.`);
+    }
+  }
+});
+
+test("gallery examples use the Manim preview frame scale", () => {
+  const galleryDir = "../examples/gallery";
+  const files = fs
+    .readdirSync(galleryDir)
+    .filter((file) => file.endsWith(".fluxion.txt"))
+    .sort();
+
+  for (const file of files) {
+    const source = fs.readFileSync(`${galleryDir}/${file}`, "utf8");
+    const documentData = compileTextDsl(source);
+    assert.equal(documentData.width, 960, `${file}: expected 960px Manim preview width.`);
+    assert.equal(documentData.height, 540, `${file}: expected 540px Manim preview height.`);
+  }
+});
+
+test("ThreeDSurfacePlot uses the Manim source camera orientation", () => {
+  const source = fs.readFileSync("../examples/gallery/three-d-surface-plot.fluxion.txt", "utf8");
+  const documentData = compileTextDsl(source);
+  const nodes = flattenNodes(documentData.nodes);
+  const axes = nodes.find((node) => node.id === "axes");
+  const surface = nodes.find((node) => node.id === "gauss");
+
+  assert.equal(axes?.geometry.cameraProjection, "manim");
+  assert.equal(axes?.geometry.phi, 75);
+  assert.equal(axes?.geometry.theta, -30);
+  assert.equal(surface?.geometry.cameraProjection, "manim");
+  assert.equal(surface?.geometry.phi, 75);
+  assert.equal(surface?.geometry.theta, -30);
+  assert.equal(surface?.geometry.resolution, 24);
 });
 
 test("includes wait-only tail time in document duration", () => {
@@ -370,7 +414,7 @@ at 0s:
 });
 
 test("places axes at the scene origin by default", () => {
-  const documentData = compileTextDsl("axes ax width=760 height=360");
+  const documentData = compileTextDsl("axes ax");
 
   const axes = documentData.nodes[0];
   assert.equal(axes?.type, "group");
@@ -378,10 +422,16 @@ test("places axes at the scene origin by default", () => {
   assert.equal(axes?.children[0]?.transform.y, 0);
   assert.equal(axes?.children[1]?.transform.x, 0);
   assert.equal(axes?.children[1]?.transform.y, 0);
-  assert.equal(axes?.geometry.xMin, -5);
-  assert.equal(axes?.geometry.xMax, 5);
-  assert.equal(axes?.geometry.yMin, -3);
-  assert.equal(axes?.geometry.yMax, 3);
+  assert.equal(axes?.children[0]?.style.stroke, "#FFFFFF");
+  assert.equal(axes?.children[1]?.style.stroke, "#FFFFFF");
+  assert.equal(axes?.children[0]?.style.strokeWidth, 2);
+  assert.equal(axes?.children[1]?.style.strokeWidth, 2);
+  assert.equal(axes?.geometry.xMin, -7);
+  assert.equal(axes?.geometry.xMax, 7);
+  assert.equal(axes?.geometry.yMin, -4);
+  assert.equal(axes?.geometry.yMax, 4);
+  assert.equal(axes?.geometry.width, 810);
+  assert.equal(axes?.geometry.height, 405);
   assert.equal(axes?.geometry.centerX, 0);
   assert.equal(axes?.geometry.centerY, 0);
 });
@@ -435,7 +485,7 @@ dataPolygon poly axes=ax points=-2,-0.5;-0.4,1.1;1.8,0.4 fill="#22d3ee" opacity=
 
 test("compiles dataLineGraph through Manim-style axes coordinates", () => {
   const documentData = compileTextDsl(`axes ax at 0,-20 width=540 height=360 xRange=0,40 yRange=-8,32 stroke="#fff" strokeWidth=3 xTicks=10 xNumbers=0,5 yNumbers=-5,0 numberSize=18
-dataLineGraph graph axes=ax points=0,20;8,0;38,0;39,-5 lineColor="#FFFF00" strokeWidth=4 vertexRadius=5`);
+dataLineGraph graph axes=ax points=0,20;8,0;38,0;39,-5 lineColor="#FFFF00" strokeWidth=4`);
 
   const axes = documentData.nodes.find((node) => node.id === "ax");
   assert.equal(axes?.children[0]?.geometry.y1, 108);
@@ -454,6 +504,7 @@ dataLineGraph graph axes=ax points=0,20;8,0;38,0;39,-5 lineColor="#FFFF00" strok
   assert.equal(graph?.children[0]?.geometry.d, "M -270 -72 L -162 108 L 243 108 L 256.5 153");
   assert.equal(graph?.children[1]?.transform.x, -270);
   assert.equal(Math.round(Number(graph?.children[1]?.transform.y)), -72);
+  assert.equal(graph?.children[1]?.geometry.r, 5.4);
   assert.equal(graph?.children[1]?.style.fill, "#FFFF00");
 });
 
@@ -470,6 +521,37 @@ test("compiles numberPlane helper as background grid lines", () => {
   assert.equal(yAxis?.style.stroke, "#dff9ff");
   assert.equal(plane?.children.find((child) => child.id === "plane:v:m2")?.geometry.x1, -120);
   assert.equal(plane?.children.find((child) => child.id === "plane:h:m1")?.geometry.y1, 60);
+});
+
+test("compiles numberPlane helper with Manim default styling", () => {
+  const documentData = compileTextDsl(`numberPlane plane xRange=-1,1 yRange=-1,1 unit=60`);
+
+  const plane = documentData.nodes[0];
+  const nonAxisLine = plane?.children.find((child) => child.id === "plane:h:1");
+  const xAxis = plane?.children.find((child) => child.id === "plane:h:0");
+  const yAxis = plane?.children.find((child) => child.id === "plane:v:0");
+  assert.equal(nonAxisLine?.style.stroke, "#29ABCA");
+  assert.equal(nonAxisLine?.style.strokeWidth, 2);
+  assert.equal(nonAxisLine?.transform.opacity, 1);
+  assert.equal(xAxis?.style.stroke, "#FFFFFF");
+  assert.equal(yAxis?.style.stroke, "#FFFFFF");
+  assert.equal(xAxis?.style.strokeWidth, 2);
+});
+
+test("compiles numberPlane helper with Manim frame-scale defaults", () => {
+  const documentData = compileTextDsl("numberPlane plane");
+
+  const plane = documentData.nodes[0];
+  assert.equal(plane?.geometry.xMin, -7.111111);
+  assert.equal(plane?.geometry.xMax, 7.111111);
+  assert.equal(plane?.geometry.yMin, -4);
+  assert.equal(plane?.geometry.yMax, 4);
+  assert.equal(plane?.geometry.xUnit, 67.5);
+  assert.equal(plane?.geometry.yUnit, 67.5);
+  assert.equal(plane?.children.find((child) => child.id === "plane:h:0")?.geometry.x1, -479.9999925);
+  assert.equal(plane?.children.find((child) => child.id === "plane:h:0")?.geometry.x2, 479.9999925);
+  assert.equal(plane?.children.find((child) => child.id === "plane:v:0")?.geometry.y1, -270);
+  assert.equal(plane?.children.find((child) => child.id === "plane:v:0")?.geometry.y2, 270);
 });
 
 test("compiles numberPlane faded sub-grid lines", () => {
@@ -490,7 +572,7 @@ test("compiles dataRect and dataDot through dynamic axes coordinates", () => {
   const documentData = compileTextDsl(`value t = 5
 axes ax at 0,0 width=480 height=360 xRange=0,10 yRange=0,10
 dataRect area axes=ax from=0,0 to=t,25/t fill="#58C4DD" fillOpacity=0.5
-dataDot dot axes=ax point=t,25/t r=8`);
+dataDot dot axes=ax point=t,25/t`);
 
   const area = documentData.nodes.find((node) => node.id === "area");
   assert.equal(area?.type, "rect");
@@ -503,6 +585,8 @@ dataDot dot axes=ax point=t,25/t r=8`);
   const dot = documentData.nodes.find((node) => node.id === "dot");
   assert.equal(dot?.type, "circle");
   assert.equal(dot?.geometry.dataDot, true);
+  assert.equal(dot?.geometry.r, 5.4);
+  assert.equal(dot?.style.strokeWidth, 0);
   assert.equal(dot?.transform.x, 0);
   assert.equal(dot?.transform.y, 0);
 
@@ -603,7 +687,7 @@ test("compiles gaussianSurface through Manim ThreeDCamera projection", () => {
 
 test("compiles sphereSurface into shaded checkerboard surface faces", () => {
   const documentData = compileTextDsl(
-    `sphereSurface sphere at 0,28 radius=104 worldRadius=1.5 xBasis=67.5,0 yBasis=0,12.15 zBasis=0,-67.5 resolution=3,4 fillA="#E65A4C" fillB="#CF5044" light=0,-0.35,1`,
+    `sphereSurface sphere at 0,28 radius=104 worldRadius=1.5 xBasis=67.5,0 yBasis=0,12.15 zBasis=0,-67.5 resolution=3,4 fillA="#E65A4C" fillB="#CF5044" light=0,0,-3`,
   );
 
   const sphere = documentData.nodes[0];
@@ -615,11 +699,14 @@ test("compiles sphereSurface into shaded checkerboard surface faces", () => {
   assert.equal(JSON.stringify(sphere?.geometry.xBasis), "[67.5,0]");
   assert.equal(JSON.stringify(sphere?.geometry.yBasis), "[0,12.15]");
   assert.equal(JSON.stringify(sphere?.geometry.zBasis), "[0,-67.5]");
+  assert.equal(JSON.stringify(sphere?.geometry.light), "[0,0,-3]");
   assert.equal(sphere?.children.length, 12);
   assert.equal(sphere?.children.every((child) => child.type === "path"), true);
   assert.equal(sphere?.children.every((child) => child.metadata?.surfaceFace !== undefined), true);
   assert.equal(sphere?.children.every((child, index, children) => index === 0 || Number(children[index - 1]?.metadata?.surfaceFace?.depth) <= Number(child.metadata?.surfaceFace?.depth)), true);
   assert.equal(sphere?.children.every((child) => String(child.geometry.d).endsWith(" Z")), true);
+  assert.equal(Math.min(...sphere!.children.map((child) => Number(child.metadata?.surfaceFace?.shade))) < -0.2, true);
+  assert.equal(Math.max(...sphere!.children.map((child) => Number(child.metadata?.surfaceFace?.shade))) > 0.09, true);
   assert.equal(sphere?.children.some((child) => child.style.fill !== "#E65A4C" && child.style.fill !== "#CF5044"), true);
   assert.equal(sphere?.children[0]?.style.stroke, "#BBBBBB");
   assert.equal(sphere?.children[0]?.style.strokeWidth, 0.5);
@@ -627,13 +714,14 @@ test("compiles sphereSurface into shaded checkerboard surface faces", () => {
 
 test("compiles sphereSurface through Manim ThreeDCamera projection", () => {
   const documentData = compileTextDsl(
-    `sphereSurface sphere radius=104 worldRadius=1.5 resolution=2,4 phi=75 theta=30 unitScale=108.75 fillA="#E65A4C" fillB="#CF5044" light=0,-0.35,1`,
+    `sphereSurface sphere radius=104 worldRadius=1.5 resolution=2,4 phi=75 theta=30 unitScale=108.75 fillA="#E65A4C" fillB="#CF5044" light=0,0,-3`,
   );
 
   const sphere = documentData.nodes[0];
   assert.equal(sphere?.geometry.cameraProjection, "manim");
   assert.equal(sphere?.geometry.phi, 75);
   assert.equal(sphere?.geometry.theta, 30);
+  assert.equal(JSON.stringify(sphere?.geometry.light), "[0,0,-3]");
   assert.equal(sphere?.children.length, 8);
   assert.equal(sphere?.children[0]?.geometry.d, "M 0 154.566298 L 76.747462 -34.404946 L -136.332141 -20.372009 L 0 154.566298 Z");
 });
@@ -649,6 +737,7 @@ test("compiles threeDAxes into projected axes with ticks and tips", () => {
   equalJson(axes?.geometry.xRange, [-6, 6, 1]);
   assert.equal(axes?.children.filter((child) => child.type === "line").length, 33);
   assert.equal(axes?.children.filter((child) => child.type === "path").length, 3);
+  assert.equal(axes?.children.find((child) => child.id === "axes:x:axis")?.style.strokeWidth, 2);
   assert.equal(axes?.children.some((child) => child.id === "axes:x:tip"), true);
 });
 
@@ -671,10 +760,28 @@ test("compiles threeDAxes through Manim ThreeDCamera projection", () => {
   assert.equal(axes?.geometry.theta, 30);
   assert.equal(axes?.children.length, 16);
   const xAxis = axes?.children.find((child) => child.id === "axes:x:axis");
+  assert.equal(xAxis?.style.strokeWidth, 2);
   assert.equal(Number(xAxis?.geometry.x1).toFixed(6), "100.355130");
   assert.equal(Number(xAxis?.geometry.x2).toFixed(6), "-118.677572");
   const zTip = axes?.children.find((child) => child.id === "axes:z:tip");
   assert.equal(zTip?.geometry.d, "M 0 -106.421631 L 7 -88.421631 L -7 -88.421631 Z");
+});
+
+test("compiles threeDAxes with Manim axis lengths independent from ranges", () => {
+  const documentData = compileTextDsl(
+    `threeDAxes axes xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 xLength=10.5 yLength=10.5 zLength=6.5 phi=75 theta=30 unitScale=67.5 includeTips=true`,
+  );
+
+  const axes = documentData.nodes[0];
+  assert.equal(axes?.geometry.xLength, 10.5);
+  assert.equal(axes?.geometry.yLength, 10.5);
+  assert.equal(axes?.geometry.zLength, 6.5);
+  const xAxis = axes?.children.find((child) => child.id === "axes:x:axis");
+  const zAxis = axes?.children.find((child) => child.id === "axes:z:axis");
+  assert.equal(Number(xAxis?.geometry.x1).toFixed(6), "145.285013");
+  assert.equal(Number(xAxis?.geometry.x2).toFixed(6), "-227.042817");
+  assert.equal(Number(zAxis?.geometry.y1).toFixed(6), "203.347567");
+  assert.equal(Number(zAxis?.geometry.y2).toFixed(6), "-221.203370");
 });
 
 test("compiles projectedCircle into a projected XY-plane path", () => {
@@ -725,6 +832,18 @@ test("compiles arrow helper as grouped shaft and tip paths", () => {
   assert.equal(arrow?.children[0]?.style.stroke, "#22d3ee");
   assert.equal(arrow?.children[0]?.style.strokeWidth, 6);
   assert.equal(String(arrow?.children[1]?.geometry.d).startsWith("M 190 80 L "), true);
+});
+
+test("compiles arrow helper with Manim default stroke and tip size", () => {
+  const documentData = compileTextDsl(`arrow vec x1=0 y1=0 x2=135 y2=-135 buff=0`);
+
+  const arrow = documentData.nodes[0];
+  assert.equal(arrow?.geometry.tipLength, 23.625);
+  assert.equal(arrow?.geometry.tipWidth, 23.625);
+  assert.equal(arrow?.children[0]?.style.stroke, "#FFFFFF");
+  assert.equal(arrow?.children[0]?.style.strokeWidth, 6);
+  assert.equal(Number(arrow?.children[0]?.geometry.x2).toFixed(6), "118.294602");
+  assert.equal(arrow?.children[1]?.geometry.d, "M 135 -135 L 126.647301 -109.941903 L 109.941903 -126.647301 Z");
 });
 
 test("compiles arrow helper with Manim-like buff and length-ratio clamps", () => {
