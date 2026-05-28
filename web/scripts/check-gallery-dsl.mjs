@@ -1070,6 +1070,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const perpendicular = findNode(documentData, 'perpendicular');
     assertGalleryCondition(label, segment?.type === 'line' && segment.style?.stroke === '#ff862f', 'expected orange measured segment.');
     assertGalleryCondition(label, horizontal?.type === 'brace' && perpendicular?.type === 'brace', 'expected two Brace helpers.');
+    assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'segment') < documentData.nodes.findIndex((node) => node.id === 'dotA') && documentData.nodes.findIndex((node) => node.id === 'segment') < documentData.nodes.findIndex((node) => node.id === 'dotB'), 'expected official self.add(line,dot,dot2,...) z-order with dots above the line.');
     assertGalleryCondition(label, horizontal?.geometry?.target === 'segment' && horizontal.geometry?.direction === 'down', 'expected horizontal brace below segment.');
     assertGalleryCondition(label, perpendicular?.geometry?.target === 'segment' && perpendicular.geometry?.direction === 'perpendicular', 'expected perpendicular brace tied to segment normal.');
     assertGalleryCondition(label, horizontal?.geometry?.label === '\\\\text{Horizontal distance}' && perpendicular?.geometry?.label === 'x-x_1', 'expected official brace labels.');
@@ -1079,6 +1080,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const horizontalPath = svgGroupPathData(svg, 'horizontal');
     const perpendicularPath = svgGroupPathData(svg, 'perpendicular');
     assertGalleryCondition(label, /<line id="segment"[^>]*x1="-135"[^>]*y1="67\.5"[^>]*x2="135"[^>]*y2="-67\.5"[^>]*stroke="#ff862f"/u.test(svg), 'expected SVG measured segment to match official dot centers.');
+    assertGalleryCondition(label, svg.indexOf('id="segment"') < svg.indexOf('id="dotA"') && svg.indexOf('id="segment"') < svg.indexOf('id="dotB"'), 'expected SVG dots to render above the measured segment like Manim self.add(line,dot,dot2,...).');
     assertGalleryCondition(label, horizontalPath.startsWith('M -135 81 ') && horizontalPath.includes(' C ') && horizontalPath.endsWith(' Z'), 'expected horizontal Brace to serialize as a curved ribbon below the segment bounds.');
     assertGalleryCondition(label, perpendicularPath.startsWith('M -141.037384 55.425233 ') && perpendicularPath.includes(' C ') && perpendicularPath.endsWith(' Z'), 'expected perpendicular Brace to serialize along the segment normal.');
     assertGalleryCondition(label, /<g id="horizontal"[^>]*>.*<text x="0" y="142\.[0-9]+"/u.test(svg) && svg.includes('text{Horizontal distance}</text>'), 'expected horizontal brace label at the Manim tip-side anchor.');
