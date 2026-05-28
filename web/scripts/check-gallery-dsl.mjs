@@ -1814,6 +1814,14 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, rotations.length === 2, 'expected two rotateUpdater wait segments.');
     assertGalleryCondition(label, rotations.some((op) => approximatelyEqual(op.from, 0) && approximatelyEqual(op.to, 114.591559) && op.t === 0 && op.duration === 2 && op.easing === 'linear'), 'expected +1 rad/s rotation over first two seconds.');
     assertGalleryCondition(label, rotations.some((op) => approximatelyEqual(op.from, 114.591559) && approximatelyEqual(op.to, 0) && op.t === 2 && op.duration === 2 && op.easing === 'linear'), 'expected -1 rad/s rotation back to reference.');
+    const forwardMid = renderedNodeAt(documentData, 1, 'line_moving');
+    const forwardEnd = renderedNodeAt(documentData, 2, 'line_moving');
+    const backwardMid = renderedNodeAt(documentData, 3, 'line_moving');
+    const holdMoving = renderedNodeAt(documentData, 4.5, 'line_moving');
+    const holdReference = renderedNodeAt(documentData, 4.5, 'line_reference');
+    assertGalleryCondition(label, approximatelyEqual(forwardMid?.transform?.rotation ?? 0, 57.29578) && approximatelyEqual(forwardEnd?.transform?.rotation ?? 0, 114.591559), 'expected rendered rotation updater to accumulate one and two radians during the forward wait.');
+    assertGalleryCondition(label, approximatelyEqual(backwardMid?.transform?.rotation ?? 0, 57.29578) && approximatelyEqual(holdMoving?.transform?.rotation ?? 1, 0), 'expected rendered rotation updater to unwind and hold at zero rotation.');
+    assertGalleryCondition(label, holdMoving?.geometry?.x2 === holdReference?.geometry?.x2 && holdMoving?.transform?.rotation === holdReference?.transform?.rotation, 'expected final moving line to overlap the reference line after updater unwinds.');
     const startSvg = svgSampleAt(documentData, 0);
     const forwardMidSvg = svgSampleAt(documentData, 1);
     const forwardEndSvg = svgSampleAt(documentData, 2);
