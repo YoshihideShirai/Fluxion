@@ -1498,6 +1498,16 @@ function checkGallerySpecificStructure(label, documentData) {
     const zoomDisplayFrame = findNode(documentData, 'zoom_display_frame');
     const zoomSample = findNode(documentData, 'zoom_sample');
     const zoomDot = findNode(documentData, 'zoom_dot');
+    const sourcePixels = [
+      ['px_00', '#000000', -354.375, -118.125],
+      ['px_01', '#646464', -118.125, -118.125],
+      ['px_02', '#1E1E1E', 118.125, -118.125],
+      ['px_03', '#C8C8C8', 354.375, -118.125],
+      ['px_10', '#FFFFFF', -354.375, 118.125],
+      ['px_11', '#000000', -118.125, 118.125],
+      ['px_12', '#050505', 118.125, 118.125],
+      ['px_13', '#212121', 354.375, 118.125],
+    ];
     assertGalleryCondition(label, approximatelyEqual(frame?.geometry?.w ?? 0, 121.5) && approximatelyEqual(frame?.geometry?.h ?? 0, 20.25), 'expected zoomed camera frame to match zoom_factor=0.3 and 6x1 display ratio.');
     assertGalleryCondition(label, frame?.style?.stroke === '#9A72AC' && approximatelyEqual(frame?.style?.strokeWidth ?? 0, 3), 'expected purple zoomed camera frame with official stroke width 3.');
     assertGalleryCondition(label, approximatelyEqual(zoomDisplay?.geometry?.w ?? 0, 121.5) && approximatelyEqual(zoomDisplay?.geometry?.h ?? 0, 20.25), 'expected zoom display to pop out from the camera frame geometry.');
@@ -1506,6 +1516,10 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, approximatelyEqual(zoomBg?.geometry?.w ?? 0, 155.25) && approximatelyEqual(zoomBg?.geometry?.h ?? 0, 54), 'expected BackgroundRectangle buff around the collapsed zoom display.');
     assertGalleryCondition(label, zoomDisplayFrame?.style?.stroke === '#FC6255' && approximatelyEqual(zoomDisplayFrame?.style?.strokeWidth ?? 0, 20), 'expected red zoomed display frame with official image_frame_stroke_width=20.');
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'px_') === 8, 'expected original 2x4 image pixel grid.');
+    assertGalleryCondition(label, sourcePixels.every(([id, fill, x, y]) => {
+      const pixel = findNode(documentData, id);
+      return pixel?.type === 'rect' && pixel.style?.fill === fill && pixel.geometry?.w === 236.25 && pixel.geometry?.h === 236.25 && pixel.transform?.x === x && pixel.transform?.y === y;
+    }), 'expected source ImageMobject uint8 pixels [[0,100,30,200],[255,0,5,33]] at image.height=7 placement.');
     assertGalleryCondition(label, zoomSample?.type === 'rect' && zoomSample.style?.fill === '#646464', 'expected zoomed camera crop to sample the single source pixel under Dot().shift(UL*2).');
     assertGalleryCondition(label, zoomDot?.type === 'circle' && approximatelyEqual(zoomDot.geometry?.r ?? 0, 5.4), 'expected zoomed camera crop to include the dot before pop-out.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'geometry.w', from: 121.5, to: 405, t: 1, duration: 1 }), 'expected pop-out to official 6-unit zoom display width.');
