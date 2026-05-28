@@ -965,6 +965,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const originLabel = findNode(documentData, 'origin_label');
     const tipLabel = findNode(documentData, 'tip_label');
     assertGalleryCondition(label, plane?.geometry?.numberPlane === true, 'expected NumberPlane background.');
+    assertGalleryCondition(label, ['plane', 'origin', 'vec', 'tip_anchor', 'origin_label', 'tip_label'].every((id, index, ids) => index === 0 || documentData.nodes.findIndex((node) => node.id === ids[index - 1]) < documentData.nodes.findIndex((node) => node.id === id)), 'expected official self.add(numberplane, dot, arrow, origin_text, tip_text) z-order.');
     assertGalleryCondition(label, plane?.children?.length === 22 && approximatelyEqual(plane.geometry?.xUnit ?? 0, 67.5) && approximatelyEqual(plane.geometry?.yUnit ?? 0, 67.5), 'expected 16:9 NumberPlane grid at Manim unit scale without boundary grid lines.');
     assertGalleryCondition(label, arrow?.geometry?.arrow === true && arrow.geometry?.x2 === 135 && arrow.geometry?.y2 === -135, 'expected vector from ORIGIN to [2, 2, 0].');
     assertGalleryCondition(label, shaft?.type === 'line' && tip?.type === 'path', 'expected arrow helper to split shaft and tip.');
@@ -976,6 +977,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="plane:/gu) === 22, 'expected SVG NumberPlane grid and axes without boundary grid lines.');
     assertGalleryCondition(label, svg.includes('id="vec:shaft"') && svg.includes('id="vec:tip"') && svg.includes('(2, 2)'), 'expected SVG vector arrow shaft, tip, and coordinate label.');
+    assertGalleryCondition(label, svg.indexOf('id="plane:h:') < svg.indexOf('id="origin"') && svg.indexOf('id="origin"') < svg.indexOf('id="vec"'), 'expected SVG vector arrow to render above the origin dot like Manim.');
     assertGalleryCondition(label, /id="plane:h:0"[^>]*x1="-479\.99999[23]"[^>]*x2="479\.999993"[^>]*stroke="#FFFFFF"/u.test(svg), 'expected SVG NumberPlane x-axis to span the full Manim frame width.');
     assertGalleryCondition(label, /id="plane:v:0"[^>]*y1="-270"[^>]*y2="270"[^>]*stroke="#FFFFFF"/u.test(svg), 'expected SVG NumberPlane y-axis to span the full Manim frame height.');
     assertGalleryCondition(label, /id="plane:h:m1"[^>]*stroke="#29ABCA"/u.test(svg) && /id="plane:v:1"[^>]*stroke="#29ABCA"/u.test(svg), 'expected SVG NumberPlane non-axis grid lines to use Manim BLUE_D.');

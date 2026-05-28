@@ -2,8 +2,8 @@ scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 numberPlane plane
-arrow vec x1=0 y1=0 x2=135 y2=-135 buff=0
 circle origin r=5.4 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=0
+arrow vec x1=0 y1=0 x2=135 y2=-135 buff=0
 circle tip_anchor r=0 at 135,-135 fill="none" stroke="none" opacity=0
 text origin_label "(0, 0)" at 0,0 size=48 fill="#FFFFFF" w=128.25 h=63.45
 text tip_label "(2, 2)" at 0,0 size=48 fill="#FFFFFF" w=128.25 h=63.45
