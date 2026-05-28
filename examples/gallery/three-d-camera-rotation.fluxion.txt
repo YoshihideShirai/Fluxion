@@ -2,8 +2,8 @@ scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 
-threeDAxes axes at 0,28 xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 xLength=10.5 yLength=10.5 zLength=6.5 phi=75 theta=30 unitScale=67.5 includeTips=true
 projectedCircle circle_xy radius=1 at 0,28 phi=75 theta=30 unitScale=67.5 samples=96 fill="none" stroke="#FFFFFF" strokeWidth=4
+threeDAxes axes at 0,28 xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 xLength=10.5 yLength=10.5 zLength=6.5 phi=75 theta=30 unitScale=67.5 includeTips=true
 
 animate axes:x:axis.x1 from 145.285013 to 171.616756 duration=1s easing=linear
 animate axes:x:axis.y1 from -65.12949 to -61.74646 duration=1s easing=linear
