@@ -4,9 +4,9 @@ value x = 0
 value y = 0
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
-dynamicLine connector x1=67.5*x y1=0 x2=39.15 y2=-67.5*y stroke="#FFFFFF" strokeWidth=4
 circle d1 r=5.4 at 0,0 fill="#58C4DD" stroke="#58C4DD" strokeWidth=0
 circle d2 r=5.4 at 39.15,0 fill="#83C167" stroke="#83C167" strokeWidth=0
+dynamicLine connector x1=67.5*x y1=0 x2=39.15 y2=-67.5*y stroke="#FFFFFF" strokeWidth=4
 
 always d1.x = expr=67.5*x
 always d2.y = expr=-67.5*y

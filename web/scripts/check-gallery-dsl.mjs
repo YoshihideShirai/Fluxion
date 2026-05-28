@@ -1582,6 +1582,7 @@ function checkGallerySpecificStructure(label, documentData) {
   if (label.includes('moving-dots')) {
     const connector = findNode(documentData, 'connector');
     assertGalleryCondition(label, connector?.geometry?.dynamicLine === true, 'expected dynamicLine connector between tracked dots.');
+    assertGalleryCondition(label, ['d1', 'd2', 'connector'].every((id, index, ids) => index === 0 || documentData.nodes.findIndex((node) => node.id === ids[index - 1]) < documentData.nodes.findIndex((node) => node.id === id)), 'expected official self.add(d1,d2,l1) z-order with connector above both dots.');
     assertGalleryCondition(label, connector?.style?.stroke === '#FFFFFF' && approximatelyEqual(connector?.style?.strokeWidth ?? 0, 4), 'expected connector to copy Manim default Line style after become(Line(...)).');
     assertGalleryCondition(label, connector?.style?.strokeLinecap === 'round' && connector?.style?.strokeLinejoin === 'round', 'expected dynamicLine connector to use Manim-like round VMobject stroke caps and joins.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindExpr' && op.id === 'd1' && op.path === 'transform.x'), 'expected d1 x updater binding.');
@@ -1590,6 +1591,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const xShiftSvg = svgSampleAt(documentData, 1);
     const yShiftSvg = svgSampleAt(documentData, 2);
     assertGalleryCondition(label, /id="connector"[^>]*x1="0"[^>]*y1="0"[^>]*x2="39\.15"[^>]*y2="0"[^>]*stroke="#FFFFFF"/u.test(initialSvg), 'expected initial SVG connector between arranged dots with default white Line style.');
+    assertGalleryCondition(label, initialSvg.indexOf('id="d1"') < initialSvg.indexOf('id="connector"') && initialSvg.indexOf('id="d2"') < initialSvg.indexOf('id="connector"'), 'expected SVG connector to render above both dots like Manim self.add(d1,d2,l1).');
     assertGalleryCondition(label, /id="connector"[^>]*stroke-linecap="round"[^>]*stroke-linejoin="round"/u.test(initialSvg), 'expected initial SVG connector to render with round caps and joins.');
     assertGalleryCondition(label, /id="connector"[^>]*x1="337\.5"[^>]*y1="0"[^>]*x2="39\.15"[^>]*y2="0"/u.test(xShiftSvg), 'expected SVG connector to follow d1.set_x after x ValueTracker animation.');
     assertGalleryCondition(label, /id="connector"[^>]*x1="337\.5"[^>]*y1="0"[^>]*x2="39\.15"[^>]*y2="-270"/u.test(yShiftSvg), 'expected SVG connector to follow d2.set_y after y ValueTracker animation.');
