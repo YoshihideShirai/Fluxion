@@ -229,7 +229,7 @@ Geometry options:
 Default values:
 
 - transform: `x=0`, `y=0`, `scale=1`, `rotation=0`, `opacity=1`; `scaleX` / `scaleY` are optional and default to `1`
-- style: `fill="#ffffff"`, `fillOpacity=1`, `stroke="none"`, `strokeOpacity=1`, `strokeWidth=0`; curve helpers such as `plot`, `angle`, `tracedPath`, and `dataLineGraph` default to `strokeLinecap=round`, `strokeLinejoin=round`
+- style: `fill="#ffffff"`, `fillOpacity=1`, `stroke="none"`, `strokeOpacity=1`, `strokeWidth=0`; curve helpers such as `plot`, `angle`, `tracedPath`, `dynamicLine`, and `dataLineGraph` default to `strokeLinecap=round`, `strokeLinejoin=round`
 - circle: `r=40`
 - rect: `w=100`, `h=80`
 - line: `x1=0`, `y1=0`, `x2=100`, `y2=0`

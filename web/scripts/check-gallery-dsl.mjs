@@ -1533,12 +1533,14 @@ function checkGallerySpecificStructure(label, documentData) {
     const connector = findNode(documentData, 'connector');
     assertGalleryCondition(label, connector?.geometry?.dynamicLine === true, 'expected dynamicLine connector between tracked dots.');
     assertGalleryCondition(label, connector?.style?.stroke === '#FFFFFF' && approximatelyEqual(connector?.style?.strokeWidth ?? 0, 4), 'expected connector to copy Manim default Line style after become(Line(...)).');
+    assertGalleryCondition(label, connector?.style?.strokeLinecap === 'round' && connector?.style?.strokeLinejoin === 'round', 'expected dynamicLine connector to use Manim-like round VMobject stroke caps and joins.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindExpr' && op.id === 'd1' && op.path === 'transform.x'), 'expected d1 x updater binding.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindExpr' && op.id === 'd2' && op.path === 'transform.y'), 'expected d2 y updater binding.');
     const initialSvg = svgSampleAt(documentData, 0);
     const xShiftSvg = svgSampleAt(documentData, 1);
     const yShiftSvg = svgSampleAt(documentData, 2);
     assertGalleryCondition(label, /id="connector"[^>]*x1="0"[^>]*y1="0"[^>]*x2="39\.15"[^>]*y2="0"[^>]*stroke="#FFFFFF"/u.test(initialSvg), 'expected initial SVG connector between arranged dots with default white Line style.');
+    assertGalleryCondition(label, /id="connector"[^>]*stroke-linecap="round"[^>]*stroke-linejoin="round"/u.test(initialSvg), 'expected initial SVG connector to render with round caps and joins.');
     assertGalleryCondition(label, /id="connector"[^>]*x1="337\.5"[^>]*y1="0"[^>]*x2="39\.15"[^>]*y2="0"/u.test(xShiftSvg), 'expected SVG connector to follow d1.set_x after x ValueTracker animation.');
     assertGalleryCondition(label, /id="connector"[^>]*x1="337\.5"[^>]*y1="0"[^>]*x2="39\.15"[^>]*y2="-270"/u.test(yShiftSvg), 'expected SVG connector to follow d2.set_y after y ValueTracker animation.');
   }

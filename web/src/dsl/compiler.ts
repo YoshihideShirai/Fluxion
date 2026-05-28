@@ -1426,6 +1426,8 @@ function parseDynamicLine(tokens: string[], state: CompileState, lineNumber: num
   node.style.fill = "none";
   node.style.stroke = "#ffffff";
   node.style.strokeWidth = 4;
+  node.style.strokeLinecap = "round";
+  node.style.strokeLinejoin = "round";
   for (const [key, value] of options) {
     if (["x1", "y1", "x2", "y2"].includes(key)) continue;
     applyNodeOption(node, key, value, lineNumber);

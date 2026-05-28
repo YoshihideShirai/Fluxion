@@ -672,6 +672,8 @@ dynamicLine connector x1=60*x y1=0 x2=72 y2=-60*y stroke="#FC6255" strokeWidth=4
   assert.equal(connector?.geometry.dynamicLine, true);
   assert.equal(connector?.geometry.x2, 72);
   assert.equal(connector?.style.stroke, "#FC6255");
+  assert.equal(connector?.style.strokeLinecap, "round");
+  assert.equal(connector?.style.strokeLinejoin, "round");
 
   const bindings = documentData.timeline.filter((op) => op.op === "bindExpr" && op.id === "connector");
   assert.equal(bindings.length, 4);
