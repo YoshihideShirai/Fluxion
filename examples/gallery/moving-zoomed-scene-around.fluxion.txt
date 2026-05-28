@@ -54,8 +54,6 @@ at 3s:
   animate zoom_display.scaleY from 1 to 1.5 duration=1s easing=easeInOut
   animate zoom_display_frame.scaleX from 1 to 0.5 duration=1s easing=easeInOut
   animate zoom_display_frame.scaleY from 1 to 1.5 duration=1s easing=easeInOut
-  animate zoom_bg.scaleX from 1 to 0.5 duration=1s easing=easeInOut
-  animate zoom_bg.scaleY from 1 to 1.5 duration=1s easing=easeInOut
   animate zoom_sample.scaleX from 1 to 0.5 duration=1s easing=easeInOut
   animate zoom_sample.scaleY from 1 to 1.5 duration=1s easing=easeInOut
   animate zoom_dot.scaleX from 1 to 0.5 duration=1s easing=easeInOut
@@ -63,7 +61,6 @@ at 3s:
   animate frame_text.opacity from 1 to 0 duration=1s easing=easeInOut
   animate zoom_text.opacity from 1 to 0 duration=1s easing=easeInOut
   wait 2s
-  animate zoom_bg.scale from 1 to 2 duration=1s easing=easeInOut
   animate zoom_display.scale from 1 to 2 duration=1s easing=easeInOut
   animate zoom_display_frame.scale from 1 to 2 duration=1s easing=easeInOut
   animate zoom_sample.scale from 1 to 2 duration=1s easing=easeInOut

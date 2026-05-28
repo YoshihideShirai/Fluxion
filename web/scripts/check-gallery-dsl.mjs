@@ -1486,6 +1486,8 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_bg', path: 'geometry.w', from: 155.25, to: 438.75, t: 1, duration: 1 }), 'expected pop-out BackgroundRectangle to include MED_SMALL_BUFF.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'frame', path: 'transform.scaleX', from: 1, to: 0.5, t: 3, duration: 1 }), 'expected anisotropic frame scale x=0.5.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'frame', path: 'transform.scaleY', from: 1, to: 1.5, t: 3, duration: 1 }), 'expected anisotropic frame scale y=1.5.');
+    assertGalleryCondition(label, !hasAnimation(documentData, { id: 'zoom_bg', path: 'transform.scaleX', from: 1, to: 0.5, t: 3, duration: 1 }), 'expected transparent BackgroundRectangle not to follow the intermediate anisotropic display scale outside UpdateFromFunc.');
+    assertGalleryCondition(label, !hasAnimation(documentData, { id: 'zoom_bg', path: 'transform.scale', from: 1, to: 2, t: 5, duration: 1 }), 'expected transparent BackgroundRectangle not to follow ScaleInPlace outside UpdateFromFunc.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'transform.scale', from: 1, to: 2, t: 5, duration: 1 }), 'expected ScaleInPlace(zoomed_display, 2).');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'frame', path: 'transform.y', from: -135, to: 33.75, t: 7, duration: 1 }), 'expected frame shift by 2.5*DOWN.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'transform.x', from: 244, to: -135, t: 9, duration: 1 }), 'expected reverse pop-out collapse to shifted frame x.');
