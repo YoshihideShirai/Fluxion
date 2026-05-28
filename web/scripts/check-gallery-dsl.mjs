@@ -962,7 +962,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const originLabel = findNode(documentData, 'origin_label');
     const tipLabel = findNode(documentData, 'tip_label');
     assertGalleryCondition(label, plane?.geometry?.numberPlane === true, 'expected NumberPlane background.');
-    assertGalleryCondition(label, plane?.children?.length === 24 && approximatelyEqual(plane.geometry?.xUnit ?? 0, 67.5) && approximatelyEqual(plane.geometry?.yUnit ?? 0, 67.5), 'expected 16:9 NumberPlane grid at Manim unit scale.');
+    assertGalleryCondition(label, plane?.children?.length === 22 && approximatelyEqual(plane.geometry?.xUnit ?? 0, 67.5) && approximatelyEqual(plane.geometry?.yUnit ?? 0, 67.5), 'expected 16:9 NumberPlane grid at Manim unit scale without boundary grid lines.');
     assertGalleryCondition(label, arrow?.geometry?.arrow === true && arrow.geometry?.x2 === 135 && arrow.geometry?.y2 === -135, 'expected vector from ORIGIN to [2, 2, 0].');
     assertGalleryCondition(label, shaft?.type === 'line' && tip?.type === 'path', 'expected arrow helper to split shaft and tip.');
     assertGalleryCondition(label, shaft?.style?.stroke === '#FFFFFF' && approximatelyEqual(shaft.style?.strokeWidth ?? 0, 6), 'expected white vector shaft.');
@@ -971,11 +971,12 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, originLabel?.text === '(0, 0)' && tipLabel?.text === '(2, 2)', 'expected coordinate labels.');
     assertGalleryCondition(label, approximatelyEqual(originLabel?.transform?.y ?? 0, 54) && approximatelyEqual(tipLabel?.transform?.x ?? 0, 216), 'expected labels placed with nextTo.');
     const svg = svgSampleAt(documentData, 0);
-    assertGalleryCondition(label, countSvgOccurrences(svg, /id="plane:/gu) === 24, 'expected SVG NumberPlane grid and axes.');
+    assertGalleryCondition(label, countSvgOccurrences(svg, /id="plane:/gu) === 22, 'expected SVG NumberPlane grid and axes without boundary grid lines.');
     assertGalleryCondition(label, svg.includes('id="vec:shaft"') && svg.includes('id="vec:tip"') && svg.includes('(2, 2)'), 'expected SVG vector arrow shaft, tip, and coordinate label.');
     assertGalleryCondition(label, /id="plane:h:0"[^>]*x1="-479\.99999[23]"[^>]*x2="479\.999993"[^>]*stroke="#FFFFFF"/u.test(svg), 'expected SVG NumberPlane x-axis to span the full Manim frame width.');
     assertGalleryCondition(label, /id="plane:v:0"[^>]*y1="-270"[^>]*y2="270"[^>]*stroke="#FFFFFF"/u.test(svg), 'expected SVG NumberPlane y-axis to span the full Manim frame height.');
     assertGalleryCondition(label, /id="plane:h:m1"[^>]*stroke="#29ABCA"/u.test(svg) && /id="plane:v:1"[^>]*stroke="#29ABCA"/u.test(svg), 'expected SVG NumberPlane non-axis grid lines to use Manim BLUE_D.');
+    assertGalleryCondition(label, !svg.includes('id="plane:h:4"') && !svg.includes('id="plane:h:m4"'), 'expected SVG NumberPlane to omit top and bottom boundary grid lines like Manim.');
     assertGalleryCondition(label, /id="vec:shaft"[^>]*x1="0"[^>]*y1="0"[^>]*x2="118\.294602"[^>]*y2="-118\.294602"[^>]*stroke-width="6"/u.test(svg), 'expected SVG vector shaft to stop before the tip with Manim stroke width.');
     assertGalleryCondition(label, svgGroupPathData(svg, 'vec:tip') === 'M 135 -135 L 126.647301 -109.941903 L 109.941903 -126.647301 Z', 'expected SVG vector tip triangle from Arrow default tip length and width.');
     assertGalleryCondition(label, svgElementTag(svg, 'origin_label').includes('transform="translate(0 54)"') && svgElementTag(svg, 'tip_label').includes('transform="translate(216 -135)"'), 'expected SVG coordinate labels to serialize at next_to positions.');

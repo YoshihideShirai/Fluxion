@@ -525,17 +525,17 @@ test("compiles numberPlane helper as background grid lines", () => {
   const plane = documentData.nodes[0];
   assert.equal(plane?.type, "group");
   assert.equal(plane?.geometry.numberPlane, true);
-  assert.equal(plane?.children.length, 8);
+  assert.equal(plane?.children.length, 4);
   const xAxis = plane?.children.find((child) => child.id === "plane:h:0");
   const yAxis = plane?.children.find((child) => child.id === "plane:v:0");
   assert.equal(xAxis?.style.stroke, "#dff9ff");
   assert.equal(yAxis?.style.stroke, "#dff9ff");
-  assert.equal(plane?.children.find((child) => child.id === "plane:v:m2")?.geometry.x1, -120);
-  assert.equal(plane?.children.find((child) => child.id === "plane:h:m1")?.geometry.y1, 60);
+  assert.equal(plane?.children.find((child) => child.id === "plane:v:m1")?.geometry.x1, -60);
+  assert.equal(plane?.children.find((child) => child.id === "plane:h:m1"), undefined);
 });
 
 test("compiles numberPlane helper with Manim default styling", () => {
-  const documentData = compileTextDsl(`numberPlane plane xRange=-1,1 yRange=-1,1 unit=60`);
+  const documentData = compileTextDsl(`numberPlane plane xRange=-2,2 yRange=-2,2 unit=60`);
 
   const plane = documentData.nodes[0];
   const nonAxisLine = plane?.children.find((child) => child.id === "plane:h:1");
@@ -551,7 +551,7 @@ test("compiles numberPlane helper with Manim default styling", () => {
 
 test("compiles numberPlane helper with per-axis and background style aliases", () => {
   const documentData = compileTextDsl(
-    `numberPlane plane xRange=-1,1 yRange=-1,1 unit=60 backgroundLineColor="#123456" backgroundLineStrokeWidth=3 backgroundLineOpacity=0.4 xAxisStroke="#ff0000" yAxisStroke="#00ff00" xAxisStrokeWidth=5 yAxisStrokeWidth=6 xAxisOpacity=0.8 yAxisOpacity=0.9`,
+    `numberPlane plane xRange=-2,2 yRange=-2,2 unit=60 backgroundLineColor="#123456" backgroundLineStrokeWidth=3 backgroundLineOpacity=0.4 xAxisStroke="#ff0000" yAxisStroke="#00ff00" xAxisStrokeWidth=5 yAxisStrokeWidth=6 xAxisOpacity=0.8 yAxisOpacity=0.9`,
   );
 
   const plane = documentData.nodes[0];
@@ -571,17 +571,17 @@ test("compiles numberPlane helper with per-axis and background style aliases", (
 
 test("compiles numberPlane helper with Manim-style ticks and coordinate labels", () => {
   const documentData = compileTextDsl(
-    `numberPlane plane xRange=-2,2 yRange=-1,1 unit=60 includeTicks=true addCoordinates=true numberSize=20 numberColor="#ffeeaa" tickLength=10 tickStrokeWidth=3`,
+    `numberPlane plane xRange=-2,2 yRange=-2,2 unit=60 includeTicks=true addCoordinates=true numberSize=20 numberColor="#ffeeaa" tickLength=10 tickStrokeWidth=3`,
   );
 
   const plane = documentData.nodes[0];
   assert.equal(plane?.geometry.includeTicks, true);
   assert.equal(plane?.geometry.addCoordinates, true);
-  assert.equal(plane?.children.length, 20);
+  assert.equal(plane?.children.length, 14);
 
-  const xTick = plane?.children.find((child) => child.id === "plane:x_tick:m2");
+  const xTick = plane?.children.find((child) => child.id === "plane:x_tick:m1");
   assert.equal(xTick?.type, "line");
-  assert.equal(xTick?.transform.x, -120);
+  assert.equal(xTick?.transform.x, -60);
   assert.equal(xTick?.geometry.y1, -5);
   assert.equal(xTick?.geometry.y2, 5);
   assert.equal(xTick?.style.strokeWidth, 3);
@@ -591,10 +591,10 @@ test("compiles numberPlane helper with Manim-style ticks and coordinate labels",
   assert.equal(yTick?.geometry.x1, -5);
   assert.equal(yTick?.geometry.x2, 5);
 
-  const xLabel = plane?.children.find((child) => child.id === "plane:x_number:2");
+  const xLabel = plane?.children.find((child) => child.id === "plane:x_number:1");
   assert.equal(xLabel?.type, "text");
-  assert.equal(xLabel?.text, "2");
-  assert.equal(xLabel?.transform.x, 128);
+  assert.equal(xLabel?.text, "1");
+  assert.equal(xLabel?.transform.x, 68);
   assert.equal(xLabel?.transform.y, 24);
   assert.equal(xLabel?.geometry.fontSize, 20);
   assert.equal(xLabel?.style.fill, "#ffeeaa");
@@ -619,6 +619,8 @@ test("compiles numberPlane helper with Manim frame-scale defaults", () => {
   assert.equal(plane?.children.find((child) => child.id === "plane:h:0")?.geometry.x2, 479.9999925);
   assert.equal(plane?.children.find((child) => child.id === "plane:v:0")?.geometry.y1, -270);
   assert.equal(plane?.children.find((child) => child.id === "plane:v:0")?.geometry.y2, 270);
+  assert.equal(plane?.children.find((child) => child.id === "plane:h:4"), undefined);
+  assert.equal(plane?.children.find((child) => child.id === "plane:h:m4"), undefined);
 });
 
 test("compiles numberPlane faded sub-grid lines", () => {
@@ -626,7 +628,7 @@ test("compiles numberPlane faded sub-grid lines", () => {
 
   const plane = documentData.nodes[0];
   assert.equal(plane?.geometry.fadedLineRatio, 2);
-  assert.equal(plane?.children.length, 10);
+  assert.equal(plane?.children.length, 6);
   const fadedVertical = plane?.children.find((child) => child.id === "plane:fv:0p5");
   assert.equal(fadedVertical?.geometry.x1, 30);
   assert.equal(fadedVertical?.style.stroke, "#29ABCA");

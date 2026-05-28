@@ -839,14 +839,14 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
   const yNumberOffsetY = parseNumber(options.get("yNumberOffsetY") ?? "10", lineNumber);
   const children: SceneNode[] = [];
 
-  const mainYValues = steppedValues(yMin, yMax, yStep);
-  const mainXValues = steppedValues(xMin, xMax, xStep);
+  const mainYValues = numberPlaneLineValues(yMin, yMax, yStep);
+  const mainXValues = numberPlaneLineValues(xMin, xMax, xStep);
   const shouldFade = (value: number, step: number) => {
     const delta = Math.abs(step) > 1e-9 ? Math.abs(step) : 1;
     return Math.abs(value / delta - Math.round(value / delta)) > 1e-7;
   };
   if (fadedLineRatio > 1) {
-    for (const y of steppedValues(yMin, yMax, yStep / fadedLineRatio)) {
+    for (const y of numberPlaneLineValues(yMin, yMax, yStep, fadedLineRatio)) {
       if (!shouldFade(y, yStep)) continue;
       const line = createBaseNode(`${id}:fh:${formatAxisValueId(y)}`, "line");
       line.geometry.x1 = xMin * xUnit;
@@ -858,7 +858,7 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
       line.transform.opacity = fadedOpacity;
       children.push(line);
     }
-    for (const x of steppedValues(xMin, xMax, xStep / fadedLineRatio)) {
+    for (const x of numberPlaneLineValues(xMin, xMax, xStep, fadedLineRatio)) {
       if (!shouldFade(x, xStep)) continue;
       const line = createBaseNode(`${id}:fv:${formatAxisValueId(x)}`, "line");
       line.geometry.x1 = x * xUnit;
@@ -2256,12 +2256,17 @@ function uniqueAxisValues(values: number[]): number[] {
   return [...byId.values()];
 }
 
-function steppedValues(min: number, max: number, step: number): number[] {
-  const delta = Math.abs(step) > 1e-9 ? Math.abs(step) : 1;
+function numberPlaneLineValues(min: number, max: number, step: number, fadedLineRatio = 1): number[] {
+  const ratio = Math.max(1, Math.round(fadedLineRatio));
+  const delta = (Math.abs(step) > 1e-9 ? Math.abs(step) : 1) / ratio;
+  // Manim's NumberPlane starts at the origin and steps outward, excluding range boundaries.
+  const positiveStop = Math.min(max - min, max);
+  const negativeStop = Math.max(min - max, min);
   const values: number[] = [];
-  const start = Math.ceil(min / delta) * delta;
-  for (let value = start; value <= max + 1e-9; value += delta) values.push(Number(value.toFixed(8)));
-  return values;
+  if (min <= 1e-9 && max >= -1e-9) values.push(0);
+  for (let value = delta; value < positiveStop - 1e-9; value += delta) values.push(Number(value.toFixed(8)));
+  for (let value = -delta; value > negativeStop + 1e-9; value -= delta) values.push(Number(value.toFixed(8)));
+  return uniqueAxisValues(values);
 }
 
 function requireAxesNode(
