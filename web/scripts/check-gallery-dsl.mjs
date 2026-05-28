@@ -36,6 +36,36 @@ const requiredFrontmatterFields = [
   'gap_id',
 ];
 
+const officialManimExampleAnchors = new Set([
+  'argminexample',
+  'booleanoperations',
+  'braceannotation',
+  'fixedinframemobjecttest',
+  'followinggraphcamera',
+  'gradientimagefromarray',
+  'graphareaplot',
+  'heatdiagramplot',
+  'manimcelogo',
+  'movingangle',
+  'movingaround',
+  'movingdots',
+  'movingframebox',
+  'movinggrouptodestination',
+  'movingzoomedscenearound',
+  'openingmanim',
+  'pointmovingonshapes',
+  'pointwithtrace',
+  'polygononaxes',
+  'rotationupdater',
+  'sinandcosfunctionplot',
+  'sinecurveunitcircle',
+  'threedcameraillusionrotation',
+  'threedcamerarotation',
+  'threedlightsourceposition',
+  'threedsurfaceplot',
+  'vectorarrow',
+]);
+
 const allowedStatuses = new Set(['ported', 'partial', 'blocker']);
 const allowedFidelities = new Set(['faithful', 'visual_approximation']);
 const faithfulLabelFreeExamples = new Set([
@@ -114,6 +144,10 @@ function readMarkdown(path) {
 function getFrontmatterValue(frontmatter, field) {
   const match = new RegExp(`^${field}:\\s*(.+)$`, 'm').exec(frontmatter);
   return match?.[1]?.trim();
+}
+
+function manimAnchorFromUrl(url) {
+  return /#([a-z0-9-]+)$/u.exec(String(url ?? ''))?.[1];
 }
 
 function checkMarkdownFrontmatter(label, frontmatter) {
@@ -1892,6 +1926,17 @@ function checkGallerySourceCoverage(pageSources) {
       throw new Error(`${source}: source_example_path is referenced by multiple gallery pages: ${labels.join(', ')}.`);
     }
   }
+
+  const coveredOfficialAnchors = new Set(
+    pageSources
+      .map(({ sourceManimUrl }) => manimAnchorFromUrl(sourceManimUrl))
+      .filter((anchor) => officialManimExampleAnchors.has(anchor)),
+  );
+  for (const anchor of officialManimExampleAnchors) {
+    if (!coveredOfficialAnchors.has(anchor)) {
+      throw new Error(`official Manim example #${anchor} is not covered by any site gallery page.`);
+    }
+  }
 }
 
 function compileSingleNode(source) {
@@ -2113,12 +2158,16 @@ for (const file of markdownFiles) {
   const { body, frontmatter } = readMarkdown(resolve(siteGalleryDir, file));
   checkMarkdownFrontmatter(label, frontmatter);
   checkGalleryExampleSync(label, frontmatter, body);
-  pageSources.push({ label, sourceExamplePath: getFrontmatterValue(frontmatter, 'source_example_path') });
+  pageSources.push({
+    label,
+    sourceExamplePath: getFrontmatterValue(frontmatter, 'source_example_path'),
+    sourceManimUrl: getFrontmatterValue(frontmatter, 'source_manim_url'),
+  });
   compileExample(label, body);
 }
 checkGallerySourceCoverage(pageSources);
 checkPythonHelperParity();
 
 console.log(
-  `Compiled ${files.length} example gallery DSL files, checked ${markdownFiles.length} site gallery pages, and verified Python helper parity successfully.`,
+  `Compiled ${files.length} example gallery DSL files, checked ${markdownFiles.length} site gallery pages, covered ${officialManimExampleAnchors.size} official Manim examples, and verified Python helper parity successfully.`,
 );
