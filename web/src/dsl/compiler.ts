@@ -1973,7 +1973,7 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
       z: { x: zBasisX, y: zBasisY, tick: { x: 1, y: 0 } },
     };
 
-    addProjectedAxis(children, id, "x", xMin, xMax, xStep, basis.x, {
+    addProjectedAxis(children, id, "x", xMin, xMax, xStep, xLength, basis.x, {
       stroke,
       strokeWidth,
       tickSize,
@@ -1983,7 +1983,7 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
       tipLength,
       tipWidth,
     });
-    addProjectedAxis(children, id, "y", yMin, yMax, yStep, basis.y, {
+    addProjectedAxis(children, id, "y", yMin, yMax, yStep, yLength, basis.y, {
       stroke,
       strokeWidth,
       tickSize,
@@ -1993,7 +1993,7 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
       tipLength,
       tipWidth,
     });
-    addProjectedAxis(children, id, "z", zMin, zMax, zStep, basis.z, {
+    addProjectedAxis(children, id, "z", zMin, zMax, zStep, zLength, basis.z, {
       stroke,
       strokeWidth,
       tickSize,
@@ -2533,6 +2533,7 @@ function addProjectedAxis(
   min: number,
   max: number,
   step: number,
+  axisLength: number,
   basis: { x: number; y: number; tick: { x: number; y: number } },
   style: {
     stroke: string;
@@ -2545,11 +2546,14 @@ function addProjectedAxis(
     tipWidth: number;
   },
 ): void {
+  const axisCoordinate = (value: number): number => ((value - min) / (max - min) - 0.5) * axisLength;
   const line = createBaseNode(`${groupId}:${axis}:axis`, "line");
-  line.geometry.x1 = min * basis.x;
-  line.geometry.y1 = min * basis.y;
-  line.geometry.x2 = max * basis.x;
-  line.geometry.y2 = max * basis.y;
+  const start = axisCoordinate(min);
+  const end = axisCoordinate(max);
+  line.geometry.x1 = start * basis.x;
+  line.geometry.y1 = start * basis.y;
+  line.geometry.x2 = end * basis.x;
+  line.geometry.y2 = end * basis.y;
   line.style.stroke = style.stroke;
   line.style.strokeWidth = style.strokeWidth;
   children.push(line);
@@ -2559,8 +2563,9 @@ function addProjectedAxis(
     for (const value of rangeTickValues(min, max, step)) {
       if (Math.abs(value) < 1e-9) continue;
       const tick = createBaseNode(`${groupId}:${axis}:tick:${formatAxisValueId(value)}`, "line");
-      const x = value * basis.x;
-      const y = value * basis.y;
+      const coordinate = axisCoordinate(value);
+      const x = coordinate * basis.x;
+      const y = coordinate * basis.y;
       tick.geometry.x1 = x - tickNormal.x * style.tickSize;
       tick.geometry.y1 = y - tickNormal.y * style.tickSize;
       tick.geometry.x2 = x + tickNormal.x * style.tickSize;
@@ -2574,7 +2579,7 @@ function addProjectedAxis(
   if (style.includeTips) {
     const direction = normalize2d({ x: basis.x, y: basis.y });
     const tip = createBaseNode(`${groupId}:${axis}:tip`, "path");
-    const tipPoint = { x: max * basis.x, y: max * basis.y };
+    const tipPoint = { x: end * basis.x, y: end * basis.y };
     const base = {
       x: tipPoint.x - direction.x * style.tipLength,
       y: tipPoint.y - direction.y * style.tipLength,

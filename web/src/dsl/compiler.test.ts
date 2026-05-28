@@ -814,7 +814,13 @@ test("compiles threeDAxes into projected axes with ticks and tips", () => {
   assert.equal(axes?.geometry.zLength, 6.5);
   assert.equal(axes?.children.filter((child) => child.type === "line").length, 33);
   assert.equal(axes?.children.filter((child) => child.type === "path").length, 3);
-  assert.equal(axes?.children.find((child) => child.id === "axes:x:axis")?.style.strokeWidth, 2);
+  const xAxis = axes?.children.find((child) => child.id === "axes:x:axis");
+  assert.equal(xAxis?.style.strokeWidth, 2);
+  assert.equal(Number(xAxis?.geometry.x1).toFixed(6), "-227.499998");
+  assert.equal(Number(xAxis?.geometry.x2).toFixed(6), "227.499998");
+  const zAxis = axes?.children.find((child) => child.id === "axes:z:axis");
+  assert.equal(Number(zAxis?.geometry.y1).toFixed(6), "195.000000");
+  assert.equal(Number(zAxis?.geometry.y2).toFixed(6), "-195.000000");
   assert.equal(axes?.children.some((child) => child.id === "axes:x:tip"), true);
 });
 

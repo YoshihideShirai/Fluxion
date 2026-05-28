@@ -315,6 +315,7 @@ class ThreeDAxes(Mobject):
                     id,
                     "x",
                     x_range,
+                    x_length,
                     x_basis,
                     (-x_basis[1], x_basis[0]),
                     stroke,
@@ -332,6 +333,7 @@ class ThreeDAxes(Mobject):
                     id,
                     "y",
                     y_range,
+                    y_length,
                     y_basis,
                     (-y_basis[1], y_basis[0]),
                     stroke,
@@ -349,6 +351,7 @@ class ThreeDAxes(Mobject):
                     id,
                     "z",
                     z_range,
+                    z_length,
                     z_basis,
                     (1, 0),
                     stroke,
@@ -379,6 +382,7 @@ def _projected_axis_children(
     group_id: str,
     axis: str,
     axis_range: tuple[float, float, float],
+    axis_length: float,
     basis: Point2,
     tick_basis: Point2,
     stroke: str,
@@ -391,13 +395,18 @@ def _projected_axis_children(
     tip_width: float,
 ) -> list[Mobject]:
     min_value, max_value, step = axis_range
+    def axis_coordinate(value: float) -> float:
+        return ((value - min_value) / (max_value - min_value) - 0.5) * axis_length
+
+    start = axis_coordinate(min_value)
+    end = axis_coordinate(max_value)
     children: list[Mobject] = [
         Line(
             id=f"{group_id}:{axis}:axis",
-            x1=min_value * basis[0],
-            y1=min_value * basis[1],
-            x2=max_value * basis[0],
-            y2=max_value * basis[1],
+            x1=start * basis[0],
+            y1=start * basis[1],
+            x2=end * basis[0],
+            y2=end * basis[1],
             style={"fill": "#ffffff", "stroke": stroke, "strokeWidth": stroke_width},
         )
     ]
@@ -406,8 +415,9 @@ def _projected_axis_children(
         for value in _axis_tick_values(min_value, max_value, step):
             if abs(value) < 1e-9:
                 continue
-            x = value * basis[0]
-            y = value * basis[1]
+            coordinate = axis_coordinate(value)
+            x = coordinate * basis[0]
+            y = coordinate * basis[1]
             children.append(
                 Line(
                     id=f"{group_id}:{axis}:tick:{_axis_value_id(value)}",
@@ -420,7 +430,7 @@ def _projected_axis_children(
             )
     if include_tips:
         direction = _normalize2d(basis)
-        tip_point = (max_value * basis[0], max_value * basis[1])
+        tip_point = (end * basis[0], end * basis[1])
         base = (tip_point[0] - direction[0] * tip_length, tip_point[1] - direction[1] * tip_length)
         normal = (-direction[1], direction[0])
         path = " ".join(
