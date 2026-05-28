@@ -9,7 +9,7 @@ known_gaps:
   - symptom: "Text kerning and the in-flight nonlinear grid morph still depend on browser renderer/path approximation and may differ slightly from Manim raster output, but the final warped grid now preserves sampled sine target paths."
     layer: renderer
     impact: low
-    workaround: "`NumberPlane()` を Manim frame scale の full-frame grid に展開し、`p + [sin(p[1]), sin(p[0]), 0]` を各 grid line 上でサンプリングした polyline target で非線形変形を近似する。"
+    workaround: "`NumberPlane()` を Manim frame scale の full-frame grid に展開し、`p + [sin(p[1]), sin(p[0]), 0]` を各 grid line 上でサンプリングした polyline target で非線形変形を近似する。公式ソースにない説明用オーバーレイや数式コールアウトは置かない。"
     closure_condition: "該当レンダリング差分が解消され、Manim 出力との視覚差が許容範囲に収まる。"
     fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Advanced Projects
@@ -22,18 +22,6 @@ rect bg w=960 h=540 at 0,0 fill="#000000"
 math title "\\text{This is some }\\LaTeX" at 0,58 size=54 fill="#ffffff" renderer=katex opacity=0
 math basel "\\sum_{n=1}^{\\infty}\\frac{1}{n^2}=\\frac{\\pi^2}{6}" at 0,-102 size=48 fill="#ffffff" renderer=katex opacity=0
 math transformTitle "\\text{That was a transform}" at -270,206 size=42 fill="#ffffff" renderer=katex opacity=0
-math gridTitle "\\text{This is a grid}" at -270,206 size=62 fill="#ffffff" renderer=katex opacity=0
-math warpedTitle "\\begin{gathered}\\text{That was a non-linear function}\\\\\\text{applied to the grid}\\end{gathered}" at -184,184 size=38 fill="#ffffff" renderer=katex opacity=0
-rect codeCard w=362 h=86 at 250,196 fill="#0b1220" stroke="#334155" strokeWidth=1.5 opacity=0
-text codeLine1 "VGroup(title, basel).arrange(DOWN)" at 250,216 size=16 fill="#c4b5fd" opacity=0
-text codeLine2 "Transform(title, transform_title)" at 250,194 size=16 fill="#bae6fd" opacity=0
-text codeLine3 "grid.animate.apply_function(...)" at 250,172 size=16 fill="#fde68a" opacity=0
-rect phaseTex w=112 h=26 at -368,-218 fill="#312e81" stroke="#818cf8" strokeWidth=1.2 opacity=0
-text phaseTexLabel "Tex + MathTex" at -368,-218 size=15 fill="#ddd6fe" opacity=0
-rect phaseGrid w=112 h=26 at -234,-218 fill="#164e63" stroke="#22d3ee" strokeWidth=1.2 opacity=0
-text phaseGridLabel "NumberPlane" at -234,-218 size=15 fill="#cffafe" opacity=0
-rect phaseWarp w=142 h=26 at -86,-218 fill="#78350f" stroke="#f59e0b" strokeWidth=1.2 opacity=0
-text phaseWarpLabel "non-linear transform" at -86,-218 size=15 fill="#fed7aa" opacity=0
 
 path grid_h0 d="M -480 -270 L 480 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
 path grid_h1 d="M -480 -202.5 L 480 -202.5" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
@@ -61,18 +49,8 @@ path grid_v12 d="M 337.5 270 L 337.5 -270" at 0,0 fill="none" stroke="#29ABCA" s
 path grid_v13 d="M 405 270 L 405 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
 path grid_v14 d="M 472.5 270 L 472.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
 group grid grid_h0 grid_h1 grid_h2 grid_h3 grid_h4 grid_h5 grid_h6 grid_h7 grid_h8 grid_v0 grid_v1 grid_v2 grid_v3 grid_v4 grid_v5 grid_v6 grid_v7 grid_v8 grid_v9 grid_v10 grid_v11 grid_v12 grid_v13 grid_v14
-line xAxis x1=-430 y1=-38 x2=430 y2=-38 at 0,0 stroke="#f8fafc" strokeWidth=2.4 opacity=0
-line yAxis x1=0 y1=-214 x2=0 y2=136 at 0,0 stroke="#f8fafc" strokeWidth=2.4 opacity=0
-circle origin r=5 at 0,-38 fill="#f8fafc" stroke="none" opacity=0
-text xMinus "-4" at -312,-58 size=16 fill="#94a3b8" opacity=0
-text xPlus "4" at 312,-58 size=16 fill="#94a3b8" opacity=0
-text yPlus "2" at 18,66 size=16 fill="#94a3b8" opacity=0
-text yMinus "-2" at 22,-162 size=16 fill="#94a3b8" opacity=0
-path warpCue1 d="M -260 58 C -214 108 -146 102 -92 68" at 0,0 fill="none" stroke="#fbbf24" strokeWidth=3 opacity=0
-path warpCue2 d="M 64 -124 C 118 -80 180 -84 242 -130" at 0,0 fill="none" stroke="#fb7185" strokeWidth=3 opacity=0
-path warpCue3 d="M -18 86 C 28 126 94 126 144 88" at 0,0 fill="none" stroke="#34d399" strokeWidth=3 opacity=0
-text warpEq "p -> p + [sin(y), sin(x), 0]" at 226,-198 size=18 fill="#fde68a" opacity=0
-text createLag "Create(grid, run_time=3, lag_ratio=0.1)" at 214,-224 size=15 fill="#93c5fd" opacity=0
+math gridTitle "\\text{This is a grid}" at -270,206 size=62 fill="#ffffff" renderer=katex opacity=0
+math warpedTitle "\\begin{gathered}\\text{That was a non-linear function}\\\\\\text{applied to the grid}\\end{gathered}" at -184,184 size=38 fill="#ffffff" renderer=katex opacity=0
 at 0s:
   play AnimationGroup(Write(title), FadeIn(basel), lagRatio=0.12) duration=1.45s easing=smooth
   animate basel.y from -102 to -62 start=0s duration=1.45s easing=smooth

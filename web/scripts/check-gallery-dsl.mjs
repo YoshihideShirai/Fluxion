@@ -1139,8 +1139,30 @@ function checkGallerySpecificStructure(label, documentData) {
     const grid = findNode(documentData, 'grid');
     const horizontalGrid = Array.from({ length: 9 }, (_, index) => findNode(documentData, `grid_h${index}`));
     const verticalGrid = Array.from({ length: 15 }, (_, index) => findNode(documentData, `grid_v${index}`));
-    const codeCard = findNode(documentData, 'codeCard');
-    const warpEq = findNode(documentData, 'warpEq');
+    const nonOfficialOverlayIds = [
+      'codeCard',
+      'codeLine1',
+      'codeLine2',
+      'codeLine3',
+      'phaseTex',
+      'phaseTexLabel',
+      'phaseGrid',
+      'phaseGridLabel',
+      'phaseWarp',
+      'phaseWarpLabel',
+      'xAxis',
+      'yAxis',
+      'origin',
+      'xMinus',
+      'xPlus',
+      'yPlus',
+      'yMinus',
+      'warpCue1',
+      'warpCue2',
+      'warpCue3',
+      'warpEq',
+      'createLag',
+    ];
     assertGalleryCondition(label, title?.type === 'math' && title.latex === '\\\\text{This is some }\\\\LaTeX' && title.geometry?.fontSize === 54, 'expected opening Tex title.');
     assertGalleryCondition(label, basel?.type === 'math' && String(basel.latex).includes('\\\\frac{\\\\pi^2}{6}') && basel.geometry?.fontSize === 48, 'expected Basel MathTex equation.');
     assertGalleryCondition(label, transformTitle?.latex === '\\\\text{That was a transform}', 'expected transform target title.');
@@ -1150,8 +1172,8 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, horizontalGrid.every((node) => node?.type === 'path') && verticalGrid.every((node) => node?.type === 'path'), 'expected 9 horizontal and 15 vertical grid paths.');
     assertGalleryCondition(label, horizontalGrid[4]?.style?.stroke === '#FFFFFF' && approximatelyEqual(horizontalGrid[4]?.style?.strokeWidth ?? 0, 2), 'expected white NumberPlane x-axis grid line.');
     assertGalleryCondition(label, verticalGrid[7]?.style?.stroke === '#FFFFFF' && approximatelyEqual(verticalGrid[7]?.style?.strokeWidth ?? 0, 2), 'expected white NumberPlane y-axis grid line.');
-    assertGalleryCondition(label, codeCard?.type === 'rect' && codeCard.transform?.opacity === 0 && codeCard.style?.fill === '#0b1220', 'expected hidden source-code callout card.');
-    assertGalleryCondition(label, warpEq?.text === 'p -> p + [sin(y), sin(x), 0]' && warpEq.transform?.opacity === 0, 'expected nonlinear transform formula callout.');
+    assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'grid') < documentData.nodes.findIndex((node) => node.id === 'gridTitle'), 'expected grid title to render above the grid like self.add(grid, grid_title).');
+    assertGalleryCondition(label, nonOfficialOverlayIds.every((id) => !findNode(documentData, id)), 'expected OpeningManim to omit non-official explanatory overlays.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'effect' && op.id === 'title' && op.effect === 'write' && approximatelyEqual(op.duration, 1.294642857142857)), 'expected opening Write(title) segment from AnimationGroup timing.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'basel', path: 'transform.y', from: -102, to: -62, t: 0, duration: 1.45, easing: 'smooth' }), 'expected Basel equation arrange upward motion.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'effect' && op.id === 'title' && op.effect === 'transform' && approximatelyEqual(op.t, 2.25) && approximatelyEqual(op.duration, 0.8928571428571428)), 'expected Transform(title, transformTitle) timing.');
