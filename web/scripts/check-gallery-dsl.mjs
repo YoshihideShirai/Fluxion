@@ -1059,7 +1059,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const exclusion = findNode(documentData, 'exclusion');
     const difference = findNode(documentData, 'difference');
     const labels = ['intersection_label', 'union_label', 'exclusion_label', 'difference_label'].map((id) => findNode(documentData, id));
-    assertGalleryCondition(label, title?.text === 'Boolean Operation' && title.style?.fill === '#ffffff', 'expected title text.');
+    assertGalleryCondition(label, title?.text === 'Boolean Operation' && title.style?.fill === '#ffffff' && title.geometry?.fontSize === 48, 'expected title text with Manim MarkupText default font size.');
     assertGalleryCondition(label, ellipseA?.children?.length === 2 && ellipseB?.children?.length === 2, 'expected two colored source ellipses with fill and stroke paths.');
     assertGalleryCondition(label, findNode(documentData, 'ellipse_a_fill')?.style?.fill === '#58C4DD' && findNode(documentData, 'ellipse_b_fill')?.style?.fill === '#FC6255', 'expected BLUE/RED source ellipses.');
     assertGalleryCondition(label, intersection?.children?.length === 2 && union?.children?.length === 2 && exclusion?.children?.length === 2 && difference?.children?.length === 2, 'expected four boolean result groups with fill and stroke.');

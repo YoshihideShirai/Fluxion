@@ -20,7 +20,7 @@ gap_id: GAP-014
 scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
-text title "Boolean Operation" at -248,-174 size=32 fill="#ffffff"
+text title "Boolean Operation" at -248,-174 size=48 fill="#ffffff"
 line title_underline x1=-128 y1=0 x2=128 y2=0 at -248,-151 stroke="#ffffff" strokeWidth=2
 path ellipse_a_fill d="M 0 -168.75 C 74.558 -168.75 135 -93.198 135 0 C 135 93.198 74.558 168.75 0 168.75 C -74.558 168.75 -135 93.198 -135 0 C -135 -93.198 -74.558 -168.75 0 -168.75 Z" fill="#58C4DD" stroke="none" opacity=0.5
 path ellipse_a_stroke d="M 0 -168.75 C 74.558 -168.75 135 -93.198 135 0 C 135 93.198 74.558 168.75 0 168.75 C -74.558 168.75 -135 93.198 -135 0 C -135 -93.198 -74.558 -168.75 0 -168.75 Z" fill="none" stroke="#58C4DD" strokeWidth=10
