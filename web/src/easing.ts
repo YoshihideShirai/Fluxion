@@ -37,6 +37,8 @@ function smooth(t: number, inflection = 10): number {
 
 export function interpolate(from: unknown, to: unknown, t: number): unknown {
   const x = clamp01(t);
+  if (x <= 0) return from;
+  if (x >= 1) return to;
 
   if (typeof from === "number" && typeof to === "number") {
     return interpolateNumber(from, to, x);

@@ -6,10 +6,10 @@ source_example_path: examples/gallery/gradient-image-from-array.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "Manim の 256x256 `np.uint8` 配列は、Fluxion の `image data=...` へ 64x64 の等間隔サンプルとして展開している。"
+  - symptom: "Manim の 256x256 `np.uint8` 配列は、Fluxion の `image data=...` へ 64x64 の等間隔サンプルとして展開しているが、同一行の水平 gradient は SVG linearGradient に畳んで滑らかに描画する。"
     layer: compiler
     impact: low
-    workaround: "画像寸法は Manim の `ImageMobject(...).scale(2)` 相当の 256px 四方に合わせ、`SurroundingRectangle(image, color=GREEN)` は `SMALL_BUFF` を加えた外枠として近似する。"
+    workaround: "画像寸法は Manim の `ImageMobject(...).scale(2)` 相当の 256px 四方に合わせ、繰り返し行の grayscale 配列は単一の水平 gradient として描画する。`SurroundingRectangle(image, color=GREEN)` は `SMALL_BUFF` を加えた外枠として近似する。"
     closure_condition: "ギャラリーで 256x256 配列を直接使っても JSON サイズと描画性能が許容範囲に収まる。"
     fidelity_upgrade_condition: "追加対応不要。"
 category: Manim Stable Examples

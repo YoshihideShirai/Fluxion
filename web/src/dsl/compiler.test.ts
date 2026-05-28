@@ -253,7 +253,7 @@ test("compiles scene, nodes, styles, animation, and at blocks", () => {
 
 circle c1 r=24 at 100,200 fill="#38bdf8" fillOpacity=0.75 stroke="#0f172a" strokeOpacity=0.6 strokeWidth=3
 rect box w=80 h=40 at 300,200 fill="#f97316" opacity=0.8
-line axis x1=-50 y1=0 x2=50 y2=0 at 400,350 stroke="#e2e8f0" strokeWidth=2
+line axis x1=-50 y1=0 x2=50 y2=0 at 400,350 stroke="#e2e8f0" strokeWidth=2 strokeLinecap=round strokeLinejoin=bevel
 text title "Fluxion Text DSL" at 400,80 size=28 fill="#e2e8f0"
 
 at 0s:
@@ -287,6 +287,8 @@ at 1s:
   const line = documentData.nodes.find((node) => node.id === "axis");
   assert.equal(line?.geometry.x1, -50);
   assert.equal(line?.geometry.x2, 50);
+  assert.equal(line?.style.strokeLinecap, "round");
+  assert.equal(line?.style.strokeLinejoin, "bevel");
 
   const title = documentData.nodes.find((node) => node.id === "title");
   assert.equal(title?.text, "Fluxion Text DSL");
@@ -502,6 +504,8 @@ dataLineGraph graph axes=ax points=0,20;8,0;38,0;39,-5 lineColor="#FFFF00" strok
   assert.equal(graph?.transform.x, 0);
   assert.equal(graph?.transform.y, -20);
   assert.equal(graph?.children[0]?.geometry.d, "M -270 -72 L -162 108 L 243 108 L 256.5 153");
+  assert.equal(graph?.children[0]?.style.strokeLinecap, "round");
+  assert.equal(graph?.children[0]?.style.strokeLinejoin, "round");
   assert.equal(graph?.children[1]?.transform.x, -270);
   assert.equal(Math.round(Number(graph?.children[1]?.transform.y)), -72);
   assert.equal(graph?.children[1]?.geometry.r, 5.4);
@@ -536,6 +540,62 @@ test("compiles numberPlane helper with Manim default styling", () => {
   assert.equal(xAxis?.style.stroke, "#FFFFFF");
   assert.equal(yAxis?.style.stroke, "#FFFFFF");
   assert.equal(xAxis?.style.strokeWidth, 2);
+});
+
+test("compiles numberPlane helper with per-axis and background style aliases", () => {
+  const documentData = compileTextDsl(
+    `numberPlane plane xRange=-1,1 yRange=-1,1 unit=60 backgroundLineColor="#123456" backgroundLineStrokeWidth=3 backgroundLineOpacity=0.4 xAxisStroke="#ff0000" yAxisStroke="#00ff00" xAxisStrokeWidth=5 yAxisStrokeWidth=6 xAxisOpacity=0.8 yAxisOpacity=0.9`,
+  );
+
+  const plane = documentData.nodes[0];
+  const nonAxisLine = plane?.children.find((child) => child.id === "plane:h:1");
+  const xAxis = plane?.children.find((child) => child.id === "plane:h:0");
+  const yAxis = plane?.children.find((child) => child.id === "plane:v:0");
+  assert.equal(nonAxisLine?.style.stroke, "#123456");
+  assert.equal(nonAxisLine?.style.strokeWidth, 3);
+  assert.equal(nonAxisLine?.transform.opacity, 0.4);
+  assert.equal(xAxis?.style.stroke, "#ff0000");
+  assert.equal(xAxis?.style.strokeWidth, 5);
+  assert.equal(xAxis?.transform.opacity, 0.8);
+  assert.equal(yAxis?.style.stroke, "#00ff00");
+  assert.equal(yAxis?.style.strokeWidth, 6);
+  assert.equal(yAxis?.transform.opacity, 0.9);
+});
+
+test("compiles numberPlane helper with Manim-style ticks and coordinate labels", () => {
+  const documentData = compileTextDsl(
+    `numberPlane plane xRange=-2,2 yRange=-1,1 unit=60 includeTicks=true addCoordinates=true numberSize=20 numberColor="#ffeeaa" tickLength=10 tickStrokeWidth=3`,
+  );
+
+  const plane = documentData.nodes[0];
+  assert.equal(plane?.geometry.includeTicks, true);
+  assert.equal(plane?.geometry.addCoordinates, true);
+  assert.equal(plane?.children.length, 20);
+
+  const xTick = plane?.children.find((child) => child.id === "plane:x_tick:m2");
+  assert.equal(xTick?.type, "line");
+  assert.equal(xTick?.transform.x, -120);
+  assert.equal(xTick?.geometry.y1, -5);
+  assert.equal(xTick?.geometry.y2, 5);
+  assert.equal(xTick?.style.strokeWidth, 3);
+
+  const yTick = plane?.children.find((child) => child.id === "plane:y_tick:1");
+  assert.equal(yTick?.transform.y, -60);
+  assert.equal(yTick?.geometry.x1, -5);
+  assert.equal(yTick?.geometry.x2, 5);
+
+  const xLabel = plane?.children.find((child) => child.id === "plane:x_number:2");
+  assert.equal(xLabel?.type, "text");
+  assert.equal(xLabel?.text, "2");
+  assert.equal(xLabel?.transform.x, 128);
+  assert.equal(xLabel?.transform.y, 24);
+  assert.equal(xLabel?.geometry.fontSize, 20);
+  assert.equal(xLabel?.style.fill, "#ffeeaa");
+
+  const yLabel = plane?.children.find((child) => child.id === "plane:y_number:m1");
+  assert.equal(yLabel?.text, "-1");
+  assert.equal(yLabel?.transform.x, 24);
+  assert.equal(yLabel?.transform.y, 70);
 });
 
 test("compiles numberPlane helper with Manim frame-scale defaults", () => {
@@ -628,7 +688,8 @@ dataRiemannRects riemann axes=ax fn=4*t-t*t range=0.3,0.6 dx=0.03 fill="#0000FF"
   const area = documentData.nodes.find((node) => node.id === "area");
   assert.equal(area?.type, "path");
   assert.equal(area?.geometry.dataArea, true);
-  assert.equal(String(area?.geometry.d).startsWith("M -50 -40 L "), true);
+  assert.equal(/^M -49\.999999999999986 -39\.999999999999986 C /.test(String(area?.geometry.d)), true);
+  assert.equal(String(area?.geometry.d).includes(" L 49.999999999999986 "), true);
   assert.equal(String(area?.geometry.d).endsWith(" Z"), true);
 
   const riemann = documentData.nodes.find((node) => node.id === "riemann");
@@ -662,13 +723,15 @@ test("compiles gaussianSurface into checkerboard surface faces", () => {
   assert.equal(String(surface?.children[0]?.geometry.d).endsWith(" Z"), true);
 });
 
-test("compiles gaussianSurface with optional height shading", () => {
+test("compiles gaussianSurface with optional Manim-style light shading", () => {
   const documentData = compileTextDsl(
     `gaussianSurface surface range=-2,2 resolution=4 scale=2 sigma=0.4 fillA="#FF862F" fillB="#58C4DD" shade=true shadeStrength=0.18`,
   );
 
   const surface = documentData.nodes[0];
   assert.equal(surface?.geometry.shade, true);
+  equalJson(surface?.geometry.light, [-7, -9, 10]);
+  assert.equal(surface?.children.some((child) => Number(child.metadata?.surfaceFace?.shade ?? 0) !== 0), true);
   assert.equal(surface?.children.some((child) => child.style.fill !== "#FF862F" && child.style.fill !== "#58C4DD"), true);
 });
 
@@ -809,8 +872,9 @@ test("compiles projectedCircle through Manim ThreeDCamera projection", () => {
   assert.equal(circle?.geometry.cameraProjection, "manim");
   assert.equal(circle?.geometry.phi, 75);
   assert.equal(circle?.geometry.theta, 30);
-  assert.equal(/^M -56\.748555 25\.439681 L /u.test(String(circle?.geometry.d)), true);
-  assert.equal((String(circle?.geometry.d).match(/\bL\b/gu) ?? []).length, 15);
+  assert.equal(/^M -56\.748555 25\.439681 C /u.test(String(circle?.geometry.d)), true);
+  assert.equal((String(circle?.geometry.d).match(/\bC\b/gu) ?? []).length, 16);
+  assert.equal(String(circle?.geometry.d).endsWith(" Z"), true);
 });
 
 test("compiles arrow helper as grouped shaft and tip paths", () => {
@@ -840,10 +904,30 @@ test("compiles arrow helper with Manim default stroke and tip size", () => {
   const arrow = documentData.nodes[0];
   assert.equal(arrow?.geometry.tipLength, 23.625);
   assert.equal(arrow?.geometry.tipWidth, 23.625);
+  assert.equal(arrow?.geometry.tipShape, "triangleFilled");
   assert.equal(arrow?.children[0]?.style.stroke, "#FFFFFF");
   assert.equal(arrow?.children[0]?.style.strokeWidth, 6);
   assert.equal(Number(arrow?.children[0]?.geometry.x2).toFixed(6), "118.294602");
   assert.equal(arrow?.children[1]?.geometry.d, "M 135 -135 L 126.647301 -109.941903 L 109.941903 -126.647301 Z");
+});
+
+test("compiles Manim arrow tip shape aliases", () => {
+  const documentData = compileTextDsl(
+    `arrow square x1=0 y1=0 x2=100 y2=0 tipShape=ArrowSquareTip tipLength=20 tipWidth=20
+arrow circle x1=0 y1=40 x2=100 y2=40 tip_shape=ArrowCircleFilledTip tipLength=20 tipWidth=20`,
+  );
+
+  const square = documentData.nodes[0];
+  assert.equal(square?.geometry.tipShape, "square");
+  assert.equal(square?.children[1]?.style.fill, "none");
+  assert.equal(square?.children[1]?.style.strokeWidth, 3);
+  assert.equal(square?.children[1]?.geometry.d, "M 100 10 L 80 10 L 80 -10 L 100 -10 Z");
+
+  const circle = documentData.nodes[1];
+  assert.equal(circle?.geometry.tipShape, "circleFilled");
+  assert.equal(circle?.children[1]?.style.fill, "#FFFFFF");
+  assert.equal(circle?.children[1]?.style.strokeWidth, 0);
+  assert.equal(String(circle?.children[1]?.geometry.d).startsWith("M 100 40 C "), true);
 });
 
 test("compiles arrow helper with Manim-like buff and length-ratio clamps", () => {
@@ -883,6 +967,8 @@ test("compiles plot with close and style overrides", () => {
   assert.equal(area?.transform.opacity, 0.3);
   assert.equal(area?.style.stroke, "#0ea5e9");
   assert.equal(area?.style.strokeWidth, 2);
+  assert.equal(area?.style.strokeLinecap, "round");
+  assert.equal(area?.style.strokeLinejoin, "round");
   assert.equal(String(area?.geometry.d).endsWith(" Z"), true);
 });
 
@@ -931,12 +1017,16 @@ angle arc at 0,-20 radius=60 from=0 to=theta samples=72 stroke="#f59e0b" strokeW
   assert.equal(arc?.geometry.radius, 60);
   assert.equal(arc?.transform.y, -20);
   assert.equal(arc?.style.stroke, "#f59e0b");
+  assert.equal(arc?.style.strokeLinecap, "round");
+  assert.equal(arc?.style.strokeLinejoin, "round");
 
   const bind = documentData.timeline.find((op) => op.op === "bindPath");
   assert.equal(bind?.op, "bindPath");
   if (bind?.op !== "bindPath") throw new Error("Expected angle bindPath operation.");
   assert.equal(bind.id, "arc");
   assert.equal(bind.path, "geometry.d");
+  assert.equal(bind.pathType, "arc");
+  assert.equal(bind.radius, 60);
   assert.equal(bind.tMaxExpr, "theta");
   equalJson(bind.deps, ["theta"]);
 });
@@ -982,6 +1072,8 @@ tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120 at 0,-20 
   assert.equal(trace?.type, "path");
   assert.equal(trace?.geometry.tracedPath, true);
   assert.equal(trace?.transform.y, -20);
+  assert.equal(trace?.style.strokeLinecap, "round");
+  assert.equal(trace?.style.strokeLinejoin, "round");
 
   const bind = documentData.timeline.find((op) => op.op === "bindPath");
   assert.equal(bind?.op, "bindPath");
@@ -1003,6 +1095,8 @@ tracedPath trace target=dot start=0s samples=24 stroke="#ffffff"`);
   assert.equal(trace?.geometry.traceStart, 0);
   assert.equal(trace?.geometry.traceSamples, 24);
   assert.equal(trace?.geometry.d, "M 12 -8");
+  assert.equal(trace?.style.strokeLinecap, "round");
+  assert.equal(trace?.style.strokeLinejoin, "round");
   assert.equal(
     documentData.timeline.some((op) => op.op === "bindPath" && op.id === "trace"),
     false,
@@ -2237,6 +2331,23 @@ play Create(diagram) duration=0.25s`);
       ["animate", "eq", "transform.opacity"],
     ],
   );
+});
+
+test("compiles group clipping options", () => {
+  const documentData = compileTextDsl(`rect viewport w=120 h=80
+rect pixel w=200 h=120
+rect masked w=200 h=120
+group clipped viewport pixel clipTarget=viewport
+group mask masked clip=rect clipW=50 clipH=40 clipX=10 clipY=-5`);
+
+  const clipped = documentData.nodes.find((node) => node.id === "clipped");
+  const mask = documentData.nodes.find((node) => node.id === "mask");
+  assert.equal(clipped?.geometry.clipTarget, "viewport");
+  assert.equal(mask?.geometry.clip, "rect");
+  assert.equal(mask?.geometry.clipW, 50);
+  assert.equal(mask?.geometry.clipH, 40);
+  assert.equal(mask?.geometry.clipX, 10);
+  assert.equal(mask?.geometry.clipY, -5);
 });
 
 test("compiles direct animations targeting group children", () => {

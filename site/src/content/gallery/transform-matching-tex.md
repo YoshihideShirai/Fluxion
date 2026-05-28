@@ -6,10 +6,10 @@ source_example_path: examples/gallery/transform_matching_tex.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "Token geometry interpolation follows the official matching choreography, with minor renderer drift because browser/KaTeX metrics differ from Manim's TeX rasterization."
+  - symptom: "Token geometry interpolation follows the official matching choreography. Renderer-side baseline measurement reduces vertical drift, but browser/KaTeX glyph metrics can still differ from Manim's TeX rasterization."
     layer: runtime
     impact: low
-    workaround: "target root を非表示のまま使わず、変形後の token を次の変形 source として materialize し、公式の `TransformMatchingTex(Group(eq1, variables), eq2)` と同じ source group から token を再帰的に対応付ける。"
+    workaround: "target root を非表示のまま使わず、変形後の token を次の変形 source として materialize し、公式の `TransformMatchingTex(Group(eq1, variables), eq2)` と同じ source group から token を再帰的に対応付ける。math renderer は KaTeX/MathJax fragment の baseline を実測して cached offset を適用する。"
     closure_condition: "TeX rasterization と token bounds が Manim 出力と同等になる。"
     fidelity_upgrade_condition: "追加対応不要。"
 category: Advanced Projects

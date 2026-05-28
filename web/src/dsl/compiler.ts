@@ -42,6 +42,7 @@ import {
   stripComment,
   tokenize,
 } from "./syntax.js";
+import { arcToSvgPath, curvesToClosedAreaPath, pointsToSvgPath, sampleSmoothPathPoints } from "../pathUtils.js";
 
 export { DslCompileError } from "./errors.js";
 
@@ -758,12 +759,30 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
   const yStep = parseNumber(options.get("yStep") ?? "1", lineNumber);
   const xUnit = parseNumber(options.get("xUnit") ?? options.get("unit") ?? "67.5", lineNumber);
   const yUnit = parseNumber(options.get("yUnit") ?? options.get("unit") ?? "67.5", lineNumber);
-  const color = options.get("stroke") ?? options.get("color") ?? "#29ABCA";
+  const color =
+    options.get("stroke") ??
+    options.get("color") ??
+    options.get("backgroundStroke") ??
+    options.get("backgroundLineStroke") ??
+    options.get("backgroundLineColor") ??
+    "#29ABCA";
   const axisColor = options.get("axisStroke") ?? options.get("axisColor") ?? "#FFFFFF";
-  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "2", lineNumber);
+  const xAxisColor = options.get("xAxisStroke") ?? options.get("xAxisColor") ?? axisColor;
+  const yAxisColor = options.get("yAxisStroke") ?? options.get("yAxisColor") ?? axisColor;
+  const strokeWidth = parseNumber(
+    options.get("strokeWidth") ?? options.get("backgroundStrokeWidth") ?? options.get("backgroundLineStrokeWidth") ?? "2",
+    lineNumber,
+  );
   const axisStrokeWidth = parseNumber(options.get("axisStrokeWidth") ?? "2", lineNumber);
-  const opacity = parseNumber(options.get("opacity") ?? "1", lineNumber);
+  const xAxisStrokeWidth = parseNumber(options.get("xAxisStrokeWidth") ?? String(axisStrokeWidth), lineNumber);
+  const yAxisStrokeWidth = parseNumber(options.get("yAxisStrokeWidth") ?? String(axisStrokeWidth), lineNumber);
+  const opacity = parseNumber(
+    options.get("opacity") ?? options.get("backgroundOpacity") ?? options.get("backgroundLineOpacity") ?? "1",
+    lineNumber,
+  );
   const axisOpacity = parseNumber(options.get("axisOpacity") ?? "1", lineNumber);
+  const xAxisOpacity = parseNumber(options.get("xAxisOpacity") ?? String(axisOpacity), lineNumber);
+  const yAxisOpacity = parseNumber(options.get("yAxisOpacity") ?? String(axisOpacity), lineNumber);
   const fadedLineRatio = Math.max(
     0,
     Math.round(parseNumber(options.get("fadedLineRatio") ?? "1", lineNumber)),
@@ -777,6 +796,16 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
     options.get("fadedOpacity") ?? String(opacity * 0.5),
     lineNumber,
   );
+  const includeTicks = parseBoolean(options.get("includeTicks") ?? options.get("axisTicks") ?? "false", lineNumber);
+  const addCoordinates = parseBoolean(options.get("addCoordinates") ?? options.get("includeNumbers") ?? "false", lineNumber);
+  const tickLength = parseNumber(options.get("tickLength") ?? "8", lineNumber);
+  const tickStrokeWidth = parseNumber(options.get("tickStrokeWidth") ?? String(axisStrokeWidth), lineNumber);
+  const numberSize = parseNumber(options.get("numberSize") ?? "24", lineNumber);
+  const numberColor = options.get("numberColor") ?? axisColor;
+  const xNumberOffsetX = parseNumber(options.get("xNumberOffsetX") ?? "8", lineNumber);
+  const xNumberOffsetY = parseNumber(options.get("xNumberOffsetY") ?? "24", lineNumber);
+  const yNumberOffsetX = parseNumber(options.get("yNumberOffsetX") ?? "24", lineNumber);
+  const yNumberOffsetY = parseNumber(options.get("yNumberOffsetY") ?? "10", lineNumber);
   const children: SceneNode[] = [];
 
   const mainYValues = steppedValues(yMin, yMax, yStep);
@@ -818,9 +847,9 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
     line.geometry.y1 = -y * yUnit;
     line.geometry.x2 = xMax * xUnit;
     line.geometry.y2 = -y * yUnit;
-    line.style.stroke = Math.abs(y) < 1e-9 ? axisColor : color;
-    line.style.strokeWidth = Math.abs(y) < 1e-9 ? axisStrokeWidth : strokeWidth;
-    line.transform.opacity = Math.abs(y) < 1e-9 ? axisOpacity : opacity;
+    line.style.stroke = Math.abs(y) < 1e-9 ? xAxisColor : color;
+    line.style.strokeWidth = Math.abs(y) < 1e-9 ? xAxisStrokeWidth : strokeWidth;
+    line.transform.opacity = Math.abs(y) < 1e-9 ? xAxisOpacity : opacity;
     children.push(line);
   }
 
@@ -830,11 +859,35 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
     line.geometry.y1 = -yMax * yUnit;
     line.geometry.x2 = x * xUnit;
     line.geometry.y2 = -yMin * yUnit;
-    line.style.stroke = Math.abs(x) < 1e-9 ? axisColor : color;
-    line.style.strokeWidth = Math.abs(x) < 1e-9 ? axisStrokeWidth : strokeWidth;
-    line.transform.opacity = Math.abs(x) < 1e-9 ? axisOpacity : opacity;
+    line.style.stroke = Math.abs(x) < 1e-9 ? yAxisColor : color;
+    line.style.strokeWidth = Math.abs(x) < 1e-9 ? yAxisStrokeWidth : strokeWidth;
+    line.transform.opacity = Math.abs(x) < 1e-9 ? yAxisOpacity : opacity;
     children.push(line);
   }
+
+  children.push(
+    ...buildNumberPlaneCoordinateChildren({
+      id,
+      mainXValues,
+      mainYValues,
+      includeTicks,
+      addCoordinates,
+      xNumbers: parseNumberListOption(options.get("xNumbers"), lineNumber),
+      yNumbers: parseNumberListOption(options.get("yNumbers"), lineNumber),
+      xUnit,
+      yUnit,
+      tickLength,
+      tickStrokeWidth,
+      numberSize,
+      numberColor,
+      xNumberOffsetX,
+      xNumberOffsetY,
+      yNumberOffsetX,
+      yNumberOffsetY,
+      xAxisStroke: xAxisColor,
+      yAxisStroke: yAxisColor,
+    }),
+  );
 
   const group = createBaseNode(id, "group");
   group.transform.x = cx;
@@ -850,6 +903,8 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
   group.geometry.xUnit = xUnit;
   group.geometry.yUnit = yUnit;
   group.geometry.fadedLineRatio = fadedLineRatio;
+  group.geometry.includeTicks = includeTicks;
+  group.geometry.addCoordinates = addCoordinates;
   for (const [key, value] of options) {
     if (
       [
@@ -863,16 +918,45 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
         "yUnit",
         "stroke",
         "color",
+        "backgroundStroke",
+        "backgroundLineStroke",
+        "backgroundLineColor",
         "axisStroke",
         "axisColor",
+        "xAxisStroke",
+        "xAxisColor",
+        "yAxisStroke",
+        "yAxisColor",
         "strokeWidth",
+        "backgroundStrokeWidth",
+        "backgroundLineStrokeWidth",
         "axisStrokeWidth",
+        "xAxisStrokeWidth",
+        "yAxisStrokeWidth",
         "opacity",
+        "backgroundOpacity",
+        "backgroundLineOpacity",
         "axisOpacity",
+        "xAxisOpacity",
+        "yAxisOpacity",
         "fadedLineRatio",
         "fadedStroke",
         "fadedStrokeWidth",
         "fadedOpacity",
+        "includeTicks",
+        "axisTicks",
+        "addCoordinates",
+        "includeNumbers",
+        "xNumbers",
+        "yNumbers",
+        "tickLength",
+        "tickStrokeWidth",
+        "numberSize",
+        "numberColor",
+        "xNumberOffsetX",
+        "xNumberOffsetY",
+        "yNumberOffsetX",
+        "yNumberOffsetY",
       ].includes(key)
     )
       continue;
@@ -881,6 +965,110 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
 
   state.nodes.set(id, group);
   state.rootIds.add(id);
+}
+
+function buildNumberPlaneCoordinateChildren({
+  id,
+  mainXValues,
+  mainYValues,
+  includeTicks,
+  addCoordinates,
+  xNumbers,
+  yNumbers,
+  xUnit,
+  yUnit,
+  tickLength,
+  tickStrokeWidth,
+  numberSize,
+  numberColor,
+  xNumberOffsetX,
+  xNumberOffsetY,
+  yNumberOffsetX,
+  yNumberOffsetY,
+  xAxisStroke,
+  yAxisStroke,
+}: {
+  id: string;
+  mainXValues: number[];
+  mainYValues: number[];
+  includeTicks: boolean;
+  addCoordinates: boolean;
+  xNumbers: number[];
+  yNumbers: number[];
+  xUnit: number;
+  yUnit: number;
+  tickLength: number;
+  tickStrokeWidth: number;
+  numberSize: number;
+  numberColor: string;
+  xNumberOffsetX: number;
+  xNumberOffsetY: number;
+  yNumberOffsetX: number;
+  yNumberOffsetY: number;
+  xAxisStroke: string;
+  yAxisStroke: string;
+}): SceneNode[] {
+  const children: SceneNode[] = [];
+  const defaultXNumbers = addCoordinates ? mainXValues.filter((value) => Math.abs(value) > 1e-9) : [];
+  const defaultYNumbers = addCoordinates ? mainYValues.filter((value) => Math.abs(value) > 1e-9) : [];
+  const xNumberValues = uniqueAxisValues([...defaultXNumbers, ...xNumbers]);
+  const yNumberValues = uniqueAxisValues([...defaultYNumbers, ...yNumbers]);
+  const xTickValues = includeTicks ? uniqueAxisValues([...mainXValues, ...xNumberValues]).filter((value) => Math.abs(value) > 1e-9) : [];
+  const yTickValues = includeTicks ? uniqueAxisValues([...mainYValues, ...yNumberValues]).filter((value) => Math.abs(value) > 1e-9) : [];
+
+  for (const value of xTickValues) {
+    const suffix = formatAxisValueId(value);
+    const tick = createBaseNode(`${id}:x_tick:${suffix}`, "line");
+    tick.transform.x = value * xUnit;
+    tick.transform.y = 0;
+    tick.geometry.x1 = 0;
+    tick.geometry.y1 = -tickLength / 2;
+    tick.geometry.x2 = 0;
+    tick.geometry.y2 = tickLength / 2;
+    tick.style.stroke = xAxisStroke;
+    tick.style.strokeWidth = tickStrokeWidth;
+    children.push(tick);
+  }
+
+  for (const value of yTickValues) {
+    const suffix = formatAxisValueId(value);
+    const tick = createBaseNode(`${id}:y_tick:${suffix}`, "line");
+    tick.transform.x = 0;
+    tick.transform.y = -value * yUnit;
+    tick.geometry.x1 = -tickLength / 2;
+    tick.geometry.y1 = 0;
+    tick.geometry.x2 = tickLength / 2;
+    tick.geometry.y2 = 0;
+    tick.style.stroke = yAxisStroke;
+    tick.style.strokeWidth = tickStrokeWidth;
+    children.push(tick);
+  }
+
+  for (const value of xNumberValues) {
+    const label = createBaseNode(`${id}:x_number:${formatAxisValueId(value)}`, "text");
+    label.text = formatAxisNumber(value);
+    label.transform.x = value * xUnit + xNumberOffsetX;
+    label.transform.y = xNumberOffsetY;
+    label.geometry.fontSize = numberSize;
+    label.style.fill = numberColor;
+    label.style.stroke = "none";
+    label.style.strokeWidth = 0;
+    children.push(label);
+  }
+
+  for (const value of yNumberValues) {
+    const label = createBaseNode(`${id}:y_number:${formatAxisValueId(value)}`, "text");
+    label.text = formatAxisNumber(value);
+    label.transform.x = yNumberOffsetX;
+    label.transform.y = -value * yUnit + yNumberOffsetY;
+    label.geometry.fontSize = numberSize;
+    label.style.fill = numberColor;
+    label.style.stroke = "none";
+    label.style.strokeWidth = 0;
+    children.push(label);
+  }
+
+  return children;
 }
 
 function buildAxesNumberChildren(
@@ -1025,6 +1213,8 @@ function parseDataLineGraph(tokens: string[], state: CompileState, lineNumber: n
   line.style.fill = "none";
   line.style.stroke = lineColor;
   line.style.strokeWidth = strokeWidth;
+  line.style.strokeLinecap = "round";
+  line.style.strokeLinejoin = "round";
 
   const dots = points.map((point, index) => {
     const dot = createBaseNode(`${id}:vertex:${index}`, "circle");
@@ -1239,10 +1429,7 @@ function parseDataArea(tokens: string[], state: CompileState, lineNumber: number
   const lowerPoints = sampleDataFunctionPoints(lower, x1, x0, samples, state, lineNumber, geometry, centerX, centerY);
 
   const node = createBaseNode(id, "path");
-  node.geometry.d = [...upperPoints, ...lowerPoints]
-    .map((point, index) => `${index === 0 ? "M" : "L"} ${formatPathNumber(point.x)} ${formatPathNumber(point.y)}`)
-    .concat("Z")
-    .join(" ");
+  node.geometry.d = curvesToClosedAreaPath(upperPoints, lowerPoints);
   node.geometry.dataArea = true;
   node.geometry.axes = axesId;
   node.geometry.lower = lower;
@@ -1345,11 +1532,26 @@ function parseGaussianSurface(tokens: string[], state: CompileState, lineNumber:
   const strokeWidth = parseNumber(options.get("strokeWidth") ?? "0.5", lineNumber);
   const fillOpacity = parseNumber(options.get("fillOpacity") ?? "0.5", lineNumber);
   const shade = parseBoolean(options.get("shade") ?? "false", lineNumber);
-  const shadeStrength = parseNumber(options.get("shadeStrength") ?? "0.18", lineNumber);
+  const shadeStrength = parseNumber(options.get("shadeStrength") ?? "1", lineNumber);
+  const [lightX, lightY, lightZ] = parseVector3Option(options.get("light") ?? "-7,-9,10", "light", lineNumber);
+  const light = { x: lightX, y: lightY, z: lightZ };
+
+  const gaussianHeightAndNormal = (u: number, v: number): { height: number; normal: { x: number; y: number; z: number } } => {
+    const dx = u - muX;
+    const dy = v - muY;
+    const distanceSquared = dx ** 2 + dy ** 2;
+    const height = Math.exp(-(distanceSquared / (2 * sigma ** 2)));
+    const sigmaSquared = sigma ** 2 || 1;
+    const dzdu = height * (-dx / sigmaSquared);
+    const dzdv = height * (-dy / sigmaSquared);
+    return {
+      height,
+      normal: normalize3d({ x: -dzdu, y: -dzdv, z: 1 }),
+    };
+  };
 
   const project = (u: number, v: number): { x: number; y: number; z: number; depth: number } => {
-    const d = Math.hypot(u - muX, v - muY);
-    const z = Math.exp(-(d ** 2 / (2 * sigma ** 2)));
+    const { height: z } = gaussianHeightAndNormal(u, v);
     const x = u * scale;
     const y = v * scale;
     const projectedZ = z * scale;
@@ -1370,7 +1572,7 @@ function parseGaussianSurface(tokens: string[], state: CompileState, lineNumber:
     };
   };
 
-  const faces: Array<{ row: number; col: number; height: number; depth: number; points: Array<{ x: number; y: number }> }> = [];
+  const faces: Array<{ row: number; col: number; height: number; shade: number; depth: number; points: Array<{ x: number; y: number }> }> = [];
   for (let row = 0; row < resolution; row += 1) {
     const va = v0 + (v1 - v0) * (row / resolution);
     const vb = v0 + (v1 - v0) * ((row + 1) / resolution);
@@ -1378,10 +1580,23 @@ function parseGaussianSurface(tokens: string[], state: CompileState, lineNumber:
       const ua = u0 + (u1 - u0) * (col / resolution);
       const ub = u0 + (u1 - u0) * ((col + 1) / resolution);
       const points = [project(ua, va), project(ub, va), project(ub, vb), project(ua, vb)];
+      const midU = (ua + ub) / 2;
+      const midV = (va + vb) / 2;
+      const { height, normal } = gaussianHeightAndNormal(midU, midV);
+      const point = { x: midU * scale, y: midV * scale, z: height * scale };
+      const toLight = normalize3d({
+        x: light.x - point.x,
+        y: light.y - point.y,
+        z: light.z - point.z,
+      });
+      const lightDot = normal.x * toLight.x + normal.y * toLight.y + normal.z * toLight.z;
+      let lightAmount = 0.5 * lightDot ** 3;
+      if (lightAmount < 0) lightAmount *= 0.5;
       faces.push({
         row,
         col,
         height: points.reduce((sum, point) => sum + point.z, 0) / points.length,
+        shade: lightAmount * shadeStrength,
         depth: points.reduce((sum, point) => sum + point.depth, 0) / points.length,
         points,
       });
@@ -1405,6 +1620,7 @@ function parseGaussianSurface(tokens: string[], state: CompileState, lineNumber:
   group.geometry.yBasis = [basisYX, basisYY];
   group.geometry.zBasis = [basisZX, basisZY];
   group.geometry.shade = shade;
+  group.geometry.light = [light.x, light.y, light.z];
   if (hasCameraProjection) {
     group.geometry.cameraProjection = "manim";
     group.geometry.phi = cameraOptions.phi;
@@ -1418,6 +1634,7 @@ function parseGaussianSurface(tokens: string[], state: CompileState, lineNumber:
         col: face.col,
         depth: face.depth,
         height: face.height,
+        shade: face.shade,
       },
     };
     node.geometry.d = face.points
@@ -1425,7 +1642,7 @@ function parseGaussianSurface(tokens: string[], state: CompileState, lineNumber:
       .concat("Z")
       .join(" ");
     const baseFill = (face.row + face.col) % 2 === 0 ? fillA : fillB;
-    node.style.fill = shade ? shadeHexColor(baseFill, 1 - shadeStrength + face.height * shadeStrength * 2) : baseFill;
+    node.style.fill = shade ? shadeHexColorByDelta(baseFill, face.shade) : baseFill;
     node.style.fillOpacity = fillOpacity;
     node.style.stroke = stroke;
     node.style.strokeWidth = strokeWidth;
@@ -1453,6 +1670,7 @@ function parseGaussianSurface(tokens: string[], state: CompileState, lineNumber:
         "fillOpacity",
         "shade",
         "shadeStrength",
+        "light",
         "phi",
         "theta",
         "gamma",
@@ -1888,7 +2106,7 @@ function manimCameraProjectedCirclePath(
   },
 ): string {
   const sampleCount = Math.max(8, Math.round(options.samples));
-  const points: string[] = [];
+  const points: Array<{ x: number; y: number }> = [];
   for (let index = 0; index < sampleCount; index += 1) {
     const alpha = (Math.PI * 2 * index) / sampleCount;
     const point = projectManimCameraPoint(
@@ -1899,9 +2117,12 @@ function manimCameraProjectedCirclePath(
       },
       options,
     );
-    points.push(`${index === 0 ? "M" : "L"} ${formatPathNumber(point.x)} ${formatPathNumber(point.y)}`);
+    points.push({
+      x: Number(formatPathNumber(point.x)),
+      y: Number(formatPathNumber(point.y)),
+    });
   }
-  return [...points, "Z"].join(" ");
+  return pointsToSvgPath(points, { close: true, smooth: true });
 }
 
 function projectManimCameraPoint(
@@ -2445,21 +2666,6 @@ function normalize3d(vector: { x: number; y: number; z: number }): { x: number; 
   return { x: vector.x / length, y: vector.y / length, z: vector.z / length };
 }
 
-function shadeHexColor(hex: string, amount: number): string {
-  const match = /^#?([0-9a-f]{6})$/iu.exec(hex);
-  if (!match) return hex;
-  const value = match[1]!;
-  const rgb = [0, 2, 4].map((offset) => Number.parseInt(value.slice(offset, offset + 2), 16));
-  const target = amount >= 1 ? 255 : 0;
-  const weight = amount >= 1 ? amount - 1 : 1 - amount;
-  return `#${rgb
-    .map((component) => {
-      const mixed = Math.round(component + (target - component) * weight);
-      return mixed.toString(16).padStart(2, "0");
-    })
-    .join("")}`;
-}
-
 function shadeHexColorByDelta(hex: string, delta: number): string {
   const match = /^#?([0-9a-f]{6})$/iu.exec(hex);
   if (!match) return hex;
@@ -2516,6 +2722,7 @@ function parseArrow(tokens: string[], state: CompileState, lineNumber: number): 
   const requestedTipLength = parseNumber(options.get("tipLength") ?? "23.625", lineNumber);
   const tipLength = Math.max(0, Math.min(requestedTipLength, drawableLength * maxTipRatio));
   const tipWidth = parseNumber(options.get("tipWidth") ?? String(tipLength), lineNumber);
+  const tipShape = parseArrowTipShape(options.get("tipShape") ?? options.get("tip_shape") ?? "triangleFilled", lineNumber);
   const strokeWidth = Math.max(0, Math.min(requestedStrokeWidth, drawableLength * maxStrokeRatio));
   const px = -uy;
   const py = ux;
@@ -2532,15 +2739,22 @@ function parseArrow(tokens: string[], state: CompileState, lineNumber: number): 
   shaft.style.strokeWidth = strokeWidth;
 
   const tip = createBaseNode(`${id}:tip`, "path");
-  tip.geometry.d = [
-    `M ${formatPathNumber(endX)} ${formatPathNumber(endY)}`,
-    `L ${formatPathNumber(baseX + px * tipWidth / 2)} ${formatPathNumber(baseY + py * tipWidth / 2)}`,
-    `L ${formatPathNumber(baseX - px * tipWidth / 2)} ${formatPathNumber(baseY - py * tipWidth / 2)}`,
-    "Z",
-  ].join(" ");
-  tip.style.fill = fill;
+  tip.geometry.d = buildArrowTipPath({
+    endX,
+    endY,
+    baseX,
+    baseY,
+    ux,
+    uy,
+    px,
+    py,
+    tipLength,
+    tipWidth,
+    tipShape,
+  });
+  tip.style.fill = isFilledArrowTipShape(tipShape) ? fill : "none";
   tip.style.stroke = fill;
-  tip.style.strokeWidth = 0;
+  tip.style.strokeWidth = isFilledArrowTipShape(tipShape) ? 0 : 3;
 
   const group = createBaseNode(id, "group");
   group.children = [shaft, tip];
@@ -2552,6 +2766,7 @@ function parseArrow(tokens: string[], state: CompileState, lineNumber: number): 
   group.geometry.buff = buff;
   group.geometry.tipLength = tipLength;
   group.geometry.tipWidth = tipWidth;
+  group.geometry.tipShape = tipShape;
   group.geometry.maxTipLengthToLengthRatio = maxTipRatio;
   group.geometry.maxStrokeWidthToLengthRatio = maxStrokeRatio;
   for (const [key, value] of options) {
@@ -2564,6 +2779,8 @@ function parseArrow(tokens: string[], state: CompileState, lineNumber: number): 
         "buff",
         "tipLength",
         "tipWidth",
+        "tipShape",
+        "tip_shape",
         "maxTipLengthToLengthRatio",
         "maxStrokeWidthToLengthRatio",
         "stroke",
@@ -2577,6 +2794,136 @@ function parseArrow(tokens: string[], state: CompileState, lineNumber: number): 
 
   state.nodes.set(id, group);
   state.rootIds.add(id);
+}
+
+type ArrowTipShape = "triangle" | "triangleFilled" | "square" | "squareFilled" | "circle" | "circleFilled" | "stealth";
+
+function parseArrowTipShape(value: string, lineNumber: number): ArrowTipShape {
+  const normalized = value.replace(/[^a-z]/giu, "").toLowerCase();
+  const shapes: Record<string, ArrowTipShape> = {
+    arrowtriangletip: "triangle",
+    triangle: "triangle",
+    triangletip: "triangle",
+    arrowtrianglefilledtip: "triangleFilled",
+    default: "triangleFilled",
+    filledtriangle: "triangleFilled",
+    trianglefilled: "triangleFilled",
+    arrowtip: "triangleFilled",
+    arrowsquaretip: "square",
+    square: "square",
+    squaretip: "square",
+    arrowsquarefilledtip: "squareFilled",
+    filledsquare: "squareFilled",
+    squarefilled: "squareFilled",
+    arrowcircletip: "circle",
+    circle: "circle",
+    circletip: "circle",
+    arrowcirclefilledtip: "circleFilled",
+    circlefilled: "circleFilled",
+    filledcircle: "circleFilled",
+    stealth: "stealth",
+    stealthtip: "stealth",
+  };
+  const shape = shapes[normalized];
+  if (!shape) {
+    throw new DslCompileError(
+      "Expected tipShape to be one of triangle, triangleFilled, square, squareFilled, circle, circleFilled, stealth, or the matching Manim Arrow*Tip class name.",
+      lineNumber,
+    );
+  }
+  return shape;
+}
+
+function isFilledArrowTipShape(shape: ArrowTipShape): boolean {
+  return shape === "triangleFilled" || shape === "squareFilled" || shape === "circleFilled" || shape === "stealth";
+}
+
+function buildArrowTipPath({
+  endX,
+  endY,
+  baseX,
+  baseY,
+  ux,
+  uy,
+  px,
+  py,
+  tipLength,
+  tipWidth,
+  tipShape,
+}: {
+  endX: number;
+  endY: number;
+  baseX: number;
+  baseY: number;
+  ux: number;
+  uy: number;
+  px: number;
+  py: number;
+  tipLength: number;
+  tipWidth: number;
+  tipShape: ArrowTipShape;
+}): string {
+  if (tipShape === "circle" || tipShape === "circleFilled") {
+    return buildArrowCircleTipPath(endX, endY, baseX, baseY, ux, uy, px, py, tipLength / 2, tipWidth / 2);
+  }
+  if (tipShape === "square" || tipShape === "squareFilled") {
+    return [
+      `M ${formatPathNumber(endX + px * tipWidth / 2)} ${formatPathNumber(endY + py * tipWidth / 2)}`,
+      `L ${formatPathNumber(baseX + px * tipWidth / 2)} ${formatPathNumber(baseY + py * tipWidth / 2)}`,
+      `L ${formatPathNumber(baseX - px * tipWidth / 2)} ${formatPathNumber(baseY - py * tipWidth / 2)}`,
+      `L ${formatPathNumber(endX - px * tipWidth / 2)} ${formatPathNumber(endY - py * tipWidth / 2)}`,
+      "Z",
+    ].join(" ");
+  }
+  if (tipShape === "stealth") {
+    const frontLength = tipLength / 1.6;
+    const wingBack = tipLength * 1.2 / 3.2;
+    const wingHalfWidth = tipWidth / 2;
+    const baseCenterX = endX - ux * frontLength;
+    const baseCenterY = endY - uy * frontLength;
+    return [
+      `M ${formatPathNumber(endX)} ${formatPathNumber(endY)}`,
+      `L ${formatPathNumber(baseCenterX - ux * wingBack + px * wingHalfWidth)} ${formatPathNumber(baseCenterY - uy * wingBack + py * wingHalfWidth)}`,
+      `L ${formatPathNumber(baseCenterX)} ${formatPathNumber(baseCenterY)}`,
+      `L ${formatPathNumber(baseCenterX - ux * wingBack - px * wingHalfWidth)} ${formatPathNumber(baseCenterY - uy * wingBack - py * wingHalfWidth)}`,
+      "Z",
+    ].join(" ");
+  }
+  return [
+    `M ${formatPathNumber(endX)} ${formatPathNumber(endY)}`,
+    `L ${formatPathNumber(baseX + px * tipWidth / 2)} ${formatPathNumber(baseY + py * tipWidth / 2)}`,
+    `L ${formatPathNumber(baseX - px * tipWidth / 2)} ${formatPathNumber(baseY - py * tipWidth / 2)}`,
+    "Z",
+  ].join(" ");
+}
+
+function buildArrowCircleTipPath(
+  endX: number,
+  endY: number,
+  baseX: number,
+  baseY: number,
+  ux: number,
+  uy: number,
+  px: number,
+  py: number,
+  rx: number,
+  ry: number,
+): string {
+  const k = 0.5522847498307936;
+  const cx = (endX + baseX) / 2;
+  const cy = (endY + baseY) / 2;
+  const front = { x: cx + ux * rx, y: cy + uy * rx };
+  const top = { x: cx + px * ry, y: cy + py * ry };
+  const back = { x: cx - ux * rx, y: cy - uy * rx };
+  const bottom = { x: cx - px * ry, y: cy - py * ry };
+  return [
+    `M ${formatPathNumber(front.x)} ${formatPathNumber(front.y)}`,
+    `C ${formatPathNumber(front.x + px * k * ry)} ${formatPathNumber(front.y + py * k * ry)} ${formatPathNumber(top.x + ux * k * rx)} ${formatPathNumber(top.y + uy * k * rx)} ${formatPathNumber(top.x)} ${formatPathNumber(top.y)}`,
+    `C ${formatPathNumber(top.x - ux * k * rx)} ${formatPathNumber(top.y - uy * k * rx)} ${formatPathNumber(back.x + px * k * ry)} ${formatPathNumber(back.y + py * k * ry)} ${formatPathNumber(back.x)} ${formatPathNumber(back.y)}`,
+    `C ${formatPathNumber(back.x - px * k * ry)} ${formatPathNumber(back.y - py * k * ry)} ${formatPathNumber(bottom.x - ux * k * rx)} ${formatPathNumber(bottom.y - uy * k * rx)} ${formatPathNumber(bottom.x)} ${formatPathNumber(bottom.y)}`,
+    `C ${formatPathNumber(bottom.x + ux * k * rx)} ${formatPathNumber(bottom.y + uy * k * rx)} ${formatPathNumber(front.x - px * k * ry)} ${formatPathNumber(front.y - py * k * ry)} ${formatPathNumber(front.x)} ${formatPathNumber(front.y)}`,
+    "Z",
+  ].join(" ");
 }
 
 function parsePlot(tokens: string[], state: CompileState, lineNumber: number): void {
@@ -2603,6 +2950,8 @@ function parsePlot(tokens: string[], state: CompileState, lineNumber: number): v
   node.style.fill = "none";
   node.style.stroke = "#38bdf8";
   node.style.strokeWidth = 4;
+  node.style.strokeLinecap = "round";
+  node.style.strokeLinejoin = "round";
   for (const [key, value] of options) {
     if (
       key === "fn" ||
@@ -2620,6 +2969,7 @@ function parsePlot(tokens: string[], state: CompileState, lineNumber: number): v
   node.geometry.scaleX = scaleX;
   node.geometry.scaleY = scaleY;
   node.metadata = { plot: { range: [r0!, r1!], samples } };
+  pathOp.smoothing = "smooth";
   const d = buildPathDataPreview(pathOp, state);
   node.geometry.d = d;
   state.nodes.set(id, node);
@@ -2726,11 +3076,16 @@ function parseAngle(tokens: string[], state: CompileState, lineNumber: number): 
     lineNumber,
   );
   if (!pathGenerator) throw new DslCompileError("Failed to build angle path.", lineNumber);
+  pathGenerator.pathType = "arc";
+  pathGenerator.radius = radius;
+  pathGenerator.smoothing = "smooth";
 
   const node = createBaseNode(id, "path");
   node.style.fill = "none";
   node.style.stroke = "#f59e0b";
   node.style.strokeWidth = 4;
+  node.style.strokeLinecap = "round";
+  node.style.strokeLinejoin = "round";
   node.geometry.angle = true;
   node.geometry.radius = radius;
   node.geometry.d = buildPathDataPreview(pathGenerator, state);
@@ -2757,6 +3112,8 @@ function parseTracedPath(tokens: string[], state: CompileState, lineNumber: numb
     node.style.fill = "none";
     node.style.stroke = "#22d3ee";
     node.style.strokeWidth = 4;
+    node.style.strokeLinecap = "round";
+    node.style.strokeLinejoin = "round";
     node.geometry.tracedPath = true;
     node.geometry.tracedTarget = target;
     node.geometry.traceStart = parseSeconds(options.get("start") ?? `${statementTime(state)}s`, lineNumber);
@@ -2785,11 +3142,14 @@ function parseTracedPath(tokens: string[], state: CompileState, lineNumber: numb
     lineNumber,
   );
   if (!pathGenerator) throw new DslCompileError("Failed to build tracedPath path.", lineNumber);
+  pathGenerator.smoothing = "smooth";
 
   const node = createBaseNode(id, "path");
   node.style.fill = "none";
   node.style.stroke = "#22d3ee";
   node.style.strokeWidth = 4;
+  node.style.strokeLinecap = "round";
+  node.style.strokeLinejoin = "round";
   node.geometry.tracedPath = true;
   node.geometry.d = buildPathDataPreview(pathGenerator, state);
   for (const [key, value] of options) {
@@ -2802,21 +3162,29 @@ function parseTracedPath(tokens: string[], state: CompileState, lineNumber: numb
   pushBindPath(state, id, "geometry.d", pathGenerator, statementTime(state));
 }
 
-function buildPathDataPreview(op: { samples:number; tMinExpr:string; tMaxExpr:string; xExpr:string; yExpr:string; close?:boolean }, state: CompileState): string {
+function buildPathDataPreview(op: { samples:number; tMinExpr:string; tMaxExpr:string; xExpr:string; yExpr:string; close?:boolean; smoothing?: "linear" | "smooth"; pathType?: "parametric" | "arc"; radius?: number }, state: CompileState): string {
   const vars = Object.fromEntries([...state.values].map(([k,v])=>[k,v]));
   const tMin = evaluateExpression(op.tMinExpr, vars);
   const tMax = evaluateExpression(op.tMaxExpr, vars);
-  const pts:string[]=[];
+  if (op.pathType === "arc") {
+    return arcToSvgPath(op.radius ?? 0, tMin, tMax, {
+      ...(op.close === undefined ? {} : { close: op.close }),
+    });
+  }
+
+  const points: Array<{ x: number; y: number }> = [];
   for (let i=0;i<op.samples;i++){
     const u = op.samples===1?0:i/(op.samples-1);
     const t = tMin + (tMax-tMin)*u;
     const scope={...vars,t};
     const x = evaluateExpression(op.xExpr, scope);
     const y = evaluateExpression(op.yExpr, scope);
-    pts.push(`${i===0?'M':'L'} ${x} ${y}`);
+    points.push({ x, y });
   }
-  if (op.close) pts.push('Z');
-  return pts.join(' ');
+  return pointsToSvgPath(points, {
+    ...(op.close === undefined ? {} : { close: op.close }),
+    smooth: op.smoothing === "smooth",
+  });
 }
 
 function pushBindPath(
@@ -2830,6 +3198,9 @@ function pushBindPath(
     xExpr: string;
     yExpr: string;
     close?: boolean;
+    smoothing?: "linear" | "smooth";
+    pathType?: "parametric" | "arc";
+    radius?: number;
   },
   time: number,
 ): void {
@@ -3096,6 +3467,9 @@ function readPathGeneratorAssignment(
       xExpr: string;
       yExpr: string;
       close?: boolean;
+      smoothing?: "linear" | "smooth";
+      pathType?: "parametric" | "arc";
+      radius?: number;
     }
   | null {
   const match = /^path\((.*)\)$/u.exec(token.trim());
@@ -3954,15 +4328,16 @@ function resamplePlotPathByArcLength(
   const scaleY = Number(path.geometry.scaleY ?? 1);
   const originX = Number(path.transform.x ?? 0);
   const originY = Number(path.transform.y ?? 0);
-  const sourcePoints: Array<{ x: number; y: number }> = [];
+  const rawPoints: Array<{ x: number; y: number }> = [];
   for (let index = 0; index < sampleCount; index += 1) {
     const alpha = sampleCount === 1 ? 0 : index / (sampleCount - 1);
     const t = Number(range[0]) + (Number(range[1]) - Number(range[0])) * alpha;
-    sourcePoints.push({
+    rawPoints.push({
       x: originX + t * scaleX,
       y: originY - evaluateGraphExpression(fnExpr, t, state, lineNumber) * scaleY,
     });
   }
+  const sourcePoints = sampleSmoothPathPoints(rawPoints, 8);
   const cumulative = [0];
   for (let index = 1; index < sourcePoints.length; index += 1) {
     const previous = sourcePoints[index - 1]!;

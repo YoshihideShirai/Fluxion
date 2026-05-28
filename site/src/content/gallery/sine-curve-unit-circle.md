@@ -9,7 +9,7 @@ known_gaps:
   - symptom: "Manim の VGroup 履歴追記式 sine curve updater は、既知の dot 軌道を `tracedPath` と `value` binding に展開して再現している。"
     layer: dsl
     impact: low
-    workaround: "公式の `t_offset` 進行を `theta` value に変換し、円上の dot、半径線、curve 接続線、sine trace を同じ value から再計算する。`MathTex` label は既定 font size 48、dot/line/trace は Manim の `YELLOW` / `YELLOW_A` / `YELLOW_D` 色定数に合わせる。"
+    workaround: "公式の `t_offset` 進行を `theta` value に変換し、円上の dot、半径線、curve 接続線、sine trace を同じ value から再計算する。sine trace はサンプル点を滑らかな cubic path に変換し、`MathTex` label は既定 font size 48、dot/line/trace は Manim の `YELLOW` / `YELLOW_A` / `YELLOW_D` 色定数に合わせる。"
     closure_condition: "VGroup への逐次 Line 追加や `always_redraw` callback を DSL/runtime に追加する。"
     fidelity_upgrade_condition: "追加対応不要。"
 category: Advanced Projects

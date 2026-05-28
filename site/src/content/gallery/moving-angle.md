@@ -9,7 +9,7 @@ known_gaps:
   - symptom: "Manim の updater callback は未実装だが、`Line(...).rotate(... about_point=LEFT)` は `rotatingLine` helper、`Angle(...)` と `point_from_proportion(0.5)` は value binding へ展開している。"
     layer: dsl
     impact: low
-    workaround: "`theta` を value tracker として管理し、`Line(LEFT, RIGHT)` を Manim 16:9 frame scale の 67.5px/unit へ展開し、基準線の about-point 回転、`Angle(..., radius=0.5)` path、`Angle(..., radius=0.5 + 3 * SMALL_BUFF).point_from_proportion(0.5)` の `\\theta` ラベル位置を再計算する。"
+    workaround: "`theta` を value tracker として管理し、`Line(LEFT, RIGHT)` を Manim 16:9 frame scale の 67.5px/unit へ展開し、基準線の about-point 回転、滑らかな cubic の `Angle(..., radius=0.5)` path、`Angle(..., radius=0.5 + 3 * SMALL_BUFF).point_from_proportion(0.5)` の `\\theta` ラベル位置を再計算する。"
     closure_condition: "Angle/MathTex の updater callback を DSL/runtime で直接扱えるようにする。"
     fidelity_upgrade_condition: "Manim の updater 関数をそのまま記述して同挙動を再現できる時。"
 category: Manim Stable Examples

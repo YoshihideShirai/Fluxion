@@ -6,7 +6,7 @@ source_example_path: examples/gallery/opening_manim.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "Text kerning and the nonlinear grid curve sampling still depend on browser renderer/path approximation and may differ slightly from Manim raster output."
+  - symptom: "Text kerning and the in-flight nonlinear grid morph still depend on browser renderer/path approximation and may differ slightly from Manim raster output, but the final warped grid preserves the cubic target paths."
     layer: renderer
     impact: low
     workaround: "`NumberPlane()` を Manim frame scale の full-frame grid に展開し、`p + [sin(p[1]), sin(p[0]), 0]` 由来の cubic path target で非線形変形を近似する。"

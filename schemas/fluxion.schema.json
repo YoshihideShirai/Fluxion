@@ -167,6 +167,14 @@
         "strokeWidth": {
           "type": "number",
           "minimum": 0
+        },
+        "strokeLinecap": {
+          "type": "string",
+          "enum": ["butt", "round", "square"]
+        },
+        "strokeLinejoin": {
+          "type": "string",
+          "enum": ["miter", "round", "bevel"]
         }
       }
     },
@@ -694,6 +702,13 @@
               "type": "string",
               "description": "Typically geometry.d for SVG path nodes."
             },
+            "pathType": {
+              "type": "string",
+              "enum": ["parametric", "arc"]
+            },
+            "radius": {
+              "type": "number"
+            },
             "samples": {
               "type": "integer",
               "minimum": 2
@@ -716,6 +731,10 @@
             },
             "close": {
               "type": "boolean"
+            },
+            "smoothing": {
+              "type": "string",
+              "enum": ["linear", "smooth"]
             },
             "deps": {
               "type": "array",

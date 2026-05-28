@@ -188,7 +188,7 @@ Common options:
 - `opacity`
 - `fill`, `fillOpacity`
 - `stroke`, `strokeOpacity`
-- `strokeWidth`
+- `strokeWidth`, `strokeLinecap=butt|round|square`, `strokeLinejoin=miter|round|bevel`
 
 Geometry options:
 
@@ -199,12 +199,12 @@ Geometry options:
 - `text`: `size` or `fontSize`
 - `math`: `size` or `fontSize`, `renderer=katex|mathjax`, `expandTokens=true|false`
 - `image`: `w`, `h`, `data=<row;row;...>`; `data` は `0,128,255;...` のようなグレースケール値行列で、Manim `ImageMobject(np.uint8(...))` 風の pixel image を生成します。
-- `group`: child ids are copied into `children` and removed from top-level roots
+- `group`: child ids are copied into `children` and removed from top-level roots. `clipTarget=<rect-or-image-id>` clips children to the referenced node's current bounds; `clip=rect clipW=<number> clipH=<number> [clipX] [clipY]` clips to an explicit centered rectangle.
 - `surroundingRect`: `target=<node-id>`, `buff=<number>`; target の宣言/推定 bounds に基づく frame-like な `rect` node として出力されます。`play Create(frame)` では `geometry.drawProgress` により Manim 風に外枠が描画されます。
 - `brace`: `target=<node-id>`, `direction=up|down|left|right|perpendicular`, `buff`, `sharpness`, `label`, `labelRenderer=text|katex|mathjax`, `labelSize`, `labelColor`, `labelOffset`, `labelAlignment=start|center|end`, `labelW`, `labelH`; Manim `Brace(...)` 風に source SVG template model から塗りつぶし brace を生成し、`get_text` / `get_tex` 相当の label を計算済み tip 近傍に配置できます。
 - `axes`: `xRange=<min,max>`, `yRange=<min,max>`, `width`, `height`, `xTicks=<n,n,...>`, `yTicks=<n,n,...>`, `xNumbers=<n,n,...>`, `yNumbers=<n,n,...>`, `tickLength`, `tickStrokeWidth`, `numberSize`, `numberColor`, `xNumberOffset`, `yNumberOffset`; 非対称 range の原点に x/y 軸を置き、必要に応じて tick line と number text を持つ `group` node を生成します。
 - `axisLabels`: `axes=<axes-id>`, `x=<latex>`, `y=<latex>`, `size`, `xSize`, `ySize`, `fill`, `renderer`, `buff`, `xBuff`, `yBuff`, `xYOffset`, `yYOffset`; Manim `Axes.get_axis_labels(...)` 風に x/y 軸端へ math label group を生成します。
-- `numberPlane`: `xRange=<min,max>`, `yRange=<min,max>`, `xStep`, `yStep`, `unit`, `xUnit`, `yUnit`, `stroke`, `axisStroke`, `strokeWidth`, `axisStrokeWidth`, `opacity`, `axisOpacity`, `fadedLineRatio`, `fadedStroke`, `fadedStrokeWidth`, `fadedOpacity`; Manim `NumberPlane()` 風の背景 grid line / faded sub-grid line と強調 x/y 軸を持つ `group` node を生成します。
+- `numberPlane`: `xRange=<min,max>`, `yRange=<min,max>`, `xStep`, `yStep`, `unit`, `xUnit`, `yUnit`, `stroke`/`backgroundLineColor`, `axisStroke`, `xAxisStroke`, `yAxisStroke`, `strokeWidth`/`backgroundLineStrokeWidth`, `axisStrokeWidth`, `xAxisStrokeWidth`, `yAxisStrokeWidth`, `opacity`/`backgroundLineOpacity`, `axisOpacity`, `xAxisOpacity`, `yAxisOpacity`, `fadedLineRatio`, `fadedStroke`, `fadedStrokeWidth`, `fadedOpacity`, `includeTicks`, `addCoordinates`/`includeNumbers`, `xNumbers`, `yNumbers`, `tickLength`, `tickStrokeWidth`, `numberSize`, `numberColor`; Manim `NumberPlane()` 風の背景 grid line / faded sub-grid line、強調 x/y 軸、任意の axis tick / coordinate label を持つ `group` node を生成します。
 - `plot`: `fn=<expr>`, `range=<min,max>`, `samples`, `scaleX`, `scaleY`, `close=true|false`; 関数をサンプリングした `path` geometry を生成します。
 - `graphLabel`: `plot=<plot-id>`, `label=<latex>`, `xVal`, `direction=right|left|up|down|ur|ul|dr|dl`, `buff`, `size`, `fill`, `renderer`, `w`, `h`, `xOffset`, `yOffset`; Manim `Axes.get_graph_label(...)` 風に plot helper 上の点から math label を配置します。
 - `dataPolygon`: `axes=<axes-id>`, `points=<x,y;...>`; 3 点以上のデータ座標を参照先 `axes` helper で scene 座標に変換し、閉じた `path` を生成します。
@@ -215,11 +215,11 @@ Geometry options:
 - `dynamicLine`: `x1=<expr>`, `y1=<expr>`, `x2=<expr>`, `y2=<expr>`; value tracker を参照する endpoint 式から `line` と `bindExpr` を生成します。Manim の `Line(...).become(...)` updater 型の connector を表現できます。
 - `dataArea`: `axes=<axes-id>`, `lower=<expr>`, `upper=<expr>`, `range=<min,max>`, `samples`; 2つの関数をサンプリングし、Manim `Axes.get_area(..., bounded_graph=...)` 風の閉じた `path` を生成します。
 - `dataRiemannRects`: `axes=<axes-id>`, `fn=<expr>`, `range=<min,max>`, `dx`; 関数を left-sample し、Manim `Axes.get_riemann_rectangles` 風の `rect` 群を持つ `group` を生成します。
-- `gaussianSurface`: `range=<min,max>`, `uRange=<min,max>`, `vRange=<min,max>`, `resolution`, `scale`, `sigma`, `mu=<x,y>`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `fillA`, `fillB`, `shade=true|false`, `shadeStrength`; Manim `Surface(param_gauss).set_fill_by_checkerboard(...)` 風の投影済み checkerboard mesh を `path` 群の `group` として生成します。`phi` / `theta` / `gamma` を指定すると、各 mesh 頂点を Manim `ThreeDCamera` 由来の透視投影で配置します。
+- `gaussianSurface`: `range=<min,max>`, `uRange=<min,max>`, `vRange=<min,max>`, `resolution`, `scale`, `sigma`, `mu=<x,y>`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `fillA`, `fillB`, `shade=true|false`, `shadeStrength`, `light=<x,y,z>`; Manim `Surface(param_gauss).set_fill_by_checkerboard(...)` 風の投影済み checkerboard mesh を `path` 群の `group` として生成します。shading 有効時は面法線と位置光源から Manim `get_shaded_rgb` 風の light delta を計算します。`phi` / `theta` / `gamma` を指定すると、各 mesh 頂点を Manim `ThreeDCamera` 由来の透視投影で配置します。
 - `sphereSurface`: `radius`, `worldRadius`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `uRange`, `vRange`, `resolution=<u,v>`, `fillA`, `fillB`, `light=<x,y,z>`, `shade=true|false`; Manim `Surface(..., checkerboard_colors=[RED_D, RED_E], resolution=(15, 32))` 風の球面 checkerboard を投影済み `path` 群として生成します。`xBasis`/`yBasis`/`zBasis` を指定すると、`worldRadius` の 3D 球面をその projection basis で描きます。`phi` / `theta` / `gamma` 指定時は Manim `ThreeDCamera` 由来の透視投影を使います。
 - `threeDAxes`: `xRange=<min,max,step>`, `yRange`, `zRange`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `includeTicks`, `includeTips`; Manim `ThreeDAxes()` の既定 range を投影済み line/tick/tip 群として生成します。`phi` / `theta` / `gamma` を指定すると、各 axis endpoint と tick を Manim `ThreeDCamera` 由来の透視投影で個別に配置します。
-- `projectedCircle`: `radius`, `xBasis=<x,y>`, `yBasis=<x,y>`; projected 3D axes と同じ basis vector から、Manim `Circle()` を XY 平面へ投影した cubic `path` を生成します。`phi` / `theta` / `gamma` を指定すると、Manim `ThreeDCamera` と同じ `rotation_about_z(-theta-90°) -> rotation_matrix(-phi, RIGHT) -> rotation_about_z(gamma)` と `focalDistance / (focalDistance - z)` の透視係数でサンプリングした path を生成します。
-- `arrow`: `x1`, `y1`, `x2`, `y2`, `buff`, `tipLength`, `tipWidth`, `maxTipLengthToLengthRatio`, `maxStrokeWidthToLengthRatio`; line shaft と filled triangle tip を持つ `group` を生成します。`tipLength` と `strokeWidth` は Manim `Arrow` と同じく drawable length に対する上限比で clamp されます。
+- `projectedCircle`: `radius`, `xBasis=<x,y>`, `yBasis=<x,y>`; projected 3D axes と同じ basis vector から、Manim `Circle()` を XY 平面へ投影した滑らかな閉じた cubic `path` を生成します。`phi` / `theta` / `gamma` を指定すると、Manim `ThreeDCamera` と同じ `rotation_about_z(-theta-90°) -> rotation_matrix(-phi, RIGHT) -> rotation_about_z(gamma)` と `focalDistance / (focalDistance - z)` の透視係数で circle をサンプリングし、投影済みサンプルを閉じた cubic curve へ変換します。
+- `arrow`: `x1`, `y1`, `x2`, `y2`, `buff`, `tipLength`, `tipWidth`, `tipShape`, `maxTipLengthToLengthRatio`, `maxStrokeWidthToLengthRatio`; line shaft と Manim 風 tip path を持つ `group` を生成します。`tipShape` は `triangle`、`triangleFilled`（既定）、`square`、`squareFilled`、`circle`、`circleFilled`、`stealth`、または `ArrowSquareTip` などの Manim class 名を受け付けます。`tipLength` と `strokeWidth` は Manim `Arrow` と同じく drawable length に対する上限比で clamp されます。
 - `rotatingLine`: `x1`, `y1`, `x2`, `y2`, `about=<x,y>`, `angle=<expr>`; 基準線分を指定点まわりに回転した `line` を生成し、`angle` が value tracker を参照する場合は endpoint を `bindExpr` で更新します。Manim の `Line(...).rotate(angle, about_point=...)` を DSL で展開する helper です。
 - `rotateUpdater`: `rate=<radians-per-second>`, `duration`, `easing`, `from`; Manim の `mobject.add_updater(lambda m, dt: m.rotate_about_origin(rate * dt))` 型 callback updater を、累積した `rotation` animation として展開します。
 - `angle`: `radius` / `r`, `from`, `to`, `samples`, `close=true|false`; 円弧の `path` と `bindPath` updater を生成します。式は value tracker を参照できるため、`to=theta` のように animated tracker に追従できます。
@@ -228,7 +228,7 @@ Geometry options:
 Default values:
 
 - transform: `x=0`, `y=0`, `scale=1`, `rotation=0`, `opacity=1`; `scaleX` / `scaleY` are optional and default to `1`
-- style: `fill="#ffffff"`, `fillOpacity=1`, `stroke="none"`, `strokeOpacity=1`, `strokeWidth=0`
+- style: `fill="#ffffff"`, `fillOpacity=1`, `stroke="none"`, `strokeOpacity=1`, `strokeWidth=0`; curve helpers such as `plot`, `angle`, `tracedPath`, and `dataLineGraph` default to `strokeLinecap=round`, `strokeLinejoin=round`
 - circle: `r=40`
 - rect: `w=100`, `h=80`
 - line: `x1=0`, `y1=0`, `x2=100`, `y2=0`
@@ -358,7 +358,7 @@ Supported primitives:
 - `Animate(id, shift=LEFT|(x,y), opacity=<number>, fill=<css-color>, fillOpacity=<number>, stroke=<css-color>, strokeOpacity=<number>, strokeWidth=<number>, scale=<factor>, rotate=<radians>, rotation=<degrees>)`: target-state clone を作り、指定した Manim 風 mobject method/option を適用して、差分を transform/style animation に展開します。
 - `Create(id)`: `create` と semantic `effect=create` を生成します。`surroundingRect` frame では `geometry.drawProgress` も animation し、外枠を描き出します。
 - `Write(id)`: writable leaf を `geometry.writeProgress=0` で `create` し、semantic `effect=write` と、幅に応じた left-to-right reveal を生成して Manim の書き出し表示を近似します。
-- `MoveAlongPath(id, path)`: `circle` path node では、Manim の circular path proportion に合わせ、右端から反時計回りに 1 周する `transform.x/y` binding と value animation に展開します。`plot` path では `easing=linear` の場合、Manim の `path.point_from_proportion(...)` と同じ曲線長比例の位置 animation に展開します。
+- `MoveAlongPath(id, path)`: `circle` path node では、Manim の circular path proportion に合わせ、右端から反時計回りに 1 周する `transform.x/y` binding と value animation に展開します。`plot` path では `easing=linear` の場合、描画に使う smoothed cubic plot curve の曲線長に沿った位置 animation に展開し、Manim の `path.point_from_proportion(...)` 挙動へ寄せます。
 - `Rotating(id[, angle], about=(x,y), axis=OUT)`: node 自身の中心または明示した点を中心に回転します。Manim の `Rotating` に合わせ、`angle=TAU`、OUT axis を既定とし、`easing=linear` では等速の tracker motion になります。
 - `Transform(a, b)`: `a` を target として、`b` と異なる transform/style/geometry property ごとに `animate` operation を生成します。
 - `TransformMatchingTex(a, b)`: `math` node の token child を同一 token 文字列で対応付け、対応 token は `Transform`、消える token は `FadeOut`、新規 token は `FadeIn` に展開します。
@@ -385,24 +385,9 @@ Token 化は LaTeX 文字列を command（例: `\pi`, `\frac`）、escape 済み
 - destination にだけある token: hidden opacity の create から `FadeIn(token)` に展開します。
 - 両方にある token: source token id を target にした `Transform(sourceToken, destinationToken)` に展開します。
 
-制約: `expandTokens=true` がない `math` node、または token child を持たない node には使えません。現在の token child の位置は近似的な semantic anchor であり、複雑な TeX layout の厳密な glyph 位置合わせは renderer の責務として未対応です。
+制約: `expandTokens=true` がない `math` node、または token child を持たない node には使えません。現在の token child の位置は semantic anchor であり、複雑な TeX layout 全体を再現するものではありません。
 
-長期的に見た目を安定させたい場合は、renderer 側で glyph metrics（ascent / descent / baseline）を実測し、token child に baseline 補正を反映する実装を推奨します。最小差分の実装案（目安）:
-
-1. `web/src/dsl/compiler.ts` の token 生成で baseline フィールドを追加（約 3〜6 行）
-   - `latexToTokenNodes(...)` 内で `child.geometry.baselineOffset = 0` を初期化する。
-2. `web/src/renderers/svgRenderer.ts` の math 描画で baseline 補正を適用（約 8〜15 行）
-   - `createMathElement(...)` で `const baselineOffset = Number(node.geometry.baselineOffset ?? 0);` を読み、`foreignObject` の `y` を `-height/2 + baselineOffset` にする。
-3. `web/src/renderers/svgRenderer.ts` に renderer 単位キャッシュ付き計測 helper を追加（約 25〜45 行）
-   - 例: `private readonly baselineCache = new Map<string, number>();`
-   - 例: `private getBaselineOffset(latex: string, renderer: MathRendererName, fontSize: number): number`
-   - cache key は `renderer + "::" + fontSize + "::" + latex`。
-4. `createMathElement(...)` から helper を呼ぶ 1 行を追加（約 1〜3 行）
-   - `node.geometry.baselineOffset` が未指定の場合のみ `getBaselineOffset(...)` を使う。
-5. fallback 方針
-   - KaTeX/MathJax 未読込時・計測失敗時は `0` を返し、現行挙動を維持する。
-
-この構成なら compiler 側の後方互換を保ちながら、`TransformMatchingTex` の token morph で起きる `r^2` / `R^2` の上下ズレを renderer 側で段階的に抑制できます。
+renderer 側では、KaTeX/MathJax fragment を inline baseline marker と比較して実測し、renderer / font size / LaTeX ごとの bounded `baselineOffset` として cache します。`geometry.baselineOffset` が明示されている場合はその値を優先します。KaTeX/MathJax 未読込時・計測失敗時は `0` に fallback し、決定的な出力を維持します。
 
 ### animate
 
@@ -440,7 +425,7 @@ Supported easing names:
 Supported property aliases:
 
 - `x`, `y`, `scale`, `scaleX`, `scaleY`, `rotation`, `opacity` -> `transform.*`
-- `fill`, `fillOpacity`, `stroke`, `strokeOpacity`, `strokeWidth` -> `style.*`
+- `fill`, `fillOpacity`, `stroke`, `strokeOpacity`, `strokeWidth`, `strokeLinecap`, `strokeLinejoin` -> `style.*`
 - `r`, `w`, `h`, `fontSize`, `x1`, `y1`, `x2`, `y2`, `d` -> `geometry.*`
 - `text` -> `text`
 

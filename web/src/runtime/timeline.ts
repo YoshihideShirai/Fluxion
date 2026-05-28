@@ -13,6 +13,7 @@ import type {
   ValueTracker,
   Camera,
 } from "../types.js";
+import { arcToSvgPath, pointsToSvgPath } from "../pathUtils.js";
 import { evaluateExpression } from "./expression.js";
 import type { SceneGraph } from "./sceneGraph.js";
 
@@ -133,6 +134,12 @@ const SIMPLIFY_EPSILON = 0.35;
 function buildPathData(op: BindPathOperation, trackerValues: Record<string, number>): string {
   const tMin = evaluateExpression(op.tMinExpr, trackerValues);
   const tMax = evaluateExpression(op.tMaxExpr, trackerValues);
+  if (op.pathType === "arc") {
+    return arcToSvgPath(op.radius ?? 0, tMin, tMax, {
+      ...(op.close === undefined ? {} : { close: op.close }),
+    });
+  }
+
   const effectiveSamples = Math.min(op.samples, MAX_PLOT_SAMPLES);
   const stride = op.samples > MAX_PLOT_SAMPLES ? Math.ceil(op.samples / MAX_PLOT_SAMPLES) : 1;
   const points: Array<{ x: number; y: number }> = [];
@@ -147,9 +154,10 @@ function buildPathData(op: BindPathOperation, trackerValues: Record<string, numb
   }
   if (points.length === 0) return "";
   const simplified = simplifyPolyline(points, SIMPLIFY_EPSILON);
-  const head = `M ${simplified[0]!.x} ${simplified[0]!.y}`;
-  const segments = simplified.slice(1).map((point) => `L ${point.x} ${point.y}`);
-  return [head, ...segments, ...(op.close ? ["Z"] : [])].join(" ");
+  return pointsToSvgPath(simplified, {
+    ...(op.close === undefined ? {} : { close: op.close }),
+    smooth: op.smoothing === "smooth",
+  });
 }
 
 function orderedTimeline(timeline: TimelineOperation[]): TimelineOperation[] {

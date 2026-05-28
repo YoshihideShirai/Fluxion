@@ -9,7 +9,7 @@ known_gaps:
   - symptom: "ZoomedScene の独立 sub-camera / ImageMobjectFromCamera は未実装のため、公式例の 2x4 image と zoomed display を同期した図形として手動再現している。"
     layer: runtime
     impact: medium
-    workaround: "元画像と zoom display を同じ grayscale rect 群で描き、Manim の 16:9 frame 換算で公式 `image.height=7`、default `Dot()` 半径 0.08、`zoomed_display_width=6` / `height=1` / `zoom_factor=0.3`、右上 corner からの `shift(DOWN)` placement、透明な `BackgroundRectangle(..., fill_opacity=0, buff=MED_SMALL_BUFF)`、独立した赤い display frame、pop-out、`FadeIn(..., shift=UP)` の上方向からのテキスト移動、非等方 scale、frame shift 後の sub-camera 内容差し替え、reverse pop-out の frame 位置への畳み込み、終端の `Uncreate(zoomed_display_frame)` と `FadeOut(frame)`、最後の既定 `self.wait()` 1秒 hold を通常 animation に展開する。"
+    workaround: "元画像と zoom display を同じ grayscale rect 群で描き、zoom display 内容は表示矩形に clip する。Manim の 16:9 frame 換算で公式 `image.height=7`、default `Dot()` 半径 0.08、`zoomed_display_width=6` / `height=1` / `zoom_factor=0.3`、右上 corner からの `shift(DOWN)` placement、透明な `BackgroundRectangle(..., fill_opacity=0, buff=MED_SMALL_BUFF)`、独立した赤い display frame、pop-out、`FadeIn(..., shift=UP)` の上方向からのテキスト移動、非等方 scale、frame shift 後の sub-camera 内容差し替え、reverse pop-out の frame 位置への畳み込み、終端の `Uncreate(zoomed_display_frame)` と `FadeOut(frame)`、最後の既定 `self.wait()` 1秒 hold を通常 animation に展開する。"
     closure_condition: "独立した sub-camera / viewport primitive を導入し、実シーンの拡大レンダリングを表示できる。"
     fidelity_upgrade_condition: "ズーム枠とズーム表示が同一ソース描画から生成され、本家と同等の追尾挙動になった時。"
 category: Manim Stable Examples
@@ -40,6 +40,7 @@ rect zoom_px_0 w=30.375 h=20.25 at -180.5625,-135 fill="#000000" stroke="none" o
 rect zoom_px_1 w=30.375 h=20.25 at -150.1875,-135 fill="#646464" stroke="none" opacity=0
 rect zoom_px_2 w=30.375 h=20.25 at -119.8125,-135 fill="#1E1E1E" stroke="none" opacity=0
 rect zoom_px_3 w=30.375 h=20.25 at -89.4375,-135 fill="#C8C8C8" stroke="none" opacity=0
+group zoom_display_content zoom_display zoom_px_0 zoom_px_1 zoom_px_2 zoom_px_3 clipTarget=zoom_display
 rect zoom_display_frame w=121.5 h=20.25 at -135,-135 fill="none" stroke="#FC6255" strokeWidth=20 opacity=0
 text zoom_text "Zoomed camera" at 244,-50 size=67 fill="#FC6255" opacity=0
 

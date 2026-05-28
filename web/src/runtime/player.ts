@@ -1,5 +1,6 @@
 import type { Camera, FluxionDocument } from "../types.js";
 import type { SceneNode } from "../types.js";
+import { pointsToSvgPath } from "../pathUtils.js";
 import type { SvgRenderer } from "../renderers/svgRenderer.js";
 import { SceneGraph } from "./sceneGraph.js";
 import { applyTimelineAt } from "./timeline.js";
@@ -110,8 +111,7 @@ function buildTargetTracePath(
     points.push({ x: target.transform.x, y: target.transform.y });
   }
   if (points.length === 0) return "";
-  const head = `M ${points[0]!.x} ${points[0]!.y}`;
-  return [head, ...points.slice(1).map((point) => `L ${point.x} ${point.y}`)].join(" ");
+  return pointsToSvgPath(points, { smooth: true });
 }
 
 function flattenNodes(nodes: SceneNode[]): SceneNode[] {

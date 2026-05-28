@@ -483,8 +483,22 @@ function svgGroupPathData(source, id) {
 }
 
 function svgPathPoints(d) {
-  return [...String(d).matchAll(/[ML]\s+(-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?)\s+(-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?)/giu)]
-    .map((match) => ({ x: Number(match[1]), y: Number(match[2]) }));
+  const points = [];
+  const numberPattern = /-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/giu;
+  for (const command of String(d).matchAll(/([MLC])([^MLCZ]*)/giu)) {
+    const kind = command[1].toUpperCase();
+    const numbers = [...command[2].matchAll(numberPattern)].map((match) => Number(match[0]));
+    if (kind === 'M' || kind === 'L') {
+      for (let index = 0; index + 1 < numbers.length; index += 2) {
+        points.push({ x: numbers[index], y: numbers[index + 1] });
+      }
+      continue;
+    }
+    for (let index = 0; index + 5 < numbers.length; index += 6) {
+      points.push({ x: numbers[index + 4], y: numbers[index + 5] });
+    }
+  }
+  return points;
 }
 
 function svgPathLastPoint(d) {
@@ -535,7 +549,8 @@ function serializeSvgNode(node, context) {
   if (!Number.isFinite(opacity) || opacity <= 0.0001) return '';
   const transform = serializeNodeTransform(node.transform);
   if (node.type === 'group') {
-    return `<g id="${escapeXml(node.id)}"${transform ? ` transform="${transform}"` : ''} opacity="${formatSvgNumber(opacity)}">${(node.children ?? []).map((child) => serializeSvgNode(child, { parentOpacity: opacity, nodeById: context.nodeById })).join('')}</g>`;
+    const clipPath = serializeClipPathAttribute(node, context.nodeById);
+    return `<g id="${escapeXml(node.id)}"${transform ? ` transform="${transform}"` : ''} opacity="${formatSvgNumber(opacity)}"${clipPath}>${(node.children ?? []).map((child) => serializeSvgNode(child, { parentOpacity: opacity, nodeById: context.nodeById })).join('')}</g>`;
   }
   if (node.type === 'image') {
     return serializeImageNode(node, opacity, transform);
@@ -583,6 +598,48 @@ function serializeSvgNode(node, context) {
   return '';
 }
 
+function serializeClipPathAttribute(node, nodeById) {
+  const rect = resolveSerializedClipRect(node, nodeById);
+  if (!rect) return '';
+  return ` clip-path="inset(${formatSvgNumber(rect.y - rect.h / 2)} ${formatSvgNumber(rect.x - rect.w / 2)} ${formatSvgNumber(rect.h)} ${formatSvgNumber(rect.w)})"`;
+}
+
+function resolveSerializedClipRect(node, nodeById) {
+  const targetId = typeof node.geometry?.clipTarget === 'string' ? node.geometry.clipTarget : '';
+  if (targetId) {
+    const target = nodeById.get(targetId);
+    if (!target) return null;
+    return serializedNodeClipBounds(target);
+  }
+
+  if (node.geometry?.clip !== 'rect') return null;
+  const w = Number(node.geometry?.clipW);
+  const h = Number(node.geometry?.clipH);
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null;
+  return {
+    x: Number(node.geometry?.clipX ?? 0),
+    y: Number(node.geometry?.clipY ?? 0),
+    w,
+    h,
+  };
+}
+
+function serializedNodeClipBounds(node) {
+  if (node.type !== 'rect' && node.type !== 'image') return null;
+  const scale = Number(node.transform?.scale ?? 1);
+  const scaleX = scale * Number(node.transform?.scaleX ?? 1);
+  const scaleY = scale * Number(node.transform?.scaleY ?? 1);
+  const w = Math.abs(Number(node.geometry?.w ?? 0) * scaleX);
+  const h = Math.abs(Number(node.geometry?.h ?? 0) * scaleY);
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null;
+  return {
+    x: Number(node.transform?.x ?? 0),
+    y: Number(node.transform?.y ?? 0),
+    w,
+    h,
+  };
+}
+
 function serializeImageNode(node, opacity, transform) {
   const pixels = parseImagePixels(String(node.geometry?.data ?? ''));
   if (pixels.length === 0 || pixels[0]?.length === 0) {
@@ -594,6 +651,10 @@ function serializeImageNode(node, opacity, transform) {
   const h = Number(node.geometry?.h ?? 0);
   const rows = pixels.length;
   const cols = pixels[0].length;
+  const horizontalGradient = detectHorizontalImageGradient(pixels, cols);
+  if (horizontalGradient) {
+    return `<g id="${escapeXml(node.id)}"${transform ? ` transform="${transform}"` : ''} opacity="${formatSvgNumber(opacity)}"><rect x="${formatSvgNumber(-w / 2)}" y="${formatSvgNumber(-h / 2)}" width="${formatSvgNumber(w)}" height="${formatSvgNumber(h)}" fill="linear-gradient(${horizontalGradient.join(',')})"/></g>`;
+  }
   const cellW = w / cols;
   const cellH = h / rows;
   const rects = [];
@@ -605,6 +666,19 @@ function serializeImageNode(node, opacity, transform) {
     }
   }
   return `<g id="${escapeXml(node.id)}"${transform ? ` transform="${transform}"` : ''} opacity="${formatSvgNumber(opacity)}">${rects.join('')}</g>`;
+}
+
+function detectHorizontalImageGradient(pixels, cols) {
+  if (pixels.length < 2 || cols < 2) return undefined;
+  const first = Array.from({ length: cols }, (_, index) => Number(pixels[0]?.[index] ?? pixels[0]?.at(-1) ?? 0));
+  if (!pixels.every((row) => first.every((value, index) => Math.abs(Number(row[index] ?? row.at(-1) ?? 0) - value) < 1e-9))) {
+    return undefined;
+  }
+  return first.map((value) => {
+    const gray = clamp(Math.round(Number(value)), 0, 255);
+    const hex = gray.toString(16).padStart(2, '0');
+    return `#${hex}${hex}${hex}`;
+  });
 }
 
 function buildSerializedBracePath(node, nodeById) {
@@ -772,6 +846,8 @@ function serializeStyle(style = {}, opacity = 1, geometry = {}) {
   const fill = style.fill ?? 'none';
   const stroke = style.stroke ?? 'none';
   const strokeWidth = Number(style.strokeWidth ?? 0);
+  const strokeLinecap = style.strokeLinecap;
+  const strokeLinejoin = style.strokeLinejoin;
   let fillOpacity = Number(style.fillOpacity ?? 1);
   if (Object.hasOwn(geometry, 'drawProgress') && fill !== 'none') {
     const progress = clamp(Number(geometry.drawProgress), 0, 1);
@@ -782,6 +858,8 @@ function serializeStyle(style = {}, opacity = 1, geometry = {}) {
     ` fill="${escapeXml(fill)}"`,
     ` stroke="${escapeXml(stroke)}"`,
     ` stroke-width="${formatSvgNumber(strokeWidth)}"`,
+    strokeLinecap ? ` stroke-linecap="${escapeXml(strokeLinecap)}"` : '',
+    strokeLinejoin ? ` stroke-linejoin="${escapeXml(strokeLinejoin)}"` : '',
     ` fill-opacity="${formatSvgNumber(fillOpacity)}"`,
     ` stroke-opacity="${formatSvgNumber(strokeOpacity)}"`,
     ` opacity="${formatSvgNumber(opacity)}"`,
@@ -863,8 +941,8 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, frame?.type === 'rect' && approximatelyEqual(frame.geometry?.w ?? 0, 269.5) && approximatelyEqual(frame.geometry?.h ?? 0, 269.5), 'expected Manim GREEN frame around image with MED_SMALL_BUFF.');
     assertGalleryCondition(label, frame?.style?.stroke === '#83C167' && approximatelyEqual(frame.style?.strokeWidth ?? 0, 4), 'expected GREEN image border.');
     const svg = svgSampleAt(documentData, 0);
-    assertGalleryCondition(label, countSvgOccurrences(svg, /<rect\b/gu) === 64 * 64 + 2, 'expected SVG to serialize all gradient image pixels plus background and frame.');
-    assertGalleryCondition(label, svg.includes('fill="#000000"') && svg.includes('fill="#ffffff"') && svg.includes('stroke="#83C167"'), 'expected SVG gradient endpoints and green frame.');
+    assertGalleryCondition(label, countSvgOccurrences(svg, /<rect\b/gu) === 3, 'expected SVG to collapse repeated image rows into one smooth gradient rect plus background and frame.');
+    assertGalleryCondition(label, svg.includes('linear-gradient(#000000') && svg.includes('#ffffff)') && svg.includes('stroke="#83C167"'), 'expected SVG gradient endpoints and green frame.');
   }
 
   if (label.includes('vector-arrow')) {
@@ -1064,7 +1142,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const finalH0 = findRenderedNode(finalWarp, 'grid_h0');
     const finalV14 = findRenderedNode(finalWarp, 'grid_v14');
     const finalTitle = findRenderedNode(finalWarp, 'gridTitle');
-    assertGalleryCondition(label, String(finalH0?.geometry?.d ?? '').startsWith('M -523.6 -225.7 L -492.9478 -225.8412') && String(finalV14?.geometry?.d ?? '').startsWith('M 523.6 225.7 L 514.7168 209.979'), 'expected final warped full-frame grid paths.');
+    assertGalleryCondition(label, String(finalH0?.geometry?.d ?? '').startsWith('M -523.6 -225.7 C ') && String(finalV14?.geometry?.d ?? '').startsWith('M 523.6 225.7 C '), 'expected final warped full-frame grid paths to keep their cubic topology.');
     assertGalleryCondition(label, String(finalTitle?.latex).includes('non-linear function') && finalTitle?.transform?.x === -184 && finalTitle?.transform?.y === 184 && finalTitle?.geometry?.fontSize === 38, 'expected final nonlinear transform title.');
 
     const gridStartSvg = svgSampleAt(documentData, 5.5);
@@ -1165,10 +1243,13 @@ function checkGallerySpecificStructure(label, documentData) {
     const line1Tag = svgElementTag(svg, 'line_1');
     const line2Tag = svgElementTag(svg, 'line_2');
     const boundedPath = svgGroupPathData(svg, 'bounded_area');
+    const boundedPoints = svgPathPoints(boundedPath);
+    const boundedFirst = boundedPoints[0];
+    const boundedLast = boundedPoints.at(-1);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="riemann:rect:/gu) === 10, 'expected all ten Riemann rectangles in SVG.');
     assertGalleryCondition(label, firstRectTag.includes('width="4.86"') && firstRectTag.includes('height="74.925"') && firstRectTag.includes('transform="translate(-353.97 165.0375)"') && firstRectTag.includes('fill="#0000FF"') && firstRectTag.includes('fill-opacity="0.5"'), 'expected first Riemann rectangle left-sampled under curve_1.');
     assertGalleryCondition(label, lastRectTag.includes('width="4.86"') && lastRectTag.includes('height="131.96925"') && lastRectTag.includes('transform="translate(-310.23 136.515375)"'), 'expected final Riemann rectangle left-sampled under curve_1.');
-    assertGalleryCondition(label, boundedPath.startsWith('M -81 -67.5 L ') && boundedPath.endsWith('-81 121.5 Z') && svg.includes('id="bounded_area"') && svg.includes('fill="#888888"'), 'expected bounded area path between x=2 and x=3.');
+    assertGalleryCondition(label, boundedPath.includes(' C ') && boundedPath.includes(' L ') && approximatelyEqual(boundedFirst?.x ?? 0, -81) && approximatelyEqual(boundedFirst?.y ?? 0, -67.5) && approximatelyEqual(boundedLast?.x ?? 0, -81) && approximatelyEqual(boundedLast?.y ?? 0, 121.5) && svg.includes('id="bounded_area"') && svg.includes('fill="#888888"'), 'expected smooth bounded area path between x=2 and x=3.');
     assertGalleryCondition(label, line1Tag.includes('x1="-81"') && line1Tag.includes('y1="202.5"') && line1Tag.includes('x2="-81"') && line1Tag.includes('y2="-67.5"'), 'expected left vertical bound line at x=2 up to curve_1.');
     assertGalleryCondition(label, line2Tag.includes('x1="81"') && line2Tag.includes('y1="202.5"') && line2Tag.includes('x2="81"') && line2Tag.includes('y2="0"'), 'expected right vertical bound line at x=3 up to curve_1.');
     assertGalleryCondition(label, svg.includes('id="curve_1"') && svg.includes('stroke="#58C4DD"') && svg.includes('id="curve_2"') && svg.includes('stroke="#83C167"'), 'expected both bounding curves in SVG.');
@@ -1223,12 +1304,14 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, surface?.geometry?.mu?.join(',') === '0,0', 'expected official gaussian mu=[0,0].');
     assertGalleryCondition(label, surface?.geometry?.cameraProjection === 'manim' && surface.geometry?.phi === 75 && surface.geometry?.theta === -30, 'expected gaussianSurface to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, surfaceFaces.length === 24 * 24, `expected 576 gaussian surface faces, got ${surfaceFaces.length}.`);
-    assertGalleryCondition(label, surfaceFaces.every((face) => face.metadata?.surfaceFace), 'expected gaussian faces to retain source row/column/depth metadata for Manim-style painter ordering.');
+    assertGalleryCondition(label, surfaceFaces.every((face) => face.metadata?.surfaceFace), 'expected gaussian faces to retain source row/column/depth/shade metadata for Manim-style painter ordering.');
     assertGalleryCondition(label, surfaceFaces.every((face, index, faces) => index === 0 || Number(faces[index - 1]?.metadata?.surfaceFace?.depth) <= Number(face.metadata?.surfaceFace?.depth)), 'expected gaussian faces to be serialized in increasing camera-depth order.');
+    assertGalleryCondition(label, surface?.geometry?.light?.join(',') === '-7,-9,10', 'expected gaussianSurface to use Manim ThreeDCamera default light source.');
     assertGalleryCondition(label, surfaceFaces.some((face) => face.metadata?.surfaceFace?.row === 12 && face.metadata?.surfaceFace?.col === 12 && Number(face.metadata?.surfaceFace?.height) > 0.5), 'expected gaussian metadata to identify the high center peak.');
+    assertGalleryCondition(label, Math.max(...surfaceFaces.map((face) => Number(face.metadata?.surfaceFace?.shade ?? 0))) > 0.2 && Math.min(...surfaceFaces.map((face) => Number(face.metadata?.surfaceFace?.shade ?? 0))) < -0.005, 'expected gaussian metadata to preserve Manim get_shaded_rgb light and shadow deltas.');
     assertGalleryCondition(label, surfaceFaces.every((child) => child.style?.stroke === '#83C167' && approximatelyEqual(child.style?.strokeWidth ?? 0, 0.5)), 'expected green 0.5px surface face strokes.');
     assertGalleryCondition(label, surfaceFaces.every((child) => approximatelyEqual(child.style?.fillOpacity ?? 0, 0.5)), 'expected checkerboard fill opacity 0.5.');
-    assertGalleryCondition(label, surfaceFills.size >= 20, `expected height-shaded checkerboard face colors, got ${surfaceFills.size}.`);
+    assertGalleryCondition(label, surfaceFills.size >= 20, `expected light/normal-shaded checkerboard face colors, got ${surfaceFills.size}.`);
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="gauss:face:/gu) === 24 * 24, 'expected all gaussian mesh faces to serialize into SVG.');
     assertGalleryCondition(label, svg.includes('stroke="#83C167"') && svg.includes('fill-opacity="0.5"'), 'expected SVG gaussian surface strokes and opacity.');
@@ -1335,10 +1418,13 @@ function checkGallerySpecificStructure(label, documentData) {
     const frame = findNode(documentData, 'frame');
     const zoomBg = findNode(documentData, 'zoom_bg');
     const zoomDisplay = findNode(documentData, 'zoom_display');
+    const zoomDisplayContent = findNode(documentData, 'zoom_display_content');
     const zoomDisplayFrame = findNode(documentData, 'zoom_display_frame');
     assertGalleryCondition(label, approximatelyEqual(frame?.geometry?.w ?? 0, 121.5) && approximatelyEqual(frame?.geometry?.h ?? 0, 20.25), 'expected zoomed camera frame to match zoom_factor=0.3 and 6x1 display ratio.');
     assertGalleryCondition(label, frame?.style?.stroke === '#9A72AC' && approximatelyEqual(frame?.style?.strokeWidth ?? 0, 3), 'expected purple zoomed camera frame with official stroke width 3.');
     assertGalleryCondition(label, approximatelyEqual(zoomDisplay?.geometry?.w ?? 0, 121.5) && approximatelyEqual(zoomDisplay?.geometry?.h ?? 0, 20.25), 'expected zoom display to pop out from the camera frame geometry.');
+    assertGalleryCondition(label, zoomDisplayContent?.type === 'group' && zoomDisplayContent.geometry?.clipTarget === 'zoom_display', 'expected zoomed display content to clip against the zoom display frame.');
+    assertGalleryCondition(label, (zoomDisplayContent?.children ?? []).length === 5, 'expected clipped zoomed display content to contain display background plus four sampled pixels.');
     assertGalleryCondition(label, approximatelyEqual(zoomBg?.geometry?.w ?? 0, 155.25) && approximatelyEqual(zoomBg?.geometry?.h ?? 0, 54), 'expected BackgroundRectangle buff around the collapsed zoom display.');
     assertGalleryCondition(label, zoomDisplayFrame?.style?.stroke === '#FC6255' && approximatelyEqual(zoomDisplayFrame?.style?.strokeWidth ?? 0, 20), 'expected red zoomed display frame with official image_frame_stroke_width=20.');
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'px_') === 8, 'expected original 2x4 image pixel grid.');
@@ -1358,6 +1444,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const shiftedSvg = svgSampleAt(documentData, 8);
     assertGalleryCondition(label, countSvgOccurrences(initialSvg, /id="px_/gu) === 8, 'expected original image pixels to serialize into initial SVG.');
     assertGalleryCondition(label, countSvgOccurrences(poppedSvg, /id="zoom_px_/gu) === 4, 'expected zoomed image pixels to serialize into SVG after pop out.');
+    assertGalleryCondition(label, /id="zoom_display_content"[^>]*clip-path=/u.test(poppedSvg), 'expected popped-out zoom display content to serialize with a clip path.');
     assertGalleryCondition(label, /id="zoom_display"[^>]*width="405"/u.test(poppedSvg), 'expected popped-out zoom display SVG width 405.');
     assertGalleryCondition(label, /id="zoom_px_0"[^>]*fill="(?:#FFFFFF|rgb\(255, 255, 255\))"/u.test(shiftedSvg), 'expected retargeted zoom display pixel color in SVG after frame shift.');
   }
@@ -1385,7 +1472,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const endDot = flattenNodes(followEnd.nodes).find((node) => node.id === 'moving_dot');
     assertGalleryCondition(label, approximatelyEqual(startDot?.transform?.x ?? 0, -331.364) && approximatelyEqual(startDot?.transform?.y ?? 0, 165.682), 'expected moving dot to remain at the graph start before MoveAlongPath begins.');
     assertGalleryCondition(label, approximatelyEqual(zoomStart.camera?.target?.x ?? 0, -331.364) && approximatelyEqual(zoomStart.camera?.target?.y ?? 0, 165.682) && approximatelyEqual(zoomStart.camera?.scale ?? 0, 2), 'expected camera to finish zooming into the graph start at 1s.');
-    assertGalleryCondition(label, approximatelyEqual(midDot?.transform?.x ?? 0, 15.637475) && approximatelyEqual(midDot?.transform?.y ?? 0, 202.493713), 'expected moving dot to follow the sine path midpoint by arc length.');
+    assertGalleryCondition(label, approximatelyEqual(midDot?.transform?.x ?? 0, 15.637475) && approximatelyEqual(midDot?.transform?.y ?? 0, 202.5), 'expected moving dot to follow the smooth sine path midpoint by arc length.');
     assertGalleryCondition(label, approximatelyEqual(followMid.camera?.target?.x ?? 0, midDot?.transform?.x ?? 0) && approximatelyEqual(followMid.camera?.target?.y ?? 0, midDot?.transform?.y ?? 0), 'expected camera target to match the moving dot while following.');
     assertGalleryCondition(label, approximatelyEqual(endDot?.transform?.x ?? 0, 362.63895) && approximatelyEqual(endDot?.transform?.y ?? 0, 165.682), 'expected moving dot to reach the graph end after MoveAlongPath.');
     assertGalleryCondition(label, approximatelyEqual(restored.camera?.target?.x ?? 1, 0) && approximatelyEqual(restored.camera?.target?.y ?? 1, 0) && approximatelyEqual(restored.camera?.scale ?? 0, 1), 'expected camera to restore to the original frame by 3s.');
@@ -1394,8 +1481,8 @@ function checkGallerySpecificStructure(label, documentData) {
     const midSvg = followMid.svg.source;
     assertGalleryCondition(label, /<g transform="translate\(480 270\) rotate\(0\) scale\(1\) translate\(0 0\)">/u.test(initialSvg), 'expected initial SVG camera transform to target the scene origin.');
     assertGalleryCondition(label, /id="moving_dot"[^>]*transform="translate\(-331\.364 165\.682\)"/u.test(initialSvg), 'expected initial SVG moving dot at the sine graph start.');
-    assertGalleryCondition(label, /<g transform="translate\(480 270\) rotate\(0\) scale\(2\) translate\(-15\.63747[0-9]* -202\.49371[0-9]*\)">/u.test(midSvg), 'expected SVG camera transform to follow the dot at the path midpoint.');
-    assertGalleryCondition(label, /id="moving_dot"[^>]*transform="translate\(15\.637475 202\.493713\)"/u.test(midSvg), 'expected SVG moving dot to serialize at the path midpoint.');
+    assertGalleryCondition(label, /<g transform="translate\(480 270\) rotate\(0\) scale\(2\) translate\(-15\.63747[0-9]* -202\.49999[0-9]*\)">/u.test(midSvg), 'expected SVG camera transform to follow the dot at the path midpoint.');
+    assertGalleryCondition(label, /id="moving_dot"[^>]*transform="translate\(15\.637475 202\.499998\)"/u.test(midSvg), 'expected SVG moving dot to serialize at the path midpoint.');
   }
 
   if (label.includes('point-with-trace')) {
@@ -1414,6 +1501,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const upShift = svgPathLastPoint(svgGroupPathData(svgSampleAt(documentData, 4), 'trace'));
     const leftShift = svgPathLastPoint(svgGroupPathData(svgSampleAt(documentData, 5), 'trace'));
     const finalPath = svgGroupPathData(svgSampleAt(documentData, 6), 'trace');
+    const finalSvg = svgSampleAt(documentData, 6);
     const finalPoint = svgPathLastPoint(finalPath);
     const finalPoints = svgPathPoints(finalPath);
     assertGalleryCondition(label, arcPeak && approximatelyEqual(arcPeak.x, 67.5) && approximatelyEqual(arcPeak.y, 67.5) && arcPeak.count === 240, 'expected trace to reach the top of the half-rotation arc at 1s.');
@@ -1421,8 +1509,9 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, upShift && approximatelyEqual(upShift.x, 135) && approximatelyEqual(upShift.y, -67.5) && upShift.count === 240, 'expected trace to include the upward smooth shift.');
     assertGalleryCondition(label, leftShift && approximatelyEqual(leftShift.x, 67.5) && approximatelyEqual(leftShift.y, -67.5) && leftShift.count === 240, 'expected trace to include the final left smooth shift.');
     assertGalleryCondition(label, finalPoint && approximatelyEqual(finalPoint.x, 67.5) && approximatelyEqual(finalPoint.y, -67.5) && finalPoint.count === 240, 'expected final SVG trace to hold the last point.');
-    assertGalleryCondition(label, finalPath.startsWith('M 0 0 L ') && finalPoints.some((point) => approximatelyEqual(point.x, 135) && approximatelyEqual(point.y, 0)), 'expected final SVG trace to retain origin and post-rotation endpoint.');
+    assertGalleryCondition(label, finalPath.startsWith('M 0 0 C ') && finalPoints.some((point) => approximatelyEqual(point.x, 135) && approximatelyEqual(point.y, 0)), 'expected final SVG trace to retain origin and post-rotation endpoint as a smooth path.');
     assertGalleryCondition(label, finalPoints.some((point) => approximatelyEqual(point.x, 135) && point.y < -67.3), 'expected final SVG trace to retain the vertical segment after rotation.');
+    assertGalleryCondition(label, /id="trace"[^>]*><path [^>]*stroke-linecap="round"[^>]*stroke-linejoin="round"/u.test(finalSvg), 'expected SVG trace to use round VMobject stroke caps and joins.');
   }
 
   if (label.includes('moving-dots')) {
@@ -1528,15 +1617,17 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, approximatelyEqual(initialLabel?.transform?.x ?? 0, -36.526872) && approximatelyEqual(initialLabel?.transform?.y ?? 0, -44.23421), 'expected theta label on the initial 110-degree angle bisector.');
     assertGalleryCondition(label, approximatelyEqual(narrowLabel?.transform?.x ?? 0, -16.756598) && approximatelyEqual(narrowLabel?.transform?.y ?? 0, -18.469088), 'expected theta label to follow the 40-degree angle bisector.');
     assertGalleryCondition(label, approximatelyEqual(straightLabel?.transform?.x ?? 0, -67.5) && approximatelyEqual(straightLabel?.transform?.y ?? 0, -54), 'expected theta label at radius 0.8 on the 180-degree angle bisector.');
-    assertGalleryCondition(label, tintLabel?.style?.fill === 'rgb(255, 128, 128)' && redLabel?.style?.fill === 'rgb(255, 0, 0)', 'expected halfway and final red label colors during set_color animation.');
+    assertGalleryCondition(label, tintLabel?.style?.fill === 'rgb(255, 128, 128)' && ['rgb(255, 0, 0)', '#FF0000'].includes(String(redLabel?.style?.fill)), 'expected halfway and final red label colors during set_color animation.');
     assertGalleryCondition(label, approximatelyEqual(finalLabel?.transform?.x ?? 0, -121.294514) && approximatelyEqual(finalLabel?.transform?.y ?? 0, -4.70641), 'expected final theta label on the large-angle bisector.');
 
     const narrowArcEnd = svgPathLastPoint(svgGroupPathData(svgSampleAt(documentData, 2), 'a'));
     const straightArc = svgGroupPathData(svgSampleAt(documentData, 3), 'a');
-    const finalArcEnd = svgPathLastPoint(svgGroupPathData(svgSampleAt(documentData, 4.5), 'a'));
+    const finalArcSvg = svgSampleAt(documentData, 4.5);
+    const finalArcEnd = svgPathLastPoint(svgGroupPathData(finalArcSvg, 'a'));
     assertGalleryCondition(label, narrowArcEnd?.count === 2 && approximatelyEqual(narrowArcEnd.x, 25.854) && approximatelyEqual(narrowArcEnd.y, -21.694082), 'expected 40-degree SVG angle arc endpoint.');
-    assertGalleryCondition(label, straightArc.startsWith('M 33.75 0 L ') && straightArc.endsWith(' L -33.75 1.3844481424784853e-8'), 'expected 180-degree SVG angle arc from right to left.');
-    assertGalleryCondition(label, finalArcEnd?.count === 16 && approximatelyEqual(finalArcEnd.x, 33.237262) && approximatelyEqual(finalArcEnd.y, 5.860626), 'expected final 350-degree SVG angle arc endpoint.');
+    assertGalleryCondition(label, straightArc.startsWith('M 33.75 0 C ') && straightArc.endsWith(' -33.75 1.3844481424784853e-8'), 'expected smooth 180-degree SVG angle arc from right to left.');
+    assertGalleryCondition(label, finalArcEnd?.count === 5 && approximatelyEqual(finalArcEnd.x, 33.237262) && approximatelyEqual(finalArcEnd.y, 5.860626), 'expected final 350-degree SVG angle arc endpoint.');
+    assertGalleryCondition(label, /id="a"[^>]*><path [^>]*stroke-linecap="round"[^>]*stroke-linejoin="round"/u.test(finalArcSvg), 'expected SVG angle arc to use round VMobject stroke caps and joins.');
   }
 
   if (label.includes('moving-frame-box') || label.includes('moving_frame_box')) {
@@ -1663,7 +1754,8 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, /id="dot"[^>]*r="5\.4"[^>]*transform="translate\(-337\.5 0\)"[^>]*fill="#F7D96F"/u.test(halfTurnSvg), 'expected half-turn SVG dot at the left edge of the circle.');
     assertGalleryCondition(label, /id="origin_to_circle"[^>]*x2="-67\.5"[^>]*y2="0"[^>]*stroke="#58C4DD"/u.test(halfTurnSvg), 'expected half-turn SVG blue radius line.');
     assertGalleryCondition(label, /id="dot_to_curve"[^>]*x1="-222\.270292"[^>]*y1="-47\.729708"[^>]*x2="371\.25"[^>]*y2="-47\.729708"[^>]*stroke="#FFF1B6"/u.test(finalSvg), 'expected final SVG projection line to the sine trace.');
-    assertGalleryCondition(label, finalSvgTracePath.startsWith('M -202.5 0 L ') && finalSvgTracePath.endsWith(' L 371.2500000104585 -47.72970774170837'), 'expected final SVG sine trace path from curve_start to the 4.25pi endpoint.');
+    assertGalleryCondition(label, finalSvgTracePath.startsWith('M -202.5 0 C ') && finalSvgTracePath.endsWith(' 371.2500000104585 -47.72970774170837'), 'expected final smooth SVG sine trace path from curve_start to the 4.25pi endpoint.');
+    assertGalleryCondition(label, /id="sine_curve"[^>]*><path [^>]*stroke-linecap="round"[^>]*stroke-linejoin="round"/u.test(finalSvg), 'expected final sine trace to use round VMobject stroke caps and joins.');
   }
 
   if (label.includes('transform_matching_tex') || label.includes('transform-matching-tex')) {

@@ -190,6 +190,19 @@ test("resamples SVG paths with different command topology before morphing", () =
   assert.equal(/^M 5 10 L /u.test(d as string), true);
 });
 
+test("keeps original SVG path topology at animation endpoints", () => {
+  const from = "M 0 0 L 10 10";
+  const to = "M 10 20 C 30 40 50 60 70 80";
+
+  const atStart = new SceneGraph([{ ...node, type: "path", geometry: { d: from } }]);
+  applyTimelineAt(atStart, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from, to, duration: 1, easing: "linear" }], 0);
+  assert.equal(atStart.get("c1")?.geometry.d, from);
+
+  const atEnd = new SceneGraph([{ ...node, type: "path", geometry: { d: from } }]);
+  applyTimelineAt(atEnd, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from, to, duration: 1, easing: "linear" }], 1);
+  assert.equal(atEnd.get("c1")?.geometry.d, to);
+});
+
 test("falls back to step switching for unsupported SVG path morph fallback commands", () => {
   const beforeEnd = new SceneGraph([{ ...node, type: "path", geometry: { d: "M 0 0 A 10 10 0 0 1 20 20" } }]);
   applyTimelineAt(beforeEnd, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from: "M 0 0 A 10 10 0 0 1 20 20", to: "M 10 20 L 30 40 L 50 60", duration: 1, easing: "linear" }], 0.5);
@@ -267,7 +280,52 @@ test("rebuilds target traced paths from sampled timeline history", () => {
   const graph = new SceneGraph(documentData.nodes);
   applyTimelineAt(graph, documentData.timeline, 2, documentData.values);
   applyTargetTraces(graph, documentData, 2);
-  assert.equal(graph.get("trace")?.geometry.d, "M 0 0 L 50 -25 L 100 -50");
+  assert.equal(
+    graph.get("trace")?.geometry.d,
+    "M 0 0 C 8.333333333333334 -4.166666666666667 33.33333333333333 -16.666666666666664 50 -25 C 66.66666666666667 -33.333333333333336 91.66666666666667 -45.833333333333336 100 -50",
+  );
+});
+
+test("builds bound angle arcs as circular cubic paths", () => {
+  const arcNode: SceneNode = {
+    id: "arc",
+    type: "path",
+    transform: { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+    style: { fill: "none", stroke: "#fff", strokeWidth: 4 },
+    geometry: { d: "" },
+    children: [],
+  };
+  const documentData: FluxionDocument = {
+    version: "0.1",
+    width: 1280,
+    height: 720,
+    fps: 60,
+    duration: 1,
+    camera: { x: 0, y: 0, scale: 1, rotation: 0 },
+    nodes: [arcNode],
+    timeline: [
+      {
+        t: 0,
+        op: "bindPath",
+        id: "arc",
+        path: "geometry.d",
+        pathType: "arc",
+        radius: 60,
+        samples: 72,
+        tMinExpr: "0",
+        tMaxExpr: "theta",
+        xExpr: "60*cos(t)",
+        yExpr: "60*sin(t)",
+      },
+    ],
+    values: [{ id: "theta", initial: Math.PI / 2 }],
+  };
+  const graph = new SceneGraph(documentData.nodes);
+  applyTimelineAt(graph, documentData.timeline, 0, documentData.values);
+  assert.equal(
+    graph.get("arc")?.geometry.d,
+    "M 60 0 C 60 33.1370849898476 33.13708498984761 60 3.67394039744206e-15 60",
+  );
 });
 
 test("ignores semantic effect operations while applying fallback animations", () => {

@@ -62,6 +62,20 @@ export function applyNodeOption(
     return;
   }
 
+  if (key === "strokeLinecap") {
+    if (!["butt", "round", "square"].includes(value))
+      throw new DslCompileError("Expected strokeLinecap to be 'butt', 'round', or 'square'.", lineNumber);
+    node.style.strokeLinecap = value === "butt" || value === "square" ? value : "round";
+    return;
+  }
+
+  if (key === "strokeLinejoin") {
+    if (!["miter", "round", "bevel"].includes(value))
+      throw new DslCompileError("Expected strokeLinejoin to be 'miter', 'round', or 'bevel'.", lineNumber);
+    node.style.strokeLinejoin = value === "miter" || value === "bevel" ? value : "round";
+    return;
+  }
+
   if (key === "expandTokens") {
     node.geometry.expandTokens = parseBoolean(value, lineNumber);
     if (node.geometry.expandTokens) expandMathTokens(node, lineNumber);
@@ -128,8 +142,20 @@ export function applyNodeOption(
     return;
   }
 
-  if (["r", "w", "h", "x1", "y1", "x2", "y2"].includes(key)) {
+  if (["r", "w", "h", "x1", "y1", "x2", "y2", "clipX", "clipY", "clipW", "clipH"].includes(key)) {
     node.geometry[key] = parseNumber(value, lineNumber);
+    return;
+  }
+
+  if (key === "clip") {
+    if (value !== "rect")
+      throw new DslCompileError("Expected clip to be 'rect'.", lineNumber);
+    node.geometry.clip = value;
+    return;
+  }
+
+  if (key === "clipTarget") {
+    node.geometry.clipTarget = value;
     return;
   }
 
@@ -158,10 +184,10 @@ export function isCameraProperty(property: string | undefined): boolean {
 export function propertyPath(property: string): string {
   if (["x", "y", "scale", "scaleX", "scaleY", "rotation", "opacity"].includes(property))
     return `transform.${property}`;
-  if (["fill", "fillOpacity", "stroke", "strokeOpacity", "strokeWidth"].includes(property))
+  if (["fill", "fillOpacity", "stroke", "strokeOpacity", "strokeWidth", "strokeLinecap", "strokeLinejoin"].includes(property))
     return `style.${property}`;
   if (
-    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "data", "sampling", "target", "direction", "buff", "sharpness", "curvature", "tip", "label", "labelSize", "labelColor", "labelOffset", "labelAlignment", "labelRenderer", "labelW", "labelH", "fillRule"].includes(property)
+    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "data", "sampling", "target", "direction", "buff", "sharpness", "curvature", "tip", "label", "labelSize", "labelColor", "labelOffset", "labelAlignment", "labelRenderer", "labelW", "labelH", "fillRule", "clip", "clipTarget", "clipX", "clipY", "clipW", "clipH"].includes(property)
   )
     return `geometry.${property}`;
   if (property === "renderer") return "renderer";

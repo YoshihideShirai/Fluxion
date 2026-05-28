@@ -18,19 +18,6 @@ def _format_path_number(value: float) -> str:
     return str(round(value, 6)).rstrip("0").rstrip(".") if "." in str(round(value, 6)) else str(round(value, 6))
 
 
-def _shade_hex_color(hex_color: str, amount: float) -> str:
-    value = hex_color[1:] if hex_color.startswith("#") else hex_color
-    if len(value) != 6:
-        return hex_color
-    try:
-        rgb = [int(value[offset : offset + 2], 16) for offset in (0, 2, 4)]
-    except ValueError:
-        return hex_color
-    target = 255 if amount >= 1 else 0
-    weight = amount - 1 if amount >= 1 else 1 - amount
-    return "#" + "".join(f"{round(component + (target - component) * weight):02x}" for component in rgb)
-
-
 def _shade_hex_color_by_delta(hex_color: str, delta: float) -> str:
     value = hex_color[1:] if hex_color.startswith("#") else hex_color
     if len(value) != 6:
@@ -102,6 +89,44 @@ def _projected_circle_path(radius: float, x_basis: Point2, y_basis: Point2) -> s
     )
 
 
+def _js_number_string(value: float) -> str:
+    if abs(value) < 0.0000000000005:
+        return "0"
+    if float(value).is_integer():
+        return str(int(value))
+    return repr(value)
+
+
+def _smooth_closed_path(points: list[Point2]) -> str:
+    if len(points) < 3:
+        commands = [f"{'M' if index == 0 else 'L'} {_js_number_string(x)} {_js_number_string(y)}" for index, (x, y) in enumerate(points)]
+        commands.append("Z")
+        return " ".join(commands)
+
+    commands = [f"M {_js_number_string(points[0][0])} {_js_number_string(points[0][1])}"]
+    count = len(points)
+    for index, current in enumerate(points):
+        previous = points[(index - 1) % count]
+        next_point = points[(index + 1) % count]
+        after_next = points[(index + 2) % count]
+        c1 = (
+            current[0] + (next_point[0] - previous[0]) / 6,
+            current[1] + (next_point[1] - previous[1]) / 6,
+        )
+        c2 = (
+            next_point[0] - (after_next[0] - current[0]) / 6,
+            next_point[1] - (after_next[1] - current[1]) / 6,
+        )
+        commands.append(
+            "C "
+            f"{_js_number_string(c1[0])} {_js_number_string(c1[1])} "
+            f"{_js_number_string(c2[0])} {_js_number_string(c2[1])} "
+            f"{_js_number_string(next_point[0])} {_js_number_string(next_point[1])}"
+        )
+    commands.append("Z")
+    return " ".join(commands)
+
+
 def _manim_camera_projected_circle_path(
     radius: float,
     *,
@@ -126,8 +151,8 @@ def _manim_camera_projected_circle_path(
             focal_distance=focal_distance,
             zoom=zoom,
         )
-        points.append(f"{'M' if index == 0 else 'L'} {_format_path_number(x)} {_format_path_number(y)}")
-    return " ".join([*points, "Z"])
+        points.append((float(_format_path_number(x)), float(_format_path_number(y))))
+    return _smooth_closed_path(points)
 
 
 def _project_manim_camera_point(
@@ -586,7 +611,8 @@ class GaussianSurface(Mobject):
         stroke_width: float = 0.5,
         fill_opacity: float = 0.5,
         shade: bool = False,
-        shade_strength: float = 0.18,
+        shade_strength: float = 1,
+        light: Point3 = (-7, -9, 10),
         phi: float | None = None,
         theta: float | None = None,
         gamma: float = 0,
@@ -609,9 +635,18 @@ class GaussianSurface(Mobject):
             "zoom": zoom,
         }
 
+        def gaussian_height_and_normal(u: float, v: float) -> tuple[float, Point3]:
+            dx = u - mu_x
+            dy = v - mu_y
+            height = math.exp(-((dx**2 + dy**2) / (2 * sigma**2)))
+            sigma_squared = sigma**2 or 1
+            dzdu = height * (-dx / sigma_squared)
+            dzdv = height * (-dy / sigma_squared)
+            normal = _normalize3d((-dzdu, -dzdv, 1))
+            return (height, normal)
+
         def project(u: float, v: float) -> tuple[float, float, float, float]:
-            distance = math.hypot(u - mu_x, v - mu_y)
-            z = math.exp(-(distance**2 / (2 * sigma**2)))
+            z, _ = gaussian_height_and_normal(u, v)
             x = u * scale
             y = v * scale
             projected_z = z * scale
@@ -633,11 +668,20 @@ class GaussianSurface(Mobject):
                 ua = u0 + (u1 - u0) * (col / resolution)
                 ub = u0 + (u1 - u0) * ((col + 1) / resolution)
                 points3d = [project(ua, va), project(ub, va), project(ub, vb), project(ua, vb)]
+                mid_u = (ua + ub) / 2
+                mid_v = (va + vb) / 2
+                height, normal = gaussian_height_and_normal(mid_u, mid_v)
+                point = (mid_u * scale, mid_v * scale, height * scale)
+                to_light = _normalize3d(tuple(light[index] - point[index] for index in range(3)))  # type: ignore[arg-type]
+                light_dot = sum(normal[index] * to_light[index] for index in range(3))
+                light_amount = 0.5 * light_dot**3
+                if light_amount < 0:
+                    light_amount *= 0.5
                 faces.append(
                     _Face(
                         row=row,
                         col=col,
-                        shade=sum(point[2] for point in points3d) / len(points3d),
+                        shade=light_amount * shade_strength,
                         depth=sum(point[3] for point in points3d) / len(points3d),
                         points=tuple((point[0], point[1]) for point in points3d),  # type: ignore[arg-type]
                     )
@@ -647,7 +691,7 @@ class GaussianSurface(Mobject):
         children = []
         for index, face in enumerate(faces):
             base_fill = fill_a if (face.row + face.col) % 2 == 0 else fill_b
-            fill = _shade_hex_color(base_fill, 1 - shade_strength + face.shade * shade_strength * 2) if shade else base_fill
+            fill = _shade_hex_color_by_delta(base_fill, face.shade) if shade else base_fill
             children.append(
                 Path(
                     id=f"{id}:face:{index}",
@@ -672,6 +716,7 @@ class GaussianSurface(Mobject):
                 "yBasis": list(y_basis),
                 "zBasis": list(z_basis),
                 "shade": shade,
+                "light": list(light),
             }
         )
         if has_camera_projection:

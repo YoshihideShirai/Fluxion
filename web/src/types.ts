@@ -28,6 +28,8 @@ export interface Style {
   stroke?: string;
   strokeOpacity?: number;
   strokeWidth?: number;
+  strokeLinecap?: "butt" | "round" | "square";
+  strokeLinejoin?: "miter" | "round" | "bevel";
 }
 
 export interface PlotMetadata {
@@ -103,12 +105,15 @@ export interface BindPathOperation extends BaseOperation {
   op: "bindPath";
   id: string;
   path: string;
+  pathType?: "parametric" | "arc";
+  radius?: number;
   samples: number;
   tMinExpr: string;
   tMaxExpr: string;
   xExpr: string;
   yExpr: string;
   close?: boolean;
+  smoothing?: "linear" | "smooth";
   deps?: string[];
 }
 

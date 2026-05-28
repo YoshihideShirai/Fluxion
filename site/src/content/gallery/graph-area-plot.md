@@ -9,7 +9,7 @@ known_gaps:
   - symptom: "Manim の `Axes.get_riemann_rectangles` と `Axes.get_area(... bounded_graph=...)` は、`dataRiemannRects` と `dataArea` が axes データ座標から静的 geometry を生成している。"
     layer: dsl
     impact: low
-    workaround: "`axes`、`axisLabels`、`plot`、`dataLine`、`dataRiemannRects`、`dataArea` で公式式から各 geometry を生成し、`get_axis_labels()` の x/y ラベルを軸端の `UR` 配置へ近似する。"
+    workaround: "`axes`、`axisLabels`、`plot`、`dataLine`、`dataRiemannRects`、`dataArea` で公式式から各 geometry を生成し、`dataArea` は上下境界を滑らかな cubic path、左右境界を直線として閉じる。`get_axis_labels()` の x/y ラベルは軸端の `UR` 配置へ近似する。"
     closure_condition: "Manim と同じ `Axes.get_riemann_rectangles` / `Axes.get_area` API を DSL/runtime で直接扱えるようにする。"
     fidelity_upgrade_condition: "追加対応不要。"
 category: Manim Stable Examples

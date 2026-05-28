@@ -9,8 +9,8 @@ known_gaps:
   - symptom: "Dot motion uses DSL-native `Rotating(... about=RIGHT)` and `Animate(... shift=...)`; trace uses `tracedPath target=dot`, which rebuilds the target motion history on seek. Fine sampling can still differ from Manim's per-frame updater history."
     layer: dsl
     impact: low
-    workaround: "半回転は `Rotating(dot, PI, about=RIGHT)`、上/左移動は `Animate(dot, shift=...)` で表し、trace は `tracedPath target=dot` で seek 時点までの target transform をサンプリングして再構築する。`Rotating` は公式ソースの既定 `linear`、後続 `.animate.shift` は既定 `smooth` として扱う。"
-    closure_condition: "Manim と同じ per-frame updater sampling / path smoothing まで一致する。"
+    workaround: "半回転は `Rotating(dot, PI, about=RIGHT)`、上/左移動は `Animate(dot, shift=...)` で表し、trace は `tracedPath target=dot` で seek 時点までの target transform をサンプリングし、滑らかな cubic path として再構築する。`Rotating` は公式ソースの既定 `linear`、後続 `.animate.shift` は既定 `smooth` として扱う。"
+    closure_condition: "Manim と同じ per-frame updater sampling まで一致する。"
     fidelity_upgrade_condition: "Manim の `path.add_updater(update_path)` と同等の履歴追記で再現できる時。"
 category: Manim Stable Examples
 status: ported

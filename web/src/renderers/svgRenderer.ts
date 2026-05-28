@@ -50,6 +50,7 @@ export class SvgRenderer {
   private readonly baselineCache = new Map<string, number>();
   private currentDefs: SVGDefsElement | null = null;
   private gradientIndex = 0;
+  private clipIndex = 0;
 
   constructor(container: Element, width = 1280, height = 720) {
     this.width = width;
@@ -67,6 +68,7 @@ export class SvgRenderer {
   render(nodes: SceneNode[], camera: Camera = DEFAULT_CAMERA): void {
     this.nodeById.clear();
     this.gradientIndex = 0;
+    this.clipIndex = 0;
     this.currentDefs = document.createElementNS(SVG_NS, "defs");
     for (const node of nodes) this.indexNode(node);
     const root = document.createElementNS(SVG_NS, "g");
@@ -83,8 +85,65 @@ export class SvgRenderer {
     this.applyTransform(element, node.transform);
     this.applyStyle(element, node.style);
     this.applyDrawProgress(element, node);
+    this.applyClipPath(element, node);
     for (const child of node.children ?? []) element.append(this.renderNode(child));
     return element;
+  }
+
+  private applyClipPath(element: SVGElement, node: SceneNode): void {
+    if (!this.currentDefs) return;
+    const clipRect = this.resolveClipRect(node);
+    if (!clipRect) return;
+
+    const clipPath = document.createElementNS(SVG_NS, "clipPath");
+    const id = `fluxion-clip-${this.clipIndex++}`;
+    clipPath.setAttribute("id", id);
+
+    const rect = document.createElementNS(SVG_NS, "rect");
+    rect.setAttribute("x", String(clipRect.x - clipRect.w / 2));
+    rect.setAttribute("y", String(clipRect.y - clipRect.h / 2));
+    rect.setAttribute("width", String(clipRect.w));
+    rect.setAttribute("height", String(clipRect.h));
+    clipPath.append(rect);
+
+    this.currentDefs.append(clipPath);
+    element.setAttribute("clip-path", `url(#${id})`);
+  }
+
+  private resolveClipRect(node: SceneNode): { x: number; y: number; w: number; h: number } | null {
+    const targetId = typeof node.geometry.clipTarget === "string" ? node.geometry.clipTarget : "";
+    if (targetId) {
+      const target = this.nodeById.get(targetId);
+      if (!target) return null;
+      return this.nodeClipBounds(target);
+    }
+
+    if (node.geometry.clip !== "rect") return null;
+    const w = Number(node.geometry.clipW);
+    const h = Number(node.geometry.clipH);
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null;
+    return {
+      x: Number(node.geometry.clipX ?? 0),
+      y: Number(node.geometry.clipY ?? 0),
+      w,
+      h,
+    };
+  }
+
+  private nodeClipBounds(node: SceneNode): { x: number; y: number; w: number; h: number } | null {
+    if (node.type !== "rect" && node.type !== "image") return null;
+    const scale = Number(node.transform.scale ?? 1);
+    const scaleX = scale * Number(node.transform.scaleX ?? 1);
+    const scaleY = scale * Number(node.transform.scaleY ?? 1);
+    const w = Math.abs(Number(node.geometry.w ?? 0) * scaleX);
+    const h = Math.abs(Number(node.geometry.h ?? 0) * scaleY);
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null;
+    return {
+      x: Number(node.transform.x ?? 0),
+      y: Number(node.transform.y ?? 0),
+      w,
+      h,
+    };
   }
 
   private createElement(node: SceneNode): SVGElement {
@@ -206,6 +265,18 @@ export class SvgRenderer {
 
     const rows = pixels.length;
     const cols = Math.max(...pixels.map((row) => row.length));
+    const horizontalGradient = this.detectHorizontalImageGradient(pixels, cols);
+    if (horizontalGradient) {
+      const rect = document.createElementNS(SVG_NS, "rect");
+      rect.setAttribute("x", String(-width / 2));
+      rect.setAttribute("y", String(-height / 2));
+      rect.setAttribute("width", String(width));
+      rect.setAttribute("height", String(height));
+      rect.setAttribute("fill", this.createLinearGradientFill(horizontalGradient, "horizontal"));
+      rect.setAttribute("stroke", "none");
+      group.append(rect);
+      return group;
+    }
     const cellW = width / cols;
     const cellH = height / rows;
     pixels.forEach((row, rowIndex) => {
@@ -222,6 +293,16 @@ export class SvgRenderer {
       }
     });
     return group;
+  }
+
+  private detectHorizontalImageGradient(pixels: number[][], cols: number): string[] | undefined {
+    if (pixels.length < 2 || cols < 2) return undefined;
+    const first = Array.from({ length: cols }, (_, index) => pixels[0]?.[index] ?? pixels[0]?.at(-1) ?? 0);
+    const rowsMatch = pixels.every((row) =>
+      first.every((value, index) => Math.abs((row[index] ?? row.at(-1) ?? 0) - value) < 1e-9),
+    );
+    if (!rowsMatch) return undefined;
+    return first.map((value) => this.pixelToColor(value));
   }
 
   private parseImagePixels(data: string): number[][] {
@@ -748,6 +829,8 @@ export class SvgRenderer {
     element.setAttribute("fill", this.resolveFill(style.fill ?? "none"));
     element.setAttribute("stroke", style.stroke ?? "none");
     element.setAttribute("stroke-width", String(style.strokeWidth ?? 0));
+    if (style.strokeLinecap) element.setAttribute("stroke-linecap", style.strokeLinecap);
+    if (style.strokeLinejoin) element.setAttribute("stroke-linejoin", style.strokeLinejoin);
     if (style.fillOpacity !== undefined) element.setAttribute("fill-opacity", String(style.fillOpacity));
     if (style.strokeOpacity !== undefined) element.setAttribute("stroke-opacity", String(style.strokeOpacity));
   }
@@ -760,13 +843,18 @@ export class SvgRenderer {
       .map((part) => part.trim())
       .filter((part) => part.length > 0);
     if (colors.length < 2) return fill;
+    return this.createLinearGradientFill(colors, "horizontal");
+  }
+
+  private createLinearGradientFill(colors: string[], direction: "horizontal" | "vertical"): string {
+    if (!this.currentDefs || colors.length < 2) return colors[0] ?? "none";
     const id = `fluxion-gradient-${this.gradientIndex++}`;
     const gradient = document.createElementNS(SVG_NS, "linearGradient");
     gradient.setAttribute("id", id);
     gradient.setAttribute("x1", "0%");
     gradient.setAttribute("y1", "0%");
-    gradient.setAttribute("x2", "100%");
-    gradient.setAttribute("y2", "0%");
+    gradient.setAttribute("x2", direction === "horizontal" ? "100%" : "0%");
+    gradient.setAttribute("y2", direction === "vertical" ? "100%" : "0%");
     colors.forEach((color, index) => {
       const stop = document.createElementNS(SVG_NS, "stop");
       stop.setAttribute("offset", `${(index / (colors.length - 1)) * 100}%`);

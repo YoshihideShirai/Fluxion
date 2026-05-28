@@ -349,8 +349,9 @@ class PythonDslTest(unittest.TestCase):
         self.assertEqual(data["geometry"]["cameraProjection"], "manim")
         self.assertEqual(data["geometry"]["phi"], 75)
         self.assertEqual(data["geometry"]["theta"], 30)
-        self.assertTrue(data["geometry"]["d"].startswith("M -56.748555 25.439681 L "))
-        self.assertEqual(data["geometry"]["d"].count(" L "), 15)
+        self.assertTrue(data["geometry"]["d"].startswith("M -56.748555 25.439681 C "))
+        self.assertTrue(data["geometry"]["d"].endswith(" Z"))
+        self.assertEqual(data["geometry"]["d"].count(" C "), 16)
 
     def test_wait_advances_scene_duration(self):
         scene = Scene()

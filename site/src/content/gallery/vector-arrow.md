@@ -6,11 +6,11 @@ source_example_path: examples/gallery/vector-arrow.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "NumberPlane は `numberPlane` helper で Manim 16:9 frame の 1 unit = 67.5px に展開し、`fadedLineRatio` と faded line style も扱えるが、axis style の全オプションは未実装。Arrow は default `stroke_width=6`、`tip_length=0.35`、buff と tip/stroke length clamp を反映するが、全 tip_shape オプションは未実装。Text labels は `next_to(..., buff=SMALL_BUFF)` 相当の `nextTo` に展開する。公式例は `self.add(...)` の静止フレームとして扱う。"
+  - symptom: "NumberPlane は `numberPlane` helper で Manim 16:9 frame の 1 unit = 67.5px に展開し、`background_line_style` / `faded_line_style`、x/y axis の主要 stroke style、任意の tick/coordinate label を扱えるが、label direction など axis style の全オプションまでは未実装。Arrow は default `stroke_width=6`、`tip_length=0.35`、buff と tip/stroke length clamp を反映し、Manim の predefined tip_shape 名も DSL の `tipShape` として扱える。Text labels は `next_to(..., buff=SMALL_BUFF)` 相当の `nextTo` に展開する。公式例は `self.add(...)` の静止フレームとして扱う。"
     layer: dsl
     impact: low
     workaround: "`NumberPlane()` は frame radius と `BLUE_D` / white axes に合わせ、`Arrow(ORIGIN, [2, 2, 0], buff=0)` は 67.5px/unit、default white、tip length 23.625px として展開する。"
-    closure_condition: "NumberPlane axis style と Arrow の tip_shape 互換が実装される。"
+    closure_condition: "NumberPlane の label direction などを含む axis style の互換が実装される。"
     fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Manim Stable Examples
 status: ported
