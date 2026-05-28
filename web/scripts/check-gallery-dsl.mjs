@@ -1375,6 +1375,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const sphereFills = new Set(sphereFaces.map((child) => child.style?.fill).filter(Boolean));
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected projected ThreeDAxes helper.');
     assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'axes') < documentData.nodes.findIndex((node) => node.id === 'sphere'), 'expected official self.add(axes, sphere) z-order.');
+    assertGalleryCondition(label, axes?.transform?.x === 0 && axes?.transform?.y === 0, 'expected ThreeDAxes to stay at the unshifted Manim scene origin.');
     assertGalleryCondition(label, axes?.children?.length === 36, `expected projected default ThreeDAxes with ticks and tips, got ${axes?.children?.length ?? 0} children.`);
     assertGalleryCondition(label, axes?.geometry?.xRange?.join(',') === '-6,6,1', 'expected official default ThreeDAxes xRange.');
     assertGalleryCondition(label, axes?.geometry?.yRange?.join(',') === '-5,5,1', 'expected official default ThreeDAxes yRange.');
@@ -1383,7 +1384,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, findNode(documentData, 'axes:x:axis')?.style?.strokeWidth === 2, 'expected ThreeDAxes axis stroke width to match NumberLine default.');
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === 30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, sphere?.geometry?.sphereSurface === true, 'expected sphereSurface mesh.');
-    assertGalleryCondition(label, sphere?.transform?.x === 0 && sphere?.transform?.y === 28, 'expected sphereSurface to share the projected axes placement.');
+    assertGalleryCondition(label, sphere?.transform?.x === 0 && sphere?.transform?.y === 0, 'expected sphereSurface to share the unshifted axes placement.');
     assertGalleryCondition(label, sphere?.geometry?.uResolution === 15 && sphere?.geometry?.vResolution === 32, 'expected official sphere surface resolution 15x32.');
     assertGalleryCondition(label, approximatelyEqual(sphere?.geometry?.radius ?? 0, 104), 'expected sphere mesh radius near official 1.5 Manim units.');
     assertGalleryCondition(label, approximatelyEqual(sphere?.geometry?.worldRadius ?? 0, 1.5), 'expected official sphere world radius 1.5.');
