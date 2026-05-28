@@ -96,13 +96,13 @@ at 3s:
   animate zoom_px_2.fill from "#1E1E1E" to "#050505" duration=1s easing=easeInOut
   animate zoom_px_3.fill from "#C8C8C8" to "#212121" duration=1s easing=easeInOut
   wait 2s
-  animate zoom_bg.scale from 2 to 1 duration=1s easing=easeInOut
-  animate zoom_display.scale from 2 to 1 duration=1s easing=easeInOut
-  animate zoom_display_frame.scale from 2 to 1 duration=1s easing=easeInOut
-  animate zoom_px_0.scale from 2 to 1 duration=1s easing=easeInOut
-  animate zoom_px_1.scale from 2 to 1 duration=1s easing=easeInOut
-  animate zoom_px_2.scale from 2 to 1 duration=1s easing=easeInOut
-  animate zoom_px_3.scale from 2 to 1 duration=1s easing=easeInOut
+  animate zoom_bg.scale from 2 to 0.3 duration=1s easing=easeInOut
+  animate zoom_display.scale from 2 to 0.3 duration=1s easing=easeInOut
+  animate zoom_display_frame.scale from 2 to 0.3 duration=1s easing=easeInOut
+  animate zoom_px_0.scale from 2 to 0.3 duration=1s easing=easeInOut
+  animate zoom_px_1.scale from 2 to 0.3 duration=1s easing=easeInOut
+  animate zoom_px_2.scale from 2 to 0.3 duration=1s easing=easeInOut
+  animate zoom_px_3.scale from 2 to 0.3 duration=1s easing=easeInOut
   animate zoom_bg.x from 244 to -135 duration=1s easing=easeInOut
   animate zoom_bg.y from -135 to 33.75 duration=1s easing=easeInOut
   animate zoom_display.x from 244 to -135 duration=1s easing=easeInOut

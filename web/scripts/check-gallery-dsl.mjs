@@ -1447,16 +1447,19 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'frame', path: 'transform.y', from: -135, to: 33.75, t: 7, duration: 1 }), 'expected frame shift by 2.5*DOWN.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'transform.x', from: 244, to: -135, t: 9, duration: 1 }), 'expected reverse pop-out collapse to shifted frame x.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'transform.y', from: -135, to: 33.75, t: 9, duration: 1 }), 'expected reverse pop-out collapse to shifted frame y.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'transform.scale', from: 2, to: 0.3, t: 9, duration: 1 }), 'expected reverse pop-out to collapse the zoom display back to the frame size.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_px_0', path: 'style.fill', from: '#000000', to: '#FFFFFF', t: 7, duration: 1 }), 'expected zoom display content to retarget after frame shift.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'effect' && op.id === 'zoom_display_frame' && op.effect === 'uncreate'), 'expected final Uncreate on zoomed display frame.');
     const initialSvg = svgSampleAt(documentData, 0);
     const poppedSvg = svgSampleAt(documentData, 2);
     const shiftedSvg = svgSampleAt(documentData, 8);
+    const collapsedDisplay = renderedNodeAt(documentData, 10, 'zoom_display');
     assertGalleryCondition(label, countSvgOccurrences(initialSvg, /id="px_/gu) === 8, 'expected original image pixels to serialize into initial SVG.');
     assertGalleryCondition(label, countSvgOccurrences(poppedSvg, /id="zoom_px_/gu) === 4, 'expected zoomed image pixels to serialize into SVG after pop out.');
     assertGalleryCondition(label, /id="zoom_display_content"[^>]*clip-path=/u.test(poppedSvg), 'expected popped-out zoom display content to serialize with a clip path.');
     assertGalleryCondition(label, /id="zoom_display"[^>]*width="405"/u.test(poppedSvg), 'expected popped-out zoom display SVG width 405.');
     assertGalleryCondition(label, /id="zoom_px_0"[^>]*fill="(?:#FFFFFF|rgb\(255, 255, 255\))"/u.test(shiftedSvg), 'expected retargeted zoom display pixel color in SVG after frame shift.');
+    assertGalleryCondition(label, approximatelyEqual(collapsedDisplay?.transform?.scale ?? 0, 0.3) && approximatelyEqual((collapsedDisplay?.geometry?.w ?? 0) * (collapsedDisplay?.transform?.scaleX ?? 1) * (collapsedDisplay?.transform?.scale ?? 1), 60.75), 'expected reverse pop-out endpoint to match the anisotropically scaled zoom frame width.');
   }
 
   if (label.includes('special-camera')) {
