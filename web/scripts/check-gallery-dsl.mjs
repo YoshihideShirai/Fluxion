@@ -1370,14 +1370,7 @@ function checkGallerySpecificStructure(label, documentData) {
 
   if (label.includes('three-d-light-source-position')) {
     const axes = findNode(documentData, 'axes');
-    const sphereGroup = findNode(documentData, 'sphere');
-    const sphere = findNode(documentData, 'sphere_mesh');
-    const shadow = findNode(documentData, 'sphere_shadow');
-    const rim = findNode(documentData, 'sphere_rim');
-    const bloom = findNode(documentData, 'highlight_bloom');
-    const highlight = findNode(documentData, 'highlight');
-    const highlightCore = findNode(documentData, 'highlight_core');
-    const pin = findNode(documentData, 'highlight_pin');
+    const sphere = findNode(documentData, 'sphere');
     const sphereFaces = sphere?.children ?? [];
     const sphereFills = new Set(sphereFaces.map((child) => child.style?.fill).filter(Boolean));
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected projected ThreeDAxes helper.');
@@ -1389,8 +1382,8 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
     assertGalleryCondition(label, findNode(documentData, 'axes:x:axis')?.style?.strokeWidth === 2, 'expected ThreeDAxes axis stroke width to match NumberLine default.');
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === 30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
-    assertGalleryCondition(label, sphereGroup?.children?.length === 10 && approximatelyEqual(sphereGroup?.transform?.scale ?? 0, 0.973558), 'expected composed lit sphere overlay group with Manim radius scaling.');
     assertGalleryCondition(label, sphere?.geometry?.sphereSurface === true, 'expected sphereSurface mesh.');
+    assertGalleryCondition(label, sphere?.transform?.x === 0 && sphere?.transform?.y === 28, 'expected sphereSurface to share the projected axes placement.');
     assertGalleryCondition(label, sphere?.geometry?.uResolution === 15 && sphere?.geometry?.vResolution === 32, 'expected official sphere surface resolution 15x32.');
     assertGalleryCondition(label, approximatelyEqual(sphere?.geometry?.radius ?? 0, 104), 'expected sphere mesh radius near official 1.5 Manim units.');
     assertGalleryCondition(label, approximatelyEqual(sphere?.geometry?.worldRadius ?? 0, 1.5), 'expected official sphere world radius 1.5.');
@@ -1403,17 +1396,9 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, sphereFaces.every((child) => child.style?.stroke === '#BBBBBB' && approximatelyEqual(child.style?.strokeWidth ?? 0, 0.5)), 'expected LIGHT_GREY 0.5px sphere face strokes.');
     assertGalleryCondition(label, sphereFills.size >= 24, `expected light-shaded checkerboard sphere faces, got ${sphereFills.size}.`);
     const svg = svgSampleAt(documentData, 0);
-    assertGalleryCondition(label, countSvgOccurrences(svg, /id="sphere_mesh:face:/gu) === 15 * 32, 'expected all sphere mesh faces to serialize into SVG.');
-    assertGalleryCondition(label, svg.indexOf('id="axes:x:axis"') < svg.indexOf('id="sphere"'), 'expected SVG lit sphere group to render over the axes like self.add(axes, sphere).');
-    assertGalleryCondition(label, svg.includes('id="highlight_core"') && svg.includes('id="terminator_left"'), 'expected SVG lit sphere highlight and terminator overlays.');
-    assertGalleryCondition(label, shadow?.style?.fill === '#260404' && approximatelyEqual(shadow?.transform?.opacity ?? 0, 0.22), 'expected broad opposite-side sphere shadow.');
-    assertGalleryCondition(label, rim?.style?.stroke === '#4D0E0F' && approximatelyEqual(rim?.transform?.opacity ?? 0, 0.65), 'expected dark sphere rim.');
-    assertGalleryCondition(label, bloom?.style?.fill === '#F1988C' && approximatelyEqual(bloom?.transform?.opacity ?? 0, 0.22), 'expected warm light-source bloom.');
-    assertGalleryCondition(label, highlight?.style?.fill === '#F1988C' && approximatelyEqual(highlight?.transform?.opacity ?? 0, 0.58), 'expected warm highlight for light_source cue.');
-    assertGalleryCondition(label, highlightCore?.style?.fill === '#FFD0C8' && approximatelyEqual(highlightCore?.transform?.y ?? 0, -72), 'expected warm top highlight core for light_source cue.');
-    assertGalleryCondition(label, pin?.style?.fill === '#FFE6E0' && approximatelyEqual(pin?.geometry?.r ?? 0, 4), 'expected small specular highlight pin.');
-    assertGalleryCondition(label, findNode(documentData, 'terminator_left') !== undefined, 'expected terminator shadow overlay.');
-    assertGalleryCondition(label, findNode(documentData, 'terminator_bottom') !== undefined, 'expected lower terminator shadow overlay.');
+    assertGalleryCondition(label, countSvgOccurrences(svg, /id="sphere:face:/gu) === 15 * 32, 'expected all sphere mesh faces to serialize into SVG.');
+    assertGalleryCondition(label, svg.indexOf('id="axes:x:axis"') < svg.indexOf('id="sphere"'), 'expected SVG sphere to render over the axes like self.add(axes, sphere).');
+    assertGalleryCondition(label, !/id="(?:highlight|highlight_core|terminator_left|terminator_bottom|sphere_shadow|sphere_rim)"/u.test(svg), 'expected no non-Manim screen-space sphere highlight or shadow overlays.');
   }
 
   if (label.includes('three-d-camera-rotation')) {

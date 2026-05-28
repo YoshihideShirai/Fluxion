@@ -4,16 +4,6 @@ rect bg w=960 h=540 at 0,0 fill="#000000"
 
 threeDAxes axes at 0,28 xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 xLength=10.5 yLength=10.5 zLength=6.5 phi=75 theta=30 unitScale=67.5 stroke="#FFFFFF" strokeWidth=2 tickSize=10 tickStrokeWidth=2 includeTicks=true includeTips=true
 
-sphereSurface sphere_mesh radius=104 worldRadius=1.5 phi=75 theta=30 unitScale=67.5 resolution=15,32 fillA="#E65A4C" fillB="#CF5044" stroke="#BBBBBB" strokeWidth=0.5 light=0,0,-3
-circle sphere_shadow r=104 at 18,38 fill="#260404" stroke="none" opacity=0.22
-circle sphere_rim r=104 at 0,0 fill="none" stroke="#4D0E0F" strokeWidth=2 opacity=0.65
-path terminator_left d="M -104 -42 C -93 -4 -89 40 -62 80 C -91 62 -109 30 -110 -7 C -111 -22 -109 -34 -104 -42 Z" fill="#180303" stroke="none" opacity=0.22
-path terminator_bottom d="M -72 70 C -25 98 42 95 84 54 C 70 89 34 112 -12 110 C -43 109 -64 94 -72 70 Z" fill="#170303" stroke="none" opacity=0.28
-circle highlight_bloom r=48 at 0,-58 fill="#F1988C" stroke="none" opacity=0.22
-circle highlight r=28 at 0,-58 fill="#F1988C" stroke="none" opacity=0.58
-circle highlight_core r=10 at 0,-72 fill="#FFD0C8" stroke="none" opacity=0.72
-path highlight_sheen d="M -38 -72 C -21 -91 28 -88 58 -62 C 35 -72 -8 -78 -38 -72 Z" fill="#FFD0C8" stroke="none" opacity=0.24
-circle highlight_pin r=4 at -6,-84 fill="#FFE6E0" stroke="none" opacity=0.78
-group sphere sphere_shadow sphere_mesh sphere_rim terminator_left terminator_bottom highlight_bloom highlight highlight_core highlight_sheen highlight_pin at 0,28 scale=0.973558
+sphereSurface sphere at 0,28 radius=104 worldRadius=1.5 phi=75 theta=30 unitScale=67.5 resolution=15,32 fillA="#E65A4C" fillB="#CF5044" stroke="#BBBBBB" strokeWidth=0.5 light=0,0,-3
 
 wait 1s
