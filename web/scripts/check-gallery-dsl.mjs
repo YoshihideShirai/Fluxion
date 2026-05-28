@@ -1148,22 +1148,22 @@ function checkGallerySpecificStructure(label, documentData) {
     const warpMidH4 = findRenderedNode(warpMid, 'grid_h4');
     const warpMidV7 = findRenderedNode(warpMid, 'grid_v7');
     const warpMidTitle = findRenderedNode(warpMid, 'gridTitle');
-    assertGalleryCondition(label, String(warpMidH4?.geometry?.d ?? '').includes('L -445.44 22.0794') && String(warpMidV7?.geometry?.d ?? '').includes('L 21.1067 253.4307'), 'expected nonlinear grid morph halfway through p + [sin(y), sin(x), 0].');
+    assertGalleryCondition(label, String(warpMidH4?.geometry?.d ?? '').includes('L -447.1598 9.5075') && String(warpMidV7?.geometry?.d ?? '').includes('L 32.8999 -0.2683'), 'expected nonlinear grid morph halfway through sampled p + [sin(y), sin(x), 0].');
     assertGalleryCondition(label, warpMidTitle?.transform?.opacity === 1 && warpMidTitle?.transform?.x === -227 && warpMidTitle?.transform?.y === 195 && warpMidTitle?.geometry?.fontSize === 50, 'expected grid title halfway toward nonlinear title.');
 
     const finalWarp = visualSample(documentData, 11.25);
     const finalH0 = findRenderedNode(finalWarp, 'grid_h0');
     const finalV14 = findRenderedNode(finalWarp, 'grid_v14');
     const finalTitle = findRenderedNode(finalWarp, 'gridTitle');
-    assertGalleryCondition(label, String(finalH0?.geometry?.d ?? '').startsWith('M -523.6 -225.7 C ') && String(finalV14?.geometry?.d ?? '').startsWith('M 523.6 225.7 C '), 'expected final warped full-frame grid paths to keep their cubic topology.');
+    assertGalleryCondition(label, String(finalH0?.geometry?.d ?? '').startsWith('M -523.584 -225.653 L ') && String(finalV14?.geometry?.d ?? '').startsWith('M 421.416 -314.347 L '), 'expected final warped full-frame grid paths to keep sampled sine topology.');
     assertGalleryCondition(label, String(finalTitle?.latex).includes('non-linear function') && finalTitle?.transform?.x === -184 && finalTitle?.transform?.y === 184 && finalTitle?.geometry?.fontSize === 38, 'expected final nonlinear transform title.');
 
     const gridStartSvg = svgSampleAt(documentData, 5.5);
     const warpMidSvg = svgSampleAt(documentData, 9.75);
     const finalSvg = svgSampleAt(documentData, 11.25);
     assertGalleryCondition(label, /<g id="grid_h4"[^>]*><path [^>]*stroke="#FFFFFF"[^>]*stroke-dashoffset="0"/u.test(gridStartSvg) && /<g id="grid_v7"[^>]*><path [^>]*stroke="#FFFFFF"[^>]*stroke-dashoffset="1"/u.test(gridStartSvg), 'expected SVG lagged grid draw state at create midpoint.');
-    assertGalleryCondition(label, svgGroupPathData(warpMidSvg, 'grid_h4').includes('L -445.44 22.0794') && svgGroupPathData(warpMidSvg, 'grid_v7').includes('L 21.1067 253.4307'), 'expected SVG nonlinear grid halfway paths.');
-    assertGalleryCondition(label, finalSvg.includes('That was a non-linear function') && svgGroupPathData(finalSvg, 'grid_h0').startsWith('M -523.6 -225.7'), 'expected final SVG warped grid and nonlinear title.');
+    assertGalleryCondition(label, svgGroupPathData(warpMidSvg, 'grid_h4').includes('L -447.1598 9.5075') && svgGroupPathData(warpMidSvg, 'grid_v7').includes('L 32.8999 -0.2683'), 'expected SVG nonlinear grid halfway paths.');
+    assertGalleryCondition(label, finalSvg.includes('That was a non-linear function') && svgGroupPathData(finalSvg, 'grid_h0').startsWith('M -523.584 -225.653'), 'expected final SVG warped grid and nonlinear title.');
   }
 
   if (label.includes('plotting-sin-cos')) {
