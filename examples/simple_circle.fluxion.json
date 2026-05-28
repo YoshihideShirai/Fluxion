@@ -22,14 +22,14 @@
         "opacity": 1.0
       },
       "style": {
-        "fill": "#0d6efd",
-        "stroke": "#0d6efd",
+        "fill": "#D147BD",
+        "stroke": "#ffffff",
         "strokeWidth": 4,
         "fillOpacity": 0.5,
         "strokeOpacity": 1
       },
       "geometry": {
-        "r": 96
+        "r": 67.5
       },
       "children": []
     }
@@ -49,14 +49,14 @@
           "opacity": 1.0
         },
         "style": {
-          "fill": "#0d6efd",
-          "stroke": "#0d6efd",
+          "fill": "#D147BD",
+          "stroke": "#ffffff",
           "strokeWidth": 4,
           "fillOpacity": 0.5,
           "strokeOpacity": 1
         },
         "geometry": {
-          "r": 96,
+          "r": 67.5,
           "drawProgress": 0
         },
         "children": []

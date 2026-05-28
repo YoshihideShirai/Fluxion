@@ -9,7 +9,7 @@ known_gaps:
   - symptom: "Union/Intersection/Difference/Exclusion の汎用ブーリアン形状演算は未対応だが、この公式例は同径楕円2つの解析的な交点から SVG arc path として展開している。"
     layer: runtime
     impact: low
-    workaround: "公式 `Ellipse(width=4.0, height=5.0)` を Manim 16:9 frame scale で 270x337.5px に展開し、同じ楕円配置・演算ラベル・演算結果色で、楕円交点 `y=146.142` を使った arc path に展開する。fill_opacity と stroke を分離して各 `self.play(...); FadeIn(label)` の順序を明示タイムラインへ展開する。"
+    workaround: "公式 `Ellipse(width=4.0, height=5.0)` を Manim 16:9 frame scale で 270x337.5px に展開し、同じ楕円配置・演算ラベル・演算結果色で、楕円交点 `y=146.142` を使った arc path に展開する。fill_opacity と stroke を分離し、演算結果の move/scale/fade-in は `Animate(...)` target-state primitive、明示 `run_time` のない各 `self.play(...)` / `FadeIn(label)` は Manim 既定の1秒 cadence へ展開する。"
     closure_condition: "パス同士のブーリアン演算プリミティブを追加し、生成形状を直接レンダリングできる。"
     fidelity_upgrade_condition: "追加対応不要。"
 category: Manim Stable Examples
@@ -45,37 +45,24 @@ path difference_stroke d="M 0 -146.142 A 135 168.75 0 1 0 0 146.142 A 135 168.75
 group difference difference_fill difference_stroke at -232.5,0 opacity=0 scale=1
 text difference_label "Difference" at 148.5,-65.25 size=23 fill="#ffffff" opacity=0
 at 0s:
-  play AnimationGroup(FadeIn(ellipse_a), FadeIn(ellipse_b), FadeIn(title), Create(title_underline), lagRatio=0.08) duration=1s easing=smooth
+  play AnimationGroup(FadeIn(ellipse_a), FadeIn(ellipse_b), FadeIn(title), FadeIn(title_underline), lagRatio=0) duration=1s easing=smooth
 
-animate intersection.opacity from 0 to 1 start=1s duration=1s easing=easeInOut
-animate intersection.x from -232.5 to 337.5 start=1s duration=1s easing=easeInOut
-animate intersection.y from 0 to -168.75 start=1s duration=1s easing=easeInOut
-animate intersection.scale from 1 to 0.25 start=1s duration=1s easing=easeInOut
-animate intersection_stroke.strokeWidth from 4 to 16 start=1s duration=1s easing=easeInOut
+at 1s:
+  play AnimationGroup(Animate(intersection, opacity=1, shift=(570,-168.75), scale=0.25), Animate(intersection_stroke, strokeWidth=16), lagRatio=0) duration=1s easing=easeInOut
 at 2s:
-  play FadeIn(intersection_label) duration=0.45s easing=smooth
+  play FadeIn(intersection_label) duration=1s easing=smooth
 
-animate union.opacity from 0 to 1 start=2.45s duration=1s easing=easeInOut
-animate union.x from -232.5 to 337.5 start=2.45s duration=1s easing=easeInOut
-animate union.y from 0 to 11.25 start=2.45s duration=1s easing=easeInOut
-animate union.scale from 1 to 0.3 start=2.45s duration=1s easing=easeInOut
-animate union_stroke.strokeWidth from 4 to 13.333 start=2.45s duration=1s easing=easeInOut
-at 3.45s:
-  play FadeIn(union_label) duration=0.45s easing=smooth
+at 3s:
+  play AnimationGroup(Animate(union, opacity=1, shift=(570,11.25), scale=0.3), Animate(union_stroke, strokeWidth=13.333), lagRatio=0) duration=1s easing=easeInOut
+at 4s:
+  play FadeIn(union_label) duration=1s easing=smooth
 
-animate exclusion.opacity from 0 to 1 start=3.9s duration=1s easing=easeInOut
-animate exclusion.x from -232.5 to 337.5 start=3.9s duration=1s easing=easeInOut
-animate exclusion.y from 0 to 222.75 start=3.9s duration=1s easing=easeInOut
-animate exclusion.scale from 1 to 0.3 start=3.9s duration=1s easing=easeInOut
-animate exclusion_stroke.strokeWidth from 4 to 13.333 start=3.9s duration=1s easing=easeInOut
-at 4.9s:
-  play FadeIn(exclusion_label) duration=0.45s easing=smooth
+at 5s:
+  play AnimationGroup(Animate(exclusion, opacity=1, shift=(570,222.75), scale=0.3), Animate(exclusion_stroke, strokeWidth=13.333), lagRatio=0) duration=1s easing=easeInOut
+at 6s:
+  play FadeIn(exclusion_label) duration=1s easing=smooth
 
-animate difference.opacity from 0 to 1 start=5.35s duration=1s easing=easeInOut
-animate difference.x from -232.5 to 148.5 start=5.35s duration=1s easing=easeInOut
-animate difference.y from 0 to 11.25 start=5.35s duration=1s easing=easeInOut
-animate difference.scale from 1 to 0.3 start=5.35s duration=1s easing=easeInOut
-animate difference_stroke.strokeWidth from 4 to 13.333 start=5.35s duration=1s easing=easeInOut
-at 6.35s:
-  play FadeIn(difference_label) duration=0.45s easing=smooth
-  wait 0.7s
+at 7s:
+  play AnimationGroup(Animate(difference, opacity=1, shift=(381,11.25), scale=0.3), Animate(difference_stroke, strokeWidth=13.333), lagRatio=0) duration=1s easing=easeInOut
+at 8s:
+  play FadeIn(difference_label) duration=1s easing=smooth

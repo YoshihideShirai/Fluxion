@@ -254,6 +254,20 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     source: 'scene width=960 height=540 fps=60\nnumberPlane plane at 480,270 xRange=-7,7 yRange=-4,4 unit=60 stroke="#00bcd4" axisStroke="#dff9ff" strokeWidth=1.4 axisStrokeWidth=1.8',
   },
   {
+    key: 'axisLabels',
+    command: 'axisLabels',
+    description: {
+      ja: 'Axes helper の軸端に Manim 風の数式ラベルを生成します。',
+      en: 'Generate Manim-style math labels at an axes helper endpoint.',
+    },
+    referencePurpose: {
+      ja: 'Axes label helper',
+      en: 'Axes label helper',
+    },
+    minimalExample: 'axisLabels labels axes=ax x="x" y="f(x)"',
+    source: 'scene width=960 height=540 fps=60\naxes ax at 480,270 width=700 height=300 xRange=-4,4 yRange=-2,2 stroke="#94a3b8" strokeWidth=3\naxisLabels labels axes=ax x="x" y="f(x)" size=28 fill="#e2e8f0"',
+  },
+  {
     key: 'plot',
     command: 'plot',
     description: {
@@ -266,6 +280,20 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     },
     minimalExample: 'plot curve fn=sin(t) range=-3.14,3.14 scaleX=80 scaleY=60',
     source: 'scene width=960 height=540 fps=60\nplot curve fn=sin(t) range=-3.14,3.14 scaleX=90 scaleY=70 at 480,270 stroke="#38bdf8" strokeWidth=5 fill="none"',
+  },
+  {
+    key: 'graphLabel',
+    command: 'graphLabel',
+    description: {
+      ja: 'Plot helper の曲線上の点から Manim 風の数式ラベルを配置します。',
+      en: 'Place a Manim-style math label from a point on a plot helper.',
+    },
+    referencePurpose: {
+      ja: 'Plot graph label helper',
+      en: 'Plot graph label helper',
+    },
+    minimalExample: 'graphLabel label plot=curve label="\\sin(x)" xVal=1.57 direction=up',
+    source: 'scene width=960 height=540 fps=60\nplot curve fn=sin(t) range=-3.14,3.14 scaleX=90 scaleY=70 at 480,270 stroke="#38bdf8" strokeWidth=5 fill="none"\ngraphLabel label plot=curve label="\\sin(x)" xVal=1.57 direction=up fill="#38bdf8"',
   },
   {
     key: 'dataPolygon',
@@ -616,6 +644,20 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     },
     minimalExample: 'animateFrame to 120,40 scale=1.4 duration=1s',
     source: 'scene width=640 height=360 fps=60\ncameraFrame at 0,0 scale=1\ncircle dot r=42 at 120,40 fill="#38bdf8"\nanimateFrame to 120,40 scale=1.4 duration=1s easing=easeInOut',
+  },
+  {
+    key: 'followCamera',
+    command: 'followCamera',
+    description: {
+      ja: 'カメラターゲットを動く node に追従させます。',
+      en: 'Keep the camera target attached to a moving node.',
+    },
+    referencePurpose: {
+      ja: 'Keep camera target on a moving node',
+      en: 'Keep camera target on a moving node',
+    },
+    minimalExample: 'followCamera dot start=1s duration=2s',
+    source: 'scene width=640 height=360 fps=60\ncamera mode=target target=0,0 scale=1\ncircle dot r=30 at -180,0 fill="#ff862f"\nline path x1=-180 y1=0 x2=180 y2=0 stroke="#94a3b8"\nanimate dot.x from -180 to 180 start=1s duration=2s easing=linear\nfollowCamera dot start=1s duration=2s\nanimate camera.scale from 1 to 1.5 start=1s duration=0.8s easing=easeInOut',
   },
   {
     key: 'play',

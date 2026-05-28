@@ -167,6 +167,191 @@ class PythonDslTest(unittest.TestCase):
         self.assertEqual(data["geometry"]["data"], "0,128,255;255,0,64")
         self.assertEqual(data["geometry"]["sampling"], "nearest")
 
+    def test_gaussian_surface_exports_projected_checkerboard_faces(self):
+        from fluxion import GaussianSurface
+
+        surface = GaussianSurface(
+            id="gauss",
+            resolution=4,
+            scale=2,
+            sigma=0.4,
+            mu=(0, 0),
+            x_basis=(63, 31),
+            y_basis=(-60, 30),
+            z_basis=(0, -130),
+            fill_opacity=0.5,
+            shade=True,
+        )
+        data = surface.to_dict()
+
+        self.assertEqual(data["type"], "group")
+        self.assertEqual(data["geometry"]["gaussianSurface"], True)
+        self.assertEqual(data["geometry"]["resolution"], 4)
+        self.assertEqual(data["geometry"]["mu"], [0, 0])
+        self.assertEqual(data["geometry"]["xBasis"], [63, 31])
+        self.assertEqual(data["geometry"]["yBasis"], [-60, 30])
+        self.assertEqual(data["geometry"]["zBasis"], [0, -130])
+        self.assertEqual(len(data["children"]), 16)
+        self.assertTrue(all(child["type"] == "path" for child in data["children"]))
+        self.assertTrue(all(child["geometry"]["d"].endswith(" Z") for child in data["children"]))
+        self.assertEqual(data["children"][0]["style"]["strokeWidth"], 0.5)
+        self.assertEqual(data["children"][0]["style"]["fillOpacity"], 0.5)
+
+    def test_gaussian_surface_exports_manim_camera_projection(self):
+        from fluxion import GaussianSurface
+
+        surface = GaussianSurface(
+            id="gauss",
+            u_range=(-1, 1),
+            v_range=(-1, 1),
+            resolution=2,
+            scale=2,
+            sigma=0.4,
+            mu=(0, 0),
+            phi=75,
+            theta=30,
+            unit_scale=108.75,
+            shade=True,
+        )
+        data = surface.to_dict()
+
+        self.assertEqual(data["geometry"]["cameraProjection"], "manim")
+        self.assertEqual(data["geometry"]["phi"], 75)
+        self.assertEqual(data["geometry"]["theta"], 30)
+        self.assertEqual(len(data["children"]), 4)
+        self.assertEqual(
+            data["children"][0]["geometry"]["d"],
+            "M -70.333659 -68.295405 L -179.877654 -35.693937 L 0 -215.670839 L 100.460552 -53.562289 Z",
+        )
+
+    def test_sphere_surface_exports_projected_checkerboard_faces(self):
+        from fluxion import SphereSurface
+
+        sphere = SphereSurface(
+            id="sphere",
+            radius=104,
+            world_radius=1.5,
+            resolution=(3, 4),
+            x_basis=(67.5, 0),
+            y_basis=(0, 12.15),
+            z_basis=(0, -67.5),
+            light=(0, -0.35, 1),
+        )
+        data = sphere.to_dict()
+
+        self.assertEqual(data["type"], "group")
+        self.assertEqual(data["geometry"]["sphereSurface"], True)
+        self.assertEqual(data["geometry"]["uResolution"], 3)
+        self.assertEqual(data["geometry"]["vResolution"], 4)
+        self.assertEqual(data["geometry"]["worldRadius"], 1.5)
+        self.assertEqual(data["geometry"]["xBasis"], [67.5, 0])
+        self.assertEqual(data["geometry"]["yBasis"], [0, 12.15])
+        self.assertEqual(data["geometry"]["zBasis"], [0, -67.5])
+        self.assertEqual(len(data["children"]), 12)
+        self.assertTrue(all(child["type"] == "path" for child in data["children"]))
+        self.assertTrue(all(child["style"]["stroke"] == "#BBBBBB" for child in data["children"]))
+
+    def test_sphere_surface_exports_manim_camera_projection(self):
+        from fluxion import SphereSurface
+
+        sphere = SphereSurface(
+            id="sphere",
+            radius=104,
+            world_radius=1.5,
+            resolution=(2, 4),
+            phi=75,
+            theta=30,
+            unit_scale=108.75,
+            light=(0, -0.35, 1),
+        )
+        data = sphere.to_dict()
+
+        self.assertEqual(data["geometry"]["cameraProjection"], "manim")
+        self.assertEqual(data["geometry"]["phi"], 75)
+        self.assertEqual(data["geometry"]["theta"], 30)
+        self.assertEqual(len(data["children"]), 8)
+        self.assertEqual(
+            data["children"][0]["geometry"]["d"],
+            "M 0 154.566298 L 76.747462 -34.404946 L -136.332141 -20.372009 L 0 154.566298 Z",
+        )
+
+    def test_three_d_axes_exports_projected_axes_ticks_and_tips(self):
+        from fluxion import ThreeDAxes
+
+        axes = ThreeDAxes(
+            id="axes",
+            x_range=(-6, 6, 1),
+            y_range=(-5, 5, 1),
+            z_range=(-4, 4, 1),
+            include_tips=True,
+        )
+        data = axes.to_dict()
+
+        self.assertEqual(data["type"], "group")
+        self.assertEqual(data["geometry"]["threeDAxes"], True)
+        self.assertEqual(data["geometry"]["xRange"], [-6, 6, 1])
+        self.assertEqual(len([child for child in data["children"] if child["type"] == "line"]), 33)
+        self.assertEqual(len([child for child in data["children"] if child["type"] == "path"]), 3)
+        self.assertIn("axes:x:tip", {child["id"] for child in data["children"]})
+
+    def test_three_d_axes_exports_manim_camera_projection(self):
+        from fluxion import ThreeDAxes
+
+        axes = ThreeDAxes(
+            id="axes",
+            x_range=(-2, 2, 1),
+            y_range=(-2, 2, 1),
+            z_range=(-1, 1, 1),
+            phi=75,
+            theta=30,
+            unit_scale=108.75,
+            include_tips=True,
+        )
+        data = axes.to_dict()
+
+        self.assertEqual(data["geometry"]["cameraProjection"], "manim")
+        self.assertEqual(data["geometry"]["phi"], 75)
+        self.assertEqual(data["geometry"]["theta"], 30)
+        self.assertEqual(len(data["children"]), 16)
+        x_axis = next(child for child in data["children"] if child["id"] == "axes:x:axis")
+        self.assertEqual(round(x_axis["geometry"]["x1"], 6), 100.35513)
+        self.assertEqual(round(x_axis["geometry"]["x2"], 6), -118.677572)
+        z_tip = next(child for child in data["children"] if child["id"] == "axes:z:tip")
+        self.assertEqual(z_tip["geometry"]["d"], "M 0 -106.421631 L 7 -88.421631 L -7 -88.421631 Z")
+
+    def test_projected_circle_exports_xy_plane_path(self):
+        from fluxion import ProjectedCircle
+
+        circle = ProjectedCircle(
+            id="circle_xy",
+            radius=0.67,
+            x_basis=(-56.75, 25.5),
+            y_basis=(87.75, 13.25),
+        )
+        data = circle.to_dict()
+
+        self.assertEqual(data["type"], "path")
+        self.assertEqual(data["geometry"]["projectedCircle"], True)
+        self.assertEqual(data["geometry"]["radius"], 0.67)
+        self.assertEqual(
+            data["geometry"]["d"],
+            "M -38.0225 17.085 C -5.552299 21.987908 37.793253 18.313285 58.7925 8.8775 C 79.791747 -0.558285 70.492701 -12.182092 38.0225 -17.085 C 5.552299 -21.987908 -37.793253 -18.313285 -58.7925 -8.8775 C -79.791747 0.558285 -70.492701 12.182092 -38.0225 17.085 Z",
+        )
+
+    def test_projected_circle_exports_manim_camera_projection_path(self):
+        from fluxion import ProjectedCircle
+
+        circle = ProjectedCircle(id="circle_xy", radius=1, phi=75, theta=30, unit_scale=108.75, samples=16)
+        data = circle.to_dict()
+
+        self.assertEqual(data["type"], "path")
+        self.assertEqual(data["geometry"]["projectedCircle"], True)
+        self.assertEqual(data["geometry"]["cameraProjection"], "manim")
+        self.assertEqual(data["geometry"]["phi"], 75)
+        self.assertEqual(data["geometry"]["theta"], 30)
+        self.assertTrue(data["geometry"]["d"].startswith("M -56.748555 25.439681 L "))
+        self.assertEqual(data["geometry"]["d"].count(" L "), 15)
+
     def test_wait_advances_scene_duration(self):
         scene = Scene()
         scene.wait(1.25)

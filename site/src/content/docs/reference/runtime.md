@@ -42,9 +42,10 @@ Timeline operations は時刻順に適用されます。同じ `t` の operation
 5. `animateValue`
 6. `animate`
 7. `setExpr`
-8. `delete`
+8. `bindExpr` / `bindPath` / `followCamera`
+9. `delete`
 
-同じ時刻・同じ operation type の中では source array order を保持します。`setExpr` は tracker animation と通常 node animation の後に評価されるため、同じ時刻の dependent property はその時刻の tracker 値を参照します。
+同じ時刻・同じ operation type の中では source array order を保持します。`setExpr` は tracker animation と通常 node animation の後に評価され、`bindExpr` / `bindPath` / `followCamera` はさらに後段の updater として適用されます。
 
 ## Animation Values
 

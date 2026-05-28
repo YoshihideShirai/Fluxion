@@ -9,7 +9,7 @@ known_gaps:
   - symptom: "3D Surface / camera projection は runtime ネイティブ未実装のため、公式 ThreeDAxes と Gaussian surface を `threeDAxes` / `gaussianSurface` helper で投影済みに展開している。"
     layer: runtime
     impact: medium
-    workaround: "`ThreeDAxes()` は tick/tip 付き `threeDAxes` helper、公式の `param_gauss`、`resolution=(24,24)`、`scale(2)`、`set_fill_by_checkerboard(ORANGE, BLUE, opacity=0.5)` は `gaussianSurface` helper で 24x24 の path face 群として生成し、平均 z 高さに応じた軽い shading で Manim 3D surface のピークを読みやすくする。"
+    workaround: "`ThreeDAxes()` は tick/tip 付き `threeDAxes` helper、公式の `param_gauss`（`sigma=0.4`, `mu=[0,0]`）、`resolution=(24,24)`、`scale(2)`、`Surface` 既定の `stroke_width=0.5`、`set_style(..., stroke_color=GREEN)`、`set_fill_by_checkerboard(ORANGE, BLUE, opacity=0.5)` は `gaussianSurface` helper で 24x24 の path face 群として生成し、`phi=75`, `theta=30` の Manim `ThreeDCamera` 由来の透視投影と平均 z 高さに応じた軽い shading でピークを読みやすくする。"
     closure_condition: "Surface primitive と 3D camera projection を runtime でネイティブ実装する。"
     fidelity_upgrade_condition: "Manim の `Surface(param_gauss)` と checkerboard fill を同等パラメータで再現できる時。"
 category: Manim Stable Examples
@@ -21,8 +21,8 @@ scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 
-threeDAxes axes at -38,124 xRange=-4.4,6,1 yRange=-3.16,4.6,1 zRange=-0.6,2.353846,1 xBasis=48.666667,24 yBasis=-60,30 zBasis=0,-130 stroke="#FFFFFF" strokeWidth=4 tickSize=10 tickStrokeWidth=2 includeTicks=true includeTips=true
+threeDAxes axes at -38,124 xRange=-4.4,6,1 yRange=-3.16,4.6,1 zRange=-0.6,2.353846,1 phi=75 theta=30 unitScale=67.5 stroke="#FFFFFF" strokeWidth=4 tickSize=10 tickStrokeWidth=2 includeTicks=true includeTips=true
 
-gaussianSurface gauss at -38,124 range=-2,2 resolution=24 scale=2 sigma=0.4 xBasis=63,31 yBasis=-60,30 zBasis=0,-130 fillA="#FF862F" fillB="#58C4DD" stroke="#83C167" strokeWidth=0.75 fillOpacity=0.5 shade=true shadeStrength=0.18
+gaussianSurface gauss at -38,124 range=-2,2 resolution=24 scale=2 sigma=0.4 mu=0,0 phi=75 theta=30 unitScale=67.5 fillA="#FF862F" fillB="#58C4DD" stroke="#83C167" strokeWidth=0.5 fillOpacity=0.5 shade=true shadeStrength=0.18
 
 wait 1s

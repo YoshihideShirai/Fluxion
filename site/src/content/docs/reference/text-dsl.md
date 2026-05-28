@@ -24,7 +24,9 @@ Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション
 | `surroundingRect` | Target-bounds rectangle declaration | `surroundingRect frame target=equation buff=10 stroke="#fbbf24"` |
 | `axes` | Axes helper declaration | `axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2 xNumbers=-4,0,4` |
 | `numberPlane` | NumberPlane grid helper | `numberPlane plane xRange=-7,7 yRange=-4,4 unit=60` |
+| `axisLabels` | Axes label helper | `axisLabels labels axes=ax x="x" y="f(x)"` |
 | `plot` | Function plot path declaration | `plot curve fn=sin(t) range=-3.14,3.14 scaleX=80 scaleY=60` |
+| `graphLabel` | Plot graph label helper | `graphLabel label plot=curve label="\sin(x)" xVal=1.57 direction=up` |
 | `dataPolygon` | Axes data-coordinate polygon helper | `dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5` |
 | `dataRect` | Axes data-coordinate rectangle helper | `dataRect area axes=ax from=0,0 to=t,25/t` |
 | `dataDot` | Axes data-coordinate dot helper | `dataDot dot axes=ax point=t,25/t` |
@@ -50,6 +52,7 @@ Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション
 | `set` | Apply an immediate property value or dependent expression | `set dot.x to expr="320 + 100 * cos(theta)"` |
 | `animate` | Interpolate one property or scalar tracker | `animate theta from 0 to 6.28 duration=2s` |
 | `animateFrame` | Interpolate the camera frame | `animateFrame to 120,40 scale=1.4 duration=1s` |
+| `followCamera` | Keep camera target on a moving node | `followCamera dot start=1s duration=2s` |
 | `play` | Run Manim-like primitives | `play FadeIn(dot) duration=0.8s` |
 | `wait` | Advance the current time cursor | `wait 0.4s` |
 
@@ -200,8 +203,10 @@ Geometry options:
 - `surroundingRect`: `target=<node-id>`, `buff=<number>`; target の宣言/推定 bounds に基づく frame-like な `rect` node として出力されます。`play Create(frame)` では `geometry.drawProgress` により Manim 風に外枠が描画されます。
 - `brace`: `target=<node-id>`, `direction=up|down|left|right|perpendicular`, `buff`, `sharpness`, `label`, `labelRenderer=text|katex|mathjax`, `labelSize`, `labelColor`, `labelOffset`, `labelAlignment=start|center|end`, `labelW`, `labelH`; Manim `Brace(...)` 風に source SVG template model から塗りつぶし brace を生成し、`get_text` / `get_tex` 相当の label を計算済み tip 近傍に配置できます。
 - `axes`: `xRange=<min,max>`, `yRange=<min,max>`, `width`, `height`, `xTicks=<n,n,...>`, `yTicks=<n,n,...>`, `xNumbers=<n,n,...>`, `yNumbers=<n,n,...>`, `tickLength`, `tickStrokeWidth`, `numberSize`, `numberColor`, `xNumberOffset`, `yNumberOffset`; 非対称 range の原点に x/y 軸を置き、必要に応じて tick line と number text を持つ `group` node を生成します。
-- `numberPlane`: `xRange=<min,max>`, `yRange=<min,max>`, `xStep`, `yStep`, `unit`, `xUnit`, `yUnit`, `stroke`, `axisStroke`, `strokeWidth`, `axisStrokeWidth`, `opacity`, `axisOpacity`; Manim `NumberPlane()` 風の背景 grid line と強調 x/y 軸を持つ `group` node を生成します。
+- `axisLabels`: `axes=<axes-id>`, `x=<latex>`, `y=<latex>`, `size`, `xSize`, `ySize`, `fill`, `renderer`, `buff`, `xBuff`, `yBuff`, `xYOffset`, `yYOffset`; Manim `Axes.get_axis_labels(...)` 風に x/y 軸端へ math label group を生成します。
+- `numberPlane`: `xRange=<min,max>`, `yRange=<min,max>`, `xStep`, `yStep`, `unit`, `xUnit`, `yUnit`, `stroke`, `axisStroke`, `strokeWidth`, `axisStrokeWidth`, `opacity`, `axisOpacity`, `fadedLineRatio`, `fadedStroke`, `fadedStrokeWidth`, `fadedOpacity`; Manim `NumberPlane()` 風の背景 grid line / faded sub-grid line と強調 x/y 軸を持つ `group` node を生成します。
 - `plot`: `fn=<expr>`, `range=<min,max>`, `samples`, `scaleX`, `scaleY`, `close=true|false`; 関数をサンプリングした `path` geometry を生成します。
+- `graphLabel`: `plot=<plot-id>`, `label=<latex>`, `xVal`, `direction=right|left|up|down|ur|ul|dr|dl`, `buff`, `size`, `fill`, `renderer`, `w`, `h`, `xOffset`, `yOffset`; Manim `Axes.get_graph_label(...)` 風に plot helper 上の点から math label を配置します。
 - `dataPolygon`: `axes=<axes-id>`, `points=<x,y;...>`; 3 点以上のデータ座標を参照先 `axes` helper で scene 座標に変換し、閉じた `path` を生成します。
 - `dataLineGraph`: `axes=<axes-id>`, `points=<x,y;...>`, `lineColor`, `strokeWidth`, `vertexRadius`; Manim `Axes.plot_line_graph` 風に、参照先 `axes` のデータ座標から折れ線 path と vertex dot を持つ `group` を生成します。
 - `dataRect`: `axes=<axes-id>`, `from=<x,y>`, `to=<x,y>`; 参照先 `axes` のデータ座標から `rect` の中心と幅/高さを生成します。`from`/`to` は value tracker を参照する式にでき、Manim `always_redraw(Polygon(... ax.c2p ...))` の rectangle 型ケースを `bindExpr` へ展開できます。
@@ -210,15 +215,15 @@ Geometry options:
 - `dynamicLine`: `x1=<expr>`, `y1=<expr>`, `x2=<expr>`, `y2=<expr>`; value tracker を参照する endpoint 式から `line` と `bindExpr` を生成します。Manim の `Line(...).become(...)` updater 型の connector を表現できます。
 - `dataArea`: `axes=<axes-id>`, `lower=<expr>`, `upper=<expr>`, `range=<min,max>`, `samples`; 2つの関数をサンプリングし、Manim `Axes.get_area(..., bounded_graph=...)` 風の閉じた `path` を生成します。
 - `dataRiemannRects`: `axes=<axes-id>`, `fn=<expr>`, `range=<min,max>`, `dx`; 関数を left-sample し、Manim `Axes.get_riemann_rectangles` 風の `rect` 群を持つ `group` を生成します。
-- `gaussianSurface`: `range=<min,max>`, `uRange=<min,max>`, `vRange=<min,max>`, `resolution`, `scale`, `sigma`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `fillA`, `fillB`, `shade=true|false`, `shadeStrength`; Manim `Surface(param_gauss).set_fill_by_checkerboard(...)` 風の投影済み checkerboard mesh を `path` 群の `group` として生成します。
-- `sphereSurface`: `radius`, `uRange`, `vRange`, `resolution=<u,v>`, `fillA`, `fillB`, `light=<x,y,z>`, `shade=true|false`; Manim `Surface(..., checkerboard_colors=[RED_D, RED_E], resolution=(15, 32))` 風の球面 checkerboard を投影済み `path` 群として生成します。
-- `threeDAxes`: `xRange=<min,max,step>`, `yRange`, `zRange`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `includeTicks`, `includeTips`; Manim `ThreeDAxes()` の既定 range を投影済み line/tick/tip 群として生成します。
-- `projectedCircle`: `radius`, `xBasis=<x,y>`, `yBasis=<x,y>`; projected 3D axes と同じ basis vector から、Manim `Circle()` を XY 平面へ投影した cubic `path` を生成します。
+- `gaussianSurface`: `range=<min,max>`, `uRange=<min,max>`, `vRange=<min,max>`, `resolution`, `scale`, `sigma`, `mu=<x,y>`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `fillA`, `fillB`, `shade=true|false`, `shadeStrength`; Manim `Surface(param_gauss).set_fill_by_checkerboard(...)` 風の投影済み checkerboard mesh を `path` 群の `group` として生成します。`phi` / `theta` / `gamma` を指定すると、各 mesh 頂点を Manim `ThreeDCamera` 由来の透視投影で配置します。
+- `sphereSurface`: `radius`, `worldRadius`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `uRange`, `vRange`, `resolution=<u,v>`, `fillA`, `fillB`, `light=<x,y,z>`, `shade=true|false`; Manim `Surface(..., checkerboard_colors=[RED_D, RED_E], resolution=(15, 32))` 風の球面 checkerboard を投影済み `path` 群として生成します。`xBasis`/`yBasis`/`zBasis` を指定すると、`worldRadius` の 3D 球面をその projection basis で描きます。`phi` / `theta` / `gamma` 指定時は Manim `ThreeDCamera` 由来の透視投影を使います。
+- `threeDAxes`: `xRange=<min,max,step>`, `yRange`, `zRange`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `includeTicks`, `includeTips`; Manim `ThreeDAxes()` の既定 range を投影済み line/tick/tip 群として生成します。`phi` / `theta` / `gamma` を指定すると、各 axis endpoint と tick を Manim `ThreeDCamera` 由来の透視投影で個別に配置します。
+- `projectedCircle`: `radius`, `xBasis=<x,y>`, `yBasis=<x,y>`; projected 3D axes と同じ basis vector から、Manim `Circle()` を XY 平面へ投影した cubic `path` を生成します。`phi` / `theta` / `gamma` を指定すると、Manim `ThreeDCamera` と同じ `rotation_about_z(-theta-90°) -> rotation_matrix(-phi, RIGHT) -> rotation_about_z(gamma)` と `focalDistance / (focalDistance - z)` の透視係数でサンプリングした path を生成します。
 - `arrow`: `x1`, `y1`, `x2`, `y2`, `buff`, `tipLength`, `tipWidth`, `maxTipLengthToLengthRatio`, `maxStrokeWidthToLengthRatio`; line shaft と filled triangle tip を持つ `group` を生成します。`tipLength` と `strokeWidth` は Manim `Arrow` と同じく drawable length に対する上限比で clamp されます。
 - `rotatingLine`: `x1`, `y1`, `x2`, `y2`, `about=<x,y>`, `angle=<expr>`; 基準線分を指定点まわりに回転した `line` を生成し、`angle` が value tracker を参照する場合は endpoint を `bindExpr` で更新します。Manim の `Line(...).rotate(angle, about_point=...)` を DSL で展開する helper です。
 - `rotateUpdater`: `rate=<radians-per-second>`, `duration`, `easing`, `from`; Manim の `mobject.add_updater(lambda m, dt: m.rotate_about_origin(rate * dt))` 型 callback updater を、累積した `rotation` animation として展開します。
 - `angle`: `radius` / `r`, `from`, `to`, `samples`, `close=true|false`; 円弧の `path` と `bindPath` updater を生成します。式は value tracker を参照できるため、`to=theta` のように animated tracker に追従できます。
-- `tracedPath`: `x`, `y`, `from`, `to`, `samples`, `close=true|false`; `path` と `bindPath` updater を生成します。現時点では parametric motion 用の declarative trace helper で、Manim `TracedPath` の履歴ベース追跡 clone ではありません。
+- `tracedPath`: `x`, `y`, `from`, `to`, `samples`, `close=true|false` を指定すると parametric `path` と `bindPath` updater を生成します。`target=<node-id>`, `start=<time>`, `samples` を指定すると、seek 時に target node の中心履歴を timeline から再構築し、Manim `TracedPath(mobject.get_center)` に近い trace を生成します。
 
 Default values:
 
@@ -348,10 +353,13 @@ Options:
 
 Supported primitives:
 
-- `FadeIn(id)`: hidden opacity の `create`、semantic `effect=fadeIn`、`transform.opacity` animation を生成します。
-- `FadeOut(id)`: semantic `effect=fadeOut`、`transform.opacity` animation、duration 終了時の `delete` を生成します。
+- `FadeIn(id, shift=UP)`: hidden opacity の `create`、semantic `effect=fadeIn`、`transform.opacity` animation を生成します。`shift` を指定すると、Manim と同じく `target - shift` から target へ移動します。
+- `FadeOut(id, shift=DOWN)`: semantic `effect=fadeOut`、`transform.opacity` animation、duration 終了時の `delete` を生成します。`shift` を指定すると、target から `target + shift` へ移動します。
+- `Animate(id, shift=LEFT|(x,y), opacity=<number>, fill=<css-color>, fillOpacity=<number>, stroke=<css-color>, strokeOpacity=<number>, strokeWidth=<number>, scale=<factor>, rotate=<radians>, rotation=<degrees>)`: target-state clone を作り、指定した Manim 風 mobject method/option を適用して、差分を transform/style animation に展開します。
 - `Create(id)`: `create` と semantic `effect=create` を生成します。`surroundingRect` frame では `geometry.drawProgress` も animation し、外枠を描き出します。
 - `Write(id)`: writable leaf を `geometry.writeProgress=0` で `create` し、semantic `effect=write` と、幅に応じた left-to-right reveal を生成して Manim の書き出し表示を近似します。
+- `MoveAlongPath(id, path)`: `circle` path node では、Manim の circular path proportion に合わせ、右端から反時計回りに 1 周する `transform.x/y` binding と value animation に展開します。`plot` path では `easing=linear` の場合、Manim の `path.point_from_proportion(...)` と同じ曲線長比例の位置 animation に展開します。
+- `Rotating(id[, angle], about=(x,y), axis=OUT)`: node 自身の中心または明示した点を中心に回転します。Manim の `Rotating` に合わせ、`angle=TAU`、OUT axis を既定とし、`easing=linear` では等速の tracker motion になります。
 - `Transform(a, b)`: `a` を target として、`b` と異なる transform/style/geometry property ごとに `animate` operation を生成します。
 - `TransformMatchingTex(a, b)`: `math` node の token child を同一 token 文字列で対応付け、対応 token は `Transform`、消える token は `FadeOut`、新規 token は `FadeIn` に展開します。
 - `ReplacementTransform(from, to)`: `from` を `to` へ morph し、終了時に `from` を削除して `to` を materialize します。
@@ -477,10 +485,13 @@ cameraFrame at 0,0 scale=1
 set camera.x to -120
 animate camera.scale from 1 to 1.6 duration=2s easing=easeInOut
 animateFrame to -120,20 scale=1.6 duration=2s easing=easeInOut
+followCamera dot start=1s duration=2s
 ```
 
-`camera` は document-level の `camera: { x, y, scale, rotation }` を設定します。既定値は `x=0`, `y=0`, `scale=1`, `rotation=0` です。`set` / `animate` は `camera.x`, `camera.y`, `camera.scale`, `camera.rotation` を target にできます。
+`camera` は document-level の `camera: { x, y, scale, rotation }` を設定します。既定値は `x=0`, `y=0`, `scale=1`, `rotation=0` です。`set` / `animate` は `camera.x`, `camera.y`, `camera.scale`, `camera.rotation`, `camera.target.x`, `camera.target.y` を target にできます。
 
 `cameraFrame` は camera frame cursor を設定する Manim 風 alias です。`animateFrame` は通常の camera timeline operation を出力しつつ、gallery example では frame movement を単一の高水準 command として記述できます。
+
+`followCamera <node-id> [start=<time>] [duration=<time>]` は animation を適用した後の node center を `camera.target` に反映します。Manim の `self.camera.frame.add_updater(lambda mob: mob.move_to(target.get_center()))` に近い camera follow を表すための updater sugar です。`duration` を省略すると、start 以降ずっと追従します。
 
 Renderer は scene origin `(0,0)` を viewport center に移してから zoom / rotation / pan を適用します: `translate(centerX + camera.x, centerY + camera.y) rotate(camera.rotation) scale(camera.scale) translate(0, 0)`。`mode=target` / `mode=frame-fit` では最後の translate が target 座標を中心へ合わせます。合成順序は `Camera * ParentNode * ChildNode` です。つまり camera は scene 全体の pan / zoom / rotation、node transform は各 node の local transform として扱われます。

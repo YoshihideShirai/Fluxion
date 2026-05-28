@@ -8,6 +8,7 @@ from .math import Math, latex_to_token_mobjects, tokenize_latex
 from .rectangle import Rectangle
 from .square import Square
 from .text import Text
+from .three_d import GaussianSurface, ProjectedCircle, SphereSurface, ThreeDAxes
 
 __all__ = [
     "Circle",
@@ -20,6 +21,10 @@ __all__ = [
     "Path",
     "Rectangle",
     "Square",
+    "GaussianSurface",
+    "ProjectedCircle",
+    "SphereSurface",
+    "ThreeDAxes",
     "Text",
     "latex_to_token_mobjects",
     "tokenize_latex",

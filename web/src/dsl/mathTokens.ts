@@ -4,6 +4,7 @@ import { DslCompileError } from "./errors.js";
 const LATEX_TOKEN_PATTERN = /\\[a-zA-Z]+\*?|\\.|[_^]|[{}]|\s+|[^\\\s_^{}]/gu;
 const TOKEN_PADDING_UNITS = 0.26;
 const SCRIPTED_DELIMITED_PADDING_UNITS = 0.5;
+const ISOLATED_TEX_PREFIX = "\u0000isolated:";
 
 export function expandMathTokens(node: SceneNode, lineNumber: number): void {
   if (node.type !== "math")
@@ -26,13 +27,23 @@ export function expandMathTokens(node: SceneNode, lineNumber: number): void {
 }
 
 function tokenizeLatex(latex: string): string[] {
-  const rawTokens = [...latex.matchAll(LATEX_TOKEN_PATTERN)]
-    .map((match) => match[0])
-    .filter((token) => !/^\s+$/u.test(token));
+  const rawTokens = readRawLatexTokens(latex);
   const tokens: string[] = [];
 
   for (let index = 0; index < rawTokens.length; index += 1) {
     let token = rawTokens[index] ?? "";
+    if (token.startsWith(ISOLATED_TEX_PREFIX)) {
+      tokens.push(token.slice(ISOLATED_TEX_PREFIX.length));
+      continue;
+    }
+    if (token === "^" || token === "_") {
+      const [argument, nextIndex] = readScriptArgument(rawTokens, index + 1);
+      if (argument !== undefined) {
+        tokens.push(token + argument);
+        index = nextIndex - 1;
+        continue;
+      }
+    }
     const grouped = maybeReadScriptedDelimitedGroup(rawTokens, index);
     if (grouped) {
       token = grouped.token;
@@ -51,6 +62,34 @@ function tokenizeLatex(latex: string): string[] {
   }
 
   return tokens;
+}
+
+function readRawLatexTokens(latex: string): string[] {
+  const tokens: string[] = [];
+  let cursor = 0;
+  while (cursor < latex.length) {
+    const start = latex.indexOf("{{", cursor);
+    if (start === -1) {
+      tokens.push(...tokenizeLatexFragment(latex.slice(cursor)));
+      break;
+    }
+    tokens.push(...tokenizeLatexFragment(latex.slice(cursor, start)));
+    const end = latex.indexOf("}}", start + 2);
+    if (end === -1) {
+      tokens.push(...tokenizeLatexFragment(latex.slice(start)));
+      break;
+    }
+    const isolated = latex.slice(start + 2, end).trim();
+    if (isolated.length > 0) tokens.push(ISOLATED_TEX_PREFIX + isolated);
+    cursor = end + 2;
+  }
+  return tokens;
+}
+
+function tokenizeLatexFragment(fragment: string): string[] {
+  return [...fragment.matchAll(LATEX_TOKEN_PATTERN)]
+    .map((match) => match[0])
+    .filter((token) => !/^\s+$/u.test(token));
 }
 
 function maybeReadScriptedDelimitedGroup(

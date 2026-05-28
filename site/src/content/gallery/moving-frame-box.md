@@ -9,11 +9,12 @@ known_gaps:
   - symptom: "MathTex part layout is approximated with separate math nodes, and the frame bounds use declared width/height metrics rather than Manim glyph boxes."
     layer: renderer
     impact: low
-    workaround: "必要に応じてスタイル値を手動調整する。"
+    workaround: "公式 `Write(text)` は Manim の `Write` 既定（多数サブモブのため 2s、linear）に合わせ、`SurroundingRectangle(text[1], buff=.1)` / `text[3]` は宣言済み MathTex part bounds に 6.75px buff を加えた `surroundingRect` として再現する。"
     closure_condition: "該当レンダリング差分が解消され、Manim 出力との視覚差が許容範囲に収まる。"
     fidelity_upgrade_condition: "追加対応不要。"
 category: Animations
 status: ported
+gap_id: GAP-008
 order: 24
 ---
 scene width=960 height=540 fps=60
@@ -29,7 +30,7 @@ group productRule lhs termA plus termB
 surroundingRect frameA target=termAFrameTarget buff=7 stroke="#ffff00" strokeWidth=4 opacity=0
 surroundingRect frameB target=termBFrameTarget buff=7 stroke="#ffff00" strokeWidth=4 opacity=0
 
-play Write(productRule) duration=1.2s easing=smooth
+play Write(productRule) duration=2s easing=linear
 play Create(frameA) duration=1s easing=smooth
 wait 1s
 play ReplacementTransform(frameA, frameB) duration=1s easing=smooth

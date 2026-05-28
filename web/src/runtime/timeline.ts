@@ -8,6 +8,7 @@ import type {
   SetValueOperation,
   BindExpressionOperation,
   BindPathOperation,
+  FollowCameraOperation,
   TimelineOperation,
   ValueTracker,
   Camera,
@@ -23,7 +24,8 @@ type InstantOperation =
   | SetExpressionOperation
   | SetValueOperation
   | BindExpressionOperation
-  | BindPathOperation;
+  | BindPathOperation
+  | FollowCameraOperation;
 
 const OPERATION_PRIORITY: Record<TimelineOperation["op"], number> = {
   create: 0,
@@ -35,6 +37,7 @@ const OPERATION_PRIORITY: Record<TimelineOperation["op"], number> = {
   setExpr: 6,
   bindExpr: 7,
   bindPath: 7,
+  followCamera: 7,
   delete: 8,
 };
 
@@ -65,6 +68,13 @@ export function applyInstantOp(
     const d = buildPathData(op, trackerValues);
     if (op.path === "geometry.d") graph.setPathData(op.id, d);
     else graph.setPath(op.id, op.path, d);
+  }
+  if (op.op === "followCamera") {
+    const target = graph.get(op.id);
+    if (target && camera) {
+      camera.target = { x: target.transform.x, y: target.transform.y };
+      camera.mode = camera.mode ?? "target";
+    }
   }
   // Effect operations are semantic hints for future renderers; fallback
   // visibility changes are represented by ordinary animate operations.
@@ -104,7 +114,11 @@ export function applyTimelineAt(
       const value = interpolate(op.from, op.to, progress);
       if (typeof value === "number") trackerValues[op.id] = value;
     } else if (op.t <= seconds) {
-      if (op.op === "bindExpr" || op.op === "bindPath") postAnimationUpdaters.push(op);
+      if (op.op === "bindExpr" || op.op === "bindPath" || op.op === "followCamera") {
+        if (op.op === "bindExpr" && op.duration !== undefined && seconds > op.t + op.duration) continue;
+        if (op.op === "followCamera" && op.duration !== undefined && seconds > op.t + op.duration) continue;
+        postAnimationUpdaters.push(op);
+      }
       else applyInstantOp(graph, op, trackerValues, camera);
     }
   }

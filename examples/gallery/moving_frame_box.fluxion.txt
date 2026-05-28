@@ -11,7 +11,7 @@ group productRule lhs termA plus termB
 surroundingRect frameA target=termAFrameTarget buff=7 stroke="#ffff00" strokeWidth=4 opacity=0
 surroundingRect frameB target=termBFrameTarget buff=7 stroke="#ffff00" strokeWidth=4 opacity=0
 
-play Write(productRule) duration=1.2s easing=smooth
+play Write(productRule) duration=2s easing=linear
 play Create(frameA) duration=1s easing=smooth
 wait 1s
 play ReplacementTransform(frameA, frameB) duration=1s easing=smooth

@@ -14,6 +14,7 @@ known_gaps:
     fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Basic Concepts
 status: ported
+gap_id: GAP-009
 order: 12
 ---
 scene width=960 height=540 fps=60

@@ -16,26 +16,32 @@ text phaseGridLabel "NumberPlane" at -234,-218 size=15 fill="#cffafe" opacity=0
 rect phaseWarp w=142 h=26 at -86,-218 fill="#78350f" stroke="#f59e0b" strokeWidth=1.2 opacity=0
 text phaseWarpLabel "non-linear transform" at -86,-218 size=15 fill="#fed7aa" opacity=0
 
-path grid_h0 d="M -430 -170 L 430 -170" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_h1 d="M -430 -118 L 430 -118" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_h2 d="M -430 -66 L 430 -66" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_h3 d="M -430 -14 L 430 -14" at 0,-24 fill="none" stroke="#334155" strokeWidth=1.8 opacity=0
-path grid_h4 d="M -430 38 L 430 38" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_h5 d="M -430 90 L 430 90" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_h6 d="M -430 142 L 430 142" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
+path grid_h0 d="M -480 -270 L 480 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_h1 d="M -480 -202.5 L 480 -202.5" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_h2 d="M -480 -135 L 480 -135" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_h3 d="M -480 -67.5 L 480 -67.5" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_h4 d="M -480 0 L 480 0" at 0,0 fill="none" stroke="#dff9ff" strokeWidth=1.8 opacity=0
+path grid_h5 d="M -480 67.5 L 480 67.5" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_h6 d="M -480 135 L 480 135" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_h7 d="M -480 202.5 L 480 202.5" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_h8 d="M -480 270 L 480 270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
 
-path grid_v0 d="M -390 -190 L -390 160" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_v1 d="M -312 -190 L -312 160" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_v2 d="M -234 -190 L -234 160" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_v3 d="M -156 -190 L -156 160" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_v4 d="M -78 -190 L -78 160" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_v5 d="M 0 -190 L 0 160" at 0,-24 fill="none" stroke="#334155" strokeWidth=1.8 opacity=0
-path grid_v6 d="M 78 -190 L 78 160" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_v7 d="M 156 -190 L 156 160" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_v8 d="M 234 -190 L 234 160" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_v9 d="M 312 -190 L 312 160" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-path grid_v10 d="M 390 -190 L 390 160" at 0,-24 fill="none" stroke="#1d4ed8" strokeWidth=1.8 opacity=0
-group grid grid_h0 grid_h1 grid_h2 grid_h3 grid_h4 grid_h5 grid_h6 grid_v0 grid_v1 grid_v2 grid_v3 grid_v4 grid_v5 grid_v6 grid_v7 grid_v8 grid_v9 grid_v10
+path grid_v0 d="M -472.5 270 L -472.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v1 d="M -405 270 L -405 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v2 d="M -337.5 270 L -337.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v3 d="M -270 270 L -270 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v4 d="M -202.5 270 L -202.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v5 d="M -135 270 L -135 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v6 d="M -67.5 270 L -67.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v7 d="M 0 270 L 0 -270" at 0,0 fill="none" stroke="#dff9ff" strokeWidth=1.8 opacity=0
+path grid_v8 d="M 67.5 270 L 67.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v9 d="M 135 270 L 135 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v10 d="M 202.5 270 L 202.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v11 d="M 270 270 L 270 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v12 d="M 337.5 270 L 337.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v13 d="M 405 270 L 405 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+path grid_v14 d="M 472.5 270 L 472.5 -270" at 0,0 fill="none" stroke="#00bcd4" strokeWidth=1.4 opacity=0
+group grid grid_h0 grid_h1 grid_h2 grid_h3 grid_h4 grid_h5 grid_h6 grid_h7 grid_h8 grid_v0 grid_v1 grid_v2 grid_v3 grid_v4 grid_v5 grid_v6 grid_v7 grid_v8 grid_v9 grid_v10 grid_v11 grid_v12 grid_v13 grid_v14
 line xAxis x1=-430 y1=-38 x2=430 y2=-38 at 0,0 stroke="#f8fafc" strokeWidth=2.4 opacity=0
 line yAxis x1=0 y1=-214 x2=0 y2=136 at 0,0 stroke="#f8fafc" strokeWidth=2.4 opacity=0
 circle origin r=5 at 0,-38 fill="#f8fafc" stroke="none" opacity=0
@@ -55,27 +61,33 @@ at 0s:
   play AnimationGroup(Transform(title, transformTitle), FadeOut(basel), lagRatio=0.12) duration=1s easing=easeInOut
   animate basel.y from -62 to -102 start=2.25s duration=1s easing=easeInOut
   wait 1s
-  play AnimationGroup(FadeOut(title), FadeIn(gridTitle), Create(grid), Create(xAxis), Create(yAxis), lagRatio=0.05) duration=3s easing=smooth
+  play AnimationGroup(FadeOut(title), FadeIn(gridTitle), Create(grid), lagRatio=0.05) duration=3s easing=smooth
   animate gridTitle.y from 246 to 206 duration=3s easing=smooth
   wait 1s
-  animate grid_h0.d from "M -430 -170 L 430 -170" to "M -430 -118 C -214 -210 214 -128 430 -202" duration=3s easing=easeInOut
-  animate grid_h1.d from "M -430 -118 L 430 -118" to "M -430 -68 C -204 -156 196 -68 430 -152" duration=3s easing=easeInOut
-  animate grid_h2.d from "M -430 -66 L 430 -66" to "M -430 -22 C -230 -108 200 -12 430 -102" duration=3s easing=easeInOut
-  animate grid_h3.d from "M -430 -14 L 430 -14" to "M -430 18 C -210 -58 204 40 430 -46" duration=3s easing=easeInOut
-  animate grid_h4.d from "M -430 38 L 430 38" to "M -430 54 C -198 -18 210 96 430 2" duration=3s easing=easeInOut
-  animate grid_h5.d from "M -430 90 L 430 90" to "M -430 90 C -208 30 224 148 430 54" duration=3s easing=easeInOut
-  animate grid_h6.d from "M -430 142 L 430 142" to "M -430 132 C -212 82 214 194 430 112" duration=3s easing=easeInOut
-  animate grid_v0.d from "M -390 -190 L -390 160" to "M -426 -190 C -344 -82 -482 28 -380 160" duration=3s easing=easeInOut
-  animate grid_v1.d from "M -312 -190 L -312 160" to "M -348 -190 C -266 -78 -398 34 -302 160" duration=3s easing=easeInOut
-  animate grid_v2.d from "M -234 -190 L -234 160" to "M -266 -190 C -190 -72 -310 40 -226 160" duration=3s easing=easeInOut
-  animate grid_v3.d from "M -156 -190 L -156 160" to "M -178 -190 C -112 -66 -226 42 -154 160" duration=3s easing=easeInOut
-  animate grid_v4.d from "M -78 -190 L -78 160" to "M -88 -190 C -28 -62 -130 42 -84 160" duration=3s easing=easeInOut
-  animate grid_v5.d from "M 0 -190 L 0 160" to "M 0 -190 C 58 -58 -42 42 0 160" duration=3s easing=easeInOut
-  animate grid_v6.d from "M 78 -190 L 78 160" to "M 88 -190 C 144 -62 42 42 82 160" duration=3s easing=easeInOut
-  animate grid_v7.d from "M 156 -190 L 156 160" to "M 178 -190 C 232 -66 120 42 152 160" duration=3s easing=easeInOut
-  animate grid_v8.d from "M 234 -190 L 234 160" to "M 266 -190 C 314 -72 202 40 224 160" duration=3s easing=easeInOut
-  animate grid_v9.d from "M 312 -190 L 312 160" to "M 348 -190 C 392 -78 274 34 302 160" duration=3s easing=easeInOut
-  animate grid_v10.d from "M 390 -190 L 390 160" to "M 426 -190 C 468 -82 352 28 382 160" duration=3s easing=easeInOut
+  animate grid_h0.d from "M -480 -270 L 480 -270" to "M -523.6 -225.7 C -208.4 -221 106.2 -319 421.4 -314.3" duration=3s easing=easeInOut
+  animate grid_h1.d from "M -480 -202.5 L 480 -202.5" to "M -463 -158.2 C -147.7 -153.5 166.8 -251.5 482 -246.8" duration=3s easing=easeInOut
+  animate grid_h2.d from "M -480 -135 L 480 -135" to "M -411.1 -90.7 C -95.9 -86 218.7 -184 533.9 -179.3" duration=3s easing=easeInOut
+  animate grid_h3.d from "M -480 -67.5 L 480 -67.5" to "M -415.7 -23.2 C -100.5 -18.5 214.1 -116.5 529.3 -111.8" duration=3s easing=easeInOut
+  animate grid_h4.d from "M -480 0 L 480 0" to "M -472.5 44.3 C -157.3 49 157.3 -49 472.5 -44.3" duration=3s easing=easeInOut
+  animate grid_h5.d from "M -480 67.5 L 480 67.5" to "M -529.3 111.8 C -214.1 116.5 100.5 18.5 415.7 23.2" duration=3s easing=easeInOut
+  animate grid_h6.d from "M -480 135 L 480 135" to "M -533.9 179.3 C -218.7 184 95.9 86 411.1 90.7" duration=3s easing=easeInOut
+  animate grid_h7.d from "M -480 202.5 L 480 202.5" to "M -482 246.8 C -166.8 251.5 147.7 153.5 463 158.2" duration=3s easing=easeInOut
+  animate grid_h8.d from "M -480 270 L 480 270" to "M -421.4 314.3 C -106.2 319 208.4 221 523.6 225.7" duration=3s easing=easeInOut
+  animate grid_v0.d from "M -472.5 270 L -472.5 -270" to "M -421.4 314.3 C -538.1 134.1 -406.9 -45.4 -523.6 -225.7" duration=3s easing=easeInOut
+  animate grid_v1.d from "M -405 270 L -405 -270" to "M -353.9 251.1 C -470.6 70.9 -339.4 -108.6 -456.1 -288.9" duration=3s easing=easeInOut
+  animate grid_v2.d from "M -337.5 270 L -337.5 -270" to "M -286.4 205.3 C -403.1 25 -271.9 -154.5 -388.6 -334.7" duration=3s easing=easeInOut
+  animate grid_v3.d from "M -270 270 L -270 -270" to "M -218.9 218.9 C -335.6 38.7 -204.4 -140.9 -321.1 -321.1" duration=3s easing=easeInOut
+  animate grid_v4.d from "M -202.5 270 L -202.5 -270" to "M -151.4 279.5 C -268.1 99.3 -136.9 -80.2 -253.6 -260.5" duration=3s easing=easeInOut
+  animate grid_v5.d from "M -135 270 L -135 -270" to "M -83.9 331.4 C -200.6 151.2 -69.4 -28.4 -186.1 -208.6" duration=3s easing=easeInOut
+  animate grid_v6.d from "M -67.5 270 L -67.5 -270" to "M -16.4 326.8 C -133.1 146.6 -1.9 -33 -118.6 -213.2" duration=3s easing=easeInOut
+  animate grid_v7.d from "M 0 270 L 0 -270" to "M 51.1 270 C -65.6 89.8 65.6 -89.8 -51.1 -270" duration=3s easing=easeInOut
+  animate grid_v8.d from "M 67.5 270 L 67.5 -270" to "M 118.6 213.2 C 1.9 33 133.1 -146.6 16.4 -326.8" duration=3s easing=easeInOut
+  animate grid_v9.d from "M 135 270 L 135 -270" to "M 186.1 208.6 C 69.4 28.4 200.6 -151.2 83.9 -331.4" duration=3s easing=easeInOut
+  animate grid_v10.d from "M 202.5 270 L 202.5 -270" to "M 253.6 260.5 C 136.9 80.2 268.1 -99.3 151.4 -279.5" duration=3s easing=easeInOut
+  animate grid_v11.d from "M 270 270 L 270 -270" to "M 321.1 321.1 C 204.4 140.9 335.6 -38.7 218.9 -218.9" duration=3s easing=easeInOut
+  animate grid_v12.d from "M 337.5 270 L 337.5 -270" to "M 388.6 334.7 C 271.9 154.5 403.1 -25 286.4 -205.3" duration=3s easing=easeInOut
+  animate grid_v13.d from "M 405 270 L 405 -270" to "M 456.1 288.9 C 339.4 108.6 470.6 -70.9 353.9 -251.1" duration=3s easing=easeInOut
+  animate grid_v14.d from "M 472.5 270 L 472.5 -270" to "M 523.6 225.7 C 406.9 45.4 538.1 -134.1 421.4 -314.3" duration=3s easing=easeInOut
   wait 1s
   play Transform(gridTitle, warpedTitle) duration=1s easing=easeInOut
   wait 1s

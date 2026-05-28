@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { SceneGraph } from "./sceneGraph.js";
 import { applyTimelineAt } from "./timeline.js";
-import { Player } from "./player.js";
+import { applyTargetTraces, Player } from "./player.js";
 import { buildCameraTransform } from "../renderers/svgRenderer.js";
 import { ease } from "../easing.js";
 import type { SceneNode, TimelineOperation, FluxionDocument } from "../types.js";
@@ -66,6 +66,23 @@ test("applies camera animation interpolation", () => {
   );
   assert.equal(camera.x, 50);
   assert.equal(camera.scale, 1.5);
+});
+
+test("updates camera target from followed node after animations", () => {
+  const graph = new SceneGraph([node]);
+  const camera = { x: 0, y: 0, scale: 1, rotation: 0, target: { x: 0, y: 0 }, mode: "target" as const };
+  applyTimelineAt(
+    graph,
+    [
+      { t: 0, op: "animate", id: "c1", path: "transform.x", from: 0, to: 100, duration: 2, easing: "linear" },
+      { t: 0, op: "animate", id: "c1", path: "transform.y", from: 0, to: -40, duration: 2, easing: "linear" },
+      { t: 0, op: "followCamera", id: "c1", duration: 2 },
+    ],
+    1,
+    [],
+    camera,
+  );
+  assert.equal(JSON.stringify(camera.target), JSON.stringify({ x: 50, y: -20 }));
 });
 
 test("builds camera transforms around the scene center", () => {
@@ -223,6 +240,34 @@ test("player preserves extended camera settings while seeking", () => {
   player.seek(0);
   assert.equal(JSON.stringify(renderedCamera), JSON.stringify(documentData.camera));
   assert.equal(renderedCamera === documentData.camera, false);
+});
+
+test("rebuilds target traced paths from sampled timeline history", () => {
+  const traceNode: SceneNode = {
+    id: "trace",
+    type: "path",
+    transform: { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+    style: { fill: "none", stroke: "#fff", strokeWidth: 2 },
+    geometry: { d: "", tracedPath: true, tracedTarget: "c1", traceStart: 0, traceSamples: 3 },
+    children: [],
+  };
+  const documentData: FluxionDocument = {
+    version: "0.1",
+    width: 1280,
+    height: 720,
+    fps: 60,
+    duration: 2,
+    camera: { x: 0, y: 0, scale: 1, rotation: 0 },
+    nodes: [node, traceNode],
+    timeline: [
+      { t: 0, op: "animate", id: "c1", path: "transform.x", from: 0, to: 100, duration: 2, easing: "linear" },
+      { t: 0, op: "animate", id: "c1", path: "transform.y", from: 0, to: -50, duration: 2, easing: "linear" },
+    ],
+  };
+  const graph = new SceneGraph(documentData.nodes);
+  applyTimelineAt(graph, documentData.timeline, 2, documentData.values);
+  applyTargetTraces(graph, documentData, 2);
+  assert.equal(graph.get("trace")?.geometry.d, "M 0 0 L 50 -25 L 100 -50");
 });
 
 test("ignores semantic effect operations while applying fallback animations", () => {

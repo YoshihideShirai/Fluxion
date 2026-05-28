@@ -1,7 +1,7 @@
 ---
-title: TexTransformExample
-description: "Manim Example: `TexTransformExample` (`#textransformexample`) に対応するデモ。"
-source_manim_url: https://docs.manim.community/en/stable/examples.html#textransformexample
+title: MatchingEquationParts
+description: "Manim Reference Example: `MatchingEquationParts` (`#matchingequationparts`) に対応するデモ。"
+source_manim_url: https://docs.manim.community/en/stable/reference/manim.animation.transform_matching_parts.TransformMatchingTex.html#matchingequationparts
 source_example_path: examples/gallery/transform_matching_tex.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
@@ -14,17 +14,18 @@ known_gaps:
     fidelity_upgrade_condition: "追加対応不要。"
 category: Advanced Projects
 status: ported
+gap_id: GAP-006
 order: 50
 ---
 scene width=960 height=540 fps=60
 rect bg w=960 h=540 at 0,0 fill="#000000"
-math varA "a" at -72,0 size=44 fill="#ffffff" renderer=katex opacity=1
-math varB "b" at 0,0 size=44 fill="#ffffff" renderer=katex opacity=1
-math varC "c" at 72,0 size=44 fill="#ffffff" renderer=katex opacity=1
-group variables varA varB varC at 0,86 opacity=1
-math eq1 "x^2+y^2=z^2" at 0,0 size=58 fill="#ffffff" renderer=katex expandTokens=true
-math eq2 "a^2+b^2=c^2" at 0,0 size=58 fill="#ffffff" renderer=katex expandTokens=true opacity=0
-math eq3 "a^2=c^2-b^2" at 0,0 size=58 fill="#ffffff" renderer=katex expandTokens=true opacity=0
+math varA "a" at -42,0 size=48 fill="#ffffff" renderer=katex opacity=1
+math varB "b" at 0,0 size=48 fill="#ffffff" renderer=katex opacity=1
+math varC "c" at 42,0 size=48 fill="#ffffff" renderer=katex opacity=1
+group variables varA varB varC at 0,-67.5 opacity=1
+math eq1 "{{x}}^2+{{y}}^2={{z}}^2" at 0,0 size=48 fill="#ffffff" renderer=katex expandTokens=true
+math eq2 "{{a}}^2+{{b}}^2={{c}}^2" at 0,0 size=48 fill="#ffffff" renderer=katex expandTokens=true opacity=0
+math eq3 "{{a}}^2={{c}}^2-{{b}}^2" at 0,0 size=48 fill="#ffffff" renderer=katex expandTokens=true opacity=0
 group eq1WithVariables eq1 variables
 at 0s:
   show eq1

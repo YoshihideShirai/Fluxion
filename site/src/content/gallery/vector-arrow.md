@@ -6,11 +6,11 @@ source_example_path: examples/gallery/vector-arrow.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "NumberPlane は `numberPlane` helper で Manim 16:9 frame の 1 unit = 67.5px に展開するが、細かな faded line / axis style 全オプションは未実装。Arrow は buff と tip/stroke length clamp を Manim 風に反映するが、全 tip_shape オプションは未実装。"
+  - symptom: "NumberPlane は `numberPlane` helper で Manim 16:9 frame の 1 unit = 67.5px に展開し、`fadedLineRatio` と faded line style も扱えるが、axis style の全オプションは未実装。Arrow は default `stroke_width=6`、`tip_length=0.35`、buff と tip/stroke length clamp を反映するが、全 tip_shape オプションは未実装。Text labels は `next_to(..., buff=SMALL_BUFF)` 相当の `nextTo` に展開する。公式例は `self.add(...)` の静止フレームとして扱う。"
     layer: dsl
     impact: low
-    workaround: "`numberPlane` と `arrow` の寸法・色を Manim 出力に合わせて調整する。"
-    closure_condition: "NumberPlane と Arrow の tip_shape 互換が実装される。"
+    workaround: "`NumberPlane()` は frame radius と `BLUE_D` / white axes に合わせ、`Arrow(ORIGIN, [2, 2, 0], buff=0)` は 67.5px/unit、default white、tip length 23.625px として展開する。"
+    closure_condition: "NumberPlane axis style と Arrow の tip_shape 互換が実装される。"
     fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Manim Stable Examples
 status: ported
@@ -19,11 +19,12 @@ order: 78
 ---
 scene width=960 height=540 fps=60
 rect bg w=960 h=540 at 0,0 fill="#000000"
-numberPlane plane xRange=-7,7 yRange=-4,4 unit=67.5 stroke="#00bcd4" axisStroke="#dff9ff" strokeWidth=1.4 axisStrokeWidth=1.8 opacity=0.9 axisOpacity=0.95
-arrow vec x1=0 y1=0 x2=135 y2=-135 buff=0 stroke="#f8fafc" fill="#f8fafc" strokeWidth=6 tipLength=21 tipWidth=21
-circle origin r=5.5 at 0,0 fill="#f8fafc" stroke="#f8fafc" strokeWidth=0
-text origin_label "(0, 0)" at 0,54 size=42 fill="#f8fafc"
-text tip_label "(2, 2)" at 210,-135 size=42 fill="#f8fafc"
-at 0s:
-  play AnimationGroup(Create(plane), FadeIn(origin), Create(vec), FadeIn(origin_label), FadeIn(tip_label), lagRatio=0.04) duration=1s easing=smooth
-  wait 1.4s
+numberPlane plane xRange=-7.111111,7.111111 yRange=-4,4 unit=67.5 stroke="#29ABCA" axisStroke="#FFFFFF" strokeWidth=2 axisStrokeWidth=2 opacity=1 axisOpacity=1
+arrow vec x1=0 y1=0 x2=135 y2=-135 buff=0 stroke="#FFFFFF" fill="#FFFFFF" strokeWidth=6 tipLength=23.625 tipWidth=23.625
+circle origin r=5.4 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=0
+circle tip_anchor r=0 at 135,-135 fill="none" stroke="none" opacity=0
+text origin_label "(0, 0)" at 0,0 size=48 fill="#FFFFFF" w=128.25 h=63.45
+text tip_label "(2, 2)" at 0,0 size=48 fill="#FFFFFF" w=128.25 h=63.45
+nextTo origin_label origin direction=down buff=16.875
+nextTo tip_label tip_anchor direction=right buff=16.875
+wait 1s

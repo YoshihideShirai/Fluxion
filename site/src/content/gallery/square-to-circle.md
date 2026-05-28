@@ -1,26 +1,27 @@
 ---
 title: SquareToCircle
-description: "Manim Example: `SquareToCircle` (`#squaretocircle`) をそのまま移植したデモ。"
-source_manim_url: https://docs.manim.community/en/stable/examples.html#squaretocircle
-source_example_path: examples/basic_concepts_square_to_circle.py
+description: "Manim Quickstart Example: `SquareToCircle` に対応するデモ。"
+source_manim_url: https://docs.manim.community/en/stable/tutorials/quickstart.html#transforming-a-square-into-a-circle
+source_example_path: examples/gallery/square-to-circle.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "Transform の頂点対応は近似だが、公式デモの構成・色・タイミングに合わせている。"
+  - symptom: "Transform の頂点対応は近似だが、公式 quickstart の `Square().rotate(PI / 4)`、`Circle().set_fill(PINK, opacity=0.5)`、`Create` → `Transform` → `FadeOut` の構成・色・タイミングに合わせている。"
     layer: runtime
     impact: low
-    workaround: "easing・duration・中間キーを調整して差を吸収する。"
+    workaround: "default `Square(side_length=2)` の 45度回転 diamond と default `Circle(radius=1)` を Manim 16:9 frame scale の 67.5px/unit に展開し、同じ cubic command topology の path で morph する。"
     closure_condition: "補間・レート関数の挙動がManim準拠になる。"
     fidelity_upgrade_condition: "追加対応不要。"
 category: Basic Concepts
 status: ported
+gap_id: GAP-005
 order: 11
 ---
 scene width=1280 height=720 fps=60
 
 rect bg w=1280 h=720 at 640,360 fill="#000000"
-path square d="M 0 -84.853 C 0 -84.853 84.853 0 84.853 0 C 84.853 0 0 84.853 0 84.853 C 0 84.853 -84.853 0 -84.853 0 C -84.853 0 0 -84.853 0 -84.853 Z" at 640,360 fill="#ec4899" fillOpacity=0 stroke="#ffffff" strokeWidth=4
-path circle d="M 0 -56 C 30.928 -56 56 -30.928 56 0 C 56 30.928 30.928 56 0 56 C -30.928 56 -56 30.928 -56 0 C -56 -30.928 -30.928 -56 0 -56 Z" at 640,360 fill="#ec4899" fillOpacity=0.5 stroke="#ffffff" strokeWidth=4
+path square d="M 0 -95.459 C 0 -95.459 95.459 0 95.459 0 C 95.459 0 0 95.459 0 95.459 C 0 95.459 -95.459 0 -95.459 0 C -95.459 0 0 -95.459 0 -95.459 Z" at 640,360 fill="#ffffff" fillOpacity=0 stroke="#ffffff" strokeWidth=4
+path circle d="M 0 -67.5 C 37.279 -67.5 67.5 -37.279 67.5 0 C 67.5 37.279 37.279 67.5 0 67.5 C -37.279 67.5 -67.5 37.279 -67.5 0 C -67.5 -37.279 -37.279 -67.5 0 -67.5 Z" at 640,360 fill="#D147BD" fillOpacity=0.5 stroke="#ffffff" strokeWidth=4
 
 play Create(square) duration=1s easing=easeInOut
 play Transform(square, circle) duration=1s easing=easeInOut

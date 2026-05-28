@@ -5,11 +5,11 @@ value t = 0
 rect bg w=960 h=540 at 0,0 fill="#000000"
 
 axes ax at 0,0 width=810 height=405 xRange=0,10 yRange=0,100 stroke="#FFFFFF" strokeWidth=3 xTicks=0,1,2,3,4,5,6,7,8,9,10 yTicks=10,20,30,40,50,60,70,80,90,100 tickLength=12 tickStrokeWidth=2
-math x_label "x" at 447,203 size=28 fill="#FFFFFF"
-math y_label "f(x)" at -403,-253 size=28 fill="#FFFFFF"
+axisLabels axis_labels axes=ax x="x" y="f(x)" size=28 fill="#FFFFFF" buff=20
 
 plot graph fn=2*(t-5)*(t-5) range=0,10 samples=220 scaleX=81 scaleY=4.05 at -405,202.5 stroke="#C55F73" strokeWidth=4 fill="none"
-dataDot dot axes=ax point=t,2*(t-5)*(t-5) r=8 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=2
+dataDot dot axes=ax point=t,2*(t-5)*(t-5) r=5.4 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=2
 
-animate t from 0 to 4.974874372 duration=1s
-wait 1s
+animate t from 0 to 4.974874372 start=0s duration=1s
+at 1s:
+  wait 1s

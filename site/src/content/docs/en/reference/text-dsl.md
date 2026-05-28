@@ -24,7 +24,9 @@ The current Text DSL scope is intentionally small: place shapes, math, paths, an
 | `surroundingRect` | Target-bounds rectangle declaration | `surroundingRect frame target=equation buff=10 stroke="#fbbf24"` |
 | `axes` | Axes helper declaration | `axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2 xNumbers=-4,0,4` |
 | `numberPlane` | NumberPlane grid helper | `numberPlane plane xRange=-7,7 yRange=-4,4 unit=60` |
+| `axisLabels` | Axes label helper | `axisLabels labels axes=ax x="x" y="f(x)"` |
 | `plot` | Function plot path declaration | `plot curve fn=sin(t) range=-3.14,3.14 scaleX=80 scaleY=60` |
+| `graphLabel` | Plot graph label helper | `graphLabel label plot=curve label="\sin(x)" xVal=1.57 direction=up` |
 | `dataPolygon` | Axes data-coordinate polygon helper | `dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5` |
 | `dataRect` | Axes data-coordinate rectangle helper | `dataRect area axes=ax from=0,0 to=t,25/t` |
 | `dataDot` | Axes data-coordinate dot helper | `dataDot dot axes=ax point=t,25/t` |
@@ -50,6 +52,7 @@ The current Text DSL scope is intentionally small: place shapes, math, paths, an
 | `set` | Apply an immediate property value or dependent expression | `set dot.x to expr="320 + 100 * cos(theta)"` |
 | `animate` | Interpolate one property or scalar tracker | `animate theta from 0 to 6.28 duration=2s` |
 | `animateFrame` | Interpolate the camera frame | `animateFrame to 120,40 scale=1.4 duration=1s` |
+| `followCamera` | Keep camera target on a moving node | `followCamera dot start=1s duration=2s` |
 | `play` | Run Manim-like primitives | `play FadeIn(dot) duration=0.8s` |
 | `wait` | Advance the current time cursor | `wait 0.4s` |
 
@@ -191,8 +194,10 @@ Common options:
 - `surroundingRect` only: `target=<node-id>`, `buff=<number>`; emits a frame-like `rect` node sized from the target node's declared/estimated bounds. `play Create(frame)` animates its border with `geometry.drawProgress` for a Manim-like outline draw.
 - `brace` only: `target=<node-id>`, `direction=up|down|left|right|perpendicular`, `buff`, `sharpness`, `label`, `labelRenderer=text|katex|mathjax`, `labelSize`, `labelColor`, `labelOffset`, `labelAlignment=start|center|end`, `labelW`, `labelH`; emits a Manim `Brace(...)`-style filled brace using the source SVG template model and can place `get_text` / `get_tex`-style labels at the computed brace tip.
 - `axes` only: `xRange=<min,max>`, `yRange=<min,max>`, `width`, `height`, `xTicks=<n,n,...>`, `yTicks=<n,n,...>`, `xNumbers=<n,n,...>`, `yNumbers=<n,n,...>`, `tickLength`, `tickStrokeWidth`, `numberSize`, `numberColor`, `xNumberOffset`, `yNumberOffset`; places x/y axis lines at the origin for asymmetric ranges and optionally emits tick lines plus number text.
-- `numberPlane` only: `xRange=<min,max>`, `yRange=<min,max>`, `xStep`, `yStep`, `unit`, `xUnit`, `yUnit`, `stroke`, `axisStroke`, `strokeWidth`, `axisStrokeWidth`, `opacity`, `axisOpacity`; emits a Manim `NumberPlane()`-style `group` with background grid lines and emphasized x/y axes.
+- `axisLabels` only: `axes=<axes-id>`, `x=<latex>`, `y=<latex>`, `size`, `xSize`, `ySize`, `fill`, `renderer`, `buff`, `xBuff`, `yBuff`, `xYOffset`, `yYOffset`; emits a math label group at the x/y axis endpoints, similar to Manim `Axes.get_axis_labels(...)`.
+- `numberPlane` only: `xRange=<min,max>`, `yRange=<min,max>`, `xStep`, `yStep`, `unit`, `xUnit`, `yUnit`, `stroke`, `axisStroke`, `strokeWidth`, `axisStrokeWidth`, `opacity`, `axisOpacity`, `fadedLineRatio`, `fadedStroke`, `fadedStrokeWidth`, `fadedOpacity`; emits a Manim `NumberPlane()`-style `group` with background grid lines, faded sub-grid lines, and emphasized x/y axes.
 - `plot` only: `fn=<expr>`, `range=<min,max>`, `samples`, `scaleX`, `scaleY`, `close=true|false`; emits a generated `path` geometry from the sampled function.
+- `graphLabel` only: `plot=<plot-id>`, `label=<latex>`, `xVal`, `direction=right|left|up|down|ur|ul|dr|dl`, `buff`, `size`, `fill`, `renderer`, `w`, `h`, `xOffset`, `yOffset`; positions a math label from a point on a plot helper, similar to Manim `Axes.get_graph_label(...)`.
 - `dataPolygon` only: `axes=<axes-id>`, `points=<x,y;...>`; maps at least three data-coordinate points through the referenced `axes` helper and emits a closed `path`.
 - `dataLineGraph` only: `axes=<axes-id>`, `points=<x,y;...>`, `lineColor`, `strokeWidth`, `vertexRadius`; maps data-coordinate points through the referenced `axes` helper and emits a Manim `Axes.plot_line_graph`-style `group` with a line path and vertex dots.
 - `dataRect` only: `axes=<axes-id>`, `from=<x,y>`, `to=<x,y>`; maps two data-coordinate points through the referenced `axes` helper and emits a `rect` center plus width/height. `from`/`to` may reference value trackers, which expands Manim rectangle-shaped `always_redraw(Polygon(... ax.c2p ...))` cases into `bindExpr`.
@@ -201,15 +206,15 @@ Common options:
 - `dynamicLine` only: `x1=<expr>`, `y1=<expr>`, `x2=<expr>`, `y2=<expr>`; emits a `line` and `bindExpr` operations from endpoint expressions that may reference value trackers. This represents Manim connector updaters shaped like `Line(...).become(...)`.
 - `dataArea` only: `axes=<axes-id>`, `lower=<expr>`, `upper=<expr>`, `range=<min,max>`, `samples`; samples two functions and emits a closed `path` similar to Manim `Axes.get_area(..., bounded_graph=...)`.
 - `dataRiemannRects` only: `axes=<axes-id>`, `fn=<expr>`, `range=<min,max>`, `dx`; left-samples a function and emits a `group` of `rect` children similar to Manim `Axes.get_riemann_rectangles`.
-- `gaussianSurface` only: `range=<min,max>`, `uRange=<min,max>`, `vRange=<min,max>`, `resolution`, `scale`, `sigma`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `fillA`, `fillB`, `shade=true|false`, `shadeStrength`; emits a `group` of projected checkerboard mesh `path` faces similar to Manim `Surface(param_gauss).set_fill_by_checkerboard(...)`.
-- `sphereSurface` only: `radius`, `uRange`, `vRange`, `resolution=<u,v>`, `fillA`, `fillB`, `light=<x,y,z>`, `shade=true|false`; emits projected checkerboard sphere `path` faces similar to Manim `Surface(..., checkerboard_colors=[RED_D, RED_E], resolution=(15, 32))`.
-- `threeDAxes` only: `xRange=<min,max,step>`, `yRange`, `zRange`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `includeTicks`, `includeTips`; emits projected line/tick/tip groups for Manim `ThreeDAxes()` default ranges.
-- `projectedCircle` only: `radius`, `xBasis=<x,y>`, `yBasis=<x,y>`; emits a cubic `path` for a Manim `Circle()` projected into the XY plane using the same basis vectors as projected 3D axes.
+- `gaussianSurface` only: `range=<min,max>`, `uRange=<min,max>`, `vRange=<min,max>`, `resolution`, `scale`, `sigma`, `mu=<x,y>`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `fillA`, `fillB`, `shade=true|false`, `shadeStrength`; emits a `group` of projected checkerboard mesh `path` faces similar to Manim `Surface(param_gauss).set_fill_by_checkerboard(...)`. When `phi` / `theta` / `gamma` are provided, each mesh vertex is placed through the Manim `ThreeDCamera` perspective projection.
+- `sphereSurface` only: `radius`, `worldRadius`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `uRange`, `vRange`, `resolution=<u,v>`, `fillA`, `fillB`, `light=<x,y,z>`, `shade=true|false`; emits projected checkerboard sphere `path` faces similar to Manim `Surface(..., checkerboard_colors=[RED_D, RED_E], resolution=(15, 32))`. When `xBasis`/`yBasis`/`zBasis` are set, the helper projects a 3D sphere with the given `worldRadius` through that projection basis. When `phi` / `theta` / `gamma` are provided, it uses the Manim `ThreeDCamera` perspective projection.
+- `threeDAxes` only: `xRange=<min,max,step>`, `yRange`, `zRange`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `includeTicks`, `includeTips`; emits projected line/tick/tip groups for Manim `ThreeDAxes()` default ranges. When `phi` / `theta` / `gamma` are provided, each axis endpoint and tick is placed through the Manim `ThreeDCamera` perspective projection.
+- `projectedCircle` only: `radius`, `xBasis=<x,y>`, `yBasis=<x,y>`; emits a cubic `path` for a Manim `Circle()` projected into the XY plane using the same basis vectors as projected 3D axes. When `phi` / `theta` / `gamma` are provided, it samples the path with Manim `ThreeDCamera`'s `rotation_about_z(-theta-90deg) -> rotation_matrix(-phi, RIGHT) -> rotation_about_z(gamma)` order and `focalDistance / (focalDistance - z)` perspective factor.
 - `arrow` only: `x1`, `y1`, `x2`, `y2`, `buff`, `tipLength`, `tipWidth`, `maxTipLengthToLengthRatio`, `maxStrokeWidthToLengthRatio`; emits a `group` with a line shaft and filled triangle tip. `tipLength` and `strokeWidth` are clamped against drawable length ratios like Manim `Arrow`.
 - `rotatingLine` only: `x1`, `y1`, `x2`, `y2`, `about=<x,y>`, `angle=<expr>`; emits a `line` made by rotating the reference segment around the given point, and updates endpoints with `bindExpr` when `angle` references a value tracker. This expands Manim-style `Line(...).rotate(angle, about_point=...)` into DSL.
 - `rotateUpdater` only: `rate=<radians-per-second>`, `duration`, `easing`, `from`; expands Manim callback updaters shaped like `mobject.add_updater(lambda m, dt: m.rotate_about_origin(rate * dt))` into cumulative `rotation` animation.
 - `angle` only: `radius` / `r`, `from`, `to`, `samples`, `close=true|false`; emits a generated `path` arc and a `bindPath` updater. Expressions can reference value trackers, so `to=theta` follows an animated tracker.
-- `tracedPath` only: `x`, `y`, `from`, `to`, `samples`, `close=true|false`; emits a generated `path` and a `bindPath` updater. This is a declarative trace helper for parametric motion, not a full history-based Manim `TracedPath` clone yet.
+- `tracedPath` only: either `x`, `y`, `from`, `to`, `samples`, `close=true|false` for a generated parametric `path` plus `bindPath` updater, or `target=<node-id>`, `start=<time>`, `samples` to rebuild the target node's center history from the timeline at seek time, similar to Manim `TracedPath(mobject.get_center)`.
 
 
 ### Path morphing constraints
@@ -268,11 +273,14 @@ always curve.d = path(x=240+96*cos(t),y=270+96*sin(t),from=0,to=2*pi,samples=128
 animate c1.x from 220 to 640 duration=1.5s easing=easeInOut
 animate title.opacity from 0 to 1 start=0s duration=1s
 animateFrame to 120,40 scale=1.4 duration=1s easing=easeInOut
+followCamera dot start=1s duration=2s
 ```
 
 `animate` interpolates a target property or a declared scalar value tracker. Numeric values interpolate; non-numeric node property values switch to `to` at completion.
 
 `animateFrame` is camera-frame sugar. It expands to synchronized `camera.x`, `camera.y`, `camera.scale`, and `camera.rotation` animations from the compiler's current camera frame cursor. Use `cameraFrame at x,y scale=<number>` to set the initial frame cursor. `animateFrame` supports `to x,y`, `scale`, `rotation`, `start`, `duration`, and `easing`.
+
+`followCamera <node-id> [start=<time>] [duration=<time>]` applies after animations and writes the node center to `camera.target`. It is updater sugar for Manim-like `self.camera.frame.add_updater(lambda mob: mob.move_to(target.get_center()))` camera following. If `duration` is omitted, following remains active after `start`.
 
 ### play and wait
 
@@ -298,10 +306,13 @@ play Succession(<Primitive>(...), <Primitive>(...)) [duration=<time>] [easing=<n
 
 Supported primitives include:
 
-- `FadeIn(id)`: creates the node at hidden opacity, emits `effect=fadeIn`, and animates `transform.opacity`.
-- `FadeOut(id)`: emits `effect=fadeOut`, animates `transform.opacity` to `0`, and deletes the node when the duration ends.
+- `FadeIn(id, shift=UP)`: creates the node at hidden opacity, emits `effect=fadeIn`, and animates `transform.opacity`. With `shift`, it moves from `target - shift` to the target, matching Manim.
+- `FadeOut(id, shift=DOWN)`: emits `effect=fadeOut`, animates `transform.opacity` to `0`, and deletes the node when the duration ends. With `shift`, it moves from the target to `target + shift`.
+- `Animate(id, shift=LEFT|(x,y), opacity=<number>, fill=<css-color>, fillOpacity=<number>, stroke=<css-color>, strokeOpacity=<number>, strokeWidth=<number>, scale=<factor>, rotate=<radians>, rotation=<degrees>)`: builds a target-state clone, applies the listed Manim-like mobject methods/options, and expands the resulting transform/style differences into animations.
 - `Create(id)`: creates the node and emits `effect=create`. For `surroundingRect` frames, it also animates `geometry.drawProgress` so the border is drawn on.
 - `Write(id)`: creates writable leaves with `geometry.writeProgress=0`, emits `effect=write`, and reveals each leaf with width-paced left-to-right timing to approximate Manim's written-on appearance.
+- `MoveAlongPath(id, path)`: for `circle` path nodes, expands to `transform.x/y` bindings plus a value animation that traverses the circle once from the rightmost point. For `plot` paths with `easing=linear`, expands to arc-length-segmented position animations matching Manim's `path.point_from_proportion(...)` behavior.
+- `Rotating(id[, angle], about=(x,y), axis=OUT)`: rotates the node around its own center or the explicit point using Manim's `Rotating` defaults: `angle=TAU`, OUT axis, and linear-style tracker motion when the play easing is `linear`.
 - `Transform(source, target)`: animates the source node toward transform/style/geometry properties from the target node.
 - `TransformMatchingTex(source, target)`: matches expanded `math` token children by identical token text. Matched tokens expand to `Transform`, source-only tokens expand to `FadeOut`, and target-only tokens expand to `FadeIn`.
 - `ReplacementTransform(from, to)`: morphs `from` toward `to`, deletes `from`, and materializes `to` at the end.
@@ -353,9 +364,10 @@ cameraFrame at 0,0 scale=1
 set camera.x to -120
 animate camera.scale from 1 to 1.6 duration=2s easing=easeInOut
 animateFrame to -120,20 scale=1.6 duration=2s easing=easeInOut
+followCamera dot start=1s duration=2s
 ```
 
-`camera` configures the document-level `camera: { x, y, scale, rotation }`. Defaults are `x=0`, `y=0`, `scale=1`, and `rotation=0`. `set` / `animate` can target `camera.x`, `camera.y`, `camera.scale`, and `camera.rotation`.
+`camera` configures the document-level `camera: { x, y, scale, rotation }`. Defaults are `x=0`, `y=0`, `scale=1`, and `rotation=0`. `set` / `animate` can target `camera.x`, `camera.y`, `camera.scale`, `camera.rotation`, `camera.target.x`, and `camera.target.y`.
 
 `cameraFrame` is a Manim-style alias for configuring the camera frame cursor. `animateFrame` emits ordinary camera timeline operations, but lets gallery examples describe frame movement as a single high-level command.
 

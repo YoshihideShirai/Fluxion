@@ -41,9 +41,10 @@ Operations are applied in timestamp order. Operations with the same `t` are stab
 5. `animateValue`
 6. `animate`
 7. `setExpr`
-8. `delete`
+8. `bindExpr` / `bindPath` / `followCamera`
+9. `delete`
 
-Operations with the same timestamp and operation type keep source array order.
+Operations with the same timestamp and operation type keep source array order. `setExpr` runs after tracker and node animations, and `bindExpr` / `bindPath` / `followCamera` run after that as updater-like operations.
 
 ## Animation values
 

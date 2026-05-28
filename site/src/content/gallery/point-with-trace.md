@@ -6,11 +6,11 @@ source_example_path: examples/gallery/point-with-trace.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "Manim の VMobject updater による実フレーム履歴追記は未実装のため、`Rotating(... about_point=RIGHT)`、`shift(UP)`、`shift(LEFT)` の既知パスを Manim frame scale の1本の `tracedPath` piecewise expression として展開している。"
+  - symptom: "Dot motion uses DSL-native `Rotating(... about=RIGHT)` and `Animate(... shift=...)`; trace uses `tracedPath target=dot`, which rebuilds the target motion history on seek. Fine sampling can still differ from Manim's per-frame updater history."
     layer: dsl
     impact: low
-    workaround: "半回転、上移動、左移動を単一の `progress` value と `min/max` 式に展開し、dot と trace を同じ式から再計算する。"
-    closure_condition: "対象 mobject の実履歴を追記する TracedPath/updater primitive を DSL/runtime に追加する。"
+    workaround: "半回転は `Rotating(dot, PI, about=RIGHT)`、上/左移動は `Animate(dot, shift=...)` で表し、trace は `tracedPath target=dot` で seek 時点までの target transform をサンプリングして再構築する。`Rotating` は公式ソースの既定 `linear`、後続 `.animate.shift` は既定 `smooth` として扱う。"
+    closure_condition: "Manim と同じ per-frame updater sampling / path smoothing まで一致する。"
     fidelity_upgrade_condition: "Manim の `path.add_updater(update_path)` と同等の履歴追記で再現できる時。"
 category: Manim Stable Examples
 status: ported
@@ -19,17 +19,17 @@ gap_id: GAP-024
 ---
 scene width=960 height=540 fps=60
 
-value progress = 0
-
 rect bg w=960 h=540 at 0,0 fill="#000000"
-tracedPath trace x=67.5*(1-cos(clipPi(t)))-67.5*clip01(t-pi-1) y=67.5*sin(clipPi(t))-67.5*clip01(t-pi) from=0 to=progress samples=240 stroke="#FFFFFF" strokeWidth=4
 circle dot r=5.4 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=2
+tracedPath trace target=dot start=0s samples=240 stroke="#FFFFFF" strokeWidth=4
 
-always dot.x = expr=67.5*(1-cos(clipPi(progress)))-67.5*clip01(progress-pi-1)
-always dot.y = expr=67.5*sin(clipPi(progress))-67.5*clip01(progress-pi)
-
-animate progress from 0 to 3.141592654 duration=2s easing=linear
-wait 1s
-animate progress from 3.141592654 to 4.141592654 duration=1s
-animate progress from 4.141592654 to 5.141592654 duration=1s
-wait 1s
+at 0s:
+  play Rotating(dot, 3.141592654, about=RIGHT) duration=2s easing=linear
+at 2s:
+  wait 1s
+at 3s:
+  play Animate(dot, shift=UP) duration=1s easing=smooth
+at 4s:
+  play Animate(dot, shift=LEFT) duration=1s easing=smooth
+at 5s:
+  wait 1s

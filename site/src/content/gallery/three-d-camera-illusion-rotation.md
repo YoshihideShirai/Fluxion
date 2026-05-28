@@ -6,10 +6,10 @@ source_example_path: examples/gallery/three-d-camera-illusion-rotation.fluxion.t
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "3D camera illusion は未実装のため、投影済み ThreeDAxes/Circle の座標を `0.2*sin(t)` theta / `0.1*cos(t)-0.1` phi の2段階変化として手動補間している。"
+  - symptom: "3D camera illusion はネイティブな runtime カメラとしては未実装のため、Manim `ThreeDCamera` 投影済み ThreeDAxes/Circle の座標を `0.2*sin(t)` theta / `0.1*cos(t)-0.1` phi の2段階変化として補間している。"
     layer: runtime
     impact: medium
-    workaround: "公式の `begin_3dillusion_camera_rotation(rate=2)` と `wait(PI/2)` に合わせ、default `Circle()` の半径 1 を `projectedCircle` から生成し、途中の theta 最大点と終了時の phi 低下点を axes/circle/tick の座標補間へ展開する。"
+    workaround: "公式の `begin_3dillusion_camera_rotation(rate=2)` と `wait(PI/2)` に合わせ、`threeDAxes` / `projectedCircle` の Manim camera 投影を使って、途中の theta 最大点と終了時の phi 低下点を axes/circle/tick の座標補間へ展開する。"
     closure_condition: "3Dカメラ姿勢パラメータ（phi/theta/gamma）と透視投影、Dot3D を runtime へ実装する。"
     fidelity_upgrade_condition: "Manim の `begin_3dillusion_camera_rotation` を同等パラメータで再現できる時。"
 category: Manim Stable Examples
@@ -22,111 +22,223 @@ scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 
-line x_axis_pos x1=0 y1=0 x2=-227 y2=102 at 0,28 stroke="#FFFFFF" strokeWidth=4
-line x_axis_neg x1=0 y1=0 x2=145 y2=-65 at 0,28 stroke="#FFFFFF" strokeWidth=4
-line y_axis_pos x1=0 y1=0 x2=351 y2=53 at 0,28 stroke="#FFFFFF" strokeWidth=4
-line y_axis_neg x1=0 y1=0 x2=-272 y2=-41 at 0,28 stroke="#FFFFFF" strokeWidth=4
-line z_axis_pos x1=0 y1=0 x2=0 y2=-221 at 0,28 stroke="#FFFFFF" strokeWidth=4
-line z_axis_neg x1=0 y1=0 x2=0 y2=203 at 0,28 stroke="#FFFFFF" strokeWidth=4
-path x_axis_tip d="M -227 102 L -213.5 88.2 L -207.7 101 Z" at 0,28 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=0
-path y_axis_tip d="M 351 53 L 332.2 57.2 L 334.2 43.4 Z" at 0,28 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=0
-path z_axis_tip d="M 0 -221 L 7 -203 L -7 -203 Z" at 0,28 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=0
+threeDAxes axes at 0,28 xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 phi=75 theta=30 unitScale=67.5 includeTips=true
+projectedCircle circle_xy radius=1 at 0,28 phi=75 theta=30 unitScale=67.5 samples=96 fill="none" stroke="#FFFFFF" strokeWidth=4
 
-line x_tick_pos1 x1=-4 y1=10 x2=4 y2=-10 at -57,54 stroke="#FFFFFF" strokeWidth=2
-line x_tick_pos2 x1=-4 y1=10 x2=4 y2=-10 at -113,79 stroke="#FFFFFF" strokeWidth=2
-line x_tick_pos3 x1=-4 y1=10 x2=4 y2=-10 at -170,105 stroke="#FFFFFF" strokeWidth=2
-line x_tick_neg1 x1=-4 y1=10 x2=4 y2=-10 at 36,12 stroke="#FFFFFF" strokeWidth=2
-line x_tick_neg2 x1=-4 y1=10 x2=4 y2=-10 at 73,-4 stroke="#FFFFFF" strokeWidth=2
-line y_tick_pos1 x1=-4 y1=-10 x2=4 y2=10 at 88,41 stroke="#FFFFFF" strokeWidth=2
-line y_tick_pos2 x1=-4 y1=-10 x2=4 y2=10 at 176,55 stroke="#FFFFFF" strokeWidth=2
-line y_tick_pos3 x1=-4 y1=-10 x2=4 y2=10 at 263,68 stroke="#FFFFFF" strokeWidth=2
-line y_tick_neg1 x1=-4 y1=-10 x2=4 y2=10 at -68,18 stroke="#FFFFFF" strokeWidth=2
-line y_tick_neg2 x1=-4 y1=-10 x2=4 y2=10 at -136,8 stroke="#FFFFFF" strokeWidth=2
-line z_tick_pos1 x1=-10 y1=0 x2=10 y2=0 at 0,-27 stroke="#FFFFFF" strokeWidth=2
-line z_tick_pos2 x1=-10 y1=0 x2=10 y2=0 at 0,-82 stroke="#FFFFFF" strokeWidth=2
-line z_tick_pos3 x1=-10 y1=0 x2=10 y2=0 at 0,-138 stroke="#FFFFFF" strokeWidth=2
-line z_tick_neg1 x1=-10 y1=0 x2=10 y2=0 at 0,79 stroke="#FFFFFF" strokeWidth=2
-line z_tick_neg2 x1=-10 y1=0 x2=10 y2=0 at 0,130 stroke="#FFFFFF" strokeWidth=2
-
-projectedCircle circle_xy radius=1 at 0,28 xBasis=-56.75,25.5 yBasis=87.75,13.25 fill="none" stroke="#FFFFFF" strokeWidth=4
-
-group world x_axis_pos x_axis_neg y_axis_pos y_axis_neg z_axis_pos z_axis_neg x_axis_tip y_axis_tip z_axis_tip x_tick_pos1 x_tick_pos2 x_tick_pos3 x_tick_neg1 x_tick_neg2 y_tick_pos1 y_tick_pos2 y_tick_pos3 y_tick_neg1 y_tick_neg2 z_tick_pos1 z_tick_pos2 z_tick_pos3 z_tick_neg1 z_tick_neg2 circle_xy
-
-animate x_axis_pos.x2 from -227 to -153 duration=0.785s easing=easeInOut
-animate x_axis_pos.y2 from 102 to 106 duration=0.785s easing=easeInOut
-animate x_axis_tip.d from "M -227 102 L -213.5 88.2 L -207.7 101 Z" to "M -153 106 L -142.2 90 L -134.2 101.5 Z" duration=0.785s easing=easeInOut
-animate x_axis_neg.x2 from 145 to 88 duration=0.785s easing=easeInOut
-animate x_axis_neg.y2 from -65 to -69 duration=0.785s easing=easeInOut
-animate y_axis_pos.x2 from 351 to 389 duration=0.785s easing=easeInOut
-animate y_axis_pos.y2 from 53 to 30 duration=0.785s easing=easeInOut
-animate y_axis_tip.d from "M 351 53 L 332.2 57.2 L 334.2 43.4 Z" to "M 389 30 L 370.5 35.6 L 371.6 21.6 Z" duration=0.785s easing=easeInOut
-animate y_axis_neg.x2 from -272 to -295 duration=0.785s easing=easeInOut
-animate y_axis_neg.y2 from -41 to -26 duration=0.785s easing=easeInOut
-animate z_axis_pos.y2 from -221 to -205 duration=0.785s easing=easeInOut
-animate z_axis_neg.y2 from 203 to 188 duration=0.785s easing=easeInOut
-animate z_axis_tip.d from "M 0 -221 L 7 -203 L -7 -203 Z" to "M 0 -205 L 7 -187 L -7 -187 Z" duration=0.785s easing=easeInOut
-animate circle_xy.d from "M -56.75 25.5 C -8.287013 32.817773 56.40784 27.333261 87.75 13.25 C 119.09216 -0.833261 105.212987 -18.182227 56.75 -25.5 C 8.287013 -32.817773 -56.40784 -27.333261 -87.75 -13.25 C -119.09216 0.833261 -105.212987 18.182227 -56.75 25.5 Z" to "M -47.761 25.373 C 8.955 29.851 73.134 19.403 89.552 5.97 C 114.925 -11.94 77.612 -28.358 43.284 -23.881 C -13.433 -25.373 -80.597 -14.925 -85.075 -7.463 C -110.448 11.94 -85.075 22.388 -47.761 25.373 Z" duration=0.785s easing=easeInOut
-animate x_tick_pos1.x from -57 to -38 duration=0.785s easing=easeInOut
-animate x_tick_pos1.y from 54 to 55 duration=0.785s easing=easeInOut
-animate x_tick_pos2.x from -113 to -76 duration=0.785s easing=easeInOut
-animate x_tick_pos2.y from 79 to 81 duration=0.785s easing=easeInOut
-animate x_tick_pos3.x from -170 to -115 duration=0.785s easing=easeInOut
-animate x_tick_pos3.y from 105 to 108 duration=0.785s easing=easeInOut
-animate x_tick_neg1.x from 36 to 22 duration=0.785s easing=easeInOut
-animate x_tick_neg1.y from 12 to 11 duration=0.785s easing=easeInOut
-animate x_tick_neg2.x from 73 to 44 duration=0.785s easing=easeInOut
-animate x_tick_neg2.y from -4 to -6 duration=0.785s easing=easeInOut
-animate y_tick_pos1.x from 88 to 97 duration=0.785s easing=easeInOut
-animate y_tick_pos1.y from 41 to 36 duration=0.785s easing=easeInOut
-animate y_tick_pos2.x from 176 to 195 duration=0.785s easing=easeInOut
-animate y_tick_pos2.y from 55 to 43 duration=0.785s easing=easeInOut
-animate y_tick_pos3.x from 263 to 292 duration=0.785s easing=easeInOut
-animate y_tick_pos3.y from 68 to 51 duration=0.785s easing=easeInOut
-animate y_tick_neg1.x from -68 to -74 duration=0.785s easing=easeInOut
-animate y_tick_neg1.y from 18 to 22 duration=0.785s easing=easeInOut
-animate y_tick_neg2.x from -136 to -147 duration=0.785s easing=easeInOut
-animate y_tick_neg2.y from 8 to 15 duration=0.785s easing=easeInOut
-animate z_tick_pos1.y from -27 to -23 duration=0.785s easing=easeInOut
-animate z_tick_pos2.y from -82 to -74 duration=0.785s easing=easeInOut
-animate z_tick_pos3.y from -138 to -126 duration=0.785s easing=easeInOut
-animate z_tick_neg1.y from 79 to 75 duration=0.785s easing=easeInOut
-animate z_tick_neg2.y from 130 to 122 duration=0.785s easing=easeInOut
-animate x_axis_pos.x2 from -153 to -227 start=0.785s duration=0.785s easing=easeInOut
-animate x_axis_pos.y2 from 106 to 90 start=0.785s duration=0.785s easing=easeInOut
-animate x_axis_tip.d from "M -153 106 L -142.2 90 L -134.2 101.5 Z" to "M -227 90 L -212.8 76.9 L -207.7 89.9 Z" start=0.785s duration=0.785s easing=easeInOut
-animate x_axis_neg.x2 from 88 to 145 start=0.785s duration=0.785s easing=easeInOut
-animate x_axis_neg.y2 from -69 to -57 start=0.785s duration=0.785s easing=easeInOut
-animate y_axis_pos.x2 from 389 to 351 start=0.785s duration=0.785s easing=easeInOut
-animate y_axis_pos.y2 from 30 to 47 start=0.785s duration=0.785s easing=easeInOut
-animate y_axis_tip.d from "M 389 30 L 370.5 35.6 L 371.6 21.6 Z" to "M 351 47 L 332.2 51.5 L 334.1 37.7 Z" start=0.785s duration=0.785s easing=easeInOut
-animate y_axis_neg.x2 from -295 to -272 start=0.785s duration=0.785s easing=easeInOut
-animate y_axis_neg.y2 from -26 to -36 start=0.785s duration=0.785s easing=easeInOut
-animate z_axis_pos.y2 from -205 to -185 start=0.785s duration=0.785s easing=easeInOut
-animate z_axis_neg.y2 from 188 to 170 start=0.785s duration=0.785s easing=easeInOut
-animate z_axis_tip.d from "M 0 -205 L 7 -187 L -7 -187 Z" to "M 0 -185 L 7 -167 L -7 -167 Z" start=0.785s duration=0.785s easing=easeInOut
-animate circle_xy.d from "M -47.761 25.373 C 8.955 29.851 73.134 19.403 89.552 5.97 C 114.925 -11.94 77.612 -28.358 43.284 -23.881 C -13.433 -25.373 -80.597 -14.925 -85.075 -7.463 C -110.448 11.94 -85.075 22.388 -47.761 25.373 Z" to "M -52.239 20.896 C 4.478 26.866 70.149 22.388 89.552 11.94 C 117.91 -4.478 83.582 -20.896 47.761 -19.403 C -8.955 -23.881 -79.104 -17.91 -85.075 -11.94 C -113.433 4.478 -89.552 16.418 -52.239 20.896 Z" start=0.785s duration=0.785s easing=easeInOut
-animate x_tick_pos1.x from -38 to -57 start=0.785s duration=0.785s easing=easeInOut
-animate x_tick_pos1.y from 55 to 51 start=0.785s duration=0.785s easing=easeInOut
-animate x_tick_pos2.x from -76 to -113 start=0.785s duration=0.785s easing=easeInOut
-animate x_tick_pos2.y from 81 to 73 start=0.785s duration=0.785s easing=easeInOut
-animate x_tick_pos3.x from -115 to -170 start=0.785s duration=0.785s easing=easeInOut
-animate x_tick_pos3.y from 108 to 96 start=0.785s duration=0.785s easing=easeInOut
-animate x_tick_neg1.x from 22 to 36 start=0.785s duration=0.785s easing=easeInOut
-animate x_tick_neg1.y from 11 to 14 start=0.785s duration=0.785s easing=easeInOut
-animate x_tick_neg2.x from 44 to 73 start=0.785s duration=0.785s easing=easeInOut
-animate x_tick_neg2.y from -6 to 0 start=0.785s duration=0.785s easing=easeInOut
-animate y_tick_pos1.x from 97 to 88 start=0.785s duration=0.785s easing=easeInOut
-animate y_tick_pos1.y from 36 to 40 start=0.785s duration=0.785s easing=easeInOut
-animate y_tick_pos2.x from 195 to 176 start=0.785s duration=0.785s easing=easeInOut
-animate y_tick_pos2.y from 43 to 52 start=0.785s duration=0.785s easing=easeInOut
-animate y_tick_pos3.x from 292 to 263 start=0.785s duration=0.785s easing=easeInOut
-animate y_tick_pos3.y from 51 to 63 start=0.785s duration=0.785s easing=easeInOut
-animate y_tick_neg1.x from -74 to -68 start=0.785s duration=0.785s easing=easeInOut
-animate y_tick_neg1.y from 22 to 19 start=0.785s duration=0.785s easing=easeInOut
-animate y_tick_neg2.x from -147 to -136 start=0.785s duration=0.785s easing=easeInOut
-animate y_tick_neg2.y from 15 to 10 start=0.785s duration=0.785s easing=easeInOut
-animate z_tick_pos1.y from -23 to -18 start=0.785s duration=0.785s easing=easeInOut
-animate z_tick_pos2.y from -74 to -64 start=0.785s duration=0.785s easing=easeInOut
-animate z_tick_pos3.y from -126 to -111 start=0.785s duration=0.785s easing=easeInOut
-animate z_tick_neg1.y from 75 to 71 start=0.785s duration=0.785s easing=easeInOut
-animate z_tick_neg2.y from 122 to 113 start=0.785s duration=0.785s easing=easeInOut
+animate axes:x:axis.x1 from 161.876341 to 220.302313 duration=0.785398s easing=easeInOut
+animate axes:x:axis.y1 from -72.567178 to -64.540265 duration=0.785398s easing=easeInOut
+animate axes:x:axis.x2 from -270.344199 to -342.53155 duration=0.785398s easing=easeInOut
+animate axes:x:axis.y2 from 121.191989 to 100.34882 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m6.x1 from 165.96699 to 223.113769 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m6.y1 from -63.442125 to -54.943614 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m6.x2 from 157.785691 to 217.490856 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m6.y2 from -81.692231 to -74.136916 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m5.x1 from 143.653913 to 192.023258 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m5.y1 from -53.439447 to -45.835268 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m5.x2 from 135.472614 to 186.400345 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m5.y2 from -71.689552 to -65.02857 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m4.x1 from 119.74183 to 158.966763 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m4.y1 from -42.719953 to -36.150962 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m4.x2 from 111.560531 to 153.34385 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m4.y2 from -60.970059 to -55.344264 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m3.x1 from 94.05247 to 123.751718 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m3.y1 from -31.203728 to -25.834282 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m3.x2 from 85.871171 to 118.128805 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m3.y2 from -49.453834 to -45.027585 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m2.x1 from 66.38004 to 86.159563 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m2.y1 from -18.798517 to -14.821199 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m2.x2 from 58.198742 to 80.53665 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m2.y2 from -37.048623 to -34.014501 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m1.x1 from 36.4857 to 45.941197 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m1.y1 from -5.397251 to -3.038736 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m1.x2 from 28.304401 to 40.318284 duration=0.785398s easing=easeInOut
+animate axes:x:tick:m1.y2 from -23.647357 to -22.232038 duration=0.785398s easing=easeInOut
+animate axes:x:tick:1.x1 from -31.132591 to -43.557658 duration=0.785398s easing=easeInOut
+animate axes:x:tick:1.y1 from 24.9152 to 23.181052 duration=0.785398s easing=easeInOut
+animate axes:x:tick:1.x2 from -39.31389 to -49.180571 duration=0.785398s easing=easeInOut
+animate axes:x:tick:1.y2 from 6.665094 to 3.98775 duration=0.785398s easing=easeInOut
+animate axes:x:tick:2.x1 from -69.571292 to -93.545339 duration=0.785398s easing=easeInOut
+animate axes:x:tick:2.y1 from 42.146798 to 37.825557 duration=0.785398s easing=easeInOut
+animate axes:x:tick:2.x2 from -77.752591 to -99.168253 duration=0.785398s easing=easeInOut
+animate axes:x:tick:2.y2 from 23.896692 to 18.632255 duration=0.785398s easing=easeInOut
+animate axes:x:tick:3.x1 from -111.686811 to -147.592367 duration=0.785398s easing=easeInOut
+animate axes:x:tick:3.y1 from 61.026668 to 53.659296 duration=0.785398s easing=easeInOut
+animate axes:x:tick:3.x2 from -119.868109 to -153.21528 duration=0.785398s easing=easeInOut
+animate axes:x:tick:3.y2 from 42.776563 to 34.465994 duration=0.785398s easing=easeInOut
+animate axes:x:tick:4.x1 from -158.033199 to -206.214138 duration=0.785398s easing=easeInOut
+animate axes:x:tick:4.y1 from 81.803186 to 70.833264 duration=0.785398s easing=easeInOut
+animate axes:x:tick:4.x2 from -166.214498 to -211.837051 duration=0.785398s easing=easeInOut
+animate axes:x:tick:4.y2 from 63.55308 to 51.639961 duration=0.785398s easing=easeInOut
+animate axes:x:tick:5.x1 from -209.281716 to -270.017156 duration=0.785398s easing=easeInOut
+animate axes:x:tick:5.y1 from 104.777268 to 89.525141 duration=0.785398s easing=easeInOut
+animate axes:x:tick:5.x2 from -217.463015 to -275.64007 duration=0.785398s easing=easeInOut
+animate axes:x:tick:5.y2 from 86.527162 to 70.331838 duration=0.785398s easing=easeInOut
+animate axes:x:tick:6.x1 from -266.25355 to -339.720093 duration=0.785398s easing=easeInOut
+animate axes:x:tick:6.y1 from 130.317042 to 109.945471 duration=0.785398s easing=easeInOut
+animate axes:x:tick:6.x2 from -274.434848 to -345.343007 duration=0.785398s easing=easeInOut
+animate axes:x:tick:6.y2 from 112.066936 to 90.752169 duration=0.785398s easing=easeInOut
+animate axes:x:tip.d from "M -270.344199 121.191989 L -256.782558 107.441283 L -251.05565 120.216357 Z" to "M -342.53155 100.34882 L -327.225598 88.570542 L -323.289558 102.005854 Z" duration=0.785398s easing=easeInOut
+animate axes:y:axis.x1 from -260.794996 to -218.067031 duration=0.785398s easing=easeInOut
+animate axes:y:axis.y1 from -38.970399 to -49.862125 duration=0.785398s easing=easeInOut
+animate axes:y:axis.x2 from 332.420235 to 301.066942 duration=0.785398s easing=easeInOut
+animate axes:y:axis.y2 from 49.673305 to 68.840472 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m5.x1 from -259.317112 to -215.838008 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m5.y1 from -48.86059 to -59.610533 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m5.x2 from -262.27288 to -220.296054 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m5.y2 from -29.080209 to -40.113717 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m4.x1 from -211.752502 to -177.170391 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m4.y1 from -41.753046 to -50.768987 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m4.x2 from -214.708269 to -181.628436 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m4.y2 from -21.972665 to -31.272171 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m3.x1 from -162.045874 to -136.246337 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m3.y1 from -34.325422 to -41.411496 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m3.x2 from -165.001641 to -140.704382 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m3.y2 from -14.545042 to -21.91468 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m2.x1 from -110.049201 to -92.862399 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m2.y1 from -26.555598 to -31.49154 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m2.x2 from -113.004969 to -97.320444 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m2.y2 from -6.775218 to -11.994724 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m1.x1 from -55.600494 to -46.789916 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m1.y1 from -18.419369 to -20.956835 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m1.x2 from -58.556261 to -51.247961 duration=0.785398s easing=easeInOut
+animate axes:y:tick:m1.y2 from 1.361011 to -1.460019 duration=0.785398s easing=easeInOut
+animate axes:y:tick:1.x1 from 61.381151 to 54.486402 duration=0.785398s easing=easeInOut
+animate axes:y:tick:1.y1 from -0.93889 to 2.200505 duration=0.785398s easing=easeInOut
+animate axes:y:tick:1.x2 from 58.425384 to 50.028357 duration=0.785398s easing=easeInOut
+animate axes:y:tick:1.y2 from 18.84149 to 21.697321 duration=0.785398s easing=easeInOut
+animate axes:y:tick:2.x1 from 124.324341 to 110.314109 duration=0.785398s easing=easeInOut
+animate axes:y:tick:2.y1 from 8.466663 to 14.965791 duration=0.785398s easing=easeInOut
+animate axes:y:tick:2.x2 from 121.368574 to 105.856064 duration=0.785398s easing=easeInOut
+animate axes:y:tick:2.y2 from 28.247044 to 34.462607 duration=0.785398s easing=easeInOut
+animate axes:y:tick:3.x1 from 190.54488 to 170.090981 duration=0.785398s easing=easeInOut
+animate axes:y:tick:3.y1 from 18.361949 to 28.634074 duration=0.785398s easing=easeInOut
+animate axes:y:tick:3.x2 from 187.589113 to 165.632936 duration=0.785398s easing=easeInOut
+animate axes:y:tick:3.y2 from 38.142329 to 48.13089 duration=0.785398s easing=easeInOut
+animate axes:y:tick:4.x1 from 260.305578 to 234.251421 duration=0.785398s easing=easeInOut
+animate axes:y:tick:4.y1 from 28.786237 to 43.304682 duration=0.785398s easing=easeInOut
+animate axes:y:tick:4.x2 from 257.349811 to 229.793376 duration=0.785398s easing=easeInOut
+animate axes:y:tick:4.y2 from 48.566617 to 62.801498 duration=0.785398s easing=easeInOut
+animate axes:y:tick:5.x1 from 333.898119 to 303.295965 duration=0.785398s easing=easeInOut
+animate axes:y:tick:5.y1 from 39.783115 to 59.092064 duration=0.785398s easing=easeInOut
+animate axes:y:tick:5.x2 from 330.942351 to 298.83792 duration=0.785398s easing=easeInOut
+animate axes:y:tick:5.y2 from 59.563495 to 78.58888 duration=0.785398s easing=easeInOut
+animate axes:y:tip.d from "M 332.420235 49.673305 L 313.583374 53.936247 L 315.652411 40.089981 Z" to "M 301.066942 68.840472 L 281.959492 71.652117 L 285.080124 58.004346 Z" duration=0.785398s easing=easeInOut
+animate circle_xy.d from "M -35.223241 15.790147 L -31.206203 16.378048 L -27.037546 16.89426 L -22.737 17.335969 L -18.325166 17.700751 L -13.823387 17.986593 L -9.25361 18.19191 L -4.638241 18.31556 L 0 18.356853 L 4.638241 18.31556 L 9.25361 18.19191 L 13.823387 17.986593 L 18.325166 17.700751 L 22.737 17.335969 L 27.037546 16.89426 L 31.206203 16.378048 L 35.223241 15.790147 L 39.069917 15.133735 L 42.728586 14.412333 L 46.182789 13.629768 L 49.417341 12.790149 L 52.418396 11.897834 L 55.173502 10.957393 L 57.671643 9.973582 L 59.903268 8.9513 L 61.860302 7.895566 L 63.536156 6.81148 L 64.925712 5.704193 L 66.02531 4.578879 L 66.832714 3.440702 L 67.347079 2.294796 L 67.568909 1.146232 L 67.5 0 L 67.14339 -1.139014 L 66.503296 -2.266045 L 65.585055 -3.37647 L 64.395055 -4.46582 L 62.940672 -5.529793 L 61.2302 -6.564267 L 59.27279 -7.565308 L 57.078378 -8.529179 L 54.657626 -9.452345 L 52.02186 -10.331481 L 49.183005 -11.163471 L 46.153535 -11.945414 L 42.946412 -12.674627 L 39.575038 -13.348642 L 36.053206 -13.965212 L 32.395051 -14.522304 L 28.61501 -15.018104 L 24.727779 -15.451016 L 20.748278 -15.819656 L 16.691611 -16.122858 L 12.573034 -16.359669 L 8.407921 -16.529348 L 4.211736 -16.631367 L 0 -16.665408 L -4.211736 -16.631367 L -8.407921 -16.529348 L -12.573034 -16.359669 L -16.691611 -16.122858 L -20.748278 -15.819656 L -24.727779 -15.451016 L -28.61501 -15.018104 L -32.395051 -14.522304 L -36.053206 -13.965212 L -39.575038 -13.348642 L -42.946412 -12.674627 L -46.153535 -11.945414 L -49.183005 -11.163471 L -52.02186 -10.331481 L -54.657626 -9.452345 L -57.078378 -8.529179 L -59.27279 -7.565308 L -61.2302 -6.564267 L -62.940672 -5.529793 L -64.395055 -4.46582 L -65.585055 -3.37647 L -66.503296 -2.266045 L -67.14339 -1.139014 L -67.5 0 L -67.568909 1.146232 L -67.347079 2.294796 L -66.832714 3.440702 L -66.02531 4.578879 L -64.925712 5.704193 L -63.536156 6.81148 L -61.860302 7.895566 L -59.903268 8.9513 L -57.671643 9.973582 L -55.173502 10.957393 L -52.418396 11.897834 L -49.417341 12.790149 L -46.182789 13.629768 L -42.728586 14.412333 L -39.069917 15.133735 Z" to "M -46.369114 13.584401 L -42.926775 14.370259 L -39.279088 15.095176 L -35.442444 15.755308 L -31.434424 16.347118 L -27.273712 16.867406 L -22.979988 17.313338 L -18.573805 17.682468 L -14.07647 17.972758 L -9.509898 18.1826 L -4.896477 18.310828 L -0.25891 18.356725 L 4.379935 18.320036 L 8.997179 18.200966 L 13.570093 18.000178 L 18.076247 17.718789 L 22.493666 17.358361 L 26.800969 16.920883 L 30.97751 16.408756 L 35.003508 15.824772 L 38.860162 15.172092 L 42.529761 14.454216 L 45.99578 13.674957 L 49.242961 12.838408 L 52.25738 11.948913 L 55.026507 11.011033 L 57.539246 10.029513 L 59.785961 9.009246 L 61.758498 7.955244 L 63.450183 6.872604 L 64.855818 5.766475 L 65.971659 4.642029 L 66.795395 3.504435 L 67.326104 2.358826 L 67.564215 1.210277 L 67.511453 0.063786 L 67.170788 -1.075757 L 66.546376 -2.20358 L 65.643489 -3.31505 L 64.468462 -4.405691 L 63.028614 -5.471189 L 61.332193 -6.507414 L 59.3883 -7.51042 L 57.206833 -8.476459 L 54.798413 -9.401985 L 52.17433 -10.283661 L 49.34648 -11.118358 L 46.327304 -11.903166 L 43.12974 -12.635387 L 39.767168 -13.312542 L 36.253358 -13.932371 L 32.602428 -14.49283 L 28.828801 -14.992093 L 24.947158 -15.428551 L 20.972408 -15.800808 L 16.919644 -16.107688 L 12.804115 -16.348223 L 8.641191 -16.521662 L 4.446331 -16.627465 L 0.235053 -16.665302 L -3.977092 -16.635057 L -8.174553 -16.536824 L -12.341807 -16.370907 L -16.463386 -16.137823 L -20.523909 -15.8383 L -24.508113 -15.473281 L -28.400885 -15.04392 L -32.187293 -14.551587 L -35.85263 -13.997868 L -39.382441 -13.384564 L -42.762573 -12.713695 L -45.979214 -11.987498 L -49.018938 -11.208427 L -51.868758 -10.379154 L -54.516171 -9.502568 L -56.949218 -8.581772 L -59.156542 -7.62008 L -61.12744 -6.621016 L -62.851933 -5.588305 L -64.320826 -4.52587 L -65.525775 -3.437824 L -66.459351 -2.328458 L -67.115109 -1.202233 L -67.487652 -0.063763 L -67.572699 1.082194 L -67.367144 2.230758 L -66.86912 3.376946 L -66.078051 4.515688 L -64.994704 5.641855 L -63.621237 6.750284 L -61.961231 7.8358 L -60.019719 8.893251 L -57.803211 9.917531 L -55.319697 10.903619 L -52.578647 11.846605 L -49.590995 12.741726 Z" duration=0.785398s easing=easeInOut
+animate axes:x:axis.x1 from 220.302313 to 164.28776 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:axis.y1 from -64.540265 to -126.786138 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:axis.x2 from -342.53155 to -263.875742 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:axis.y2 from 100.34882 to 203.64138 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m6.x1 from 223.113769 to 170.397301 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m6.y1 from -54.943614 to -118.869477 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m6.x2 from 217.490856 to 158.178219 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m6.y2 from -74.136916 to -134.702798 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m5.x1 from 192.023258 to 147.461586 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m5.y1 from -45.835268 to -101.16925 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m5.x2 from 186.400345 to 135.242505 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m5.y2 from -65.02857 to -117.002571 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m4.x1 from 158.966763 to 122.98636 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m4.y1 from -36.150962 to -82.280933 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m4.x2 from 153.34385 to 110.767279 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m4.y2 from -55.344264 to -98.114254 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m3.x1 from 123.751718 to 96.811235 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m3.y1 from -25.834282 to -62.080749 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m3.x2 from 118.128805 to 84.592154 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m3.y2 from -45.027585 to -77.914069 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m2.x1 from 86.159563 to 68.752743 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m2.y1 from -14.821199 to -40.42711 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m2.x2 from 80.53665 to 56.533662 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m2.y2 from -34.014501 to -56.260431 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m1.x1 from 45.941197 to 38.600029 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m1.y1 from -3.038736 to -17.157292 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m1.x2 from 40.318284 to 26.380947 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:m1.y2 from -22.232038 to -32.990613 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:1.x1 from -43.557658 to -29.001561 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:1.y1 from 23.181052 to 35.013024 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:1.x2 from -49.180571 to -41.220642 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:1.y2 from 3.98775 to 19.179704 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:2.x1 from -93.545339 to -67.063659 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:2.y1 from 37.825557 to 64.386767 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:2.x2 from -99.168253 to -79.282741 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:2.y2 from 18.632255 to 48.553447 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:3.x1 from -147.592367 to -108.46511 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:3.y1 from 53.659296 to 96.337596 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:3.x2 from -153.21528 to -120.684192 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:3.y2 from 34.465994 to 80.504275 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:4.x1 from -206.214138 to -153.66554 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:4.y1 from 70.833264 to 131.220219 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:4.x2 from -211.837051 to -165.884621 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:4.y2 from 51.639961 to 115.386898 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:5.x1 from -270.017156 to -203.212981 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:5.y1 from 89.525141 to 169.457569 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:5.x2 from -275.64007 to -215.432063 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:5.y2 from 70.331838 to 153.624249 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:6.x1 from -339.720093 to -257.766201 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:6.y1 from 109.945471 to 211.558041 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:6.x2 from -345.343007 to -269.985283 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tick:6.y2 from 90.752169 to 195.72472 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:x:tip.d from "M -342.53155 100.34882 L -327.225598 88.570542 L -323.289558 102.005854 Z" to "M -263.875742 203.64138 L -253.902432 187.102544 L -245.349075 198.185869 Z" start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:axis.x1 from -218.067031 to -262.867037 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:axis.y1 from -49.862125 to -67.620977 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:axis.x2 from 301.066942 to 329.113525 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:axis.y2 from 68.840472 to 84.66249 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m5.x1 from -215.838008 to -260.375707 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m5.y1 from -59.610533 to -77.30567 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m5.x2 from -220.296054 to -265.358366 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m5.y2 from -40.113717 to -57.936284 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m4.x1 from -177.170391 to -212.122205 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m4.y1 from -50.768987 to -64.892744 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m4.x2 from -181.628436 to -217.104864 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m4.y2 from -31.272171 to -45.523358 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m3.x1 from -136.246337 to -161.844653 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m3.y1 from -41.411496 to -51.959144 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m3.x2 from -140.704382 to -166.827312 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m3.y2 from -21.91468 to -32.589758 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m2.x1 from -92.862399 to -109.412971 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m2.y1 from -31.49154 to -38.471407 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m2.x2 from -97.320444 to -114.39563 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m2.y2 from -11.994724 to -19.102021 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m1.x1 from -46.789916 to -54.685689 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m1.y1 from -20.956835 to -24.39314 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m1.x2 from -51.247961 to -59.668348 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:m1.y2 from -1.460019 to -5.023754 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:1.x1 from 54.486402 to 62.286334 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:1.y1 from 2.200505 to 5.697215 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:1.x2 from 50.028357 to 57.303676 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:1.y2 from 21.697321 to 25.066601 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:2.x1 from 110.314109 to 124.883345 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:2.y1 from 14.965791 to 21.799923 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:2.x2 from 105.856064 to 119.900686 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:2.y2 from 34.462607 to 41.169309 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:3.x1 from 170.090981 to 190.484041 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:3.y1 from 28.634074 to 38.67531 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:3.x2 from 165.632936 to 185.501382 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:3.y2 from 48.13089 to 58.044696 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:4.x1 from 234.251421 to 259.309931 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:4.y1 from 43.304682 to 56.38036 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:4.x2 from 229.793376 to 254.327272 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:4.y2 from 62.801498 to 75.749746 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:5.x1 from 303.295965 to 331.604855 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:5.y1 from 59.092064 to 74.977798 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:5.x2 from 298.83792 to 326.622196 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tick:5.y2 from 78.58888 to 94.347183 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:y:tip.d from "M 301.066942 68.840472 L 281.959492 71.652117 L 285.080124 58.004346 Z" to "M 329.113525 84.66249 L 309.937147 86.957383 L 313.425009 73.398812 Z" start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:axis.y1 from 247.964392 to 221.940543 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:axis.y2 from -275.036932 to -265.365317 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:m4.y1 from 247.964392 to 221.940543 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:m4.y2 from 247.964392 to 221.940543 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:m3.y1 from 188.290023 to 169.931385 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:m3.y2 from 188.290023 to 169.931385 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:m2.y1 from 127.110134 to 115.703755 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:m2.y2 from 127.110134 to 115.703755 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:m1.y1 from 64.367023 to 59.112614 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:m1.y2 from 64.367023 to 59.112614 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:1.y1 from -66.054805 to -61.806448 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:1.y2 from -66.054805 to -61.806448 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:2.y1 from -133.864659 to -126.495164 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:2.y2 from -133.864659 to -126.495164 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:3.y1 from -203.500449 to -194.272579 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:3.y2 from -203.500449 to -194.272579 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:4.y1 from -275.036932 to -265.365317 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tick:4.y2 from -275.036932 to -265.365317 start=0.785398s duration=0.785398s easing=easeInOut
+animate axes:z:tip.d from "M 0 -275.036932 L 7 -257.036932 L -7 -257.036932 Z" to "M 0 -265.365317 L 7 -247.365317 L -7 -247.365317 Z" start=0.785398s duration=0.785398s easing=easeInOut
+animate circle_xy.d from "M -46.369114 13.584401 L -42.926775 14.370259 L -39.279088 15.095176 L -35.442444 15.755308 L -31.434424 16.347118 L -27.273712 16.867406 L -22.979988 17.313338 L -18.573805 17.682468 L -14.07647 17.972758 L -9.509898 18.1826 L -4.896477 18.310828 L -0.25891 18.356725 L 4.379935 18.320036 L 8.997179 18.200966 L 13.570093 18.000178 L 18.076247 17.718789 L 22.493666 17.358361 L 26.800969 16.920883 L 30.97751 16.408756 L 35.003508 15.824772 L 38.860162 15.172092 L 42.529761 14.454216 L 45.99578 13.674957 L 49.242961 12.838408 L 52.25738 11.948913 L 55.026507 11.011033 L 57.539246 10.029513 L 59.785961 9.009246 L 61.758498 7.955244 L 63.450183 6.872604 L 64.855818 5.766475 L 65.971659 4.642029 L 66.795395 3.504435 L 67.326104 2.358826 L 67.564215 1.210277 L 67.511453 0.063786 L 67.170788 -1.075757 L 66.546376 -2.20358 L 65.643489 -3.31505 L 64.468462 -4.405691 L 63.028614 -5.471189 L 61.332193 -6.507414 L 59.3883 -7.51042 L 57.206833 -8.476459 L 54.798413 -9.401985 L 52.17433 -10.283661 L 49.34648 -11.118358 L 46.327304 -11.903166 L 43.12974 -12.635387 L 39.767168 -13.312542 L 36.253358 -13.932371 L 32.602428 -14.49283 L 28.828801 -14.992093 L 24.947158 -15.428551 L 20.972408 -15.800808 L 16.919644 -16.107688 L 12.804115 -16.348223 L 8.641191 -16.521662 L 4.446331 -16.627465 L 0.235053 -16.665302 L -3.977092 -16.635057 L -8.174553 -16.536824 L -12.341807 -16.370907 L -16.463386 -16.137823 L -20.523909 -15.8383 L -24.508113 -15.473281 L -28.400885 -15.04392 L -32.187293 -14.551587 L -35.85263 -13.997868 L -39.382441 -13.384564 L -42.762573 -12.713695 L -45.979214 -11.987498 L -49.018938 -11.208427 L -51.868758 -10.379154 L -54.516171 -9.502568 L -56.949218 -8.581772 L -59.156542 -7.62008 L -61.12744 -6.621016 L -62.851933 -5.588305 L -64.320826 -4.52587 L -65.525775 -3.437824 L -66.459351 -2.328458 L -67.115109 -1.202233 L -67.487652 -0.063763 L -67.572699 1.082194 L -67.367144 2.230758 L -66.86912 3.376946 L -66.078051 4.515688 L -64.994704 5.641855 L -63.621237 6.750284 L -61.961231 7.8358 L -60.019719 8.893251 L -57.803211 9.917531 L -55.319697 10.903619 L -52.578647 11.846605 L -49.590995 12.741726 Z" to "M -35.111101 27.096364 L -31.103166 28.101889 L -26.945469 28.984603 L -22.657551 29.739772 L -18.259791 30.363322 L -13.773278 30.851868 L -9.219684 31.202751 L -4.621122 31.414053 L 0 31.484616 L 4.621122 31.414053 L 9.219684 31.202751 L 13.773278 30.851868 L 18.259791 30.363322 L 22.657551 29.739772 L 26.945469 28.984603 L 31.103166 28.101889 L 35.111101 27.096364 L 38.950687 25.97338 L 42.604388 24.738866 L 46.055819 23.399281 L 49.289827 21.961562 L 52.292551 20.433074 L 55.05149 18.821554 L 57.555534 17.135059 L 59.795005 15.381908 L 61.761667 13.570628 L 63.44874 11.709902 L 64.850889 9.808512 L 65.964216 7.875294 L 66.786234 5.919086 L 67.315834 3.948683 L 67.553247 1.972793 L 67.5 0 L 67.158862 -1.961276 L 66.533792 -3.902809 L 65.629877 -5.816602 L 64.453275 -7.694907 L 63.01115 -9.530257 L 61.311606 -11.315479 L 59.363629 -13.043718 L 57.177018 -14.708447 L 54.762327 -16.303484 L 52.130799 -17.822999 L 49.294313 -19.261526 L 46.26532 -20.613964 L 43.056796 -21.875586 L 39.68218 -23.042043 L 36.155334 -24.109363 L 32.490488 -25.073953 L 28.702198 -25.932601 L 24.805302 -26.682477 L 20.814882 -27.321128 L 16.746223 -27.846483 L 12.614776 -28.256847 L 8.436126 -28.550904 L 4.225952 -28.727714 L 0 -28.786714 L -4.225952 -28.727714 L -8.436126 -28.550904 L -12.614776 -28.256847 L -16.746223 -27.846483 L -20.814882 -27.321128 L -24.805302 -26.682477 L -28.702198 -25.932601 L -32.490488 -25.073953 L -36.155334 -24.109363 L -39.68218 -23.042043 L -43.056796 -21.875586 L -46.26532 -20.613964 L -49.294313 -19.261526 L -52.130799 -17.822999 L -54.762327 -16.303484 L -57.177018 -14.708447 L -59.363629 -13.043718 L -61.311606 -11.315479 L -63.01115 -9.530257 L -64.453275 -7.694907 L -65.629877 -5.816602 L -66.533792 -3.902809 L -67.158862 -1.961276 L -67.5 0 L -67.553247 1.972793 L -67.315834 3.948683 L -66.786234 5.919086 L -65.964216 7.875294 L -64.850889 9.808512 L -63.44874 11.709902 L -61.761667 13.570628 L -59.795005 15.381908 L -57.555534 17.135059 L -55.05149 18.821554 L -52.292551 20.433074 L -49.289827 21.961562 L -46.055819 23.399281 L -42.604388 24.738866 L -38.950687 25.97338 Z" start=0.785398s duration=0.785398s easing=easeInOut

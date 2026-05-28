@@ -2,9 +2,9 @@ scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 
-threeDAxes axes at 0,28 xRange=-2.555,4,1 yRange=-3.1,4,1 zRange=-3.675,4,1 xBasis=-56.75,25.5 yBasis=87.75,13.25 zBasis=0,-55.25 stroke="#FFFFFF" strokeWidth=4 tickSize=10 tickStrokeWidth=2 includeTicks=true includeTips=true
+threeDAxes axes at 0,28 xRange=-2.555,4,1 yRange=-3.1,4,1 zRange=-3.675,4,1 phi=75 theta=30 unitScale=67.5 stroke="#FFFFFF" strokeWidth=4 tickSize=10 tickStrokeWidth=2 includeTicks=true includeTips=true
 
-sphereSurface sphere_mesh radius=104 resolution=15,32 fillA="#E65A4C" fillB="#CF5044" light=0,-0.35,1
+sphereSurface sphere_mesh radius=104 worldRadius=1.5 phi=75 theta=30 unitScale=67.5 resolution=15,32 fillA="#E65A4C" fillB="#CF5044" stroke="#BBBBBB" strokeWidth=0.5 light=0,-0.35,1
 circle sphere_shadow r=104 at 18,38 fill="#260404" stroke="none" opacity=0.22
 circle sphere_rim r=104 at 0,0 fill="none" stroke="#4D0E0F" strokeWidth=2 opacity=0.65
 path terminator_left d="M -104 -42 C -93 -4 -89 40 -62 80 C -91 62 -109 30 -110 -7 C -111 -22 -109 -34 -104 -42 Z" fill="#180303" stroke="none" opacity=0.22

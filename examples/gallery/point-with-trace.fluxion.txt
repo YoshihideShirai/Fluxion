@@ -1,16 +1,16 @@
 scene width=960 height=540 fps=60
 
-value progress = 0
-
 rect bg w=960 h=540 at 0,0 fill="#000000"
-tracedPath trace x=67.5*(1-cos(clipPi(t)))-67.5*clip01(t-pi-1) y=67.5*sin(clipPi(t))-67.5*clip01(t-pi) from=0 to=progress samples=240 stroke="#FFFFFF" strokeWidth=4
 circle dot r=5.4 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=2
+tracedPath trace target=dot start=0s samples=240 stroke="#FFFFFF" strokeWidth=4
 
-always dot.x = expr=67.5*(1-cos(clipPi(progress)))-67.5*clip01(progress-pi-1)
-always dot.y = expr=67.5*sin(clipPi(progress))-67.5*clip01(progress-pi)
-
-animate progress from 0 to 3.141592654 duration=2s easing=linear
-wait 1s
-animate progress from 3.141592654 to 4.141592654 duration=1s
-animate progress from 4.141592654 to 5.141592654 duration=1s
-wait 1s
+at 0s:
+  play Rotating(dot, 3.141592654, about=RIGHT) duration=2s easing=linear
+at 2s:
+  wait 1s
+at 3s:
+  play Animate(dot, shift=UP) duration=1s easing=smooth
+at 4s:
+  play Animate(dot, shift=LEFT) duration=1s easing=smooth
+at 5s:
+  wait 1s

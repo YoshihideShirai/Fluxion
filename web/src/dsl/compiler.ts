@@ -52,6 +52,7 @@ interface CompileState {
   camera: Camera;
   cameraFrameCursor: CameraFrameCursor;
   nodes: Map<string, SceneNode>;
+  autoCreateSnapshots: Map<string, SceneNode>;
   values: Map<string, number>;
   timeline: TimelineOperation[];
   shown: Set<string>;
@@ -84,6 +85,7 @@ export function compileTextDsl(source: string): FluxionDocument {
     camera,
     cameraFrameCursor: cameraFrameCursorFromCamera(camera),
     nodes: new Map(),
+    autoCreateSnapshots: new Map(),
     values: new Map(),
     timeline: [],
     shown: new Set(),
@@ -178,6 +180,11 @@ export function compileTextDsl(source: string): FluxionDocument {
       return;
     }
 
+    if (keyword === "followCamera") {
+      parseFollowCamera(tokens, state, lineNumber, statementTime(state));
+      return;
+    }
+
     if (
       keyword === "circle" ||
       keyword === "rect" ||
@@ -204,6 +211,11 @@ export function compileTextDsl(source: string): FluxionDocument {
       return;
     }
 
+    if (keyword === "axisLabels") {
+      parseAxisLabels(tokens, state, lineNumber);
+      return;
+    }
+
     if (keyword === "numberPlane") {
       parseNumberPlane(tokens, state, lineNumber);
       return;
@@ -211,6 +223,11 @@ export function compileTextDsl(source: string): FluxionDocument {
 
     if (keyword === "plot") {
       parsePlot(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "graphLabel") {
+      parseGraphLabel(tokens, state, lineNumber);
       return;
     }
 
@@ -322,7 +339,7 @@ export function compileTextDsl(source: string): FluxionDocument {
     const node = state.nodes.get(id);
     if (!node) continue;
     if (!isShownOrHasShownDescendant(node, state.shown)) {
-      autoCreates.push({ t: 0, op: "create", node: structuredClone(node) });
+      autoCreates.push({ t: 0, op: "create", node: structuredClone(state.autoCreateSnapshots.get(id) ?? node) });
       state.shown.add(node.id);
     }
   }
@@ -659,6 +676,76 @@ function parseAxes(tokens: string[], state: CompileState, lineNumber: number): v
   state.rootIds.add(id);
 }
 
+function parseAxisLabels(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after axisLabels.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const axesId = options.get("axes");
+  if (!axesId) throw new DslCompileError("axisLabels requires axes=<axes-id>.", lineNumber);
+  const axes = requireAxesNode(state, axesId, lineNumber, "axisLabels");
+  const fontSize = parseNumber(options.get("size") ?? options.get("fontSize") ?? "28", lineNumber);
+  const xFontSize = parseNumber(options.get("xSize") ?? String(fontSize), lineNumber);
+  const yFontSize = parseNumber(options.get("ySize") ?? String(fontSize), lineNumber);
+  const fill = options.get("fill") ?? "#FFFFFF";
+  const renderer = options.get("renderer") ?? "katex";
+  const buff = parseNumber(options.get("buff") ?? "20", lineNumber);
+  const xBuff = parseNumber(options.get("xBuff") ?? String(buff), lineNumber);
+  const yBuff = parseNumber(options.get("yBuff") ?? String(buff), lineNumber);
+  const xYOffset = parseNumber(options.get("xYOffset") ?? String(-buff), lineNumber);
+  const yYOffset = parseNumber(options.get("yYOffset") ?? String(-buff), lineNumber);
+  const xLabel = options.get("x") ?? "x";
+  const yLabel = options.get("y") ?? "y";
+  const centerX = Number(axes.geometry.centerX ?? 0);
+  const centerY = Number(axes.geometry.centerY ?? 0);
+  const width = Number(axes.geometry.width ?? 760);
+  const height = Number(axes.geometry.height ?? 360);
+  const originX = Number(axes.geometry.originX ?? 0);
+  const originY = Number(axes.geometry.originY ?? 0);
+  const xNode = createBaseNode(`${id}:x`, "math");
+  xNode.latex = xLabel;
+  xNode.renderer = renderer;
+  xNode.geometry.fontSize = xFontSize;
+  xNode.transform.x = centerX + width / 2 + xBuff;
+  xNode.transform.y = centerY + originY + xYOffset;
+  xNode.style.fill = fill;
+  const yNode = createBaseNode(`${id}:y`, "math");
+  yNode.latex = yLabel;
+  yNode.renderer = renderer;
+  yNode.geometry.fontSize = yFontSize;
+  yNode.transform.x = centerX + originX + yBuff;
+  yNode.transform.y = centerY - height / 2 + yYOffset;
+  yNode.style.fill = fill;
+  const group = createBaseNode(id, "group");
+  group.children = [xNode, yNode];
+  group.geometry.axisLabels = true;
+  group.geometry.axes = axesId;
+  for (const [key, value] of options) {
+    if (
+      [
+        "axes",
+        "x",
+        "y",
+        "size",
+        "fontSize",
+        "xSize",
+        "ySize",
+        "fill",
+        "renderer",
+        "buff",
+        "xBuff",
+        "yBuff",
+        "xYOffset",
+        "yYOffset",
+      ].includes(key)
+    )
+      continue;
+    applyNodeOption(group, key, value, lineNumber);
+  }
+  state.nodes.set(id, group);
+  state.rootIds.add(id);
+}
+
 function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: number): void {
   const id = tokens[1];
   if (!id) throw new DslCompileError("Expected id after numberPlane.", lineNumber);
@@ -677,9 +764,55 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
   const axisStrokeWidth = parseNumber(options.get("axisStrokeWidth") ?? "1.8", lineNumber);
   const opacity = parseNumber(options.get("opacity") ?? "0.9", lineNumber);
   const axisOpacity = parseNumber(options.get("axisOpacity") ?? "0.95", lineNumber);
+  const fadedLineRatio = Math.max(
+    0,
+    Math.round(parseNumber(options.get("fadedLineRatio") ?? "1", lineNumber)),
+  );
+  const fadedStroke = options.get("fadedStroke") ?? color;
+  const fadedStrokeWidth = parseNumber(
+    options.get("fadedStrokeWidth") ?? String(strokeWidth * 0.5),
+    lineNumber,
+  );
+  const fadedOpacity = parseNumber(
+    options.get("fadedOpacity") ?? String(opacity * 0.5),
+    lineNumber,
+  );
   const children: SceneNode[] = [];
 
-  for (const y of steppedValues(yMin, yMax, yStep)) {
+  const mainYValues = steppedValues(yMin, yMax, yStep);
+  const mainXValues = steppedValues(xMin, xMax, xStep);
+  const shouldFade = (value: number, step: number) => {
+    const delta = Math.abs(step) > 1e-9 ? Math.abs(step) : 1;
+    return Math.abs(value / delta - Math.round(value / delta)) > 1e-7;
+  };
+  if (fadedLineRatio > 1) {
+    for (const y of steppedValues(yMin, yMax, yStep / fadedLineRatio)) {
+      if (!shouldFade(y, yStep)) continue;
+      const line = createBaseNode(`${id}:fh:${formatAxisValueId(y)}`, "line");
+      line.geometry.x1 = xMin * xUnit;
+      line.geometry.y1 = -y * yUnit;
+      line.geometry.x2 = xMax * xUnit;
+      line.geometry.y2 = -y * yUnit;
+      line.style.stroke = fadedStroke;
+      line.style.strokeWidth = fadedStrokeWidth;
+      line.transform.opacity = fadedOpacity;
+      children.push(line);
+    }
+    for (const x of steppedValues(xMin, xMax, xStep / fadedLineRatio)) {
+      if (!shouldFade(x, xStep)) continue;
+      const line = createBaseNode(`${id}:fv:${formatAxisValueId(x)}`, "line");
+      line.geometry.x1 = x * xUnit;
+      line.geometry.y1 = -yMax * yUnit;
+      line.geometry.x2 = x * xUnit;
+      line.geometry.y2 = -yMin * yUnit;
+      line.style.stroke = fadedStroke;
+      line.style.strokeWidth = fadedStrokeWidth;
+      line.transform.opacity = fadedOpacity;
+      children.push(line);
+    }
+  }
+
+  for (const y of mainYValues) {
     const line = createBaseNode(`${id}:h:${formatAxisValueId(y)}`, "line");
     line.geometry.x1 = xMin * xUnit;
     line.geometry.y1 = -y * yUnit;
@@ -691,7 +824,7 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
     children.push(line);
   }
 
-  for (const x of steppedValues(xMin, xMax, xStep)) {
+  for (const x of mainXValues) {
     const line = createBaseNode(`${id}:v:${formatAxisValueId(x)}`, "line");
     line.geometry.x1 = x * xUnit;
     line.geometry.y1 = -yMax * yUnit;
@@ -716,6 +849,7 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
   group.geometry.yStep = yStep;
   group.geometry.xUnit = xUnit;
   group.geometry.yUnit = yUnit;
+  group.geometry.fadedLineRatio = fadedLineRatio;
   for (const [key, value] of options) {
     if (
       [
@@ -735,6 +869,10 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
         "axisStrokeWidth",
         "opacity",
         "axisOpacity",
+        "fadedLineRatio",
+        "fadedStroke",
+        "fadedStrokeWidth",
+        "fadedOpacity",
       ].includes(key)
     )
       continue;
@@ -1140,7 +1278,7 @@ function parseDataRiemannRects(tokens: string[], state: CompileState, lineNumber
   const geometry = axesGeometry(axes);
   const fill = options.get("fill") ?? options.get("color") ?? "#0000FF";
   const stroke = options.get("stroke") ?? options.get("strokeColor") ?? "#000000";
-  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "1", lineNumber);
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "0.5", lineNumber);
   const fillOpacity = parseNumber(options.get("fillOpacity") ?? "0.5", lineNumber);
   const children: SceneNode[] = [];
   const count = Math.max(0, Math.ceil((x1 - x0) / dx - 1e-9));
@@ -1188,23 +1326,42 @@ function parseGaussianSurface(tokens: string[], state: CompileState, lineNumber:
   const resolution = Math.max(1, Math.round(parseNumber(options.get("resolution") ?? "24", lineNumber)));
   const scale = parseNumber(options.get("scale") ?? "2", lineNumber);
   const sigma = parseNumber(options.get("sigma") ?? "0.4", lineNumber);
+  const [muX, muY] = parsePointOption(options.get("mu") ?? "0,0", "mu", lineNumber);
   const [basisXX, basisXY] = parsePointOption(options.get("xBasis") ?? "63,31", "xBasis", lineNumber);
   const [basisYX, basisYY] = parsePointOption(options.get("yBasis") ?? "-60,30", "yBasis", lineNumber);
   const [basisZX, basisZY] = parsePointOption(options.get("zBasis") ?? "0,-130", "zBasis", lineNumber);
+  const hasCameraProjection = options.has("phi") || options.has("theta") || options.has("gamma");
+  const cameraOptions = {
+    phi: parseNumber(options.get("phi") ?? "75", lineNumber),
+    theta: parseNumber(options.get("theta") ?? "30", lineNumber),
+    gamma: parseNumber(options.get("gamma") ?? "0", lineNumber),
+    unitScale: parseNumber(options.get("unitScale") ?? "108.75", lineNumber),
+    focalDistance: parseNumber(options.get("focalDistance") ?? "20", lineNumber),
+    zoom: parseNumber(options.get("zoom") ?? "1", lineNumber),
+  };
   const fillA = options.get("fillA") ?? "#FF862F";
   const fillB = options.get("fillB") ?? "#58C4DD";
   const stroke = options.get("stroke") ?? "#83C167";
-  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "1", lineNumber);
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "0.5", lineNumber);
   const fillOpacity = parseNumber(options.get("fillOpacity") ?? "0.5", lineNumber);
   const shade = parseBoolean(options.get("shade") ?? "false", lineNumber);
   const shadeStrength = parseNumber(options.get("shadeStrength") ?? "0.18", lineNumber);
 
   const project = (u: number, v: number): { x: number; y: number; z: number; depth: number } => {
-    const d = Math.hypot(u, v);
+    const d = Math.hypot(u - muX, v - muY);
     const z = Math.exp(-(d ** 2 / (2 * sigma ** 2)));
     const x = u * scale;
     const y = v * scale;
     const projectedZ = z * scale;
+    if (hasCameraProjection) {
+      const projected = projectManimCameraPoint({ x, y, z: projectedZ }, cameraOptions);
+      return {
+        x: projected.x,
+        y: projected.y,
+        z,
+        depth: projected.z,
+      };
+    }
     return {
       x: x * basisXX + y * basisYX + projectedZ * basisZX,
       y: x * basisXY + y * basisYY + projectedZ * basisZY,
@@ -1242,10 +1399,27 @@ function parseGaussianSurface(tokens: string[], state: CompileState, lineNumber:
   group.geometry.vMax = v1;
   group.geometry.resolution = resolution;
   group.geometry.sigma = sigma;
+  group.geometry.mu = [muX, muY];
   group.geometry.scale = scale;
+  group.geometry.xBasis = [basisXX, basisXY];
+  group.geometry.yBasis = [basisYX, basisYY];
+  group.geometry.zBasis = [basisZX, basisZY];
   group.geometry.shade = shade;
+  if (hasCameraProjection) {
+    group.geometry.cameraProjection = "manim";
+    group.geometry.phi = cameraOptions.phi;
+    group.geometry.theta = cameraOptions.theta;
+  }
   group.children = faces.map((face, index) => {
     const node = createBaseNode(`${id}:face:${index}`, "path");
+    node.metadata = {
+      surfaceFace: {
+        row: face.row,
+        col: face.col,
+        depth: face.depth,
+        height: face.height,
+      },
+    };
     node.geometry.d = face.points
       .map((point, pointIndex) => `${pointIndex === 0 ? "M" : "L"} ${formatPathNumber(point.x)} ${formatPathNumber(point.y)}`)
       .concat("Z")
@@ -1268,6 +1442,7 @@ function parseGaussianSurface(tokens: string[], state: CompileState, lineNumber:
         "resolution",
         "scale",
         "sigma",
+        "mu",
         "xBasis",
         "yBasis",
         "zBasis",
@@ -1278,6 +1453,12 @@ function parseGaussianSurface(tokens: string[], state: CompileState, lineNumber:
         "fillOpacity",
         "shade",
         "shadeStrength",
+        "phi",
+        "theta",
+        "gamma",
+        "unitScale",
+        "focalDistance",
+        "zoom",
       ].includes(key)
     )
       continue;
@@ -1298,10 +1479,24 @@ function parseSphereSurface(tokens: string[], state: CompileState, lineNumber: n
   const [v0, v1] = parseRangeOption(options.get("vRange") ?? "0,6.28318530718", "vRange", lineNumber);
   const [uResolution, vResolution] = parseResolutionOption(options.get("resolution") ?? "15,32", lineNumber);
   const radius = parseNumber(options.get("radius") ?? "104", lineNumber);
+  const worldRadius = parseNumber(options.get("worldRadius") ?? "1", lineNumber);
+  const hasProjectionBasis = options.has("xBasis") || options.has("yBasis") || options.has("zBasis");
+  const hasCameraProjection = options.has("phi") || options.has("theta") || options.has("gamma");
+  const cameraOptions = {
+    phi: parseNumber(options.get("phi") ?? "75", lineNumber),
+    theta: parseNumber(options.get("theta") ?? "30", lineNumber),
+    gamma: parseNumber(options.get("gamma") ?? "0", lineNumber),
+    unitScale: parseNumber(options.get("unitScale") ?? "108.75", lineNumber),
+    focalDistance: parseNumber(options.get("focalDistance") ?? "20", lineNumber),
+    zoom: parseNumber(options.get("zoom") ?? "1", lineNumber),
+  };
+  const [basisXX, basisXY] = parsePointOption(options.get("xBasis") ?? `${radius},0`, "xBasis", lineNumber);
+  const [basisYX, basisYY] = parsePointOption(options.get("yBasis") ?? `0,${radius * 0.18}`, "yBasis", lineNumber);
+  const [basisZX, basisZY] = parsePointOption(options.get("zBasis") ?? `0,${-radius}`, "zBasis", lineNumber);
   const fillA = options.get("fillA") ?? "#E65A4C";
   const fillB = options.get("fillB") ?? "#CF5044";
-  const stroke = options.get("stroke") ?? "none";
-  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "0", lineNumber);
+  const stroke = options.get("stroke") ?? "#BBBBBB";
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "0.5", lineNumber);
   const fillOpacity = parseNumber(options.get("fillOpacity") ?? "1", lineNumber);
   const shade = parseBoolean(options.get("shade") ?? "true", lineNumber);
   const [lightX, lightY, lightZ] = parseVector3Option(options.get("light") ?? "0,-0.35,1", "light", lineNumber);
@@ -1313,6 +1508,29 @@ function parseSphereSurface(tokens: string[], state: CompileState, lineNumber: n
     const x = cu * Math.cos(v);
     const y = cu * Math.sin(v);
     const z = Math.sin(u);
+    if (hasCameraProjection) {
+      const scaledX = x * worldRadius;
+      const scaledY = y * worldRadius;
+      const scaledZ = z * worldRadius;
+      const projected = projectManimCameraPoint({ x: scaledX, y: scaledY, z: scaledZ }, cameraOptions);
+      return {
+        x: projected.x,
+        y: projected.y,
+        z,
+        depth: projected.z,
+      };
+    }
+    if (hasProjectionBasis) {
+      const scaledX = x * worldRadius;
+      const scaledY = y * worldRadius;
+      const scaledZ = z * worldRadius;
+      return {
+        x: scaledX * basisXX + scaledY * basisYX + scaledZ * basisZX,
+        y: scaledX * basisXY + scaledY * basisYY + scaledZ * basisZY,
+        z,
+        depth: 0.25 * scaledX + 0.35 * scaledY + scaledZ,
+      };
+    }
     return {
       x: radius * x,
       y: radius * (-z + 0.18 * y),
@@ -1356,8 +1574,27 @@ function parseSphereSurface(tokens: string[], state: CompileState, lineNumber: n
   group.geometry.uResolution = uResolution;
   group.geometry.vResolution = vResolution;
   group.geometry.radius = radius;
+  group.geometry.worldRadius = worldRadius;
+  if (hasProjectionBasis) {
+    group.geometry.xBasis = [basisXX, basisXY];
+    group.geometry.yBasis = [basisYX, basisYY];
+    group.geometry.zBasis = [basisZX, basisZY];
+  }
+  if (hasCameraProjection) {
+    group.geometry.cameraProjection = "manim";
+    group.geometry.phi = cameraOptions.phi;
+    group.geometry.theta = cameraOptions.theta;
+  }
   group.children = faces.map((face, index) => {
     const node = createBaseNode(`${id}:face:${index}`, "path");
+    node.metadata = {
+      surfaceFace: {
+        row: face.row,
+        col: face.col,
+        depth: face.depth,
+        shade: face.shade,
+      },
+    };
     node.geometry.d = face.points
       .map((point, pointIndex) => `${pointIndex === 0 ? "M" : "L"} ${formatPathNumber(point.x)} ${formatPathNumber(point.y)}`)
       .concat("Z")
@@ -1378,6 +1615,10 @@ function parseSphereSurface(tokens: string[], state: CompileState, lineNumber: n
         "vRange",
         "resolution",
         "radius",
+        "worldRadius",
+        "xBasis",
+        "yBasis",
+        "zBasis",
         "fillA",
         "fillB",
         "stroke",
@@ -1385,6 +1626,12 @@ function parseSphereSurface(tokens: string[], state: CompileState, lineNumber: n
         "fillOpacity",
         "shade",
         "light",
+        "phi",
+        "theta",
+        "gamma",
+        "unitScale",
+        "focalDistance",
+        "zoom",
       ].includes(key)
     )
       continue;
@@ -1415,44 +1662,86 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
   const includeTips = parseBoolean(options.get("includeTips") ?? "true", lineNumber);
   const tipLength = parseNumber(options.get("tipLength") ?? "18", lineNumber);
   const tipWidth = parseNumber(options.get("tipWidth") ?? "14", lineNumber);
+  const hasCameraProjection = options.has("phi") || options.has("theta") || options.has("gamma");
 
   const children: SceneNode[] = [];
-  const basis = {
-    x: { x: xBasisX, y: xBasisY, tick: { x: -xBasisY, y: xBasisX } },
-    y: { x: yBasisX, y: yBasisY, tick: { x: -yBasisY, y: yBasisX } },
-    z: { x: zBasisX, y: zBasisY, tick: { x: 1, y: 0 } },
-  };
+  if (hasCameraProjection) {
+    const cameraOptions = {
+      phi: parseNumber(options.get("phi") ?? "75", lineNumber),
+      theta: parseNumber(options.get("theta") ?? "30", lineNumber),
+      gamma: parseNumber(options.get("gamma") ?? "0", lineNumber),
+      unitScale: parseNumber(options.get("unitScale") ?? "108.75", lineNumber),
+      focalDistance: parseNumber(options.get("focalDistance") ?? "20", lineNumber),
+      zoom: parseNumber(options.get("zoom") ?? "1", lineNumber),
+    };
+    addManimCameraProjectedAxis(children, id, "x", xMin, xMax, xStep, cameraOptions, {
+      stroke,
+      strokeWidth,
+      tickSize,
+      tickStrokeWidth,
+      includeTicks,
+      includeTips,
+      tipLength,
+      tipWidth,
+    });
+    addManimCameraProjectedAxis(children, id, "y", yMin, yMax, yStep, cameraOptions, {
+      stroke,
+      strokeWidth,
+      tickSize,
+      tickStrokeWidth,
+      includeTicks,
+      includeTips,
+      tipLength,
+      tipWidth,
+    });
+    addManimCameraProjectedAxis(children, id, "z", zMin, zMax, zStep, cameraOptions, {
+      stroke,
+      strokeWidth,
+      tickSize,
+      tickStrokeWidth,
+      includeTicks,
+      includeTips,
+      tipLength,
+      tipWidth,
+    });
+  } else {
+    const basis = {
+      x: { x: xBasisX, y: xBasisY, tick: { x: -xBasisY, y: xBasisX } },
+      y: { x: yBasisX, y: yBasisY, tick: { x: -yBasisY, y: yBasisX } },
+      z: { x: zBasisX, y: zBasisY, tick: { x: 1, y: 0 } },
+    };
 
-  addProjectedAxis(children, id, "x", xMin, xMax, xStep, basis.x, {
-    stroke,
-    strokeWidth,
-    tickSize,
-    tickStrokeWidth,
-    includeTicks,
-    includeTips,
-    tipLength,
-    tipWidth,
-  });
-  addProjectedAxis(children, id, "y", yMin, yMax, yStep, basis.y, {
-    stroke,
-    strokeWidth,
-    tickSize,
-    tickStrokeWidth,
-    includeTicks,
-    includeTips,
-    tipLength,
-    tipWidth,
-  });
-  addProjectedAxis(children, id, "z", zMin, zMax, zStep, basis.z, {
-    stroke,
-    strokeWidth,
-    tickSize,
-    tickStrokeWidth,
-    includeTicks,
-    includeTips,
-    tipLength,
-    tipWidth,
-  });
+    addProjectedAxis(children, id, "x", xMin, xMax, xStep, basis.x, {
+      stroke,
+      strokeWidth,
+      tickSize,
+      tickStrokeWidth,
+      includeTicks,
+      includeTips,
+      tipLength,
+      tipWidth,
+    });
+    addProjectedAxis(children, id, "y", yMin, yMax, yStep, basis.y, {
+      stroke,
+      strokeWidth,
+      tickSize,
+      tickStrokeWidth,
+      includeTicks,
+      includeTips,
+      tipLength,
+      tipWidth,
+    });
+    addProjectedAxis(children, id, "z", zMin, zMax, zStep, basis.z, {
+      stroke,
+      strokeWidth,
+      tickSize,
+      tickStrokeWidth,
+      includeTicks,
+      includeTips,
+      tipLength,
+      tipWidth,
+    });
+  }
 
   const group = createBaseNode(id, "group");
   group.transform.x = cx;
@@ -1461,6 +1750,11 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
   group.geometry.xRange = [xMin, xMax, xStep];
   group.geometry.yRange = [yMin, yMax, yStep];
   group.geometry.zRange = [zMin, zMax, zStep];
+  if (hasCameraProjection) {
+    group.geometry.cameraProjection = "manim";
+    group.geometry.phi = parseNumber(options.get("phi") ?? "75", lineNumber);
+    group.geometry.theta = parseNumber(options.get("theta") ?? "30", lineNumber);
+  }
   group.children = children;
 
   for (const [key, value] of options) {
@@ -1481,6 +1775,12 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
         "includeTips",
         "tipLength",
         "tipWidth",
+        "phi",
+        "theta",
+        "gamma",
+        "unitScale",
+        "focalDistance",
+        "zoom",
       ].includes(key)
     )
       continue;
@@ -1500,28 +1800,145 @@ function parseProjectedCircle(tokens: string[], state: CompileState, lineNumber:
   const radius = parseNumber(options.get("radius") ?? "1", lineNumber);
   const [xBasisX, xBasisY] = parsePointOption(options.get("xBasis") ?? "-56.75,25.5", "xBasis", lineNumber);
   const [yBasisX, yBasisY] = parsePointOption(options.get("yBasis") ?? "87.75,13.25", "yBasis", lineNumber);
+  const hasCameraProjection = options.has("phi") || options.has("theta") || options.has("gamma");
 
   const path = createBaseNode(id, "path");
   path.transform.x = cx;
   path.transform.y = cy;
-  path.geometry.d = projectedCirclePath(
-    radius,
-    { x: xBasisX, y: xBasisY },
-    { x: yBasisX, y: yBasisY },
-  );
+  path.geometry.d = hasCameraProjection
+    ? manimCameraProjectedCirclePath(radius, {
+        phi: parseNumber(options.get("phi") ?? "75", lineNumber),
+        theta: parseNumber(options.get("theta") ?? "30", lineNumber),
+        gamma: parseNumber(options.get("gamma") ?? "0", lineNumber),
+        unitScale: parseNumber(options.get("unitScale") ?? "108.75", lineNumber),
+        focalDistance: parseNumber(options.get("focalDistance") ?? "20", lineNumber),
+        zoom: parseNumber(options.get("zoom") ?? "1", lineNumber),
+        samples: parseNumber(options.get("samples") ?? "64", lineNumber),
+      })
+    : projectedCirclePath(
+        radius,
+        { x: xBasisX, y: xBasisY },
+        { x: yBasisX, y: yBasisY },
+      );
   path.geometry.projectedCircle = true;
   path.geometry.radius = radius;
+  if (hasCameraProjection) {
+    path.geometry.cameraProjection = "manim";
+    path.geometry.phi = parseNumber(options.get("phi") ?? "75", lineNumber);
+    path.geometry.theta = parseNumber(options.get("theta") ?? "30", lineNumber);
+  }
   path.style.fill = options.get("fill") ?? "none";
   path.style.stroke = options.get("stroke") ?? "#FFFFFF";
   path.style.strokeWidth = parseNumber(options.get("strokeWidth") ?? "4", lineNumber);
 
   for (const [key, value] of options) {
-    if (["at", "radius", "xBasis", "yBasis", "fill", "stroke", "strokeWidth"].includes(key)) continue;
+    if (
+      [
+        "at",
+        "radius",
+        "xBasis",
+        "yBasis",
+        "phi",
+        "theta",
+        "gamma",
+        "unitScale",
+        "focalDistance",
+        "zoom",
+        "samples",
+        "fill",
+        "stroke",
+        "strokeWidth",
+      ].includes(key)
+    )
+      continue;
     applyNodeOption(path, key, value, lineNumber);
   }
 
   state.nodes.set(id, path);
   state.rootIds.add(id);
+}
+
+function manimCameraProjectedCirclePath(
+  radius: number,
+  options: {
+    phi: number;
+    theta: number;
+    gamma: number;
+    unitScale: number;
+    focalDistance: number;
+    zoom: number;
+    samples: number;
+  },
+): string {
+  const sampleCount = Math.max(8, Math.round(options.samples));
+  const points: string[] = [];
+  for (let index = 0; index < sampleCount; index += 1) {
+    const alpha = (Math.PI * 2 * index) / sampleCount;
+    const point = projectManimCameraPoint(
+      {
+        x: Math.cos(alpha) * radius,
+        y: Math.sin(alpha) * radius,
+        z: 0,
+      },
+      options,
+    );
+    points.push(`${index === 0 ? "M" : "L"} ${formatPathNumber(point.x)} ${formatPathNumber(point.y)}`);
+  }
+  return [...points, "Z"].join(" ");
+}
+
+function projectManimCameraPoint(
+  point: { x: number; y: number; z: number },
+  options: { phi: number; theta: number; gamma: number; unitScale: number; focalDistance: number; zoom: number },
+): { x: number; y: number; z: number } {
+  const phi = (options.phi * Math.PI) / 180;
+  const theta = (options.theta * Math.PI) / 180;
+  const gamma = (options.gamma * Math.PI) / 180;
+  const rotZ = (angle: number): number[][] => {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return [
+      [c, -s, 0],
+      [s, c, 0],
+      [0, 0, 1],
+    ];
+  };
+  const rotX = (angle: number): number[][] => {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return [
+      [1, 0, 0],
+      [0, c, -s],
+      [0, s, c],
+    ];
+  };
+  const multiply = (left: number[][], right: number[][]): number[][] => {
+    const result: number[][] = [];
+    for (let row = 0; row < 3; row += 1) {
+      const rowResult: number[] = [];
+      for (let col = 0; col < 3; col += 1) {
+        rowResult[col] =
+          (left[row]?.[0] ?? 0) * (right[0]?.[col] ?? 0) +
+          (left[row]?.[1] ?? 0) * (right[1]?.[col] ?? 0) +
+          (left[row]?.[2] ?? 0) * (right[2]?.[col] ?? 0);
+      }
+      result[row] = rowResult;
+    }
+    return result;
+  };
+  let matrix = [
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1],
+  ];
+  for (const rotation of [rotZ(-theta - Math.PI / 2), rotX(-phi), rotZ(gamma)]) {
+    matrix = multiply(rotation, matrix);
+  }
+  const rotatedX = (matrix[0]?.[0] ?? 0) * point.x + (matrix[0]?.[1] ?? 0) * point.y + (matrix[0]?.[2] ?? 0) * point.z;
+  const rotatedY = (matrix[1]?.[0] ?? 0) * point.x + (matrix[1]?.[1] ?? 0) * point.y + (matrix[1]?.[2] ?? 0) * point.z;
+  const rotatedZ = (matrix[2]?.[0] ?? 0) * point.x + (matrix[2]?.[1] ?? 0) * point.y + (matrix[2]?.[2] ?? 0) * point.z;
+  const factor = (options.focalDistance / (options.focalDistance - rotatedZ)) * options.zoom * options.unitScale;
+  return { x: rotatedX * factor, y: -rotatedY * factor, z: rotatedZ };
 }
 
 function projectedCirclePath(
@@ -1900,6 +2317,87 @@ function addProjectedAxis(
   }
 }
 
+function addManimCameraProjectedAxis(
+  children: SceneNode[],
+  groupId: string,
+  axis: "x" | "y" | "z",
+  min: number,
+  max: number,
+  step: number,
+  cameraOptions: { phi: number; theta: number; gamma: number; unitScale: number; focalDistance: number; zoom: number },
+  style: {
+    stroke: string;
+    strokeWidth: number;
+    tickSize: number;
+    tickStrokeWidth: number;
+    includeTicks: boolean;
+    includeTips: boolean;
+    tipLength: number;
+    tipWidth: number;
+  },
+): void {
+  const pointAt = (value: number): { x: number; y: number } => {
+    if (axis === "x") return projectManimCameraPoint({ x: value, y: 0, z: 0 }, cameraOptions);
+    if (axis === "y") return projectManimCameraPoint({ x: 0, y: value, z: 0 }, cameraOptions);
+    return projectManimCameraPoint({ x: 0, y: 0, z: value }, cameraOptions);
+  };
+  const tangentAt = (value: number): { x: number; y: number } => {
+    const delta = Math.max(Math.abs(step || 1) * 0.001, 0.001);
+    const before = pointAt(value - delta);
+    const after = pointAt(value + delta);
+    return normalize2d({ x: after.x - before.x, y: after.y - before.y });
+  };
+
+  const line = createBaseNode(`${groupId}:${axis}:axis`, "line");
+  const start = pointAt(min);
+  const end = pointAt(max);
+  line.geometry.x1 = start.x;
+  line.geometry.y1 = start.y;
+  line.geometry.x2 = end.x;
+  line.geometry.y2 = end.y;
+  line.style.stroke = style.stroke;
+  line.style.strokeWidth = style.strokeWidth;
+  children.push(line);
+
+  if (style.includeTicks) {
+    for (const value of rangeTickValues(min, max, step)) {
+      if (Math.abs(value) < 1e-9) continue;
+      const tick = createBaseNode(`${groupId}:${axis}:tick:${formatAxisValueId(value)}`, "line");
+      const point = pointAt(value);
+      const tangent = tangentAt(value);
+      const normal = axis === "z" ? { x: 1, y: 0 } : { x: -tangent.y, y: tangent.x };
+      tick.geometry.x1 = point.x - normal.x * style.tickSize;
+      tick.geometry.y1 = point.y - normal.y * style.tickSize;
+      tick.geometry.x2 = point.x + normal.x * style.tickSize;
+      tick.geometry.y2 = point.y + normal.y * style.tickSize;
+      tick.style.stroke = style.stroke;
+      tick.style.strokeWidth = style.tickStrokeWidth;
+      children.push(tick);
+    }
+  }
+
+  if (style.includeTips) {
+    const direction = tangentAt(max);
+    const tip = createBaseNode(`${groupId}:${axis}:tip`, "path");
+    const tipPoint = pointAt(max);
+    const base = {
+      x: tipPoint.x - direction.x * style.tipLength,
+      y: tipPoint.y - direction.y * style.tipLength,
+    };
+    const normal = { x: -direction.y, y: direction.x };
+    tip.geometry.d = [
+      `M ${formatPathNumber(tipPoint.x)} ${formatPathNumber(tipPoint.y)}`,
+      `L ${formatPathNumber(base.x + normal.x * style.tipWidth / 2)} ${formatPathNumber(base.y + normal.y * style.tipWidth / 2)}`,
+      `L ${formatPathNumber(base.x - normal.x * style.tipWidth / 2)} ${formatPathNumber(base.y - normal.y * style.tipWidth / 2)}`,
+      "Z",
+    ].join(" ");
+    tip.style.fill = style.stroke;
+    tip.style.stroke = style.stroke;
+    tip.style.strokeWidth = 0;
+    children.push(tip);
+  }
+}
+
 function rangeTickValues(min: number, max: number, step: number): number[] {
   const values: number[] = [];
   if (step > 0) {
@@ -2076,11 +2574,99 @@ function parsePlot(tokens: string[], state: CompileState, lineNumber: number): v
     ) continue;
     applyNodeOption(node, key, value, lineNumber);
   }
+  node.geometry.fn = fnExpr;
+  node.geometry.range = [r0!, r1!];
+  node.geometry.scaleX = scaleX;
+  node.geometry.scaleY = scaleY;
   node.metadata = { plot: { range: [r0!, r1!], samples } };
   const d = buildPathDataPreview(pathOp, state);
   node.geometry.d = d;
   state.nodes.set(id, node);
   state.rootIds.add(id);
+}
+
+function parseGraphLabel(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after graphLabel.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const plotId = options.get("plot");
+  if (!plotId) throw new DslCompileError("graphLabel requires plot=<plot-id>.", lineNumber);
+  const plot = requireNode(state, plotId, lineNumber);
+  const fnExpr = String(plot.geometry.fn ?? "");
+  if (!fnExpr) throw new DslCompileError(`graphLabel plot '${plotId}' is not a plot helper.`, lineNumber);
+  const range = Array.isArray(plot.geometry.range) ? plot.geometry.range : undefined;
+  const xVal = parseNumber(options.get("xVal") ?? String(range?.[1] ?? 0), lineNumber);
+  const yVal = evaluateGraphExpression(fnExpr, xVal, state, lineNumber);
+  const scaleX = Number(plot.geometry.scaleX ?? 1);
+  const scaleY = Number(plot.geometry.scaleY ?? 1);
+  const pointX = Number(plot.transform.x ?? 0) + xVal * scaleX;
+  const pointY = Number(plot.transform.y ?? 0) - yVal * scaleY;
+  const size = parseNumber(options.get("size") ?? options.get("fontSize") ?? "28", lineNumber);
+  const label = options.get("label") ?? "f(x)";
+  const renderer = options.get("renderer") ?? "katex";
+  const fill = options.get("fill") ?? String(plot.style.stroke ?? "#FFFFFF");
+  const buff = parseNumber(options.get("buff") ?? "16.875", lineNumber);
+  const labelW = parseNumber(options.get("w") ?? String(Math.max(size * 2, label.length * size * 0.35)), lineNumber);
+  const labelH = parseNumber(options.get("h") ?? String(size * 1.55), lineNumber);
+  const xOffset = parseNumber(options.get("xOffset") ?? "0", lineNumber);
+  const yOffset = parseNumber(options.get("yOffset") ?? "0", lineNumber);
+  const direction = parseGraphLabelDirection(options.get("direction") ?? "right", lineNumber);
+  const node = createBaseNode(id, "math");
+  node.latex = label;
+  node.renderer = renderer;
+  node.geometry.fontSize = size;
+  node.geometry.w = labelW;
+  node.geometry.h = labelH;
+  node.geometry.graphLabel = true;
+  node.geometry.plot = plotId;
+  node.geometry.xVal = xVal;
+  node.style.fill = fill;
+  node.transform.x = pointX + direction.x * (labelW / 2 + buff) + xOffset;
+  node.transform.y = pointY + direction.y * (labelH / 2 + buff) + yOffset;
+  for (const [key, value] of options) {
+    if (
+      [
+        "plot",
+        "label",
+        "xVal",
+        "direction",
+        "buff",
+        "size",
+        "fontSize",
+        "renderer",
+        "fill",
+        "w",
+        "h",
+        "xOffset",
+        "yOffset",
+      ].includes(key)
+    )
+      continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+}
+
+function parseGraphLabelDirection(raw: string, lineNumber: number): { x: number; y: number } {
+  const directions: Record<string, { x: number; y: number }> = {
+    right: { x: 1, y: 0 },
+    left: { x: -1, y: 0 },
+    up: { x: 0, y: -1 },
+    down: { x: 0, y: 1 },
+    ur: { x: Math.SQRT1_2, y: -Math.SQRT1_2 },
+    ul: { x: -Math.SQRT1_2, y: -Math.SQRT1_2 },
+    dr: { x: Math.SQRT1_2, y: Math.SQRT1_2 },
+    dl: { x: -Math.SQRT1_2, y: Math.SQRT1_2 },
+  };
+  const direction = directions[raw.toLowerCase()];
+  if (!direction)
+    throw new DslCompileError(
+      "graphLabel direction must be right, left, up, down, ur, ul, dr, or dl.",
+      lineNumber,
+    );
+  return direction;
 }
 
 function parseAngle(tokens: string[], state: CompileState, lineNumber: number): void {
@@ -2122,6 +2708,28 @@ function parseTracedPath(tokens: string[], state: CompileState, lineNumber: numb
   if (!id) throw new DslCompileError("Expected id after tracedPath.", lineNumber);
   if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
   const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const target = options.get("target");
+  if (target) {
+    if (!findNode(state, target))
+      throw new DslCompileError(`Unknown tracedPath target '${target}'.`, lineNumber);
+    const node = createBaseNode(id, "path");
+    node.style.fill = "none";
+    node.style.stroke = "#22d3ee";
+    node.style.strokeWidth = 4;
+    node.geometry.tracedPath = true;
+    node.geometry.tracedTarget = target;
+    node.geometry.traceStart = parseSeconds(options.get("start") ?? `${statementTime(state)}s`, lineNumber);
+    node.geometry.traceSamples = parseNumber(options.get("samples") ?? "96", lineNumber);
+    const targetNode = requireNode(state, target, lineNumber);
+    node.geometry.d = `M ${targetNode.transform.x} ${targetNode.transform.y}`;
+    for (const [key, value] of options) {
+      if (["target", "start", "samples"].includes(key)) continue;
+      applyNodeOption(node, key, value, lineNumber);
+    }
+    state.nodes.set(id, node);
+    state.rootIds.add(id);
+    return;
+  }
   const xExpr = options.get("x");
   const yExpr = options.get("y");
   if (!xExpr || !yExpr)
@@ -2283,12 +2891,25 @@ function parseNextTo(tokens: string[], state: CompileState, lineNumber: number, 
     if (key === "buff") { buff = parseNumber(value, lineNumber); continue; }
     throw new DslCompileError(`Unknown nextTo option '${key}'.`, lineNumber);
   }
-  const a = measureNode(node);
-  const b = measureNode(target);
-  if (direction === "right") pushSet(state, time, node.id, "transform.x", target.transform.x + b.w/2 + a.w/2 + buff);
-  else if (direction === "left") pushSet(state, time, node.id, "transform.x", target.transform.x - b.w/2 - a.w/2 - buff);
-  else if (direction === "up") pushSet(state, time, node.id, "transform.y", target.transform.y + b.h/2 + a.h/2 + buff);
-  else pushSet(state, time, node.id, "transform.y", target.transform.y - b.h/2 - a.h/2 - buff);
+  const a = approximateNodeBounds(node);
+  const b = approximateNodeBounds(target);
+  const aWidth = a.maxX - a.minX;
+  const aHeight = a.maxY - a.minY;
+  const bCenterX = (b.minX + b.maxX) / 2;
+  const bCenterY = (b.minY + b.maxY) / 2;
+  if (direction === "right") {
+    pushSet(state, time, node.id, "transform.x", b.maxX + aWidth / 2 + buff);
+    pushSet(state, time, node.id, "transform.y", bCenterY);
+  } else if (direction === "left") {
+    pushSet(state, time, node.id, "transform.x", b.minX - aWidth / 2 - buff);
+    pushSet(state, time, node.id, "transform.y", bCenterY);
+  } else if (direction === "up") {
+    pushSet(state, time, node.id, "transform.y", b.minY - aHeight / 2 - buff);
+    pushSet(state, time, node.id, "transform.x", bCenterX);
+  } else {
+    pushSet(state, time, node.id, "transform.y", b.maxY + aHeight / 2 + buff);
+    pushSet(state, time, node.id, "transform.x", bCenterX);
+  }
 }
 
 function pushSet(state: CompileState, time: number, id: string, path: string, value: number): void {
@@ -2517,16 +3138,37 @@ function parsePlay(
   const [call, optionTokens] = readPlayCall(tokens, lineNumber);
   let duration = 1;
   let easing = "smooth";
+  let hasDuration = false;
+  let hasEasing = false;
   let color: string | undefined;
   for (const [key, value] of readAssignments(optionTokens, lineNumber)) {
-    if (key === "duration") duration = parseSeconds(value, lineNumber);
-    else if (key === "easing") easing = parseEasing(value, lineNumber);
+    if (key === "duration") {
+      duration = parseSeconds(value, lineNumber);
+      hasDuration = true;
+    } else if (key === "easing") {
+      easing = parseEasing(value, lineNumber);
+      hasEasing = true;
+    }
     else if (key === "color") color = value;
     else throw new DslCompileError(`Unknown play option '${key}'.`, lineNumber);
   }
+  if (call.name === "Rotating") {
+    if (!hasDuration) duration = 5;
+    if (!hasEasing) easing = "linear";
+  }
 
+  snapshotPendingAutoCreates(state);
   emitPlayCall(state, call, statementTime(state), duration, easing, lineNumber, color);
   advanceStatementTime(state, duration);
+}
+
+function snapshotPendingAutoCreates(state: CompileState): void {
+  for (const id of state.rootIds) {
+    if (state.autoCreateSnapshots.has(id)) continue;
+    const node = state.nodes.get(id);
+    if (!node || isShownOrHasShownDescendant(node, state.shown)) continue;
+    state.autoCreateSnapshots.set(id, structuredClone(node));
+  }
 }
 
 function emitPlayCall(
@@ -2539,16 +3181,33 @@ function emitPlayCall(
   playColor?: string,
 ): void {
   if (call.name === "FadeIn") {
-    ensureNoPlayOptions(call, lineNumber);
     const id = expectPlayArg(call, 1, lineNumber);
-    pushFadeIn(state, start, id, duration, easing, lineNumber);
+    const shift = readFadeShift(call, lineNumber);
+    pushFadeIn(state, start, id, duration, easing, lineNumber, shift);
     return;
   }
 
   if (call.name === "FadeOut") {
-    ensureNoPlayOptions(call, lineNumber);
     const id = expectPlayArg(call, 1, lineNumber);
-    pushFadeOut(state, start, id, duration, easing, lineNumber);
+    const shift = readFadeShift(call, lineNumber);
+    pushFadeOut(state, start, id, duration, easing, lineNumber, shift);
+    return;
+  }
+
+  if (call.name === "Animate") {
+    pushAnimateMethod(state, start, call, duration, easing, lineNumber);
+    return;
+  }
+
+  if (call.name === "MoveAlongPath") {
+    ensureNoPlayOptions(call, lineNumber);
+    const ids = expectPlayIdArgs(call, 2, lineNumber);
+    pushMoveAlongPath(state, start, ids[0]!, ids[1]!, duration, easing, lineNumber);
+    return;
+  }
+
+  if (call.name === "Rotating") {
+    pushRotating(state, start, call, duration, easing, lineNumber);
     return;
   }
 
@@ -2559,6 +3218,9 @@ function emitPlayCall(
     const toId = ids[1]!;
     const fromNode = requireNode(state, fromId, lineNumber);
     const toNode = requireNode(state, toId, lineNumber);
+    const transformSourceNode = state.shown.has(fromId)
+      ? visibleZeroOpacityClone(fromNode)
+      : fromNode;
     state.timeline.push({
       t: start,
       op: "effect",
@@ -2567,7 +3229,7 @@ function emitPlayCall(
       duration,
       easing,
     });
-    pushTransformAnimations(state, start, fromNode, toNode, duration, easing);
+    pushTransformAnimations(state, start, transformSourceNode, toNode, duration, easing);
     state.timeline.push({ t: start + duration, op: "delete", id: fromId });
     state.timeline.push({
       t: start + duration,
@@ -2586,6 +3248,13 @@ function emitPlayCall(
     return;
   }
 
+  if (call.name === "Uncreate") {
+    ensureNoPlayOptions(call, lineNumber);
+    const id = expectPlayArg(call, 1, lineNumber);
+    pushUncreate(state, start, id, duration, easing, lineNumber);
+    return;
+  }
+
   if (call.name === "Write") {
     ensureNoPlayOptions(call, lineNumber);
     const id = expectPlayArg(call, 1, lineNumber);
@@ -2600,6 +3269,9 @@ function emitPlayCall(
     const toId = ids[1]!;
     const fromNode = requireNode(state, fromId, lineNumber);
     const toNode = requireNode(state, toId, lineNumber);
+    const transformSourceNode = state.shown.has(fromId)
+      ? visibleZeroOpacityClone(fromNode)
+      : fromNode;
     state.timeline.push({
       t: start,
       op: "effect",
@@ -2608,7 +3280,7 @@ function emitPlayCall(
       duration,
       easing,
     });
-    pushTransformAnimations(state, start, fromNode, toNode, duration, easing);
+    pushTransformAnimations(state, start, transformSourceNode, toNode, duration, easing);
     state.shown.add(toId);
     return;
   }
@@ -2706,6 +3378,60 @@ function readCircumscribeColor(
   return color;
 }
 
+function readFadeShift(
+  call: PlayCall,
+  lineNumber: number,
+): { x: number; y: number } {
+  let shift = { x: 0, y: 0 };
+  for (const [key, value] of call.options) {
+    if (key === "shift") shift = parseDirectionVector(value, lineNumber);
+    else
+      throw new DslCompileError(
+        `Unknown ${call.name} option '${key}'.`,
+        lineNumber,
+      );
+  }
+  return shift;
+}
+
+function parseDirectionVector(
+  raw: string,
+  lineNumber: number,
+): { x: number; y: number } {
+  const unit = 67.5;
+  const directions: Record<string, { x: number; y: number }> = {
+    ORIGIN: { x: 0, y: 0 },
+    UP: { x: 0, y: -unit },
+    DOWN: { x: 0, y: unit },
+    LEFT: { x: -unit, y: 0 },
+    RIGHT: { x: unit, y: 0 },
+    UL: { x: -unit, y: -unit },
+    UR: { x: unit, y: -unit },
+    DL: { x: -unit, y: unit },
+    DR: { x: unit, y: unit },
+  };
+  const trimmed = raw.trim();
+  const coordinateMatch = trimmed.match(/^\(([^,]+),([^,]+)\)$/u);
+  if (coordinateMatch) {
+    return {
+      x: parseNumber(coordinateMatch[1]!, lineNumber),
+      y: parseNumber(coordinateMatch[2]!, lineNumber),
+    };
+  }
+
+  const multiplierMatch = trimmed.match(/^(.+?)\s*\*\s*([A-Z]+)$/u);
+  const scale = multiplierMatch
+    ? parseNumber(multiplierMatch[1]!, lineNumber)
+    : 1;
+  const direction = directions[multiplierMatch ? multiplierMatch[2]! : trimmed];
+  if (!direction)
+    throw new DslCompileError(
+      "Expected shift to be UP, DOWN, LEFT, RIGHT, UL, UR, DL, DR, ORIGIN, n*<direction>, or (x,y).",
+      lineNumber,
+    );
+  return { x: direction.x * scale, y: direction.y * scale };
+}
+
 function pushTransformMatchingTex(
   state: CompileState,
   start: number,
@@ -2766,7 +3492,7 @@ function pushTransformMatchingTex(
       state.timeline.push({
         t: start + duration,
         op: "create",
-        node: match.absoluteNode,
+        node: visibleZeroOpacityClone(match.absoluteNode),
       });
       state.timeline.push({ t: start + duration, op: "delete", id: child.id });
     } else {
@@ -2935,9 +3661,12 @@ function pushFadeIn(
   duration: number,
   easing: string,
   lineNumber: number,
+  shift: { x: number; y: number } = { x: 0, y: 0 },
 ): void {
   const sourceNode = visibleZeroOpacityClone(requireNode(state, id, lineNumber));
   const node = hiddenClone(sourceNode);
+  node.transform.x -= shift.x;
+  node.transform.y -= shift.y;
   state.timeline.push({ t: start, op: "create", node });
   state.timeline.push({
     t: start,
@@ -2957,11 +3686,384 @@ function pushFadeIn(
     duration,
     easing,
   });
+  if (shift.x !== 0)
+    state.timeline.push({
+      t: start,
+      op: "animate",
+      id,
+      path: "transform.x",
+      from: sourceNode.transform.x - shift.x,
+      to: sourceNode.transform.x,
+      duration,
+      easing,
+    });
+  if (shift.y !== 0)
+    state.timeline.push({
+      t: start,
+      op: "animate",
+      id,
+      path: "transform.y",
+      from: sourceNode.transform.y - shift.y,
+      to: sourceNode.transform.y,
+      duration,
+      easing,
+    });
   state.shown.add(id);
 }
 
 function fadeInTargetOpacity(node: SceneNode): number {
   return node.transform.opacity > 0 ? node.transform.opacity : 1;
+}
+
+function pushAnimateMethod(
+  state: CompileState,
+  start: number,
+  call: PlayCall,
+  duration: number,
+  easing: string,
+  lineNumber: number,
+): void {
+  const id = expectPlayArg(call, 1, lineNumber);
+  const node = requireNode(state, id, lineNumber);
+  const target = structuredClone(node);
+  if (call.options.size === 0)
+    throw new DslCompileError(
+      "Animate requires at least one method option.",
+      lineNumber,
+    );
+
+  for (const [key, value] of call.options) {
+    if (key === "shift") {
+      const shift = parseDirectionVector(value, lineNumber);
+      target.transform.x += shift.x;
+      target.transform.y += shift.y;
+    } else if (key === "fill") {
+      target.style.fill = value;
+    } else if (key === "fillOpacity") {
+      target.style.fillOpacity = parseNumber(value, lineNumber);
+    } else if (key === "stroke") {
+      target.style.stroke = value;
+    } else if (key === "strokeOpacity") {
+      target.style.strokeOpacity = parseNumber(value, lineNumber);
+    } else if (key === "strokeWidth") {
+      target.style.strokeWidth = parseNumber(value, lineNumber);
+    } else if (key === "opacity") {
+      target.transform.opacity = parseNumber(value, lineNumber);
+    } else if (key === "scale") {
+      target.transform.scale *= parseNumber(value, lineNumber);
+    } else if (key === "rotate") {
+      target.transform.rotation += parseNumber(value, lineNumber) * (180 / Math.PI);
+    } else if (key === "rotation") {
+      target.transform.rotation += parseNumber(value, lineNumber);
+    } else {
+      throw new DslCompileError(
+        `Unknown ${call.name} option '${key}'.`,
+        lineNumber,
+      );
+    }
+  }
+
+  state.timeline.push({
+    t: start,
+    op: "effect",
+    id,
+    effect: "animate",
+    duration,
+    easing,
+  });
+  pushTransformAnimations(state, start, node, target, duration, easing);
+  node.transform = target.transform;
+  node.style = target.style;
+  node.geometry = target.geometry;
+}
+
+function pushMoveAlongPath(
+  state: CompileState,
+  start: number,
+  id: string,
+  pathId: string,
+  duration: number,
+  easing: string,
+  lineNumber: number,
+): void {
+  const node = requireNode(state, id, lineNumber);
+  const path = requireNode(state, pathId, lineNumber);
+  if (path.geometry.fn) {
+    pushMoveAlongPlotPath(state, start, node, path, duration, easing, lineNumber);
+    return;
+  }
+  if (path.type !== "circle")
+    throw new DslCompileError(
+      "MoveAlongPath currently supports circle and plot path nodes.",
+      lineNumber,
+    );
+  const trackerId = `__moveAlongPath_${id}_${pathId}_${state.timeline.length}`;
+  const cx = formatPathNumber(Number(path.transform.x ?? 0));
+  const cy = formatPathNumber(Number(path.transform.y ?? 0));
+  const r = formatPathNumber(Number(path.geometry.r ?? 0));
+  state.values.set(trackerId, 0);
+  state.timeline.push({
+    t: start,
+    op: "bindExpr",
+    id,
+    path: "transform.x",
+    expr: `${cx}+${r}*cos(${trackerId})`,
+    duration,
+    deps: [trackerId],
+  });
+  state.timeline.push({
+    t: start,
+    op: "bindExpr",
+    id,
+    path: "transform.y",
+    expr: `${cy}-${r}*sin(${trackerId})`,
+    duration,
+    deps: [trackerId],
+  });
+  state.timeline.push({
+    t: start,
+    op: "animateValue",
+    id: trackerId,
+    from: 0,
+    to: Math.PI * 2,
+    duration,
+    easing,
+  });
+  node.transform.x = Number(path.transform.x ?? 0) + Number(path.geometry.r ?? 0);
+  node.transform.y = Number(path.transform.y ?? 0);
+  state.timeline.push({
+    t: start + duration,
+    op: "set",
+    id,
+    path: "transform.x",
+    value: node.transform.x,
+  });
+  state.timeline.push({
+    t: start + duration,
+    op: "set",
+    id,
+    path: "transform.y",
+    value: node.transform.y,
+  });
+}
+
+function pushMoveAlongPlotPath(
+  state: CompileState,
+  start: number,
+  node: SceneNode,
+  path: SceneNode,
+  duration: number,
+  easing: string,
+  lineNumber: number,
+): void {
+  if (easing !== "linear")
+    throw new DslCompileError(
+      "MoveAlongPath on plot paths currently requires easing=linear.",
+      lineNumber,
+    );
+  const points = resamplePlotPathByArcLength(path, state, lineNumber, 64);
+  if (points.length < 2)
+    throw new DslCompileError(
+      "MoveAlongPath plot path requires at least two sampled points.",
+      lineNumber,
+    );
+  const segmentDuration = duration / (points.length - 1);
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const from = points[index]!;
+    const to = points[index + 1]!;
+    const segmentStart = start + segmentDuration * index;
+    state.timeline.push({
+      t: segmentStart,
+      op: "animate",
+      id: node.id,
+      path: "transform.x",
+      from: from.x,
+      to: to.x,
+      duration: segmentDuration,
+      easing: "linear",
+    });
+    state.timeline.push({
+      t: segmentStart,
+      op: "animate",
+      id: node.id,
+      path: "transform.y",
+      from: from.y,
+      to: to.y,
+      duration: segmentDuration,
+      easing: "linear",
+    });
+  }
+  const finalPoint = points[points.length - 1]!;
+  node.transform.x = finalPoint.x;
+  node.transform.y = finalPoint.y;
+}
+
+function resamplePlotPathByArcLength(
+  path: SceneNode,
+  state: CompileState,
+  lineNumber: number,
+  segments: number,
+): Array<{ x: number; y: number }> {
+  const fnExpr = String(path.geometry.fn ?? "");
+  const range = Array.isArray(path.geometry.range) ? path.geometry.range : undefined;
+  if (!fnExpr || !range)
+    throw new DslCompileError("MoveAlongPath plot path is missing plot metadata.", lineNumber);
+  const sampleCount = Math.max(segments * 4, Math.min(256, Number(path.metadata?.plot?.samples ?? 200)));
+  const scaleX = Number(path.geometry.scaleX ?? 1);
+  const scaleY = Number(path.geometry.scaleY ?? 1);
+  const originX = Number(path.transform.x ?? 0);
+  const originY = Number(path.transform.y ?? 0);
+  const sourcePoints: Array<{ x: number; y: number }> = [];
+  for (let index = 0; index < sampleCount; index += 1) {
+    const alpha = sampleCount === 1 ? 0 : index / (sampleCount - 1);
+    const t = Number(range[0]) + (Number(range[1]) - Number(range[0])) * alpha;
+    sourcePoints.push({
+      x: originX + t * scaleX,
+      y: originY - evaluateGraphExpression(fnExpr, t, state, lineNumber) * scaleY,
+    });
+  }
+  const cumulative = [0];
+  for (let index = 1; index < sourcePoints.length; index += 1) {
+    const previous = sourcePoints[index - 1]!;
+    const current = sourcePoints[index]!;
+    cumulative.push(cumulative[index - 1]! + Math.hypot(current.x - previous.x, current.y - previous.y));
+  }
+  const total = cumulative[cumulative.length - 1]!;
+  if (total <= 0) return sourcePoints.slice(0, 1);
+  const output: Array<{ x: number; y: number }> = [];
+  let sourceIndex = 1;
+  for (let index = 0; index <= segments; index += 1) {
+    const targetLength = (total * index) / segments;
+    while (sourceIndex < cumulative.length - 1 && cumulative[sourceIndex]! < targetLength) sourceIndex += 1;
+    const previousLength = cumulative[sourceIndex - 1]!;
+    const nextLength = cumulative[sourceIndex]!;
+    const previous = sourcePoints[sourceIndex - 1]!;
+    const next = sourcePoints[sourceIndex]!;
+    const localAlpha = nextLength === previousLength ? 0 : (targetLength - previousLength) / (nextLength - previousLength);
+    output.push({
+      x: previous.x + (next.x - previous.x) * localAlpha,
+      y: previous.y + (next.y - previous.y) * localAlpha,
+    });
+  }
+  return output;
+}
+
+function pushRotating(
+  state: CompileState,
+  start: number,
+  call: PlayCall,
+  duration: number,
+  easing: string,
+  lineNumber: number,
+): void {
+  if (
+    call.args.length < 1 ||
+    call.args.length > 2 ||
+    call.args.some((arg) => typeof arg !== "string")
+  )
+    throw new DslCompileError(
+      `Expected ${call.name}(id[, angle], about=(x,y)).`,
+      lineNumber,
+    );
+
+  const id = call.args[0] as string;
+  const node = requireNode(state, id, lineNumber);
+  let angle = call.args[1] === undefined ? Math.PI * 2 : parseNumber(call.args[1] as string, lineNumber);
+  let aboutX = Number(node.transform.x ?? 0);
+  let aboutY = Number(node.transform.y ?? 0);
+
+  for (const [key, value] of call.options) {
+    if (key === "angle") angle = parseNumber(value, lineNumber);
+    else if (key === "about" || key === "aboutPoint" || key === "about_point") {
+      [aboutX, aboutY] = parseRotatingAboutPoint(value, lineNumber);
+    } else if (key === "axis") {
+      if (value !== "OUT")
+        throw new DslCompileError(
+          "Rotating currently supports only the OUT axis.",
+          lineNumber,
+        );
+    } else {
+      throw new DslCompileError(
+        `Unknown ${call.name} option '${key}'.`,
+        lineNumber,
+      );
+    }
+  }
+
+  const trackerId = `__rotating_${id}_${state.timeline.length}`;
+  const fromX = Number(node.transform.x ?? 0);
+  const fromY = Number(node.transform.y ?? 0);
+  const fromRotation = Number(node.transform.rotation ?? 0);
+  const angleExpr = `(-${trackerId})`;
+  state.values.set(trackerId, 0);
+  state.timeline.push({
+    t: start,
+    op: "bindExpr",
+    id,
+    path: "transform.x",
+    expr: rotatedPointExpression("x", fromX, fromY, aboutX, aboutY, angleExpr),
+    duration,
+    deps: [trackerId],
+  });
+  state.timeline.push({
+    t: start,
+    op: "bindExpr",
+    id,
+    path: "transform.y",
+    expr: rotatedPointExpression("y", fromX, fromY, aboutX, aboutY, angleExpr),
+    duration,
+    deps: [trackerId],
+  });
+  state.timeline.push({
+    t: start,
+    op: "animateValue",
+    id: trackerId,
+    from: 0,
+    to: angle,
+    duration,
+    easing,
+  });
+  state.timeline.push({
+    t: start,
+    op: "animate",
+    id,
+    path: "transform.rotation",
+    from: fromRotation,
+    to: fromRotation - angle * (180 / Math.PI),
+    duration,
+    easing,
+  });
+  const finalX = aboutX + (fromX - aboutX) * Math.cos(angle) + (fromY - aboutY) * Math.sin(angle);
+  const finalY = aboutY - (fromX - aboutX) * Math.sin(angle) + (fromY - aboutY) * Math.cos(angle);
+  node.transform.x = finalX;
+  node.transform.y = finalY;
+  node.transform.rotation = fromRotation - angle * (180 / Math.PI);
+  state.timeline.push({
+    t: start + duration,
+    op: "set",
+    id,
+    path: "transform.x",
+    value: finalX,
+  });
+  state.timeline.push({
+    t: start + duration,
+    op: "set",
+    id,
+    path: "transform.y",
+    value: finalY,
+  });
+}
+
+function parseRotatingAboutPoint(raw: string, lineNumber: number): [number, number] {
+  const trimmed = raw.trim();
+  const wrapped = trimmed.match(/^[([](.+)[)\]]$/u);
+  if (wrapped) return parsePointOption(wrapped[1]!, "about", lineNumber);
+  try {
+    const direction = parseDirectionVector(trimmed, lineNumber);
+    return [direction.x, direction.y];
+  } catch {
+    return parsePointOption(trimmed, "about", lineNumber);
+  }
 }
 
 function pushFadeOut(
@@ -2971,8 +4073,12 @@ function pushFadeOut(
   duration: number,
   easing: string,
   lineNumber: number,
+  shift: { x: number; y: number } = { x: 0, y: 0 },
 ): void {
   const node = requireNode(state, id, lineNumber);
+  const fromOpacity = state.shown.has(id)
+    ? fadeInTargetOpacity(node)
+    : node.transform.opacity;
   state.timeline.push({
     t: start,
     op: "effect",
@@ -2986,12 +4092,35 @@ function pushFadeOut(
     op: "animate",
     id,
     path: "transform.opacity",
-    from: node.transform.opacity,
+    from: fromOpacity,
     to: 0,
     duration,
     easing,
   });
+  if (shift.x !== 0)
+    state.timeline.push({
+      t: start,
+      op: "animate",
+      id,
+      path: "transform.x",
+      from: node.transform.x,
+      to: node.transform.x + shift.x,
+      duration,
+      easing,
+    });
+  if (shift.y !== 0)
+    state.timeline.push({
+      t: start,
+      op: "animate",
+      id,
+      path: "transform.y",
+      from: node.transform.y,
+      to: node.transform.y + shift.y,
+      duration,
+      easing,
+    });
   state.timeline.push({ t: start + duration, op: "delete", id });
+  state.shown.delete(id);
 }
 
 function parseAnimate(
@@ -3013,7 +4142,7 @@ function parseAnimate(
         "Expected animate target like 'c1.x', 'camera.x', or a declared value tracker id.",
         lineNumber,
       );
-    if (!state.nodes.has(id))
+    if (!findNode(state, id))
       throw new DslCompileError(`Unknown node '${id}'.`, lineNumber);
   }
 
@@ -3133,6 +4262,42 @@ function parseAnimateFrame(
     easing,
   );
   state.cameraFrameCursor = target;
+}
+
+function parseFollowCamera(
+  tokens: string[],
+  state: CompileState,
+  lineNumber: number,
+  fallbackStart: number,
+): void {
+  let targetId = tokens[1];
+  let start = fallbackStart;
+  let duration: number | undefined;
+  const optionStart = targetId?.includes("=") ? 1 : 2;
+
+  for (const [key, value] of readAssignments(tokens.slice(optionStart), lineNumber)) {
+    if (key === "target") targetId = value;
+    else if (key === "start") start = parseSeconds(value, lineNumber);
+    else if (key === "duration") duration = parseSeconds(value, lineNumber);
+    else
+      throw new DslCompileError(
+        `Unknown followCamera option '${key}'.`,
+        lineNumber,
+      );
+  }
+
+  if (!targetId)
+    throw new DslCompileError("Expected followCamera target id.", lineNumber);
+  if (!findNode(state, targetId))
+    throw new DslCompileError(`Unknown followCamera target '${targetId}'.`, lineNumber);
+
+  state.timeline.push({
+    t: start,
+    op: "followCamera",
+    id: targetId,
+    ...(duration === undefined ? {} : { duration }),
+  });
+  state.camera.mode = "target";
 }
 
 function pushCameraFrameAnimations(
@@ -3458,6 +4623,55 @@ function pushCreate(
     });
   }
   state.shown.add(id);
+}
+
+function pushUncreate(
+  state: CompileState,
+  start: number,
+  id: string,
+  duration: number,
+  easing: string,
+  lineNumber: number,
+): void {
+  const node = requireNode(state, id, lineNumber);
+  const leaves = leafNodes(visibleZeroOpacityClone(node));
+  state.timeline.push({
+    t: start,
+    op: "effect",
+    id,
+    effect: "uncreate",
+    duration,
+    easing,
+  });
+  if (leaves.length > 0) {
+    const segments = createSegments(leaves, duration);
+    segments.forEach(({ node: leaf, offset, segmentDuration }) => {
+      const isDrawable = supportsDrawProgress(leaf);
+      state.timeline.push({
+        t: start + offset,
+        op: "animate",
+        id: leaf.id,
+        path: isDrawable ? "geometry.drawProgress" : "transform.opacity",
+        from: isDrawable ? 1 : fadeInTargetOpacity(leaf),
+        to: 0,
+        duration: segmentDuration,
+        easing,
+      });
+    });
+  } else {
+    state.timeline.push({
+      t: start,
+      op: "animate",
+      id,
+      path: "transform.opacity",
+      from: fadeInTargetOpacity(node),
+      to: 0,
+      duration,
+      easing,
+    });
+  }
+  state.timeline.push({ t: start + duration, op: "delete", id });
+  state.shown.delete(id);
 }
 
 function supportsDrawProgress(node: SceneNode): boolean {

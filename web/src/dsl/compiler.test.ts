@@ -160,6 +160,19 @@ animate theta from 0 to 3.141592654 duration=1s`);
   assert.equal(animate.to, 120);
 });
 
+test("compiles followCamera updater operation", () => {
+  const documentData = compileTextDsl(`camera mode=target target=0,0 scale=1
+circle dot r=5 at 10,-20
+followCamera dot start=1s duration=2s`);
+
+  const follow = documentData.timeline.find((op) => op.op === "followCamera");
+  if (follow?.op !== "followCamera") throw new Error("Expected followCamera operation.");
+  assert.equal(follow.id, "dot");
+  assert.equal(follow.t, 1);
+  assert.equal(follow.duration, 2);
+  assert.equal(documentData.camera.mode, "target");
+});
+
 test("compiles cameraFrame and animateFrame sugar", () => {
   const documentData = compileTextDsl(`cameraFrame at 10,20 scale=1.5 rotation=5
 animateFrame to 110,45 scale=2 rotation=15 duration=2s easing=linear
@@ -373,6 +386,35 @@ test("places axes at the scene origin by default", () => {
   assert.equal(axes?.geometry.centerY, 0);
 });
 
+test("compiles axisLabels at Manim-like axis endpoints", () => {
+  const documentData = compileTextDsl(`axes ax at 0,0 width=810 height=405 xRange=0,10 yRange=0,100
+axisLabels labels axes=ax x="x" y="f(x)" size=28 fill="#fff" buff=20`);
+
+  const labels = documentData.nodes[1];
+  assert.equal(labels?.type, "group");
+  assert.equal(labels?.geometry.axisLabels, true);
+  assert.equal(labels?.children[0]?.id, "labels:x");
+  assert.equal(labels?.children[0]?.latex, "x");
+  assert.equal(labels?.children[0]?.transform.x, 425);
+  assert.equal(labels?.children[0]?.transform.y, 182.5);
+  assert.equal(labels?.children[1]?.latex, "f(x)");
+  assert.equal(labels?.children[1]?.transform.x, -385);
+  assert.equal(labels?.children[1]?.transform.y, -222.5);
+});
+
+test("compiles axisLabels with per-axis label offsets", () => {
+  const documentData = compileTextDsl(`axes ax at 0,-20 width=607.5 height=405 xRange=0,40 yRange=-8,32
+axisLabels labels axes=ax x="\\Delta Q" y="T[^\\circ C]" xSize=32 ySize=30 xBuff=52.25 xYOffset=-23.5 yBuff=65.75 yYOffset=-22.5`);
+
+  const labels = documentData.nodes[1];
+  assert.equal(labels?.children[0]?.geometry.fontSize, 32);
+  assert.equal(labels?.children[0]?.transform.x, 356);
+  assert.equal(labels?.children[0]?.transform.y, 78);
+  assert.equal(labels?.children[1]?.geometry.fontSize, 30);
+  assert.equal(labels?.children[1]?.transform.x, -238);
+  assert.equal(labels?.children[1]?.transform.y, -245);
+});
+
 test("compiles dataPolygon points through axes coordinates", () => {
   const documentData = compileTextDsl(`axes ax at 0,-30 width=760 height=340 xRange=-4,4 yRange=-2,2
 dataPolygon poly axes=ax points=-2,-0.5;-0.4,1.1;1.8,0.4 fill="#22d3ee" opacity=0.2`);
@@ -428,6 +470,20 @@ test("compiles numberPlane helper as background grid lines", () => {
   assert.equal(yAxis?.style.stroke, "#dff9ff");
   assert.equal(plane?.children.find((child) => child.id === "plane:v:m2")?.geometry.x1, -120);
   assert.equal(plane?.children.find((child) => child.id === "plane:h:m1")?.geometry.y1, 60);
+});
+
+test("compiles numberPlane faded sub-grid lines", () => {
+  const documentData = compileTextDsl(`numberPlane plane xRange=-1,1 yRange=-1,1 unit=60 stroke="#29ABCA" strokeWidth=2 opacity=1 fadedLineRatio=2`);
+
+  const plane = documentData.nodes[0];
+  assert.equal(plane?.geometry.fadedLineRatio, 2);
+  assert.equal(plane?.children.length, 10);
+  const fadedVertical = plane?.children.find((child) => child.id === "plane:fv:0p5");
+  assert.equal(fadedVertical?.geometry.x1, 30);
+  assert.equal(fadedVertical?.style.stroke, "#29ABCA");
+  assert.equal(fadedVertical?.style.strokeWidth, 1);
+  assert.equal(fadedVertical?.transform.opacity, 0.5);
+  assert.equal(plane?.children.find((child) => child.id === "plane:v:0p5"), undefined);
 });
 
 test("compiles dataRect and dataDot through dynamic axes coordinates", () => {
@@ -500,18 +556,25 @@ dataRiemannRects riemann axes=ax fn=4*t-t*t range=0.3,0.6 dx=0.03 fill="#0000FF"
 
 test("compiles gaussianSurface into checkerboard surface faces", () => {
   const documentData = compileTextDsl(
-    `gaussianSurface surface at -38,124 range=-2,2 resolution=4 scale=2 sigma=0.4 fillA="#FF862F" fillB="#58C4DD" stroke="#83C167" fillOpacity=0.5`,
+    `gaussianSurface surface at -38,124 range=-2,2 resolution=4 scale=2 sigma=0.4 mu=0,0 xBasis=63,31 yBasis=-60,30 zBasis=0,-130 fillA="#FF862F" fillB="#58C4DD" stroke="#83C167" fillOpacity=0.5`,
   );
 
   const surface = documentData.nodes[0];
   assert.equal(surface?.type, "group");
   assert.equal(surface?.geometry.gaussianSurface, true);
   assert.equal(surface?.geometry.resolution, 4);
+  assert.equal(JSON.stringify(surface?.geometry.mu), "[0,0]");
+  assert.equal(JSON.stringify(surface?.geometry.xBasis), "[63,31]");
+  assert.equal(JSON.stringify(surface?.geometry.yBasis), "[-60,30]");
+  assert.equal(JSON.stringify(surface?.geometry.zBasis), "[0,-130]");
   assert.equal(surface?.children.length, 16);
   assert.equal(surface?.children.every((child) => child.type === "path"), true);
+  assert.equal(surface?.children.every((child) => child.metadata?.surfaceFace !== undefined), true);
+  assert.equal(surface?.children.every((child, index, children) => index === 0 || Number(children[index - 1]?.metadata?.surfaceFace?.depth) <= Number(child.metadata?.surfaceFace?.depth)), true);
   assert.equal(surface?.children.some((child) => child.style.fill === "#FF862F"), true);
   assert.equal(surface?.children.some((child) => child.style.fill === "#58C4DD"), true);
   assert.equal(surface?.children[0]?.style.fillOpacity, 0.5);
+  assert.equal(surface?.children[0]?.style.strokeWidth, 0.5);
   assert.equal(String(surface?.children[0]?.geometry.d).endsWith(" Z"), true);
 });
 
@@ -525,9 +588,22 @@ test("compiles gaussianSurface with optional height shading", () => {
   assert.equal(surface?.children.some((child) => child.style.fill !== "#FF862F" && child.style.fill !== "#58C4DD"), true);
 });
 
+test("compiles gaussianSurface through Manim ThreeDCamera projection", () => {
+  const documentData = compileTextDsl(
+    `gaussianSurface gauss range=-1,1 resolution=2 scale=2 sigma=0.4 mu=0,0 phi=75 theta=30 unitScale=108.75 fillA="#FF862F" fillB="#58C4DD" shade=true`,
+  );
+
+  const surface = documentData.nodes[0];
+  assert.equal(surface?.geometry.cameraProjection, "manim");
+  assert.equal(surface?.geometry.phi, 75);
+  assert.equal(surface?.geometry.theta, 30);
+  assert.equal(surface?.children.length, 4);
+  assert.equal(surface?.children[0]?.geometry.d, "M -70.333659 -68.295405 L -179.877654 -35.693937 L 0 -215.670839 L 100.460552 -53.562289 Z");
+});
+
 test("compiles sphereSurface into shaded checkerboard surface faces", () => {
   const documentData = compileTextDsl(
-    `sphereSurface sphere at 0,28 radius=104 resolution=3,4 fillA="#E65A4C" fillB="#CF5044" light=0,-0.35,1`,
+    `sphereSurface sphere at 0,28 radius=104 worldRadius=1.5 xBasis=67.5,0 yBasis=0,12.15 zBasis=0,-67.5 resolution=3,4 fillA="#E65A4C" fillB="#CF5044" light=0,-0.35,1`,
   );
 
   const sphere = documentData.nodes[0];
@@ -535,10 +611,31 @@ test("compiles sphereSurface into shaded checkerboard surface faces", () => {
   assert.equal(sphere?.geometry.sphereSurface, true);
   assert.equal(sphere?.geometry.uResolution, 3);
   assert.equal(sphere?.geometry.vResolution, 4);
+  assert.equal(sphere?.geometry.worldRadius, 1.5);
+  assert.equal(JSON.stringify(sphere?.geometry.xBasis), "[67.5,0]");
+  assert.equal(JSON.stringify(sphere?.geometry.yBasis), "[0,12.15]");
+  assert.equal(JSON.stringify(sphere?.geometry.zBasis), "[0,-67.5]");
   assert.equal(sphere?.children.length, 12);
   assert.equal(sphere?.children.every((child) => child.type === "path"), true);
+  assert.equal(sphere?.children.every((child) => child.metadata?.surfaceFace !== undefined), true);
+  assert.equal(sphere?.children.every((child, index, children) => index === 0 || Number(children[index - 1]?.metadata?.surfaceFace?.depth) <= Number(child.metadata?.surfaceFace?.depth)), true);
   assert.equal(sphere?.children.every((child) => String(child.geometry.d).endsWith(" Z")), true);
   assert.equal(sphere?.children.some((child) => child.style.fill !== "#E65A4C" && child.style.fill !== "#CF5044"), true);
+  assert.equal(sphere?.children[0]?.style.stroke, "#BBBBBB");
+  assert.equal(sphere?.children[0]?.style.strokeWidth, 0.5);
+});
+
+test("compiles sphereSurface through Manim ThreeDCamera projection", () => {
+  const documentData = compileTextDsl(
+    `sphereSurface sphere radius=104 worldRadius=1.5 resolution=2,4 phi=75 theta=30 unitScale=108.75 fillA="#E65A4C" fillB="#CF5044" light=0,-0.35,1`,
+  );
+
+  const sphere = documentData.nodes[0];
+  assert.equal(sphere?.geometry.cameraProjection, "manim");
+  assert.equal(sphere?.geometry.phi, 75);
+  assert.equal(sphere?.geometry.theta, 30);
+  assert.equal(sphere?.children.length, 8);
+  assert.equal(sphere?.children[0]?.geometry.d, "M 0 154.566298 L 76.747462 -34.404946 L -136.332141 -20.372009 L 0 154.566298 Z");
 });
 
 test("compiles threeDAxes into projected axes with ticks and tips", () => {
@@ -563,6 +660,23 @@ test("compiles threeDAxes without ticks when requested", () => {
   assert.equal(axes?.children.filter((child) => child.type === "path").length, 3);
 });
 
+test("compiles threeDAxes through Manim ThreeDCamera projection", () => {
+  const documentData = compileTextDsl(
+    `threeDAxes axes xRange=-2,2,1 yRange=-2,2,1 zRange=-1,1,1 phi=75 theta=30 unitScale=108.75 includeTips=true`,
+  );
+
+  const axes = documentData.nodes[0];
+  assert.equal(axes?.geometry.cameraProjection, "manim");
+  assert.equal(axes?.geometry.phi, 75);
+  assert.equal(axes?.geometry.theta, 30);
+  assert.equal(axes?.children.length, 16);
+  const xAxis = axes?.children.find((child) => child.id === "axes:x:axis");
+  assert.equal(Number(xAxis?.geometry.x1).toFixed(6), "100.355130");
+  assert.equal(Number(xAxis?.geometry.x2).toFixed(6), "-118.677572");
+  const zTip = axes?.children.find((child) => child.id === "axes:z:tip");
+  assert.equal(zTip?.geometry.d, "M 0 -106.421631 L 7 -88.421631 L -7 -88.421631 Z");
+});
+
 test("compiles projectedCircle into a projected XY-plane path", () => {
   const documentData = compileTextDsl(
     `projectedCircle circle_xy radius=0.67 at 0,28 xBasis=-56.75,25.5 yBasis=87.75,13.25 fill="none" stroke="#FFFFFF" strokeWidth=4`,
@@ -575,6 +689,21 @@ test("compiles projectedCircle into a projected XY-plane path", () => {
   assert.equal(circle?.geometry.d, "M -38.0225 17.085 C -5.552299 21.987908 37.793253 18.313285 58.7925 8.8775 C 79.791747 -0.558285 70.492701 -12.182092 38.0225 -17.085 C 5.552299 -21.987908 -37.793253 -18.313285 -58.7925 -8.8775 C -79.791747 0.558285 -70.492701 12.182092 -38.0225 17.085 Z");
   assert.equal(circle?.transform.y, 28);
   assert.equal(circle?.style.fill, "none");
+});
+
+test("compiles projectedCircle through Manim ThreeDCamera projection", () => {
+  const documentData = compileTextDsl(
+    `projectedCircle circle_xy radius=1 phi=75 theta=30 unitScale=108.75 samples=16 fill="none" stroke="#FFFFFF" strokeWidth=4`,
+  );
+
+  const circle = documentData.nodes[0];
+  assert.equal(circle?.type, "path");
+  assert.equal(circle?.geometry.projectedCircle, true);
+  assert.equal(circle?.geometry.cameraProjection, "manim");
+  assert.equal(circle?.geometry.phi, 75);
+  assert.equal(circle?.geometry.theta, 30);
+  assert.equal(/^M -56\.748555 25\.439681 L /u.test(String(circle?.geometry.d)), true);
+  assert.equal((String(circle?.geometry.d).match(/\bL\b/gu) ?? []).length, 15);
 });
 
 test("compiles arrow helper as grouped shaft and tip paths", () => {
@@ -636,6 +765,25 @@ test("compiles plot with close and style overrides", () => {
   assert.equal(area?.style.stroke, "#0ea5e9");
   assert.equal(area?.style.strokeWidth, 2);
   assert.equal(String(area?.geometry.d).endsWith(" Z"), true);
+});
+
+test("compiles graphLabel from a plot helper point", () => {
+  const documentData = compileTextDsl(`plot curve fn="cos(t)" range=-10,10.3 samples=32 at=-4.987685,0 scaleX=33.251232 scaleY=135 stroke="#FC6255"
+graphLabel label plot=curve label="\\cos(x)" direction=right size=28 w=67.25 h=43.4 yOffset=-0.5
+graphLabel tau plot=curve label="x=2\\pi" xVal=6.283185 direction=ur size=26 fill="#ffffff" w=75 h=40.3 xOffset=3.615 yOffset=-8.819`);
+
+  const label = documentData.nodes[1];
+  assert.equal(label?.type, "math");
+  assert.equal(label?.geometry.graphLabel, true);
+  assert.equal(label?.latex, "\\cos(x)");
+  assert.equal(label?.style.fill, "#FC6255");
+  assert.equal(Math.round(Number(label?.transform.x)), 388);
+  assert.equal(Math.round(Number(label?.transform.y)), 86);
+  const tau = documentData.nodes[2];
+  assert.equal(tau?.latex, "x=2\\pi");
+  assert.equal(tau?.style.fill, "#ffffff");
+  assert.equal(Math.round(Number(tau?.transform.x)), 246);
+  assert.equal(Math.round(Number(tau?.transform.y)), -170);
 });
 
 test("compiles nonuniform transform scale properties", () => {
@@ -725,6 +873,23 @@ tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120 at 0,-20 
   assert.equal(bind.samples, 120);
 });
 
+test("compiles tracedPath helper from a target node", () => {
+  const documentData = compileTextDsl(`circle dot r=5 at 12,-8
+tracedPath trace target=dot start=0s samples=24 stroke="#ffffff"`);
+
+  const trace = documentData.nodes.find((node) => node.id === "trace");
+  assert.equal(trace?.type, "path");
+  assert.equal(trace?.geometry.tracedPath, true);
+  assert.equal(trace?.geometry.tracedTarget, "dot");
+  assert.equal(trace?.geometry.traceStart, 0);
+  assert.equal(trace?.geometry.traceSamples, 24);
+  assert.equal(trace?.geometry.d, "M 12 -8");
+  assert.equal(
+    documentData.timeline.some((op) => op.op === "bindPath" && op.id === "trace"),
+    false,
+  );
+});
+
 test("compiles surroundingRect nodes from target bounds", () => {
   const documentData = compileTextDsl(`math term "f(x)\\frac{d}{dx}g(x)" at 120,80 size=30 w=260 h=72
 surroundingRect frame target=term buff=10 stroke="#fbbf24" strokeWidth=4`);
@@ -758,6 +923,24 @@ play Create(frame) duration=0.75s easing=linear`);
       .filter((op): op is AnimateOperation => op.op === "animate")
       .map((op) => [op.id, op.path, op.from, op.to, op.duration, op.easing]),
     [["frame", "geometry.drawProgress", 0, 1, 0.75, "linear"]],
+  );
+});
+
+test("expands Uncreate on drawable nodes into reverse draw progress", () => {
+  const documentData = compileTextDsl(`rect frame w=120 h=40 fill="none" stroke="#ef4444" strokeWidth=8
+play Uncreate(frame) duration=0.5s easing=linear`);
+
+  equalJson(
+    documentData.timeline
+      .filter((op): op is AnimateOperation => op.op === "animate")
+      .map((op) => [op.id, op.path, op.from, op.to, op.duration, op.easing]),
+    [["frame", "geometry.drawProgress", 1, 0, 0.5, "linear"]],
+  );
+  assert.equal(
+    documentData.timeline.some(
+      (op) => op.op === "delete" && op.id === "frame" && op.t === 0.5,
+    ),
+    true,
   );
 });
 
@@ -846,6 +1029,410 @@ at 5s:
   if (setOperation?.op !== "set") throw new Error("Expected set operation.");
   assert.equal(setOperation.path, "style.fill");
   assert.equal(setOperation.value, "#38bdf8");
+});
+
+test("expands FadeIn shift from the offset start position", () => {
+  const documentData = compileTextDsl(`text label "Label" at 10,20 opacity=0
+play FadeIn(label, shift=UP) duration=1s easing=linear`);
+
+  const create = documentData.timeline.find(
+    (op): op is CreateOperation => op.op === "create" && op.node.id === "label",
+  );
+  assert.equal(create?.node.transform.x, 10);
+  assert.equal(create?.node.transform.y, 87.5);
+  assert.equal(create?.node.transform.opacity, 0);
+
+  const animations = documentData.timeline.filter(
+    (op): op is AnimateOperation => op.op === "animate" && op.id === "label",
+  );
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.path === "transform.opacity" &&
+        op.from === 0 &&
+        op.to === 1 &&
+        op.duration === 1 &&
+        op.easing === "linear",
+    ),
+    true,
+  );
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.path === "transform.y" &&
+        op.from === 87.5 &&
+        op.to === 20 &&
+        op.duration === 1 &&
+        op.easing === "linear",
+    ),
+    true,
+  );
+});
+
+test("expands FadeOut shift toward the offset end position", () => {
+  const documentData = compileTextDsl(`text label "Label" at 10,20
+play FadeOut(label, shift=DOWN) duration=0.5s easing=linear`);
+
+  const animations = documentData.timeline.filter(
+    (op): op is AnimateOperation => op.op === "animate" && op.id === "label",
+  );
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.path === "transform.opacity" &&
+        op.from === 1 &&
+        op.to === 0 &&
+        op.duration === 0.5 &&
+        op.easing === "linear",
+    ),
+    true,
+  );
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.path === "transform.y" &&
+        op.from === 20 &&
+        op.to === 87.5 &&
+        op.duration === 0.5 &&
+        op.easing === "linear",
+    ),
+    true,
+  );
+  assert.equal(
+    documentData.timeline.some(
+      (op) => op.op === "delete" && op.id === "label" && op.t === 0.5,
+    ),
+    true,
+  );
+});
+
+test("expands Animate method options through a target-state clone", () => {
+  const documentData = compileTextDsl(`rect square w=135 h=135 at 0,0 fill="#58C4DD" stroke="#58C4DD"
+play Animate(square, shift=LEFT) duration=1s easing=smooth
+play Animate(square, fill="#FF862F") duration=1s easing=smooth
+play Animate(square, scale=0.3) duration=1s easing=smooth
+play Animate(square, rotate=0.4) duration=1s easing=smooth`);
+
+  const animations = documentData.timeline.filter((op) => op.op === "animate");
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.id === "square" &&
+        op.path === "transform.x" &&
+        op.from === 0 &&
+        op.to === -67.5 &&
+        op.t === 0,
+    ),
+    true,
+  );
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.id === "square" &&
+        op.path === "style.fill" &&
+        op.from === "#58C4DD" &&
+        op.to === "#FF862F" &&
+        op.t === 1,
+    ),
+    true,
+  );
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.id === "square" &&
+        op.path === "transform.scale" &&
+        op.from === 1 &&
+        op.to === 0.3 &&
+        op.t === 2,
+    ),
+    true,
+  );
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.id === "square" &&
+        op.path === "transform.rotation" &&
+        op.from === 0 &&
+        Math.round(Number(op.to) * 1000) === 22918 &&
+        op.t === 3,
+    ),
+    true,
+  );
+});
+
+test("expands Animate coordinate shifts on groups", () => {
+  const documentData = compileTextDsl(`circle a r=5 at 0,0
+circle b r=5 at 20,0
+group dots a b
+play Animate(dots, shift=(189,-202.5)) duration=1s easing=smooth`);
+
+  const animations = documentData.timeline.filter((op) => op.op === "animate");
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.id === "dots" &&
+        op.path === "transform.x" &&
+        op.from === 0 &&
+        op.to === 189,
+    ),
+    true,
+  );
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.id === "dots" &&
+        op.path === "transform.y" &&
+        op.from === 0 &&
+        op.to === -202.5,
+    ),
+    true,
+  );
+});
+
+test("expands Animate opacity and stroke style options", () => {
+  const documentData = compileTextDsl(`path result d="M 0 0 L 20 0" opacity=0 stroke="#83C167" strokeWidth=4
+play Animate(result, opacity=1, stroke="#FFFFFF", strokeOpacity=0.5, strokeWidth=16) duration=1s easing=easeInOut`);
+
+  const animations = documentData.timeline.filter((op) => op.op === "animate");
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.id === "result" &&
+        op.path === "transform.opacity" &&
+        op.from === 0 &&
+        op.to === 1,
+    ),
+    true,
+  );
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.id === "result" &&
+        op.path === "style.stroke" &&
+        op.from === "#83C167" &&
+        op.to === "#FFFFFF",
+    ),
+    true,
+  );
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.id === "result" &&
+        op.path === "style.strokeOpacity" &&
+        op.to === 0.5,
+    ),
+    true,
+  );
+  assert.equal(
+    animations.some(
+      (op) =>
+        op.id === "result" &&
+        op.path === "style.strokeWidth" &&
+        op.from === 4 &&
+        op.to === 16,
+    ),
+    true,
+  );
+});
+
+test("expands MoveAlongPath on circular paths into position bindings", () => {
+  const documentData = compileTextDsl(`circle orbit r=67.5 at 0,0 fill="none"
+circle dot r=5.4 at 67.5,0
+play MoveAlongPath(dot, orbit) duration=2s easing=linear`);
+
+  const bindings = documentData.timeline.filter((op) => op.op === "bindExpr");
+  assert.equal(
+    bindings.some(
+      (op) =>
+        op.id === "dot" &&
+        op.path === "transform.x" &&
+        op.expr.includes("67.5*cos(__moveAlongPath_dot_orbit_"),
+    ),
+    true,
+  );
+  assert.equal(
+    bindings.some(
+      (op) =>
+        op.id === "dot" &&
+        op.path === "transform.y" &&
+        op.expr.includes("-67.5*sin(__moveAlongPath_dot_orbit_"),
+    ),
+    true,
+  );
+  const tracker = documentData.timeline.find(
+    (op) => op.op === "animateValue" && op.id.startsWith("__moveAlongPath_dot_orbit_"),
+  );
+  assert.equal(tracker?.op, "animateValue");
+  if (tracker?.op === "animateValue") {
+    assert.equal(tracker.from, 0);
+    assert.equal(Math.round(tracker.to * 1000), 6283);
+    assert.equal(tracker.duration, 2);
+    assert.equal(tracker.easing, "linear");
+  }
+});
+
+test("expands MoveAlongPath on plot paths into arc-length segments", () => {
+  const documentData = compileTextDsl(`plot graph fn="sin(t)" range=0,3.141592654 samples=80 at=10,20 scaleX=50 scaleY=25
+circle dot r=5.4 at 10,20
+play MoveAlongPath(dot, graph) duration=1s easing=linear`);
+
+  const xAnimations = documentData.timeline.filter(
+    (op) => op.op === "animate" && op.id === "dot" && op.path === "transform.x",
+  );
+  const yAnimations = documentData.timeline.filter(
+    (op) => op.op === "animate" && op.id === "dot" && op.path === "transform.y",
+  );
+  assert.equal(xAnimations.length, 64);
+  assert.equal(yAnimations.length, 64);
+  assert.equal(xAnimations[0]?.op, "animate");
+  assert.equal(yAnimations[0]?.op, "animate");
+  if (xAnimations[0]?.op === "animate" && yAnimations[0]?.op === "animate") {
+    assert.equal(xAnimations[0].from, 10);
+    assert.equal(yAnimations[0].from, 20);
+    assert.equal(xAnimations[0].duration, 1 / 64);
+    assert.equal(yAnimations[0].easing, "linear");
+  }
+  const lastX = xAnimations[xAnimations.length - 1];
+  const lastY = yAnimations[yAnimations.length - 1];
+  assert.equal(lastX?.op, "animate");
+  assert.equal(lastY?.op, "animate");
+  if (lastX?.op === "animate" && lastY?.op === "animate") {
+    assert.equal(Math.round(Number(lastX.to) * 1000), 167080);
+    assert.equal(Math.round(Number(lastY.to) * 1000), 20000);
+  }
+});
+
+test("keeps delayed MoveAlongPath auto-created nodes at their initial position", () => {
+  const documentData = compileTextDsl(`plot graph fn="sin(t)" range=0,3.141592654 samples=80 at=10,20 scaleX=50 scaleY=25
+circle dot r=5.4 at 10,20
+at 1s:
+  play MoveAlongPath(dot, graph) duration=1s easing=linear`);
+
+  const create = documentData.timeline.find(
+    (op) => op.op === "create" && op.node.id === "dot",
+  );
+  assert.equal(create?.op, "create");
+  if (create?.op === "create") {
+    assert.equal(create.node.transform.x, 10);
+    assert.equal(create.node.transform.y, 20);
+  }
+
+  const dot = documentData.nodes.find((node) => node.id === "dot");
+  assert.equal(Math.round(Number(dot?.transform.x) * 1000), 167080);
+  assert.equal(Math.round(Number(dot?.transform.y) * 1000), 20000);
+});
+
+test("expands Rotating around an explicit point into position bindings", () => {
+  const documentData = compileTextDsl(`circle dot r=5.4 at 67.5,0
+play Rotating(dot, 6.283185307, about=(135,0)) duration=1.5s easing=linear`);
+
+  const bindings = documentData.timeline.filter((op) => op.op === "bindExpr");
+  assert.equal(
+    bindings.some(
+      (op) =>
+        op.id === "dot" &&
+        op.path === "transform.x" &&
+        op.expr.includes("135+(-67.5)*cos((-__rotating_dot_"),
+    ),
+    true,
+  );
+  assert.equal(
+    bindings.some(
+      (op) =>
+        op.id === "dot" &&
+        op.path === "transform.y" &&
+        op.expr.includes("0+(-67.5)*sin((-__rotating_dot_"),
+    ),
+    true,
+  );
+  const tracker = documentData.timeline.find(
+    (op) => op.op === "animateValue" && op.id.startsWith("__rotating_dot_"),
+  );
+  assert.equal(tracker?.op, "animateValue");
+  if (tracker?.op === "animateValue") {
+    assert.equal(tracker.from, 0);
+    assert.equal(Math.round(tracker.to * 1000), 6283);
+    assert.equal(tracker.duration, 1.5);
+    assert.equal(tracker.easing, "linear");
+  }
+  const xBinding = documentData.timeline.find(
+    (op) => op.op === "bindExpr" && op.id === "dot" && op.path === "transform.x",
+  );
+  assert.equal(xBinding?.op, "bindExpr");
+  if (xBinding?.op === "bindExpr") assert.equal(xBinding.duration, 1.5);
+  const rotation = documentData.timeline.find(
+    (op) => op.op === "animate" && op.id === "dot" && op.path === "transform.rotation",
+  );
+  assert.equal(rotation?.op, "animate");
+  if (rotation?.op === "animate") {
+    assert.equal(rotation.from, 0);
+    assert.equal(typeof rotation.to, "number");
+    if (typeof rotation.to !== "number") return;
+    assert.equal(Math.round(rotation.to), -360);
+  }
+});
+
+test("expires timed Rotating position bindings after final position is set", () => {
+  const documentData = compileTextDsl(`circle dot r=5.4 at 0,0
+at 0s:
+  play Rotating(dot, 3.141592654, about=RIGHT) duration=2s easing=linear
+at 3s:
+  play Animate(dot, shift=UP) duration=1s easing=smooth`);
+
+  const finalSets = documentData.timeline.filter(
+    (op) => op.op === "set" && op.id === "dot" && op.t === 2,
+  );
+  assert.equal(
+    finalSets.some(
+      (op) => op.op === "set" && op.path === "transform.x" && Math.round(Number(op.value) * 1000) === 135000,
+    ),
+    true,
+  );
+  assert.equal(
+    documentData.timeline.some(
+      (op) =>
+        op.op === "animate" &&
+        op.id === "dot" &&
+        op.path === "transform.y" &&
+        Math.round(Number(op.from) * 1000) === 0 &&
+        Math.round(Number(op.to) * 1000) === -67500 &&
+        op.t === 3,
+    ),
+    true,
+  );
+});
+
+test("uses Manim Rotating default timing when play options are omitted", () => {
+  const documentData = compileTextDsl(`circle dot r=5.4 at 67.5,0
+play Rotating(dot, about=(135,0))`);
+
+  const tracker = documentData.timeline.find(
+    (op) => op.op === "animateValue" && op.id.startsWith("__rotating_dot_"),
+  );
+  assert.equal(tracker?.op, "animateValue");
+  if (tracker?.op === "animateValue") {
+    assert.equal(Math.round(tracker.to * 1000), 6283);
+    assert.equal(tracker.duration, 5);
+    assert.equal(tracker.easing, "linear");
+  }
+  assert.equal(documentData.duration, 5);
+});
+
+test("fades out previously faded-in hidden nodes from visible opacity", () => {
+  const documentData = compileTextDsl(`text label "Label" at 10,20 opacity=0
+play FadeIn(label) duration=0.5s easing=linear
+play FadeOut(label, shift=RIGHT) duration=0.5s easing=linear`);
+
+  const fadeOutOpacity = documentData.timeline
+    .filter((op): op is AnimateOperation => op.op === "animate")
+    .find(
+      (op) =>
+        op.id === "label" &&
+        op.path === "transform.opacity" &&
+        op.t === 0.5,
+    );
+  assert.equal(fadeOutOpacity?.from, 1);
+  assert.equal(fadeOutOpacity?.to, 0);
 });
 
 test("advances play statements inside at blocks from the block time", () => {
@@ -1017,6 +1604,18 @@ test("keeps superscript and subscript groups renderable when expanding math toke
   );
 });
 
+test("keeps double-braced TeX parts isolated for TransformMatchingTex", () => {
+  const documentData = compileTextDsl(
+    `math equation "{{a}}^2+{{b}}^2={{c}}^2" expandTokens=true size=48 renderer=katex`,
+  );
+
+  const equation = documentData.nodes.find((node) => node.id === "equation");
+  equalJson(
+    equation?.children.map((child) => child.latex),
+    ["a", "^2", "+", "b", "^2", "=", "c", "^2"],
+  );
+});
+
 test("gives scripted math tokens enough layout width for TransformMatchingTex", () => {
   const documentData = compileTextDsl(
     `math equation "x^2+y^2=(r)^2" expandTokens=true size=58 renderer=katex
@@ -1086,6 +1685,16 @@ play TransformMatchingTex(eq2, eq3) duration=1s`);
   assert.equal(
     documentData.timeline.some(
       (op) => op.op === "create" && op.node.id === "eq2:tex:1" && op.t === 1,
+    ),
+    true,
+  );
+  assert.equal(
+    documentData.timeline.some(
+      (op) =>
+        op.op === "create" &&
+        op.node.id === "eq2:tex:1" &&
+        op.t === 1 &&
+        op.node.transform.opacity === 1,
     ),
     true,
   );
@@ -1210,6 +1819,38 @@ play ReplacementTransform(from, to) duration=1.25s easing=linear`);
   );
 });
 
+test("keeps created ReplacementTransform sources visible at transform start", () => {
+  const documentData = compileTextDsl(`rect from w=40 h=40 opacity=0
+rect to w=40 h=40 at 100,0 opacity=0
+
+play Create(from) duration=1s easing=linear
+play ReplacementTransform(from, to) duration=1s easing=linear`);
+
+  assert.equal(
+    documentData.timeline.some(
+      (op) =>
+        op.op === "animate" &&
+        op.id === "from" &&
+        op.path === "transform.opacity" &&
+        op.t === 1 &&
+        op.from === 0,
+    ),
+    false,
+  );
+  assert.equal(
+    documentData.timeline.some(
+      (op) =>
+        op.op === "animate" &&
+        op.id === "from" &&
+        op.path === "transform.x" &&
+        op.t === 1 &&
+        op.from === 0 &&
+        op.to === 100,
+    ),
+    true,
+  );
+});
+
 test("fades hidden nodes in to visible opacity", () => {
   const documentData = compileTextDsl(`text title "Intro" at 100,80 opacity=0
 
@@ -1280,6 +1921,38 @@ play Transform(source, target) duration=1s`);
   assert.equal(textSet?.op, "set");
   assert.equal(textSet?.t, 1);
   assert.equal(textSet?.value, "B");
+});
+
+test("keeps written Transform sources visible at transform start", () => {
+  const documentData = compileTextDsl(`math source "\\\\text{Before}" opacity=0
+math target "\\\\text{After}" at 80,0 opacity=0
+
+play Write(source) duration=1s
+play Transform(source, target) duration=1s easing=linear`);
+
+  assert.equal(
+    documentData.timeline.some(
+      (op) =>
+        op.op === "animate" &&
+        op.id === "source" &&
+        op.path === "transform.opacity" &&
+        op.t === 1 &&
+        op.from === 0,
+    ),
+    false,
+  );
+  assert.equal(
+    documentData.timeline.some(
+      (op) =>
+        op.op === "animate" &&
+        op.id === "source" &&
+        op.path === "transform.x" &&
+        op.t === 1 &&
+        op.from === 0 &&
+        op.to === 80,
+    ),
+    true,
+  );
 });
 
 test("transforms math content to the target latex at the end", () => {
@@ -1447,6 +2120,20 @@ play Create(diagram) duration=0.25s`);
   );
 });
 
+test("compiles direct animations targeting group children", () => {
+  const documentData = compileTextDsl(`line child x1=0 y1=0 x2=10 y2=0
+group parent child
+animate child.x2 from 10 to 40 duration=0.5s easing=linear`);
+
+  const op = documentData.timeline.find(
+    (operation): operation is AnimateOperation =>
+      operation.op === "animate" && operation.id === "child" && operation.path === "geometry.x2",
+  );
+  assert.equal(op?.from, 10);
+  assert.equal(op?.to, 40);
+  assert.equal(op?.duration, 0.5);
+});
+
 test("auto-creates unshown nodes in source order", () => {
   const documentData = compileTextDsl(`circle first
 circle second
@@ -1576,7 +2263,32 @@ test("nextTo places node next to target", () => {
   const documentData = compileTextDsl(`rect target w=100 h=40 at 50,0
 circle c r=10
 nextTo c target direction=right buff=10`);
-  const set = documentData.timeline.find((op) => op.op === "set" && op.id === "c");
-  assert.equal(set?.op, "set");
-  if (set?.op === "set") assert.equal(set.value, 120);
+  const sets = documentData.timeline.filter(
+    (op): op is SetOperation => op.op === "set" && op.id === "c",
+  );
+  equalJson(
+    sets.map((op) => [op.path, op.value]),
+    [
+      ["transform.x", 120],
+      ["transform.y", 0],
+    ],
+  );
+});
+
+test("nextTo maps Manim up and down directions to screen coordinates", () => {
+  const documentData = compileTextDsl(`circle target r=10 at 50,20
+circle up r=5 at 0,0
+circle down r=5 at 0,0
+nextTo up target direction=up buff=3
+nextTo down target direction=down buff=3`);
+  const sets = documentData.timeline.filter((op) => op.op === "set");
+  equalJson(
+    sets.map((op) => [op.id, op.path, op.value]),
+    [
+      ["up", "transform.y", 2],
+      ["up", "transform.x", 50],
+      ["down", "transform.y", 38],
+      ["down", "transform.x", 50],
+    ],
+  );
 });

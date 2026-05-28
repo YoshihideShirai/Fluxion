@@ -35,6 +35,14 @@ export interface PlotMetadata {
   samples?: number;
 }
 
+export interface SurfaceFaceMetadata {
+  row: number;
+  col: number;
+  depth: number;
+  height?: number;
+  shade?: number;
+}
+
 export interface SceneNode {
   id: string;
   type: NodeType;
@@ -47,6 +55,7 @@ export interface SceneNode {
   renderer?: string;
   metadata?: {
     plot?: PlotMetadata;
+    surfaceFace?: SurfaceFaceMetadata;
   };
 }
 
@@ -86,6 +95,7 @@ export interface BindExpressionOperation extends BaseOperation {
   id: string;
   path: string;
   expr: string;
+  duration?: number;
   deps?: string[];
 }
 
@@ -135,6 +145,12 @@ export interface EffectOperation extends BaseOperation {
   easing: EasingName;
 }
 
+export interface FollowCameraOperation extends BaseOperation {
+  op: "followCamera";
+  id: string;
+  duration?: number;
+}
+
 export type TimelineOperation =
   | CreateOperation
   | DeleteOperation
@@ -145,7 +161,8 @@ export type TimelineOperation =
   | SetValueOperation
   | AnimateOperation
   | AnimateValueOperation
-  | EffectOperation;
+  | EffectOperation
+  | FollowCameraOperation;
 
 export interface ValueTracker {
   id: string;
