@@ -1046,21 +1046,21 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, findNode(documentData, 'bg')?.style?.fill === '#ece6e2', 'expected official light logo background.');
     assertGalleryCondition(label, logo?.children?.map((child) => child.id).join(',') === 't,s,c,m', 'expected official VGroup z-order triangle, square, circle, M.');
     assertGalleryCondition(label, triangle?.type === 'triangle' && approximatelyEqual(triangle.geometry?.w ?? 0, 116.9) && approximatelyEqual(triangle.geometry?.h ?? 0, 101.25), 'expected scaled Manim triangle geometry.');
-    assertGalleryCondition(label, triangle?.style?.fill === '#e07a5f' && triangle.transform?.x === 110 && triangle.transform?.y === -32, 'expected official RED triangle placement.');
+    assertGalleryCondition(label, triangle?.style?.fill === '#e07a5f' && approximatelyEqual(triangle.transform?.x ?? 0, 135) && approximatelyEqual(triangle.transform?.y ?? 0, 42.1875), 'expected official RED triangle placement after VGroup.move_to(ORIGIN).');
     assertGalleryCondition(label, square?.type === 'rect' && square.geometry?.w === 135 && square.geometry?.h === 135, 'expected default Square scaled to 2 Manim units.');
-    assertGalleryCondition(label, square?.style?.fill === '#525893' && square.transform?.x === 58 && square.transform?.y === 34, 'expected official BLUE square placement.');
+    assertGalleryCondition(label, square?.style?.fill === '#525893' && approximatelyEqual(square.transform?.x ?? 0, 67.5) && approximatelyEqual(square.transform?.y ?? 0, -11.25), 'expected official BLUE square placement after VGroup.move_to(ORIGIN).');
     assertGalleryCondition(label, circle?.type === 'circle' && approximatelyEqual(circle.geometry?.r ?? 0, 67.5), 'expected default Circle scaled to one Manim unit radius.');
-    assertGalleryCondition(label, circle?.style?.fill === '#87c2a5' && circle.transform?.x === -12 && circle.transform?.y === -32, 'expected official GREEN circle placement.');
+    assertGalleryCondition(label, circle?.style?.fill === '#87c2a5' && approximatelyEqual(circle.transform?.x ?? 0, 0) && approximatelyEqual(circle.transform?.y ?? 0, 56.25), 'expected official GREEN circle placement after VGroup.move_to(ORIGIN).');
     assertGalleryCondition(label, m?.type === 'math' && m.latex === '\\\\mathbb{M}' && m.renderer === 'katex', 'expected MathTex blackboard M.');
-    assertGalleryCondition(label, m?.geometry?.fontSize === 174 && m?.style?.fill === '#343434' && m.transform?.x === -110 && m.transform?.y === 78, 'expected MathTex M scale and placement.');
+    assertGalleryCondition(label, m?.geometry?.fontSize === 174 && m?.style?.fill === '#343434' && approximatelyEqual(m.transform?.x ?? 0, -84.375) && approximatelyEqual(m.transform?.y ?? 0, -45), 'expected MathTex M scale and placement after VGroup.move_to(ORIGIN).');
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'create').length === 2, 'expected static logo plus background creation only.');
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, /<svg [^>]*viewBox="0 0 960 540"><g transform="translate\(480 270\) rotate\(0\) scale\(1\) translate\(0 0\)">/u.test(svg), 'expected SVG logo sample to use the centered Manim frame transform.');
     assertGalleryCondition(label, /<rect id="bg" x="-480" y="-270" width="960" height="540"[^>]*fill="#ece6e2"/u.test(svg), 'expected SVG logo background to fill the whole frame.');
-    assertGalleryCondition(label, /<polygon id="t" points="0,-50\.625 58\.45,50\.625 -58\.45,50\.625" transform="translate\(110 -32\)"[^>]*fill="#e07a5f"/u.test(svg), 'expected SVG triangle to serialize with official scaled vertices and red fill.');
-    assertGalleryCondition(label, /<rect id="s" x="-67\.5" y="-67\.5" width="135" height="135" transform="translate\(58 34\)"[^>]*fill="#525893"/u.test(svg), 'expected SVG square to serialize with official blue fill.');
-    assertGalleryCondition(label, /<circle id="c" cx="0" cy="0" r="67\.5" transform="translate\(-12 -32\)"[^>]*fill="#87c2a5"/u.test(svg), 'expected SVG circle to serialize with official green fill.');
-    assertGalleryCondition(label, svgElementTag(svg, 'm').includes('transform="translate(-110 78)"') && svgElementTag(svg, 'm').includes('font-size="174"') && svgElementTag(svg, 'm').includes('fill="#343434"') && svg.includes('mathbb{M}</text>'), 'expected SVG MathTex fallback text to serialize at the official placement.');
+    assertGalleryCondition(label, /<polygon id="t" points="0,-50\.625 58\.45,50\.625 -58\.45,50\.625" transform="translate\(135 42\.1875\)"[^>]*fill="#e07a5f"/u.test(svg), 'expected SVG triangle to serialize with official scaled vertices and red fill.');
+    assertGalleryCondition(label, /<rect id="s" x="-67\.5" y="-67\.5" width="135" height="135" transform="translate\(67\.5 -11\.25\)"[^>]*fill="#525893"/u.test(svg), 'expected SVG square to serialize with official blue fill.');
+    assertGalleryCondition(label, /<circle id="c" cx="0" cy="0" r="67\.5" transform="translate\(0 56\.25\)"[^>]*fill="#87c2a5"/u.test(svg), 'expected SVG circle to serialize with official green fill.');
+    assertGalleryCondition(label, svgElementTag(svg, 'm').includes('transform="translate(-84.375 -45)"') && svgElementTag(svg, 'm').includes('font-size="174"') && svgElementTag(svg, 'm').includes('fill="#343434"') && svg.includes('mathbb{M}</text>'), 'expected SVG MathTex fallback text to serialize at the official placement.');
     assertGalleryCondition(label, svg.indexOf('id="t"') < svg.indexOf('id="s"') && svg.indexOf('id="s"') < svg.indexOf('id="c"') && svg.indexOf('id="c"') < svg.indexOf('id="m"'), 'expected SVG logo z-order to match Manim VGroup order.');
   }
 
