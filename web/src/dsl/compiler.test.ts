@@ -2350,6 +2350,14 @@ group mask masked clip=rect clipW=50 clipH=40 clipX=10 clipY=-5`);
   assert.equal(mask?.geometry.clipY, -5);
 });
 
+test("compiles fixed-in-frame node option", () => {
+  const documentData = compileTextDsl(`text label "Fixed" at -270,-212 fixedInFrame=true
+camera scale=2 target=100,50 mode=target`);
+
+  const label = documentData.nodes.find((node) => node.id === "label");
+  assert.equal(label?.geometry.fixedInFrame, true);
+});
+
 test("compiles direct animations targeting group children", () => {
   const documentData = compileTextDsl(`line child x1=0 y1=0 x2=10 y2=0
 group parent child

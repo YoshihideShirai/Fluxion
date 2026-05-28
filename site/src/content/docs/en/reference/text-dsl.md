@@ -187,6 +187,7 @@ Common options:
 - `scaleX`, `scaleY`: optional nonuniform scale multipliers composed with `scale`
 - `rotation`
 - `opacity`
+- `fixedInFrame=true|false`: renders the top-level node in screen-centered coordinates outside the camera transform, matching Manim fixed-in-frame mobjects.
 - `fill`, `fillOpacity`, `stroke`, `strokeOpacity`, `strokeWidth`, `strokeLinecap=butt|round|square`, `strokeLinejoin=miter|round|bevel`
 - `size` / `fontSize`
 - `math` only: `renderer=katex|mathjax`, `expandTokens=true|false`

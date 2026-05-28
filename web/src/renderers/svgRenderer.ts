@@ -42,6 +42,10 @@ export function buildCameraTransform(
   ].join(" ");
 }
 
+export function buildFixedFrameTransform(width = 1280, height = 720): string {
+  return `translate(${width / 2} ${height / 2})`;
+}
+
 export class SvgRenderer {
   private readonly svg: SVGSVGElement;
   private readonly width: number;
@@ -72,10 +76,17 @@ export class SvgRenderer {
     this.currentDefs = document.createElementNS(SVG_NS, "defs");
     for (const node of nodes) this.indexNode(node);
     const root = document.createElementNS(SVG_NS, "g");
+    const fixedRoot = document.createElementNS(SVG_NS, "g");
+    const sceneNodes = nodes.filter((node) => !this.isFixedInFrame(node));
+    const fixedNodes = nodes.filter((node) => this.isFixedInFrame(node));
     this.applyCameraTransform(root, camera);
-    root.replaceChildren(...nodes.map((node) => this.renderNode(node)));
-    if (this.currentDefs.childNodes.length > 0) this.svg.replaceChildren(this.currentDefs, root);
-    else this.svg.replaceChildren(root);
+    fixedRoot.setAttribute("transform", buildFixedFrameTransform(this.width, this.height));
+    root.replaceChildren(...sceneNodes.map((node) => this.renderNode(node)));
+    fixedRoot.replaceChildren(...fixedNodes.map((node) => this.renderNode(node)));
+    const children: SVGElement[] = [root];
+    if (fixedNodes.length > 0) children.push(fixedRoot);
+    if (this.currentDefs.childNodes.length > 0) this.svg.replaceChildren(this.currentDefs, ...children);
+    else this.svg.replaceChildren(...children);
     this.currentDefs = null;
   }
 
@@ -245,6 +256,10 @@ export class SvgRenderer {
       return this.createMathElement(node);
     }
     return document.createElementNS(SVG_NS, "g");
+  }
+
+  private isFixedInFrame(node: SceneNode): boolean {
+    return node.geometry.fixedInFrame === true;
   }
 
   private createImageElement(node: SceneNode): SVGElement {

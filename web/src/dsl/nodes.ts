@@ -83,6 +83,11 @@ export function applyNodeOption(
     return;
   }
 
+  if (key === "fixedInFrame") {
+    node.geometry.fixedInFrame = parseBoolean(value, lineNumber);
+    return;
+  }
+
   if (key === "renderer") {
     if (value !== "katex" && value !== "mathjax")
       throw new DslCompileError(
@@ -187,7 +192,7 @@ export function propertyPath(property: string): string {
   if (["fill", "fillOpacity", "stroke", "strokeOpacity", "strokeWidth", "strokeLinecap", "strokeLinejoin"].includes(property))
     return `style.${property}`;
   if (
-    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "data", "sampling", "target", "direction", "buff", "sharpness", "curvature", "tip", "label", "labelSize", "labelColor", "labelOffset", "labelAlignment", "labelRenderer", "labelW", "labelH", "fillRule", "clip", "clipTarget", "clipX", "clipY", "clipW", "clipH"].includes(property)
+    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "data", "sampling", "target", "direction", "buff", "sharpness", "curvature", "tip", "label", "labelSize", "labelColor", "labelOffset", "labelAlignment", "labelRenderer", "labelW", "labelH", "fillRule", "clip", "clipTarget", "clipX", "clipY", "clipW", "clipH", "fixedInFrame"].includes(property)
   )
     return `geometry.${property}`;
   if (property === "renderer") return "renderer";

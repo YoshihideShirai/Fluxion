@@ -186,6 +186,7 @@ Common options:
 - `scaleX`, `scaleY`: optional nonuniform scale multipliers composed with `scale`
 - `rotation`
 - `opacity`
+- `fixedInFrame=true|false`: top-level node を camera transform の外側、画面中央基準座標で描画し、Manim の fixed-in-frame mobject を近似します。
 - `fill`, `fillOpacity`
 - `stroke`, `strokeOpacity`
 - `strokeWidth`, `strokeLinecap=butt|round|square`, `strokeLinejoin=miter|round|bevel`

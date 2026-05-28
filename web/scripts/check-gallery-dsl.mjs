@@ -14,7 +14,7 @@ const playerModule = await import(pathToFileURL(resolve(webRoot, 'dist/runtime/p
 const rendererModule = await import(pathToFileURL(resolve(webRoot, 'dist/renderers/svgRenderer.js')).href);
 const { compileTextDsl } = compilerModule;
 const { Player } = playerModule;
-const { buildCameraTransform } = rendererModule;
+const { buildCameraTransform, buildFixedFrameTransform } = rendererModule;
 
 const files = readdirSync(examplesGalleryDir)
   .filter((file) => file.endsWith('.fluxion.txt'))
@@ -525,14 +525,22 @@ function serializeSvgSample(documentData, nodes, camera) {
   const width = Number(documentData.width ?? 960);
   const height = Number(documentData.height ?? 540);
   const nodeById = new Map(flattenNodes(nodes).map((node) => [node.id, node]));
-  const scene = nodes.map((node) => serializeSvgNode(node, { parentOpacity: 1, nodeById })).join('');
+  const sceneNodes = nodes.filter((node) => !isFixedInFrameNode(node));
+  const fixedNodes = nodes.filter((node) => isFixedInFrameNode(node));
+  const scene = sceneNodes.map((node) => serializeSvgNode(node, { parentOpacity: 1, nodeById })).join('');
+  const fixed = fixedNodes.map((node) => serializeSvgNode(node, { parentOpacity: 1, nodeById })).join('');
   const cameraTransform = buildCameraTransform(camera ?? {}, width, height);
-  const source = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${formatSvgNumber(width)} ${formatSvgNumber(height)}"><g transform="${cameraTransform}">${scene}</g></svg>`;
+  const fixedLayer = fixed ? `<g transform="${buildFixedFrameTransform(width, height)}">${fixed}</g>` : '';
+  const source = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${formatSvgNumber(width)} ${formatSvgNumber(height)}"><g transform="${cameraTransform}">${scene}</g>${fixedLayer}</svg>`;
   return {
     source,
     elementCount: (source.match(/<(?:g|path|circle|rect|line|polygon|text)\b/gu) ?? []).length,
     contentElementCount: countSerializedContentElements(nodes),
   };
+}
+
+function isFixedInFrameNode(node) {
+  return node.geometry?.fixedInFrame === true;
 }
 
 function countSerializedContentElements(nodes) {
@@ -980,10 +988,11 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === -45, 'expected fixed-frame example axes to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
     assertGalleryCondition(label, text?.type === 'text' && text.text === 'This is a 3D text', 'expected fixed-in-frame text label.');
+    assertGalleryCondition(label, text?.geometry?.fixedInFrame === true, 'expected fixed-in-frame text to render outside the camera transform.');
     assertGalleryCondition(label, approximatelyEqual(text?.transform?.x ?? 0, -270) && approximatelyEqual(text?.transform?.y ?? 0, -212), 'expected text to stay pinned at the upper-left screen corner.');
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="axes:[xyz]:tick:/gu) === 30, 'expected all fixed-frame projected axis ticks to serialize into SVG.');
-    assertGalleryCondition(label, svg.includes('id="text3d"') && /id="axes:x:axis"[^>]*x2="305\.322489"/u.test(svg), 'expected SVG fixed-frame text and projected x-axis endpoint.');
+    assertGalleryCondition(label, svg.includes('<g transform="translate(480 270)"><text id="text3d"') && /id="axes:x:axis"[^>]*x2="305\.322489"/u.test(svg), 'expected SVG fixed-frame text layer and projected x-axis endpoint.');
   }
 
   if (label.includes('manim-ce-logo') || label.includes('manim_ce_logo')) {
