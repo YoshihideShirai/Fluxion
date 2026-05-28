@@ -46,6 +46,8 @@ export class SvgRenderer {
   private readonly height: number;
   private readonly nodeById = new Map<string, SceneNode>();
   private readonly baselineCache = new Map<string, number>();
+  private currentDefs: SVGDefsElement | null = null;
+  private gradientIndex = 0;
 
   constructor(container: Element, width = 1280, height = 720) {
     this.width = width;
@@ -62,11 +64,15 @@ export class SvgRenderer {
 
   render(nodes: SceneNode[], camera: Camera = DEFAULT_CAMERA): void {
     this.nodeById.clear();
+    this.gradientIndex = 0;
+    this.currentDefs = document.createElementNS(SVG_NS, "defs");
     for (const node of nodes) this.indexNode(node);
     const root = document.createElementNS(SVG_NS, "g");
     this.applyCameraTransform(root, camera);
     root.replaceChildren(...nodes.map((node) => this.renderNode(node)));
-    this.svg.replaceChildren(root);
+    if (this.currentDefs.childNodes.length > 0) this.svg.replaceChildren(this.currentDefs, root);
+    else this.svg.replaceChildren(root);
+    this.currentDefs = null;
   }
 
   private renderNode(node: SceneNode): SVGElement {
@@ -134,6 +140,7 @@ export class SvgRenderer {
     if (node.type === "path") {
       const el = document.createElementNS(SVG_NS, "path");
       el.setAttribute("d", String(node.geometry.d ?? ""));
+      if (node.geometry.fillRule) el.setAttribute("fill-rule", String(node.geometry.fillRule));
       return el;
     }
     if (node.type === "text") {
@@ -166,8 +173,38 @@ export class SvgRenderer {
     const curvature = this.clamp(Number(node.geometry.curvature ?? 0.22), 0.08, 0.6);
     const tip = this.clamp(Number(node.geometry.tip ?? 0.35), 0.12, 0.75);
     const dir = String(node.geometry.direction ?? "down");
+    if (target.type === "line" && (dir === "perpendicular" || dir === "normal" || dir === "line")) {
+      return this.buildLineBrace(target, buff, curvature, tip, node);
+    }
     if (dir === "up" || dir === "down") return this.buildHorizontalBrace(b, dir, buff, curvature, tip, node);
     return this.buildVerticalBrace(b, dir === "left" ? "left" : "right", buff, curvature, tip, node);
+  }
+
+  private buildLineBrace(
+    target: SceneNode,
+    buff: number,
+    curvature: number,
+    tip: number,
+    node: SceneNode,
+  ): { path: string; anchor: { x: number; y: number } } {
+    const tx = Number(target.transform.x ?? 0);
+    const ty = Number(target.transform.y ?? 0);
+    const start = { x: tx + Number(target.geometry.x1 ?? 0), y: ty + Number(target.geometry.y1 ?? 0) };
+    const end = { x: tx + Number(target.geometry.x2 ?? 0), y: ty + Number(target.geometry.y2 ?? 0) };
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const length = Math.hypot(dx, dy);
+    if (length < 1) return { path: "M 0 0", anchor: start };
+
+    const ux = dx / length;
+    const uy = dy / length;
+    const nx = -uy;
+    const ny = ux;
+    const baseStart = { x: start.x + nx * buff, y: start.y + ny * buff };
+    const baseEnd = { x: end.x + nx * buff, y: end.y + ny * buff };
+    const { path, tipPoint, tipDepth } = this.buildBraceRibbon(baseStart, baseEnd, { x: nx, y: ny }, curvature, tip);
+    const gap = tipDepth * 0.65 + 18;
+    return { path, anchor: { x: tipPoint.x + nx * gap, y: tipPoint.y + ny * gap } };
   }
 
   private buildHorizontalBrace(
@@ -182,16 +219,15 @@ export class SvgRenderer {
     const y = dir === "up" ? b.minY - buff : b.maxY + buff;
     const sign = dir === "up" ? -1 : 1;
     const center = (b.minX + b.maxX) / 2;
-    const control = this.clamp(length * curvature, 10, 64);
-    const tipDepth = this.clamp(length * tip * 0.32, 12, Math.max(18, length * 0.75));
-    const cpInset = this.clamp(control * 0.45, 6, control);
-    const path = [
-      `M ${b.minX} ${y}`,
-      `C ${b.minX + cpInset} ${y} ${center - control} ${y + sign * tipDepth} ${center} ${y + sign * tipDepth}`,
-      `C ${center + control} ${y + sign * tipDepth} ${b.maxX - cpInset} ${y} ${b.maxX} ${y}`,
-    ].join(" ");
+    const { path, tipPoint, tipDepth } = this.buildBraceRibbon(
+      { x: b.minX, y },
+      { x: b.maxX, y },
+      { x: 0, y: sign },
+      curvature,
+      tip,
+    );
     const anchor = this.computeBraceLabelAnchor(
-      { x: center, y: y + sign * tipDepth },
+      { x: center, y: tipPoint.y },
       sign,
       tipDepth,
       length,
@@ -213,16 +249,15 @@ export class SvgRenderer {
     const x = dir === "left" ? b.minX - buff : b.maxX + buff;
     const sign = dir === "left" ? -1 : 1;
     const center = (b.minY + b.maxY) / 2;
-    const control = this.clamp(length * curvature, 10, 64);
-    const tipDepth = this.clamp(length * tip * 0.32, 12, Math.max(18, length * 0.75));
-    const cpInset = this.clamp(control * 0.45, 6, control);
-    const path = [
-      `M ${x} ${b.minY}`,
-      `C ${x} ${b.minY + cpInset} ${x + sign * tipDepth} ${center - control} ${x + sign * tipDepth} ${center}`,
-      `C ${x + sign * tipDepth} ${center + control} ${x} ${b.maxY - cpInset} ${x} ${b.maxY}`,
-    ].join(" ");
+    const { path, tipPoint, tipDepth } = this.buildBraceRibbon(
+      { x, y: b.minY },
+      { x, y: b.maxY },
+      { x: sign, y: 0 },
+      curvature,
+      tip,
+    );
     const anchor = this.computeBraceLabelAnchor(
-      { x: x + sign * tipDepth, y: center },
+      { x: tipPoint.x, y: center },
       sign,
       tipDepth,
       length,
@@ -230,6 +265,52 @@ export class SvgRenderer {
       false,
     );
     return { path, anchor };
+  }
+
+  private buildBraceRibbon(
+    start: { x: number; y: number },
+    end: { x: number; y: number },
+    normal: { x: number; y: number },
+    curvature: number,
+    tip: number,
+  ): { path: string; tipPoint: { x: number; y: number }; tipDepth: number } {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const length = Math.max(1, Math.hypot(dx, dy));
+    const ux = dx / length;
+    const uy = dy / length;
+    const center = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+    const tipDepth = this.clamp(length * tip * 0.32, 14, Math.max(20, length * 0.42));
+    const thickness = this.clamp(length * (0.016 + curvature * 0.018), 5, 12);
+    const tipThickness = thickness * 1.25;
+    const endCurl = this.clamp(length * 0.045, 8, 22);
+    const p = (along: number, outward: number): string =>
+      `${center.x + ux * along + normal.x * outward} ${center.y + uy * along + normal.y * outward}`;
+    const tipPoint = {
+      x: center.x + normal.x * tipDepth,
+      y: center.y + normal.y * tipDepth,
+    };
+
+    return {
+      path: [
+        `M ${p(-length / 2, 0)}`,
+        `C ${p(-length / 2 + endCurl, 0)} ${p(-length * 0.46, thickness)} ${p(-length * 0.39, thickness)}`,
+        `L ${p(-length * 0.18, thickness)}`,
+        `C ${p(-length * 0.1, thickness)} ${p(-length * 0.07, tipDepth - tipThickness)} ${p(0, tipDepth)}`,
+        `C ${p(length * 0.07, tipDepth - tipThickness)} ${p(length * 0.1, thickness)} ${p(length * 0.18, thickness)}`,
+        `L ${p(length * 0.39, thickness)}`,
+        `C ${p(length * 0.46, thickness)} ${p(length / 2 - endCurl, 0)} ${p(length / 2, 0)}`,
+        `C ${p(length / 2 - endCurl, -thickness)} ${p(length * 0.46, -thickness)} ${p(length * 0.39, -thickness)}`,
+        `L ${p(length * 0.18, -thickness)}`,
+        `C ${p(length * 0.1, -thickness)} ${p(length * 0.07, tipDepth - tipThickness * 2)} ${p(0, tipDepth - tipThickness)}`,
+        `C ${p(-length * 0.07, tipDepth - tipThickness * 2)} ${p(-length * 0.1, -thickness)} ${p(-length * 0.18, -thickness)}`,
+        `L ${p(-length * 0.39, -thickness)}`,
+        `C ${p(-length * 0.46, -thickness)} ${p(-length / 2 + endCurl, -thickness)} ${p(-length / 2, 0)}`,
+        "Z",
+      ].join(" "),
+      tipPoint,
+      tipDepth,
+    };
   }
 
   private computeBraceLabelAnchor(
@@ -263,7 +344,11 @@ export class SvgRenderer {
       return { minX: x - r, maxX: x + r, minY: y - r, maxY: y + r };
     }
     if (node.type === "line") {
-      return { minX: x + Number(node.geometry.x1 ?? 0), maxX: x + Number(node.geometry.x2 ?? 0), minY: y + Number(node.geometry.y1 ?? 0), maxY: y + Number(node.geometry.y2 ?? 0) };
+      const x1 = x + Number(node.geometry.x1 ?? 0);
+      const x2 = x + Number(node.geometry.x2 ?? 0);
+      const y1 = y + Number(node.geometry.y1 ?? 0);
+      const y2 = y + Number(node.geometry.y2 ?? 0);
+      return { minX: Math.min(x1, x2), maxX: Math.max(x1, x2), minY: Math.min(y1, y2), maxY: Math.max(y1, y2) };
     }
     const w = Number(node.geometry.w ?? (Number(node.geometry.fontSize ?? 32) * 4));
     const h = Number(node.geometry.h ?? (Number(node.geometry.fontSize ?? 32) * 1.5));
@@ -417,9 +502,34 @@ export class SvgRenderer {
   }
 
   private applyStyle(element: SVGElement, style: Style): void {
-    element.setAttribute("fill", style.fill ?? "none");
+    element.setAttribute("fill", this.resolveFill(style.fill ?? "none"));
     element.setAttribute("stroke", style.stroke ?? "none");
     element.setAttribute("stroke-width", String(style.strokeWidth ?? 0));
+  }
+
+  private resolveFill(fill: string): string {
+    const stops = /^linear-gradient\((.+)\)$/u.exec(fill.trim())?.[1];
+    if (!stops || !this.currentDefs) return fill;
+    const colors = stops
+      .split(",")
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0);
+    if (colors.length < 2) return fill;
+    const id = `fluxion-gradient-${this.gradientIndex++}`;
+    const gradient = document.createElementNS(SVG_NS, "linearGradient");
+    gradient.setAttribute("id", id);
+    gradient.setAttribute("x1", "0%");
+    gradient.setAttribute("y1", "0%");
+    gradient.setAttribute("x2", "100%");
+    gradient.setAttribute("y2", "0%");
+    colors.forEach((color, index) => {
+      const stop = document.createElementNS(SVG_NS, "stop");
+      stop.setAttribute("offset", `${(index / (colors.length - 1)) * 100}%`);
+      stop.setAttribute("stop-color", color);
+      gradient.append(stop);
+    });
+    this.currentDefs.append(gradient);
+    return `url(#${id})`;
   }
 
   private applyDrawProgress(element: SVGElement, node: SceneNode): void {
@@ -428,5 +538,8 @@ export class SvgRenderer {
     element.setAttribute("pathLength", "1");
     element.setAttribute("stroke-dasharray", "1");
     element.setAttribute("stroke-dashoffset", String(1 - progress));
+    if ((node.style.fill ?? "none") !== "none" && progress < 0.999) {
+      element.setAttribute("fill-opacity", String(this.clamp((progress - 0.72) / 0.28, 0, 1)));
+    }
   }
 }

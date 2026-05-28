@@ -29,35 +29,35 @@
 | tracking_id | gallery_slug | reason | related_modules |
 |---|---|---|---|
 | GAP-001 | animations-using-animate | parity確認のみ（追加ギャップ未特定） | `web/src/dsl/compiler.ts`, `web/src/runtime/*` |
-| GAP-002 | opening-manim | parity確認のみ（追加ギャップ未特定） | `web/src/dsl/compiler.ts`, `web/src/runtime/*` |
+| GAP-002 | opening-manim | visual approximation improved: timings now follow the official `wait()`, `Create(grid, run_time=3, lag_ratio=0.1)`, and nonlinear transform `run_time=3` cadence more closely; Tex titles now keep default white styling and `Transform` materializes target text/LaTeX content at the animation end. | `web/src/dsl/compiler.ts`, `web/src/runtime/*` |
 | GAP-003 | simple-circle | parity確認のみ（追加ギャップ未特定） | `web/src/dsl/compiler.ts`, `web/src/runtime/*` |
 | GAP-004 | plotting-sin-cos | parity確認のみ（追加ギャップ未特定） | `web/src/dsl/compiler.ts`, `python/fluxion/primitives/*` |
 | GAP-005 | square-to-circle | parity確認のみ（追加ギャップ未特定） | `web/src/dsl/compiler.ts`, `web/src/runtime/*` |
-| GAP-006 | transform-matching-tex | parity確認のみ（追加ギャップ未特定） | `web/src/dsl/compiler.ts`, `python/fluxion/primitives/*` |
+| GAP-006 | transform-matching-tex | visual approximation improved: scene is reduced to the official white MathTex-only `MatchingEquationParts` choreography, hidden target tokens are materialized for chained transforms, and the hidden `variables` group moves down into `eq2` during the first transform. | `web/src/dsl/compiler.ts`, `python/fluxion/primitives/*` |
 | GAP-007 | orbital-dot | parity確認のみ（追加ギャップ未特定） | `web/src/runtime/*`, `python/fluxion/primitives/*` |
 | GAP-008 | moving-frame-box | parity確認のみ（追加ギャップ未特定） | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 | GAP-009 | manim-ce-logo | parity確認のみ（追加ギャップ未特定） | `python/fluxion/primitives/*`, `web/src/runtime/*` |
-| GAP-010 | brace-annotation | parity確認のみ（追加ギャップ未特定） | `python/fluxion/primitives/*`, `web/src/runtime/*` |
-| GAP-011 | sine-curve-unit-circle | `tracedPath` helper は追加済み。履歴ベースの厳密な Manim `TracedPath` 追記挙動は未実装。 | `web/src/runtime/*`, `python/fluxion/primitives/*`, `web/src/dsl/compiler.ts` |
-| GAP-012 | special-camera | parity確認のみ（追加ギャップ未特定） | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
-| GAP-013 | arg-min-example | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
-| GAP-014 | boolean-operations | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
-| GAP-015 | fixed-in-frame-m-object-test | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
-| GAP-016 | graph-area-plot | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/dsl/compiler.ts` |
-| GAP-017 | gradient-image-from-array | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
-| GAP-018 | heat-diagram-plot | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
-| GAP-019 | moving-angle | `angle` helper は追加済み。象限・直角マーク等の Manim `Angle` 詳細オプションは未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts`, `python/fluxion/primitives/*` |
-| GAP-020 | moving-around | `cameraFrame` / `animateFrame` helper は追加済み。frame updater と mobject tracking API は未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
-| GAP-021 | moving-dots | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
-| GAP-022 | moving-group-to-destination | resolved (2026-05-25): `arrange` / `nextTo` を追加。`aligned_edge` 等の詳細レイアウト引数は未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
-| GAP-023 | moving-zoomed-scene-around | `tracedPath` helper は追加済み。ZoomedScene の独立 sub-camera / viewport primitive は未実装。 | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
-| GAP-024 | point-with-trace | `tracedPath` helper は追加済み。対象 mobject の実履歴追跡・減衰オプションは未実装。 | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
-| GAP-025 | polygon-on-axes | `dataPolygon` helper は追加済み。汎用 `coords_to_point` 相当 API は未実装。 | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
-| GAP-026 | rotation-updater | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
-| GAP-027 | three-d-camera-illusion-rotation | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
-| GAP-028 | three-d-camera-rotation | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
-| GAP-029 | three-d-light-source-position | Required primitives/effects are not fully mapped yet. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
-| GAP-030 | three-d-surface-plot | Required primitives/effects are not fully mapped yet. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-010 | brace-annotation | visual approximation improved: line bounds are normalized, `direction=perpendicular` renders a filled brace ribbon along diagonal line targets, and labels are placed near brace tips closer to Manim's `get_text` / `get_tex`; fine curl details remain approximated. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-011 | sine-curve-unit-circle | visual parity ported: updater-built sine curve history is represented with `tracedPath` plus synchronized value bindings. | `web/src/runtime/*`, `python/fluxion/primitives/*`, `web/src/dsl/compiler.ts` |
+| GAP-012 | special-camera | visual approximation improved: FollowingGraphCamera now keeps the official default 1s `MoveAlongPath(..., rate_func=linear)` cadence and follows it with 36 linear `animateFrame` samples at zoom scale 2. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-013 | arg-min-example | visual parity ported: `ax.c2p` and dot updater are represented with fixed-scale value bindings matching the source motion. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-014 | boolean-operations | visual approximation improved: hand-authored boolean SVG paths now split fill and stroke so Manim's `fill_opacity=0.5` keeps stronger outlines while preserving the official one-play-per-operation scale/move choreography; true path boolean primitives are still missing. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-015 | fixed-in-frame-m-object-test | visual parity ported: ThreeDAxes projection and fixed-in-frame text are hand-authored until 3D camera/fixed layers exist. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-016 | graph-area-plot | visual parity ported: `get_riemann_rectangles` and bounded `get_area` are represented with manual rect/path geometry matching the source figure. | `python/fluxion/primitives/*`, `web/src/dsl/compiler.ts` |
+| GAP-017 | gradient-image-from-array | visual parity ported: native ImageMobject/array input is still missing, but the gallery reproduces the grayscale image with an SVG linear gradient. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-018 | heat-diagram-plot | visual parity ported: line graph is hand-positioned because axes helper origin/tick placement for asymmetric ranges is incomplete. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
+| GAP-019 | moving-angle | visual parity ported: `Line.rotate(..., about_point=LEFT)` and Angle/MathTex updaters are expanded to `value` + `always` bindings. | `web/src/runtime/*`, `web/src/dsl/compiler.ts`, `python/fluxion/primitives/*` |
+| GAP-020 | moving-around | visual parity ported: `.animate` target-copy syntax is expanded manually to equivalent property interpolation. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-021 | moving-dots | visual parity ported: updater API is represented with `value` trackers and `always` bindings for dot/line coordinates. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-022 | moving-group-to-destination | visual parity ported: the VGroup shift is expanded to equivalent group x/y interpolation so the red dot aligns with the yellow destination. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-023 | moving-zoomed-scene-around | visual approximation improved: ZoomedScene sub-camera/display is hand-authored with official 2x4 grayscale image dimensions, upper-right shifted zoom display placement, anisotropic display cell scaling, display content retargeting after frame shift, and reverse pop-out fade. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-024 | point-with-trace | visual parity ported: VMobject updater history is expanded to a piecewise `tracedPath` expression synced with the dot motion. | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-025 | polygon-on-axes | visual parity ported: rectangle/dot are driven by `value` + `always` bindings matching the source `always_redraw(Polygon(...))` motion. | `web/src/dsl/compiler.ts`, `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-026 | rotation-updater | visual parity ported: callback updater with `dt` is expanded to equivalent linear `rotation` animations. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-027 | three-d-camera-illusion-rotation | visual approximation improved: the official `begin_3dillusion_camera_rotation(rate=2)` updater is expanded into two projected coordinate keyframes matching its theta sine and phi cosine offsets over `wait(PI/2)`. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-028 | three-d-camera-rotation | visual approximation improved: ambient camera rotation now expands the official `rate=0.1` one-second theta sweep into projected line/path coordinate interpolation, then eases back for `move_camera`. | `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
+| GAP-029 | three-d-light-source-position | visual approximation improved: ThreeDAxes now shares the same `phi=75°, theta=30°` projection used by the 3D camera examples, and the RED_D/RED_E checkerboard sphere is centered on the projected axes origin with denser alternating patches and stronger `3*IN` light cues. | `web/src/runtime/*`, `python/fluxion/primitives/*` |
+| GAP-030 | three-d-surface-plot | visual approximation improved: Gaussian checkerboard Surface now uses official ORANGE/BLUE 0.5-opacity faces with GREEN strokes, a taller central peak, and additional mid-cell mesh lines to suggest the source `resolution=(24,24)`. | `python/fluxion/primitives/*`, `web/src/runtime/*` |
 | GAP-031 | vector-arrow | `arrow` helper は追加済み。Manim Arrow の buff/tip shape 全オプションは未実装。 | `python/fluxion/primitives/*`, `web/src/runtime/*`, `web/src/dsl/compiler.ts` |
 
 ---

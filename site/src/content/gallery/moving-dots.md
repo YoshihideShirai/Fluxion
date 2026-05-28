@@ -3,60 +3,36 @@ title: MovingDots
 description: "Manim Example: `MovingDots` (`#movingdots`) の Fluxion 移植版。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#movingdots
 source_example_path: examples/gallery/moving-dots.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "本家の updater 駆動挙動は簡略化しており、位相差付き正弦運動で視覚近似している。"
+  - symptom: "Manim の updater API はDSL構文としては未対応だが、同じValueTrackerとLine追従挙動を `always` binding で再現している。"
     layer: dsl
-    impact: medium
-    workaround: "`value` と `always expr` で複数 dot の同期運動を表現する。"
+    impact: low
+    workaround: "`value` と `always expr` で dot 座標と line endpoints を同期する。"
     closure_condition: "updater 構文/API の互換レイヤーを拡張する。"
     fidelity_upgrade_condition: "Manim の updater 記述をほぼ同形で移植できる時。"
 category: Manim Stable Examples
-status: partial
+status: ported
 order: 68
 gap_id: GAP-021
 ---
 scene width=960 height=540 fps=60
 
-value t = 0
-
-rect bg w=960 h=540 at 0,0 fill="#080b14"
-rect panel w=760 h=340 at 0,-18 fill="#0f172a" stroke="#1e293b" strokeWidth=2
-text title "MovingDots" at -312,196 size=40 fill="#f8fafc"
-text formula "x_i(t)=x_i(0)+A\\sin(t+\\phi_i)" at 168,196 size=23 fill="#bae6fd"
-line axis x1=-330 y1=0 x2=330 y2=0 at 0,-46 stroke="#475569" strokeWidth=3
-line zero_tick x1=0 y1=-14 x2=0 y2=14 at 0,-46 stroke="#64748b" strokeWidth=2
-text zero_label "0" at 0,-84 size=18 fill="#94a3b8"
-path wave_a d="M -320 -46 C -250 -130 -170 38 -100 -46 C -30 -130 50 38 120 -46 C 190 -130 260 38 330 -46" fill="none" stroke="#38bdf8" strokeWidth=2 opacity=0.34
-path wave_b d="M -320 -46 C -250 38 -170 -130 -100 -46 C -30 38 50 -130 120 -46 C 190 38 260 -130 330 -46" fill="none" stroke="#fb923c" strokeWidth=2 opacity=0.28
-circle dot_a r=15 at -240,-46 fill="#38bdf8" stroke="#e0f2fe" strokeWidth=3
-circle dot_b r=15 at -120,-46 fill="#fb923c" stroke="#ffedd5" strokeWidth=3
-circle dot_c r=15 at 0,-46 fill="#22c55e" stroke="#dcfce7" strokeWidth=3
-circle ghost_a r=10 at -240,-46 fill="#38bdf8" opacity=0.2
-circle ghost_b r=10 at -120,-46 fill="#fb923c" opacity=0.18
-circle ghost_c r=10 at 0,-46 fill="#22c55e" opacity=0.18
-text label_a "phase 0" at -274,84 size=18 fill="#7dd3fc"
-text label_b "phase pi/2" at -52,78 size=18 fill="#fdba74"
-text label_c "phase pi" at 208,84 size=18 fill="#86efac"
-text note "updater driven motion approximated with value trackers" at 0,-210 size=20 fill="#94a3b8"
-
-always dot_a.x = expr=-240 + 210*sin(t)
-always dot_b.x = expr=-120 + 210*sin(t + pi/2)
-always dot_c.x = expr=0 + 210*sin(t + pi)
-always ghost_a.x = expr=-240 + 210*sin(t - 0.55)
-always ghost_b.x = expr=-120 + 210*sin(t + pi/2 - 0.55)
-always ghost_c.x = expr=0 + 210*sin(t + pi - 0.55)
-
+value x = 0
+value y = 0
+rect bg w=960 h=540 at 0,0 fill="#000000"
+line connector x1=0 y1=0 x2=72 y2=0 stroke="#FC6255" strokeWidth=4
+circle d1 r=8 at 0,0 fill="#58C4DD" stroke="#58C4DD" strokeWidth=0
+circle d2 r=8 at 72,0 fill="#83C167" stroke="#83C167" strokeWidth=0
+always d1.x = expr=60*x
+always d2.y = expr=-60*y
+always connector.x1 = expr=60*x
+always connector.y1 = expr=0
+always connector.x2 = expr=72
+always connector.y2 = expr=-60*y
 at 0s:
-  play FadeIn(panel) duration=0.35s
-  play FadeIn(title) duration=0.5s
-  play FadeIn(formula) duration=0.5s
-  play Create(axis) duration=0.6s
-  play AnimationGroup(Create(wave_a), Create(wave_b), FadeIn(zero_tick), FadeIn(zero_label), lagRatio=0.08) duration=0.9s easing=easeOut
-  play AnimationGroup(FadeIn(ghost_a), FadeIn(ghost_b), FadeIn(ghost_c), FadeIn(dot_a), FadeIn(dot_b), FadeIn(dot_c), lagRatio=0.08) duration=0.8s easing=easeOut
-  play AnimationGroup(FadeIn(label_a), FadeIn(label_b), FadeIn(label_c), lagRatio=0.08) duration=0.5s
-  play FadeIn(note) duration=0.4s
-
-wait 0.2s
-animate t from 0 to 12.566 duration=5.8s easing=linear
+  animate x from 0 to 5 duration=1s easing=smooth
+at 1s:
+  animate y from 0 to 4 duration=1s easing=smooth
+wait 1s

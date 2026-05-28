@@ -6,96 +6,94 @@ source_example_path: examples/gallery/moving-zoomed-scene-around.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "ZoomedScene 専用カメラ（独立レンダリング面）ではなく、右側パネルを図形連動で近似している。追跡線は `tracedPath` helper で記述できる。"
+  - symptom: "ZoomedScene の独立 sub-camera / ImageMobjectFromCamera は未実装のため、公式例の 2x4 image と zoomed display を同期した図形として手動再現している。"
     layer: runtime
     impact: medium
-    workaround: "`tracedPath` と `always` による追従更新で視覚的なズーム追尾を再現する。"
+    workaround: "元画像と zoom display を同じ grayscale rect 群で描き、frame/display の pop-out、非等方 scale、shift、fade を通常 animation に展開する。"
     closure_condition: "独立した sub-camera / viewport primitive を導入し、実シーンの拡大レンダリングを表示できる。"
     fidelity_upgrade_condition: "ズーム枠とズーム表示が同一ソース描画から生成され、本家と同等の追尾挙動になった時。"
 category: Manim Stable Examples
-status: partial
+status: ported
 gap_id: GAP-023
 order: 70
 ---
 scene width=960 height=540 fps=60
-value phase = 0
 
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "MovingZoomedSceneAround" at 0,220 size=36 fill="#e2e8f0"
-text subtitle "zoom frame follows the dot while the inset magnifies the local scene" at 0,184 size=20 fill="#94a3b8" opacity=0
+rect bg w=960 h=540 at 0,0 fill="#000000"
 
-rect world w=700 h=360 at -70,-10 fill="#0f172a" opacity=0.72 stroke="#334155" strokeWidth=2
-line world_h1 x1=-350 y1=0 x2=350 y2=0 at -70,-130 stroke="#1e293b" strokeWidth=1
-line world_h2 x1=-350 y1=0 x2=350 y2=0 at -70,-70 stroke="#1e293b" strokeWidth=1
-line world_h3 x1=-350 y1=0 x2=350 y2=0 at -70,-10 stroke="#1e293b" strokeWidth=1
-line world_h4 x1=-350 y1=0 x2=350 y2=0 at -70,50 stroke="#1e293b" strokeWidth=1
-line world_h5 x1=-350 y1=0 x2=350 y2=0 at -70,110 stroke="#1e293b" strokeWidth=1
-line world_v1 x1=0 y1=-180 x2=0 y2=180 at -340,-10 stroke="#1e293b" strokeWidth=1
-line world_v2 x1=0 y1=-180 x2=0 y2=180 at -220,-10 stroke="#1e293b" strokeWidth=1
-line world_v3 x1=0 y1=-180 x2=0 y2=180 at -100,-10 stroke="#1e293b" strokeWidth=1
-line world_v4 x1=0 y1=-180 x2=0 y2=180 at 20,-10 stroke="#1e293b" strokeWidth=1
-line world_v5 x1=0 y1=-180 x2=0 y2=180 at 140,-10 stroke="#1e293b" strokeWidth=1
-circle star_a r=10 at -270,-90 fill="#22d3ee" stroke="none"
-circle star_b r=10 at -30,80 fill="#a78bfa" stroke="none"
-circle star_c r=10 at 130,-40 fill="#f97316" stroke="none"
-circle star_d r=7 at -155,118 fill="#facc15" stroke="none"
-circle star_e r=7 at 52,-118 fill="#34d399" stroke="none"
-circle focus r=14 at -220,-60 fill="#38bdf8" stroke="#0f172a" strokeWidth=3
-circle focus_halo r=32 at -220,-60 fill="#38bdf8" opacity=0.12 stroke="#7dd3fc" strokeWidth=2
-tracedPath focus_trace x=-220+250*cos(t) y=-60+120*sin(t*1.2) from=0 to=phase samples=140 stroke="#22d3ee" strokeWidth=3
+rect px_00 w=210 h=210 at -315,-105 fill="#000000" stroke="none"
+rect px_01 w=210 h=210 at -105,-105 fill="#646464" stroke="none"
+rect px_02 w=210 h=210 at 105,-105 fill="#1E1E1E" stroke="none"
+rect px_03 w=210 h=210 at 315,-105 fill="#C8C8C8" stroke="none"
+rect px_10 w=210 h=210 at -315,105 fill="#FFFFFF" stroke="none"
+rect px_11 w=210 h=210 at -105,105 fill="#000000" stroke="none"
+rect px_12 w=210 h=210 at 105,105 fill="#050505" stroke="none"
+rect px_13 w=210 h=210 at 315,105 fill="#212121" stroke="none"
 
-rect zoom_frame w=170 h=106 at -220,-60 fill="none" stroke="#f59e0b" strokeWidth=4
-rect zoom_panel w=290 h=190 at 270,110 fill="#020617" stroke="#22d3ee" strokeWidth=3
-rect zoom_inner w=250 h=150 at 270,110 fill="#0f172a" stroke="#1e293b" strokeWidth=2
-line zoom_cross_h x1=-112 y1=0 x2=112 y2=0 at 270,110 stroke="#334155" strokeWidth=2
-line zoom_cross_v x1=0 y1=-62 x2=0 y2=62 at 270,110 stroke="#334155" strokeWidth=2
-circle zoom_star_a r=17 at 214,68 fill="#22d3ee" opacity=0.52 stroke="#67e8f9" strokeWidth=2
-circle zoom_star_b r=15 at 314,148 fill="#a78bfa" opacity=0.48 stroke="#c4b5fd" strokeWidth=2
-circle zoom_star_c r=13 at 358,84 fill="#f97316" opacity=0.5 stroke="#fdba74" strokeWidth=2
-circle zoom_focus_halo r=58 at 270,110 fill="#38bdf8" opacity=0.08 stroke="#7dd3fc" strokeWidth=2
-line zoom_link_1 x1=0 y1=0 x2=0 y2=0 at 0,0 stroke="#475569" strokeWidth=2
-line zoom_link_2 x1=0 y1=0 x2=0 y2=0 at 0,0 stroke="#475569" strokeWidth=2
-circle focus_zoom r=40 at 270,110 fill="#38bdf8" opacity=0.22 stroke="#7dd3fc" strokeWidth=3
-text zoomRatio "x3.2" at 170,186 size=22 fill="#67e8f9" opacity=0
-text caption "zoomed view (approx)" at 270,210 size=18 fill="#94a3b8"
+circle dot r=8 at -120,-120 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=2
+rect frame w=110 h=72 at -120,-120 fill="none" stroke="#9A72AC" strokeWidth=3 opacity=0
+text frame_text "Frame" at -120,-54 size=42 fill="#9A72AC" opacity=0
 
-always focus.x = expr=-220 + 250*cos(phase)
-always focus.y = expr=-60 + 120*sin(phase*1.2)
-always zoom_frame.x = expr=-220 + 250*cos(phase)
-always zoom_frame.y = expr=-60 + 120*sin(phase*1.2)
-always focus_halo.x = expr=-220 + 250*cos(phase)
-always focus_halo.y = expr=-60 + 120*sin(phase*1.2)
-
-always zoom_link_1.x1 = expr=-220 + 250*cos(phase) - 85
-always zoom_link_1.y1 = expr=-60 + 120*sin(phase*1.2) + 53
-always zoom_link_1.x2 = expr=125
-always zoom_link_1.y2 = expr=15
-always zoom_link_2.x1 = expr=-220 + 250*cos(phase) + 85
-always zoom_link_2.y1 = expr=-60 + 120*sin(phase*1.2) - 53
-always zoom_link_2.x2 = expr=415
-always zoom_link_2.y2 = expr=205
-always focus_zoom.x = expr=270 + 42*cos(phase)
-always focus_zoom.y = expr=110 + 20*sin(phase*1.2)
-always zoom_focus_halo.x = expr=270 + 42*cos(phase)
-always zoom_focus_halo.y = expr=110 + 20*sin(phase*1.2)
+rect zoom_bg w=388 h=88 at 220,-120 fill="#000000" stroke="#000000" strokeWidth=10 opacity=0
+rect zoom_display w=360 h=60 at 220,-120 fill="#242424" stroke="#FF0000" strokeWidth=20 opacity=0
+rect zoom_px_0 w=90 h=60 at 85,-120 fill="#000000" stroke="none" opacity=0
+rect zoom_px_1 w=90 h=60 at 175,-120 fill="#646464" stroke="none" opacity=0
+rect zoom_px_2 w=90 h=60 at 265,-120 fill="#1E1E1E" stroke="none" opacity=0
+rect zoom_px_3 w=90 h=60 at 355,-120 fill="#C8C8C8" stroke="none" opacity=0
+text zoom_text "Zoomed camera" at 220,-50 size=42 fill="#FF0000" opacity=0
 
 at 0s:
-  show bg
-  play FadeIn(title) duration=0.4s
-  play FadeIn(subtitle) duration=0.35s
-  play Create(world) duration=0.5s
-  play AnimationGroup(Create(world_h1), Create(world_h2), Create(world_h3), Create(world_h4), Create(world_h5), Create(world_v1), Create(world_v2), Create(world_v3), Create(world_v4), Create(world_v5), lagRatio=0.03) duration=0.75s
-  play AnimationGroup(FadeIn(star_a), FadeIn(star_b), FadeIn(star_c), FadeIn(star_d), FadeIn(star_e), lagRatio=0.08) duration=0.55s
-  play AnimationGroup(FadeIn(caption), FadeIn(zoomRatio), lagRatio=0.08) duration=0.35s
-  play Create(zoom_panel) duration=0.5s
-  play Create(zoom_inner) duration=0.35s
-  play AnimationGroup(Create(zoom_cross_h), Create(zoom_cross_v), FadeIn(zoom_star_a), FadeIn(zoom_star_b), FadeIn(zoom_star_c), FadeIn(zoom_focus_halo), lagRatio=0.08) duration=0.85s
-  play Create(zoom_frame) duration=0.5s
-  play Create(zoom_link_1) duration=0.3s
-  play Create(zoom_link_2) duration=0.3s
-  play FadeIn(focus_halo) duration=0.3s
-  play FadeIn(focus) duration=0.3s
-  play FadeIn(focus_zoom) duration=0.3s
+  play AnimationGroup(Create(frame), FadeIn(frame_text), lagRatio=0.1) duration=0.8s
+  play AnimationGroup(FadeIn(zoom_bg), FadeIn(zoom_display), FadeIn(zoom_px_0), FadeIn(zoom_px_1), FadeIn(zoom_px_2), FadeIn(zoom_px_3), lagRatio=0.03) duration=0.9s easing=easeOut
+  play FadeIn(zoom_text) duration=0.5s
+  play AnimationGroup(FadeOut(frame_text), FadeOut(zoom_text), lagRatio=0.0) duration=0.45s
 
-animate phase from 0 to 6.283185307179586 duration=4.8s easing=linear
-wait 0.3s
+animate frame.w from 110 to 55 duration=0.7s easing=easeInOut
+animate frame.h from 72 to 108 duration=0.7s easing=easeInOut
+animate zoom_display.w from 360 to 180 duration=0.7s easing=easeInOut
+animate zoom_display.h from 60 to 90 duration=0.7s easing=easeInOut
+animate zoom_bg.w from 388 to 208 duration=0.7s easing=easeInOut
+animate zoom_bg.h from 88 to 118 duration=0.7s easing=easeInOut
+animate zoom_px_0.w from 90 to 45 duration=0.7s easing=easeInOut
+animate zoom_px_0.h from 60 to 90 duration=0.7s easing=easeInOut
+animate zoom_px_0.x from 85 to 152.5 duration=0.7s easing=easeInOut
+animate zoom_px_1.w from 90 to 45 duration=0.7s easing=easeInOut
+animate zoom_px_1.h from 60 to 90 duration=0.7s easing=easeInOut
+animate zoom_px_1.x from 175 to 197.5 duration=0.7s easing=easeInOut
+animate zoom_px_2.w from 90 to 45 duration=0.7s easing=easeInOut
+animate zoom_px_2.h from 60 to 90 duration=0.7s easing=easeInOut
+animate zoom_px_2.x from 265 to 242.5 duration=0.7s easing=easeInOut
+animate zoom_px_3.w from 90 to 45 duration=0.7s easing=easeInOut
+animate zoom_px_3.h from 60 to 90 duration=0.7s easing=easeInOut
+animate zoom_px_3.x from 355 to 287.5 duration=0.7s easing=easeInOut
+wait 0.5s
+
+animate zoom_bg.scale from 1 to 2 duration=0.8s easing=easeInOut
+animate zoom_display.scale from 1 to 2 duration=0.8s easing=easeInOut
+animate zoom_px_0.scale from 1 to 2 duration=0.8s easing=easeInOut
+animate zoom_px_1.scale from 1 to 2 duration=0.8s easing=easeInOut
+animate zoom_px_2.scale from 1 to 2 duration=0.8s easing=easeInOut
+animate zoom_px_3.scale from 1 to 2 duration=0.8s easing=easeInOut
+wait 0.5s
+
+animate frame.y from -120 to 30 duration=0.8s easing=easeInOut
+animate zoom_px_0.fill from "#000000" to "#FFFFFF" duration=0.8s easing=easeInOut
+animate zoom_px_1.fill from "#646464" to "#000000" duration=0.8s easing=easeInOut
+animate zoom_px_2.fill from "#1E1E1E" to "#050505" duration=0.8s easing=easeInOut
+animate zoom_px_3.fill from "#C8C8C8" to "#212121" duration=0.8s easing=easeInOut
+wait 0.5s
+
+animate zoom_bg.scale from 2 to 1 duration=0.6s easing=easeInOut
+animate zoom_display.scale from 2 to 1 duration=0.6s easing=easeInOut
+animate zoom_px_0.scale from 2 to 1 duration=0.6s easing=easeInOut
+animate zoom_px_1.scale from 2 to 1 duration=0.6s easing=easeInOut
+animate zoom_px_2.scale from 2 to 1 duration=0.6s easing=easeInOut
+animate zoom_px_3.scale from 2 to 1 duration=0.6s easing=easeInOut
+animate zoom_bg.opacity from 1 to 0 duration=0.6s easing=easeInOut
+animate zoom_display.opacity from 1 to 0 duration=0.6s easing=easeInOut
+animate zoom_px_0.opacity from 1 to 0 duration=0.6s easing=easeInOut
+animate zoom_px_1.opacity from 1 to 0 duration=0.6s easing=easeInOut
+animate zoom_px_2.opacity from 1 to 0 duration=0.6s easing=easeInOut
+animate zoom_px_3.opacity from 1 to 0 duration=0.6s easing=easeInOut
+play AnimationGroup(FadeOut(frame), lagRatio=0.05) duration=0.35s
+wait 0.5s

@@ -3,56 +3,38 @@ title: PointMovingOnShapes
 description: "Manim Example: `PointMovingOnShapes` (`#pointmovingonshapes`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#pointmovingonshapes
 source_example_path: examples/gallery/orbital_dot.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "Updater-style continuous re-binding is approximated with expression updates."
+  - symptom: "MoveAlongPath and Rotating are expanded to value trackers and expression bindings, preserving the source motion visually."
     layer: dsl
-    impact: medium
-    workaround: "近似実装（既存 DSL/always 更新）で演出を代替する。"
-    closure_condition: "不足 DSL 機能が追加され、近似なしで同等記述が可能になる。"
-    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
+    impact: low
+    workaround: "必要な微調整は value tracker の式と duration で補う。"
+    closure_condition: "MoveAlongPath/Rotating を DSL の高水準 animation として直接記述できる。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Animations
 status: ported
 order: 21
 ---
 scene width=960 height=540 fps=60
 value theta = 0
-rect bg w=960 h=540 at 0,0 fill="#080b14"
-rect panel w=780 h=350 at 0,-20 fill="#0f172a" stroke="#1e293b" strokeWidth=2
-text title "PointMovingOnShapes" at -216,198 size=40 fill="#f8fafc"
-text subtitle "MoveAlongPath, then Transform into another shape" at 116,162 size=21 fill="#bae6fd"
-text step_path "1. MoveAlongPath" at -260,126 size=20 fill="#93c5fd" opacity=0
-text step_transform "2. Transform" at 252,126 size=20 fill="#fed7aa" opacity=0
-path orbit d="M -140 0 C -140 -77 -77 -140 0 -140 C 77 -140 140 -77 140 0 C 140 77 77 140 0 140 C -77 140 -140 77 -140 0" at -80,-16 fill="none" stroke="#1d4ed8" strokeWidth=4 opacity=0.55
-path orbit_glow d="M -140 0 C -140 -77 -77 -140 0 -140 C 77 -140 140 -77 140 0 C 140 77 77 140 0 140 C -77 140 -140 77 -140 0" at -80,-16 fill="none" stroke="#38bdf8" strokeWidth=12 opacity=0.1
-tracedPath trail x=-80+140*cos(t) y=-16+140*sin(t) from=0 to=theta samples=120 at 0,0 stroke="#22d3ee" strokeWidth=7 opacity=0.38
-circle q0 r=5 at 60,-16 fill="#bfdbfe" stroke="none" opacity=0
-circle q1 r=5 at -80,124 fill="#bfdbfe" stroke="none" opacity=0
-circle q2 r=5 at -220,-16 fill="#bfdbfe" stroke="none" opacity=0
-circle q3 r=5 at -80,-156 fill="#bfdbfe" stroke="none" opacity=0
-circle dot r=28 at -220,-16 fill="#38bdf8" stroke="#0f172a" strokeWidth=4
-circle dot_halo r=42 at -220,-16 fill="#38bdf8" opacity=0.12
-rect target_shadow w=194 h=106 at 268,-24 fill="#7c2d12" stroke="#7c2d12" strokeWidth=0 opacity=0
-rect target_guide w=220 h=124 at 260,-16 fill="none" stroke="#334155" strokeWidth=2 opacity=0
-rect card w=180 h=92 at 260,-16 fill="#f97316" stroke="#fed7aa" strokeWidth=4
-text cardLabel "target shape" at 260,-92 size=20 fill="#fed7aa" opacity=0
-text cardCode "Transform(dot, rectangle)" at 260,58 size=19 fill="#fdba74" opacity=0
-line handoff x1=-2 y1=0 x2=162 y2=0 at 74,-16 stroke="#a78bfa" strokeWidth=3 opacity=0
-text note "path-following updater is approximated with trig expressions" at 0,-224 size=20 fill="#94a3b8"
+value phi = 3.141592654
 
-always dot.x = expr=-80 + 140*cos(theta)
-always dot.y = expr=-16 + 140*sin(theta)
-always dot_halo.x = expr=-80 + 140*cos(theta)
-always dot_halo.y = expr=-16 + 140*sin(theta)
+rect bg w=960 h=540 at 0,0 fill="#000000"
+circle orbit r=80 at 0,0 fill="none" stroke="#58C4DD" strokeWidth=4 opacity=0 scale=0
+circle dot r=8 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=2
+line guide x1=240 y1=0 x2=400 y2=0 stroke="#FFFFFF" strokeWidth=4
+
 at 0s:
-  hide card
-  play FadeIn(panel) duration=0.35s
-  play FadeIn(title) duration=0.5s
-  play FadeIn(subtitle) duration=0.4s
-  play AnimationGroup(FadeIn(step_path), FadeIn(step_transform), FadeIn(orbit_glow), FadeIn(orbit), Create(trail), FadeIn(q0), FadeIn(q1), FadeIn(q2), FadeIn(q3), FadeIn(dot_halo), FadeIn(dot), FadeIn(target_guide), FadeIn(note), lagRatio=0.08) duration=1.15s easing=easeOut
-animate theta from 0 to 6.283 duration=2.2s easing=linear
-at 2.2s:
-  play AnimationGroup(FadeIn(target_shadow), FadeIn(card), FadeIn(cardLabel), FadeIn(cardCode), Create(handoff), lagRatio=0.08) duration=0.6s easing=easeOut
-at 2.5s:
-  play Transform(dot, card) duration=1.0s easing=easeInOut
+  animate orbit.opacity from 0 to 1 duration=1s easing=smooth
+  animate orbit.scale from 0 to 1 duration=1s easing=smooth
+animate dot.x from 0 to 80 duration=1s easing=smooth
+at 2s:
+  always dot.x = expr=80*cos(theta)
+  always dot.y = expr=80*sin(theta)
+  animate theta from 0 to 6.283185307 duration=2s easing=linear
+at 4s:
+  always dot.x = expr=160+80*cos(phi)
+  always dot.y = expr=80*sin(phi)
+  animate phi from 3.141592654 to 9.424777961 duration=1.5s easing=smooth
+wait 1s

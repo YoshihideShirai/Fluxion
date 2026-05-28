@@ -1,58 +1,20 @@
 scene width=960 height=540 fps=60
 
-value theta = 0
+value rot = 0
+value up = 0
+value left = 0
 
-rect bg w=960 h=540 at 0,0 fill="#080b14"
-rect panel w=760 h=350 at 0,-22 fill="#0f172a" stroke="#1e293b" strokeWidth=2
-text title "PointWithTrace" at -270,198 size=40 fill="#f8fafc"
-text formula "TracedPath(lambda: dot.get_center())" at 162,198 size=22 fill="#bae6fd"
-text tracker "theta tracker -> path samples" at 156,162 size=18 fill="#fde68a" opacity=0
-circle guide_outer r=156 at -82,-26 fill="none" stroke="#334155" strokeWidth=2
-circle guide_inner r=92 at -82,-26 fill="none" stroke="#1e293b" strokeWidth=2
-line x_axis x1=-182 y1=0 x2=182 y2=0 at -82,-26 stroke="#243044" strokeWidth=2
-line y_axis x1=0 y1=-182 x2=0 y2=182 at -82,-26 stroke="#243044" strokeWidth=2
-tracedPath trace_shadow x=156*cos(t) y=156*sin(t) from=0 to=6.283 samples=180 at -82,-26 stroke="#0e7490" strokeWidth=11 opacity=0.1
-tracedPath trace x=156*cos(t) y=156*sin(t) from=0 to=theta samples=180 at -82,-26 stroke="#22d3ee" strokeWidth=5
-circle sample_0 r=5 at 74,-26 fill="#67e8f9" opacity=0.35 stroke="none"
-circle sample_90 r=5 at -82,130 fill="#67e8f9" opacity=0.35 stroke="none"
-circle sample_180 r=5 at -238,-26 fill="#67e8f9" opacity=0.35 stroke="none"
-circle sample_270 r=5 at -82,-182 fill="#67e8f9" opacity=0.35 stroke="none"
-circle ghost_a r=12 at 60,21 fill="#22d3ee" opacity=0.14 stroke="#7dd3fc" strokeWidth=2
-circle ghost_b r=10 at 17,89 fill="#22d3ee" opacity=0.12 stroke="#7dd3fc" strokeWidth=2
-circle ghost_c r=8 at -50,126 fill="#22d3ee" opacity=0.1 stroke="#7dd3fc" strokeWidth=2
-line radius x1=0 y1=0 x2=156 y2=0 at -82,-26 stroke="#a78bfa" strokeWidth=3 opacity=0.82
-line tangent x1=120 y1=36 x2=192 y2=-36 at -82,-26 stroke="#fbbf24" strokeWidth=3 opacity=0.9
-circle dot r=14 at 74,-26 fill="#38bdf8" stroke="#e0f2fe" strokeWidth=3
-circle halo r=25 at 74,-26 fill="#22d3ee" opacity=0.12
-circle current_sample r=6 at 74,-26 fill="#fef08a" stroke="#713f12" strokeWidth=2 opacity=0
-text label_trace "stored path" at -300,80 size=18 fill="#67e8f9"
-text label_dot "moving point" at 152,72 size=18 fill="#bfdbfe"
-text label_history "history samples" at -280,-164 size=18 fill="#99f6e4" opacity=0
-text note "path samples follow the value tracker from 0 to theta" at 0,-224 size=20 fill="#94a3b8"
+rect bg w=960 h=540 at 0,0 fill="#000000"
+tracedPath arc_trace x=120*(1-cos(t)) y=120*sin(t) from=0 to=rot samples=140 stroke="#FFFFFF" strokeWidth=4
+tracedPath up_trace x=240 y=-120*t from=0 to=up samples=32 stroke="#FFFFFF" strokeWidth=4
+tracedPath left_trace x=240-120*t y=-120 from=0 to=left samples=32 stroke="#FFFFFF" strokeWidth=4
+circle dot r=8 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=2
 
-always dot.x = expr=-82 + 156*cos(theta)
-always dot.y = expr=-26 + 156*sin(theta)
-always halo.x = expr=-82 + 156*cos(theta)
-always halo.y = expr=-26 + 156*sin(theta)
-always current_sample.x = expr=-82 + 156*cos(theta)
-always current_sample.y = expr=-26 + 156*sin(theta)
-always radius.x2 = expr=156*cos(theta)
-always radius.y2 = expr=156*sin(theta)
-always tangent.x1 = expr=156*cos(theta) - 36*sin(theta)
-always tangent.y1 = expr=156*sin(theta) + 36*cos(theta)
-always tangent.x2 = expr=156*cos(theta) + 36*sin(theta)
-always tangent.y2 = expr=156*sin(theta) - 36*cos(theta)
+always dot.x = expr=120*(1-cos(rot))-120*left
+always dot.y = expr=120*sin(rot)-120*up
 
-at 0s:
-  play FadeIn(panel) duration=0.35s
-  play FadeIn(title) duration=0.5s
-  play AnimationGroup(FadeIn(formula), FadeIn(tracker), lagRatio=0.08) duration=0.5s
-  play AnimationGroup(Create(guide_outer), Create(guide_inner), Create(x_axis), Create(y_axis), Create(trace_shadow), lagRatio=0.08) duration=0.95s easing=easeOut
-  play AnimationGroup(FadeIn(sample_0), FadeIn(sample_90), FadeIn(sample_180), FadeIn(sample_270), FadeIn(ghost_a), FadeIn(ghost_b), FadeIn(ghost_c), FadeIn(label_history), lagRatio=0.06) duration=0.75s
-  play AnimationGroup(Create(radius), Create(tangent), FadeIn(halo), FadeIn(dot), FadeIn(current_sample), lagRatio=0.08) duration=0.8s
-  play AnimationGroup(FadeIn(label_trace), FadeIn(label_dot), FadeIn(note), lagRatio=0.12) duration=0.6s
-
-wait 0.2s
-animate theta from 0 to 6.283 duration=4s easing=linear
-wait 0.2s
-play Circumscribe(dot) duration=0.7s color="#fbbf24"
+animate rot from 0 to 3.141592654 duration=2s easing=linear
+wait 1s
+animate up from 0 to 1 duration=1s
+animate left from 0 to 1 duration=1s
+wait 1s

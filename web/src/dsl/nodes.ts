@@ -88,8 +88,8 @@ export function applyNodeOption(
     return;
   }
   if (key === "direction") {
-    if (!["up", "down", "left", "right"].includes(value))
-      throw new DslCompileError("Brace direction must be one of up/down/left/right.", lineNumber);
+    if (!["up", "down", "left", "right", "perpendicular", "normal", "line"].includes(value))
+      throw new DslCompileError("Brace direction must be one of up/down/left/right/perpendicular/normal/line.", lineNumber);
     node.geometry.direction = value;
     return;
   }
@@ -107,6 +107,12 @@ export function applyNodeOption(
   }
   if (key === "labelColor") {
     node.geometry.labelColor = value;
+    return;
+  }
+  if (key === "fillRule") {
+    if (value !== "nonzero" && value !== "evenodd")
+      throw new DslCompileError("Expected fillRule to be 'nonzero' or 'evenodd'.", lineNumber);
+    node.geometry.fillRule = value;
     return;
   }
 
@@ -138,7 +144,7 @@ export function propertyPath(property: string): string {
   if (["fill", "stroke", "strokeWidth"].includes(property))
     return `style.${property}`;
   if (
-    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "target", "direction", "buff", "label", "labelSize", "labelColor"].includes(property)
+    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "target", "direction", "buff", "label", "labelSize", "labelColor", "fillRule"].includes(property)
   )
     return `geometry.${property}`;
   if (property === "renderer") return "renderer";

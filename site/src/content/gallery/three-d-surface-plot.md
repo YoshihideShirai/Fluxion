@@ -6,55 +6,57 @@ source_example_path: examples/gallery/three-d-surface-plot.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "3D Surface mesh は未実装のため、投影済みの多面体パッチとメッシュ線で Gaussian surface を視覚近似している。"
+  - symptom: "3D Surface mesh / camera projection は未実装のため、公式の Gaussian surface を投影済み checkerboard path patch で近似している。"
     layer: runtime
-    impact: high
-    workaround: "checkerboard color の path patch 群で surface の立体感を表現する。"
+    impact: medium
+    workaround: "ThreeDAxes を line 群で描き、`Surface(param_gauss).set_fill_by_checkerboard(ORANGE, BLUE, opacity=0.5)` の見た目を手描き polygon mesh と中間 mesh line に展開する。"
     closure_condition: "Surface primitive と 3D camera projection を runtime でネイティブ実装する。"
-    fidelity_upgrade_condition: "Manim の Surface(param_gauss).set_fill_by_checkerboard(...) を同等パラメータで再現できる時。"
+    fidelity_upgrade_condition: "Manim の `Surface(param_gauss)` と checkerboard fill を同等パラメータで再現できる時。"
 category: Manim Stable Examples
-status: partial
+status: ported
 gap_id: GAP-030
 order: 77
 ---
 scene width=960 height=540 fps=60
-value t = 0
-rect bg w=960 h=540 at 0,0 fill="#050816"
-text title "ThreeDSurfacePlot" at 0,220 size=38 fill="#f8fafc"
-text note "projected Gaussian surface with checkerboard fill" at 0,-222 size=20 fill="#94a3b8"
 
-line x_axis x1=-330 y1=0 x2=330 y2=0 at 0,-138 stroke="#334155" strokeWidth=2
-line y_axis x1=0 y1=-184 x2=0 y2=168 at -276,-20 stroke="#334155" strokeWidth=2
-line z_axis x1=-244 y1=-154 x2=250 y2=150 at 0,-28 stroke="#334155" strokeWidth=2
+rect bg w=960 h=540 at 0,0 fill="#000000"
 
-path p00 d="M -292 -112 L -218 -74 L -156 -90 L -230 -128 Z" fill="#f97316" stroke="#16a34a" strokeWidth=1.5 opacity=0
-path p01 d="M -218 -74 L -142 -38 L -82 -54 L -156 -90 Z" fill="#2563eb" stroke="#16a34a" strokeWidth=1.5 opacity=0
-path p02 d="M -142 -38 L -58 -2 L 6 -20 L -82 -54 Z" fill="#f97316" stroke="#16a34a" strokeWidth=1.5 opacity=0
-path p03 d="M -58 -2 L 26 34 L 92 12 L 6 -20 Z" fill="#2563eb" stroke="#16a34a" strokeWidth=1.5 opacity=0
-path p04 d="M 26 34 L 106 66 L 172 42 L 92 12 Z" fill="#f97316" stroke="#16a34a" strokeWidth=1.5 opacity=0
+line x_axis_pos x1=0 y1=0 x2=292 y2=144 at -38,124 stroke="#FFFFFF" strokeWidth=4
+line x_axis_neg x1=0 y1=0 x2=-214 y2=-106 at -38,124 stroke="#FFFFFF" strokeWidth=4
+line y_axis_pos x1=0 y1=0 x2=-276 y2=138 at -38,124 stroke="#FFFFFF" strokeWidth=4
+line y_axis_neg x1=0 y1=0 x2=190 y2=-94 at -38,124 stroke="#FFFFFF" strokeWidth=4
+line z_axis_pos x1=0 y1=0 x2=0 y2=-306 at -38,124 stroke="#FFFFFF" strokeWidth=4
+line z_axis_neg x1=0 y1=0 x2=0 y2=78 at -38,124 stroke="#FFFFFF" strokeWidth=4
 
-path p10 d="M -230 -128 L -156 -90 L -94 -52 L -168 -86 Z" fill="#2563eb" stroke="#16a34a" strokeWidth=1.5 opacity=0
-path p11 d="M -156 -90 L -82 -54 L -20 18 L -94 -52 Z" fill="#f97316" stroke="#16a34a" strokeWidth=1.5 opacity=0
-path p12 d="M -82 -54 L 6 -20 L 62 76 L -20 18 Z" fill="#2563eb" stroke="#16a34a" strokeWidth=1.5 opacity=0
-path p13 d="M 6 -20 L 92 12 L 148 86 L 62 76 Z" fill="#f97316" stroke="#16a34a" strokeWidth=1.5 opacity=0
-path p14 d="M 92 12 L 172 42 L 224 78 L 148 86 Z" fill="#2563eb" stroke="#16a34a" strokeWidth=1.5 opacity=0
+path p00 d="M -250 72 L -164 114 L -94 80 L -180 38 Z" fill="#FF862F" stroke="#83C167" strokeWidth=1 opacity=0.5
+path p01 d="M -164 114 L -78 156 L -8 122 L -94 80 Z" fill="#58C4DD" stroke="#83C167" strokeWidth=1 opacity=0.5
+path p02 d="M -78 156 L 8 198 L 78 164 L -8 122 Z" fill="#FF862F" stroke="#83C167" strokeWidth=1 opacity=0.5
+path p03 d="M 8 198 L 94 240 L 164 206 L 78 164 Z" fill="#58C4DD" stroke="#83C167" strokeWidth=1 opacity=0.5
 
-path p20 d="M -168 -86 L -94 -52 L -34 -16 L -106 -50 Z" fill="#f97316" stroke="#16a34a" strokeWidth=1.5 opacity=0
-path p21 d="M -94 -52 L -20 18 L 42 120 L -34 -16 Z" fill="#2563eb" stroke="#16a34a" strokeWidth=1.5 opacity=0
-path p22 d="M -20 18 L 62 76 L 116 176 L 42 120 Z" fill="#f97316" stroke="#16a34a" strokeWidth=1.5 opacity=0
-path p23 d="M 62 76 L 148 86 L 204 138 L 116 176 Z" fill="#2563eb" stroke="#16a34a" strokeWidth=1.5 opacity=0
-path p24 d="M 148 86 L 224 78 L 282 106 L 204 138 Z" fill="#f97316" stroke="#16a34a" strokeWidth=1.5 opacity=0
+path p10 d="M -180 38 L -94 80 L -28 18 L -114 -24 Z" fill="#58C4DD" stroke="#83C167" strokeWidth=1 opacity=0.5
+path p11 d="M -94 80 L -8 122 L 58 6 L -28 18 Z" fill="#FF862F" stroke="#83C167" strokeWidth=1 opacity=0.5
+path p12 d="M -8 122 L 78 164 L 144 98 L 58 6 Z" fill="#58C4DD" stroke="#83C167" strokeWidth=1 opacity=0.5
+path p13 d="M 78 164 L 164 206 L 230 170 L 144 98 Z" fill="#FF862F" stroke="#83C167" strokeWidth=1 opacity=0.5
 
-path ridge d="M -292 -112 C -160 -40 -60 70 42 120 C 100 164 172 142 282 106" fill="none" stroke="#bbf7d0" strokeWidth=3 opacity=0
-path contour_a d="M -230 -128 C -90 -80 40 20 172 42" fill="none" stroke="#7dd3fc" strokeWidth=2 opacity=0
-path contour_b d="M -168 -86 C -52 -10 72 82 224 78" fill="none" stroke="#fed7aa" strokeWidth=2 opacity=0
-group surface p00 p01 p02 p03 p04 p10 p11 p12 p13 p14 p20 p21 p22 p23 p24 ridge contour_a contour_b
-always surface.rotation = expr=3*sin(t)
-always surface.y = expr=10*sin(t*0.7)
-at 0s:
-  play FadeIn(title) duration=0.5s
-  play LaggedStart(Create(x_axis), Create(y_axis), Create(z_axis), lagRatio=0.12) duration=0.9s easing=easeOut
-  play LaggedStart(FadeIn(p00), FadeIn(p01), FadeIn(p02), FadeIn(p03), FadeIn(p04), FadeIn(p10), FadeIn(p11), FadeIn(p12), FadeIn(p13), FadeIn(p14), FadeIn(p20), FadeIn(p21), FadeIn(p22), FadeIn(p23), FadeIn(p24), lagRatio=0.035) duration=1.6s easing=easeOut
-  play AnimationGroup(Create(ridge), Create(contour_a), Create(contour_b), lagRatio=0.16) duration=0.9s easing=easeOut
-animate t from 0 to 6.283 duration=4.5s easing=linear
-wait 0.45s
+path p20 d="M -114 -24 L -28 18 L 38 -58 L -48 -100 Z" fill="#FF862F" stroke="#83C167" strokeWidth=1 opacity=0.5
+path p21 d="M -28 18 L 58 6 L 124 -140 L 38 -58 Z" fill="#58C4DD" stroke="#83C167" strokeWidth=1 opacity=0.5
+path p22 d="M 58 6 L 144 98 L 210 40 L 124 -140 Z" fill="#FF862F" stroke="#83C167" strokeWidth=1 opacity=0.5
+path p23 d="M 144 98 L 230 170 L 296 136 L 210 40 Z" fill="#58C4DD" stroke="#83C167" strokeWidth=1 opacity=0.5
+
+path p30 d="M -48 -100 L 38 -58 L 108 -92 L 22 -134 Z" fill="#58C4DD" stroke="#83C167" strokeWidth=1 opacity=0.5
+path p31 d="M 38 -58 L 124 -140 L 194 -144 L 108 -92 Z" fill="#FF862F" stroke="#83C167" strokeWidth=1 opacity=0.5
+path p32 d="M 124 -140 L 210 40 L 280 6 L 194 -144 Z" fill="#58C4DD" stroke="#83C167" strokeWidth=1 opacity=0.5
+path p33 d="M 210 40 L 296 136 L 366 102 L 280 6 Z" fill="#FF862F" stroke="#83C167" strokeWidth=1 opacity=0.5
+
+path mesh_u0 d="M -215 55 L -129 97 L -43 139 L 43 181 L 129 223" fill="none" stroke="#83C167" strokeWidth=1 opacity=0.42
+path mesh_u1 d="M -147 7 L -61 49 L 25 64 L 111 131 L 197 188" fill="none" stroke="#83C167" strokeWidth=1 opacity=0.42
+path mesh_u2 d="M -81 -62 L 5 -20 L 91 -67 L 177 69 L 263 153" fill="none" stroke="#83C167" strokeWidth=1 opacity=0.42
+path mesh_u3 d="M -13 -117 L 73 -75 L 159 -142 L 245 23 L 331 119" fill="none" stroke="#83C167" strokeWidth=1 opacity=0.42
+path mesh_v0 d="M -207 93 L -137 59 L -71 -3 L -5 -79 L 65 -113" fill="none" stroke="#83C167" strokeWidth=1 opacity=0.42
+path mesh_v1 d="M -121 135 L -51 101 L 15 12 L 81 -99 L 151 -118" fill="none" stroke="#83C167" strokeWidth=1 opacity=0.42
+path mesh_v2 d="M -35 177 L 35 143 L 101 52 L 167 -50 L 237 -69" fill="none" stroke="#83C167" strokeWidth=1 opacity=0.42
+path mesh_v3 d="M 51 219 L 121 185 L 187 134 L 253 88 L 323 54" fill="none" stroke="#83C167" strokeWidth=1 opacity=0.42
+path ridge_x d="M -250 72 C -92 108 16 -22 124 -140 C 204 -68 288 40 366 102" fill="none" stroke="#83C167" strokeWidth=2 opacity=0.72
+path ridge_y d="M -180 38 C -44 28 70 -126 194 -144 C 240 -82 268 20 296 136" fill="none" stroke="#83C167" strokeWidth=2 opacity=0.72
+
+wait 1s

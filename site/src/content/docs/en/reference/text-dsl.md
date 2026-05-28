@@ -204,7 +204,7 @@ at 0s:
   hide oldLabel
 ```
 
-A block applies statements at a shared time. `show` creates a declared node at that time. `hide` deletes it. `set` applies an immediate property value.
+A block sets the current cursor to the given time for its indented statements. `show` creates a declared node at that time, `hide` deletes it, and `set` applies an immediate property value. `play` and `wait` advance the block cursor, so sequential Manim-style scripts can be written inside one block. Use `AnimationGroup` or separate `at` blocks when operations must share the same start time.
 
 ### value trackers
 

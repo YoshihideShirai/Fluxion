@@ -3,7 +3,7 @@ from fluxion import Circle, Create, FadeOut, Scene, Square, Transform
 
 class SquareToCircle(Scene):
     def construct(self) -> None:
-        circle = Circle(id="circle", r=56).move_to(640, 360).set_style(fill="#facc15", stroke="#facc15", opacity=0.8)
+        circle = Circle(id="circle", r=56).move_to(640, 360).set_style(fill="#ec4899", stroke="#f9a8d4", opacity=0.5)
         square = Square(id="square", side=120).move_to(640, 360).rotate(45)
 
         self.play(Create(square), run_time=1)

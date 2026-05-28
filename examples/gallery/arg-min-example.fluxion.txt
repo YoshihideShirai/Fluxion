@@ -1,39 +1,42 @@
 scene width=960 height=540 fps=60
 
-rect bg w=960 h=540 at 0,0 fill="#050816"
-text title "ArgMinExample" at 0,220 size=42 fill="#f8fafc"
-math formula "f(x)=0.08x^3-0.7x+0.35" at 0,176 size=34 fill="#bae6fd" renderer=katex opacity=0
-rect panel w=760 h=330 at 0,-30 fill="#0f172a" stroke="#334155" strokeWidth=2
-line x_axis x1=-330 y1=0 x2=330 y2=0 at 0,-90 stroke="#94a3b8" strokeWidth=3
-line y_axis x1=0 y1=-150 x2=0 y2=155 at -300,-40 stroke="#94a3b8" strokeWidth=3
-line tick_a x1=0 y1=-8 x2=0 y2=8 at -214,-90 stroke="#64748b" strokeWidth=2
-line tick_b x1=0 y1=-8 x2=0 y2=8 at 188,-90 stroke="#64748b" strokeWidth=2
-text x_label "x" at 346,-112 size=22 fill="#cbd5e1"
-text y_label "f(x)" at -334,126 size=22 fill="#cbd5e1"
-text min_x "x_min" at -214,-126 size=20 fill="#86efac" opacity=0
-text max_x "x_max" at 188,-126 size=20 fill="#fdba74" opacity=0
-path curve d="M -286 82 C -232 0 -208 -132 -118 -116 C -42 -102 -12 -18 34 26 C 86 78 134 112 202 82 C 244 64 266 18 292 -56" at 0,-10 fill="none" stroke="#38bdf8" strokeWidth=5
-path curve_glow d="M -286 82 C -232 0 -208 -132 -118 -116 C -42 -102 -12 -18 34 26 C 86 78 134 112 202 82 C 244 64 266 18 292 -56" at 0,-10 fill="none" stroke="#7dd3fc" strokeWidth=10 opacity=0.16
-line min_v x1=0 y1=0 x2=0 y2=-132 at -214,42 stroke="#22c55e" strokeWidth=3 opacity=0
-line max_v x1=0 y1=0 x2=0 y2=112 at 188,-18 stroke="#f97316" strokeWidth=3 opacity=0
-circle min_dot r=12 at -214,-90 fill="#22c55e" stroke="#052e16" strokeWidth=3 opacity=0
-circle max_dot r=12 at 188,94 fill="#f97316" stroke="#7c2d12" strokeWidth=3 opacity=0
-rect min_tag w=148 h=44 at -134,-168 fill="#052e16" stroke="#22c55e" strokeWidth=2 opacity=0
-rect max_tag w=148 h=44 at 268,138 fill="#431407" stroke="#f97316" strokeWidth=2 opacity=0
-text min_label "arg min" at -134,-169 size=24 fill="#bbf7d0" opacity=0
-text max_label "arg max" at 268,137 size=24 fill="#fed7aa" opacity=0
+value t = 0
 
-at 0s:
-  show bg
-  play FadeIn(title) duration=0.55s
-  play FadeIn(formula) duration=0.45s
-  play FadeIn(panel) duration=0.35s
-  play LaggedStart(Create(x_axis), Create(y_axis), Create(tick_a), Create(tick_b), FadeIn(x_label), FadeIn(y_label), lagRatio=0.08) duration=0.9s easing=easeOut
-  play Create(curve_glow) duration=0.8s
-  play Create(curve) duration=1.25s easing=easeOut
+rect bg w=960 h=540 at 0,0 fill="#000000"
 
-wait 0.2s
-play AnimationGroup(FadeIn(min_v), FadeIn(min_dot), FadeIn(min_tag), FadeIn(min_label), FadeIn(min_x), lagRatio=0.08) duration=0.7s easing=easeOut
-wait 0.2s
-play AnimationGroup(FadeIn(max_v), FadeIn(max_dot), FadeIn(max_tag), FadeIn(max_label), FadeIn(max_x), lagRatio=0.08) duration=0.7s easing=easeOut
-wait 0.8s
+line x_axis x1=-250 y1=160 x2=270 y2=160 stroke="#FFFFFF" strokeWidth=3
+line y_axis x1=-250 y1=160 x2=-250 y2=-180 stroke="#FFFFFF" strokeWidth=3
+
+line x_tick_0 x1=0 y1=-6 x2=0 y2=6 at -250,160 stroke="#FFFFFF" strokeWidth=2
+line x_tick_1 x1=0 y1=-6 x2=0 y2=6 at -200,160 stroke="#FFFFFF" strokeWidth=2
+line x_tick_2 x1=0 y1=-6 x2=0 y2=6 at -150,160 stroke="#FFFFFF" strokeWidth=2
+line x_tick_3 x1=0 y1=-6 x2=0 y2=6 at -100,160 stroke="#FFFFFF" strokeWidth=2
+line x_tick_4 x1=0 y1=-6 x2=0 y2=6 at -50,160 stroke="#FFFFFF" strokeWidth=2
+line x_tick_5 x1=0 y1=-6 x2=0 y2=6 at 0,160 stroke="#FFFFFF" strokeWidth=2
+line x_tick_6 x1=0 y1=-6 x2=0 y2=6 at 50,160 stroke="#FFFFFF" strokeWidth=2
+line x_tick_7 x1=0 y1=-6 x2=0 y2=6 at 100,160 stroke="#FFFFFF" strokeWidth=2
+line x_tick_8 x1=0 y1=-6 x2=0 y2=6 at 150,160 stroke="#FFFFFF" strokeWidth=2
+line x_tick_9 x1=0 y1=-6 x2=0 y2=6 at 200,160 stroke="#FFFFFF" strokeWidth=2
+line x_tick_10 x1=0 y1=-6 x2=0 y2=6 at 250,160 stroke="#FFFFFF" strokeWidth=2
+line y_tick_10 x1=-6 y1=0 x2=6 y2=0 at -250,128 stroke="#FFFFFF" strokeWidth=2
+line y_tick_20 x1=-6 y1=0 x2=6 y2=0 at -250,96 stroke="#FFFFFF" strokeWidth=2
+line y_tick_30 x1=-6 y1=0 x2=6 y2=0 at -250,64 stroke="#FFFFFF" strokeWidth=2
+line y_tick_40 x1=-6 y1=0 x2=6 y2=0 at -250,32 stroke="#FFFFFF" strokeWidth=2
+line y_tick_50 x1=-6 y1=0 x2=6 y2=0 at -250,0 stroke="#FFFFFF" strokeWidth=2
+line y_tick_60 x1=-6 y1=0 x2=6 y2=0 at -250,-32 stroke="#FFFFFF" strokeWidth=2
+line y_tick_70 x1=-6 y1=0 x2=6 y2=0 at -250,-64 stroke="#FFFFFF" strokeWidth=2
+line y_tick_80 x1=-6 y1=0 x2=6 y2=0 at -250,-96 stroke="#FFFFFF" strokeWidth=2
+line y_tick_90 x1=-6 y1=0 x2=6 y2=0 at -250,-128 stroke="#FFFFFF" strokeWidth=2
+line y_tick_100 x1=-6 y1=0 x2=6 y2=0 at -250,-160 stroke="#FFFFFF" strokeWidth=2
+
+math x_label "x" at 292,160 size=28 fill="#FFFFFF"
+math y_label "f(x)" at -248,-210 size=28 fill="#FFFFFF"
+
+plot graph fn=2*(t-5)*(t-5) range=0,10 samples=220 scaleX=50 scaleY=3.2 at -250,160 stroke="#C55F73" strokeWidth=4 fill="none"
+circle dot r=8 at -250,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=2
+
+always dot.x = expr=-250+50*t
+always dot.y = expr=160-6.4*(t-5)*(t-5)
+
+animate t from 0 to 5 duration=1s
+wait 1s

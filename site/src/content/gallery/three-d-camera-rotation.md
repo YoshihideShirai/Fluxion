@@ -6,82 +6,47 @@ source_example_path: examples/gallery/three-d-camera-rotation.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "3D renderer 非搭載のため、2D投影 + cameraFrame sweep で視覚近似している。"
+  - symptom: "3D camera は未実装のため、`ThreeDAxes` と `Circle` の投影済み座標を短い theta sweep として手動補間し、`begin_ambient_camera_rotation` / `move_camera` の見た目を近似している。"
     layer: runtime
-    impact: high
-    workaround: "`always` と `animateFrame` を併用してカメラ回転感を演出する。"
+    impact: medium
+    workaround: "公式の `set_camera_orientation(phi=75°, theta=30°)` と `begin_ambient_camera_rotation(rate=0.1)` に合わせ、1秒分の theta 変化を line/path の座標補間へ展開する。"
     closure_condition: "3D座標系/カメラ回転（phi/theta/gamma）を runtime でネイティブ実装する。"
-    fidelity_upgrade_condition: "Manim の 3D camera rotation を同等パラメータで再現できる時。"
+    fidelity_upgrade_condition: "Manim の `begin_ambient_camera_rotation` と `move_camera` を同等パラメータで再現できる時。"
 category: Manim Stable Examples
-status: partial
+status: ported
 priority: high
 gap_id: GAP-028
 order: 75
 ---
 scene width=960 height=540 fps=60
 
-value t = 0
+rect bg w=960 h=540 at 0,0 fill="#000000"
 
-rect bg w=960 h=540 at 0,0 fill="#020617"
-text title "ThreeDCameraRotation (approx)" at 0,220 size=34 fill="#e2e8f0"
-text note "2D projection + cameraFrame sweep" at 0,-212 size=20 fill="#94a3b8"
-text thetaLabel "theta camera sweep" at 238,176 size=19 fill="#fef3c7" opacity=0
+line x_axis_pos x1=0 y1=0 x2=-227 y2=102 at 0,28 stroke="#FFFFFF" strokeWidth=4
+line x_axis_neg x1=0 y1=0 x2=145 y2=-65 at 0,28 stroke="#FFFFFF" strokeWidth=4
+line y_axis_pos x1=0 y1=0 x2=351 y2=53 at 0,28 stroke="#FFFFFF" strokeWidth=4
+line y_axis_neg x1=0 y1=0 x2=-272 y2=-41 at 0,28 stroke="#FFFFFF" strokeWidth=4
+line z_axis_pos x1=0 y1=0 x2=0 y2=-221 at 0,28 stroke="#FFFFFF" strokeWidth=4
+line z_axis_neg x1=0 y1=0 x2=0 y2=203 at 0,28 stroke="#FFFFFF" strokeWidth=4
 
-cameraFrame at 0,0 scale=1
+path circle_xy d="M -35 16 C 3 21 47 17 60 9 C 79 -3 56 -16 32 -15 C -6 -18 -53 -14 -57 -9 C -76 3 -60 12 -35 16 Z" at 0,28 fill="none" stroke="#FFFFFF" strokeWidth=4
 
-rect stage w=700 h=320 at 0,-20 fill="#0f172a" stroke="#334155" strokeWidth=2
-path floor_back d="M -270 -118 L 270 -118 L 330 70 L -330 70 Z" at 0,-20 fill="#020617" stroke="#1e293b" strokeWidth=2 opacity=0.85
-line floor_h1 x1=-304 y1=36 x2=304 y2=36 at 0,-20 stroke="#1e293b" strokeWidth=1
-line floor_h2 x1=-286 y1=-14 x2=286 y2=-14 at 0,-20 stroke="#1e293b" strokeWidth=1
-line floor_h3 x1=-270 y1=-66 x2=270 y2=-66 at 0,-20 stroke="#1e293b" strokeWidth=1
-line floor_v1 x1=-210 y1=-118 x2=-258 y2=70 at 0,-20 stroke="#1e293b" strokeWidth=1
-line floor_v2 x1=-105 y1=-118 x2=-130 y2=70 at 0,-20 stroke="#1e293b" strokeWidth=1
-line floor_v3 x1=0 y1=-118 x2=0 y2=70 at 0,-20 stroke="#334155" strokeWidth=1.5
-line floor_v4 x1=105 y1=-118 x2=130 y2=70 at 0,-20 stroke="#1e293b" strokeWidth=1
-line floor_v5 x1=210 y1=-118 x2=258 y2=70 at 0,-20 stroke="#1e293b" strokeWidth=1
-path orbit_back d="M -250 -40 C -80 -180 80 120 250 -40" fill="none" stroke="#1e40af" strokeWidth=8 opacity=0.16
-path orbit d="M -250 -40 C -80 -180 80 120 250 -40" fill="none" stroke="#60a5fa" strokeWidth=2.5
-circle obj r=15 at -240,-40 fill="#38bdf8" stroke="#0e7490" strokeWidth=2
-circle obj_halo r=38 at -240,-40 fill="#38bdf8" opacity=0.08 stroke="#7dd3fc" strokeWidth=2
-circle light r=12 at 200,-40 fill="#fbbf24" stroke="#78350f" strokeWidth=2
-circle light_halo r=42 at 200,-40 fill="#fbbf24" opacity=0.1 stroke="#fde68a" strokeWidth=2
-line axis_x x1=-270 y1=0 x2=270 y2=0 at 0,-40 stroke="#1e293b" strokeWidth=2
-line axis_y x1=0 y1=-120 x2=0 y2=120 at 0,-40 stroke="#1e293b" strokeWidth=2
-line axis_z x1=-176 y1=86 x2=176 y2=-86 at 0,-40 stroke="#334155" strokeWidth=2
-text xLabel "x" at 290,-52 size=18 fill="#94a3b8" opacity=0
-text yLabel "y" at 18,-170 size=18 fill="#94a3b8" opacity=0
-text zLabel "z" at 190,-134 size=18 fill="#94a3b8" opacity=0
-line beam x1=-92 y1=0 x2=92 y2=0 at 0,0 stroke="#f59e0b" strokeWidth=3
-line beam_glow x1=-112 y1=0 x2=112 y2=0 at 0,0 stroke="#fbbf24" strokeWidth=8 opacity=0.15
-
-always obj.x = expr=-240*cos(t)
-always obj.y = expr=-40 + 120*sin(t)
-always obj_halo.x = expr=-240*cos(t)
-always obj_halo.y = expr=-40 + 120*sin(t)
-always light.x = expr=200*cos(t*0.7 + pi/3)
-always light.y = expr=-40 + 90*sin(t*0.7 + pi/3)
-always light_halo.x = expr=200*cos(t*0.7 + pi/3)
-always light_halo.y = expr=-40 + 90*sin(t*0.7 + pi/3)
-always beam.x = expr=40*cos(t*0.9)
-always beam.y = expr=-40 + 30*sin(t*1.3)
-always beam.rotation = expr=40*sin(t*0.8)
-always beam_glow.x = expr=40*cos(t*0.9)
-always beam_glow.y = expr=-40 + 30*sin(t*1.3)
-always beam_glow.rotation = expr=40*sin(t*0.8)
-
-at 0s:
-  play FadeIn(title) duration=0.5s
-  play AnimationGroup(FadeIn(note), FadeIn(thetaLabel), lagRatio=0.08) duration=0.45s
-  play FadeIn(stage) duration=0.5s
-  play FadeIn(floor_back) duration=0.35s
-  play AnimationGroup(Create(floor_h1), Create(floor_h2), Create(floor_h3), Create(floor_v1), Create(floor_v2), Create(floor_v3), Create(floor_v4), Create(floor_v5), lagRatio=0.04) duration=0.8s
-  play AnimationGroup(Create(axis_x), Create(axis_y), Create(axis_z), FadeIn(xLabel), FadeIn(yLabel), FadeIn(zLabel), lagRatio=0.08) duration=0.8s
-  play AnimationGroup(Create(orbit_back), Create(orbit), lagRatio=0.08) duration=0.8s
-  play AnimationGroup(FadeIn(obj_halo), FadeIn(obj), FadeIn(light_halo), FadeIn(light), lagRatio=0.08) duration=0.65s
-  play AnimationGroup(Create(beam_glow), Create(beam), lagRatio=0.06) duration=0.6s
-
-animate t from 0 to 12.566 duration=6s easing=linear
-animateFrame to 90,-16 scale=1.15 start=0.8s duration=2.2s easing=easeInOut
-animateFrame to -90,-16 scale=1.15 start=3.1s duration=2.2s easing=easeInOut
-wait 0.5s
-play FadeOut(note) duration=0.4s
+animate x_axis_pos.x2 from -227 to -191 duration=1s easing=linear
+animate x_axis_pos.y2 from 102 to 107 duration=1s easing=linear
+animate x_axis_neg.x2 from 145 to 117 duration=1s easing=linear
+animate x_axis_neg.y2 from -65 to -69 duration=1s easing=linear
+animate y_axis_pos.x2 from 351 to 372 duration=1s easing=linear
+animate y_axis_pos.y2 from 53 to 43 duration=1s easing=linear
+animate y_axis_neg.x2 from -272 to -285 duration=1s easing=linear
+animate y_axis_neg.y2 from -41 to -34 duration=1s easing=linear
+animate circle_xy.d from "M -35 16 C 3 21 47 17 60 9 C 79 -3 56 -16 32 -15 C -6 -18 -53 -14 -57 -9 C -76 3 -60 12 -35 16 Z" to "M -34 17 C 5 21 48 15 60 7 C 78 -6 54 -18 31 -16 C -7 -18 -54 -12 -57 -7 C -75 6 -59 14 -34 17 Z" duration=1s easing=linear
+animate x_axis_pos.x2 from -191 to -227 start=1s duration=1s easing=easeInOut
+animate x_axis_pos.y2 from 107 to 102 start=1s duration=1s easing=easeInOut
+animate x_axis_neg.x2 from 117 to 145 start=1s duration=1s easing=easeInOut
+animate x_axis_neg.y2 from -69 to -65 start=1s duration=1s easing=easeInOut
+animate y_axis_pos.x2 from 372 to 351 start=1s duration=1s easing=easeInOut
+animate y_axis_pos.y2 from 43 to 53 start=1s duration=1s easing=easeInOut
+animate y_axis_neg.x2 from -285 to -272 start=1s duration=1s easing=easeInOut
+animate y_axis_neg.y2 from -34 to -41 start=1s duration=1s easing=easeInOut
+animate circle_xy.d from "M -34 17 C 5 21 48 15 60 7 C 78 -6 54 -18 31 -16 C -7 -18 -54 -12 -57 -7 C -75 6 -59 14 -34 17 Z" to "M -35 16 C 3 21 47 17 60 9 C 79 -3 56 -16 32 -15 C -6 -18 -53 -14 -57 -9 C -76 3 -60 12 -35 16 Z" start=1s duration=1s easing=easeInOut
+wait 3s

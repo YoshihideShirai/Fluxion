@@ -91,7 +91,7 @@
       "id": "square",
       "path": "style.fill",
       "from": "#ffffff",
-      "to": "#facc15",
+      "to": "#ec4899",
       "duration": 1,
       "easing": "easeInOut"
     },
@@ -101,7 +101,7 @@
       "id": "square",
       "path": "style.opacity",
       "from": null,
-      "to": 0.8,
+      "to": 0.5,
       "duration": 1,
       "easing": "easeInOut"
     },
@@ -111,7 +111,7 @@
       "id": "square",
       "path": "style.stroke",
       "from": "#111827",
-      "to": "#facc15",
+      "to": "#f9a8d4",
       "duration": 1,
       "easing": "easeInOut"
     },

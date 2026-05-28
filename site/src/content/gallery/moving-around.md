@@ -3,62 +3,29 @@ title: MovingAround
 description: "Manim Example: `MovingAround` (`#movingaround`) の Fluxion 移植版。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#movingaround
 source_example_path: examples/gallery/moving-around.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "Text DSL の `cameraFrame` / `animateFrame` helper で frame 移動は書けるが、Manim の frame updater 完全互換ではない。"
-    layer: dsl
+  - symptom: "Fluxion は Manim の `.animate` target-copy pipeline ではなく、等価な transform/style property interpolation に展開している。"
+    layer: runtime
     impact: low
-    workaround: "`animateFrame to x,y scale=<number>` で視覚的な移動・ズームを再現する。"
-    closure_condition: "camera frame updater と mobject tracking API を追加する。"
-    fidelity_upgrade_condition: "Manim と同等の camera フレーミング記述で同等の挙動を表現できる時。"
+    workaround: "shift, set_fill, scale, rotate を同じ順序・duration・色定数で明示的な property animation として記述する。"
+    closure_condition: "`.animate` の target-state 補間をDSLで直接表現できる。"
+    fidelity_upgrade_condition: "Manim と同等の `.animate` 補間挙動で同等の視覚結果を表現できる時。"
 category: Manim Stable Examples
-status: partial
+status: ported
 order: 67
 gap_id: GAP-020
 ---
 scene width=960 height=540 fps=60
 
-rect bg w=960 h=540 at 0,0 fill="#080b14"
-rect stage w=790 h=365 at 0,-24 fill="#0f172a" stroke="#1e293b" strokeWidth=2
-text title "MovingAround" at -292,198 size=40 fill="#f8fafc"
-text formula "frame.animate.move_to(...).set(width=...)" at 158,198 size=21 fill="#bae6fd"
-path route d="M -280 -112 C -210 4 -72 112 220 90 C 118 18 12 -68 -180 -126" fill="none" stroke="#334155" strokeWidth=5 opacity=0.9
-path route_glow d="M -280 -112 C -210 4 -72 112 220 90 C 118 18 12 -68 -180 -126" fill="none" stroke="#38bdf8" strokeWidth=11 opacity=0.12
-rect frame_hint_a w=260 h=150 at -230,-92 fill="none" stroke="#64748b" strokeWidth=2 opacity=0.55
-rect frame_hint_b w=300 h=170 at 110,45 fill="none" stroke="#fbbf24" strokeWidth=3 opacity=0.65
-rect frame_hint_c w=240 h=140 at -70,-55 fill="none" stroke="#22d3ee" strokeWidth=3 opacity=0.6
-circle waypoint_a r=8 at -260,-70 fill="#94a3b8" stroke="#e2e8f0" strokeWidth=2
-circle waypoint_b r=8 at 220,90 fill="#fbbf24" stroke="#fffbeb" strokeWidth=2
-circle waypoint_c r=8 at -180,-120 fill="#22d3ee" stroke="#ecfeff" strokeWidth=2
-circle dot r=18 at -260,-70 fill="#38bdf8" stroke="#e0f2fe" strokeWidth=3
-circle halo r=34 at -260,-70 fill="#38bdf8" opacity=0.14
-text label_a "start" at -292,-126 size=18 fill="#cbd5e1"
-text label_b "zoom target" at 244,128 size=18 fill="#fde68a"
-text label_c "pan back" at -154,-162 size=18 fill="#67e8f9"
-text note "camera frame movement is mirrored by guide rectangles" at 0,-226 size=20 fill="#94a3b8"
-
-cameraFrame at 0,0 scale=1
-
+rect bg w=960 h=540 at 0,0 fill="#000000"
+rect square w=135 h=135 at 0,0 fill="#58C4DD" stroke="#58C4DD" strokeWidth=4
 at 0s:
-  play FadeIn(stage) duration=0.35s
-  play FadeIn(title) duration=0.5s
-  play FadeIn(formula) duration=0.45s
-  play AnimationGroup(Create(route_glow), Create(route), FadeIn(frame_hint_a), lagRatio=0.08) duration=0.85s easing=easeOut
-  play AnimationGroup(FadeIn(waypoint_a), FadeIn(waypoint_b), FadeIn(waypoint_c), FadeIn(label_a), FadeIn(label_b), FadeIn(label_c), lagRatio=0.08) duration=0.75s
-  play AnimationGroup(FadeIn(halo), FadeIn(dot), FadeIn(note), lagRatio=0.08) duration=0.55s
-
-wait 0.2s
-animate dot.x from -260 to 220 duration=1.4s easing=easeInOut
-animate dot.y from -70 to 90 duration=1.4s easing=easeInOut
-animate halo.x from -260 to 220 duration=1.4s easing=easeInOut
-animate halo.y from -70 to 90 duration=1.4s easing=easeInOut
-play FadeIn(frame_hint_b) duration=0.35s
-animateFrame to 110,45 scale=1.35 duration=1.4s easing=easeInOut
-wait 0.3s
-animate dot.x from 220 to -180 duration=1.2s easing=easeInOut
-animate dot.y from 90 to -120 duration=1.2s easing=easeInOut
-animate halo.x from 220 to -180 duration=1.2s easing=easeInOut
-animate halo.y from 90 to -120 duration=1.2s easing=easeInOut
-play FadeIn(frame_hint_c) duration=0.35s
-animateFrame to -70,-55 scale=1.05 duration=1.2s easing=easeInOut
+  animate square.x from 0 to -68 duration=1s easing=smooth
+at 1s:
+  animate square.fill from "#58C4DD" to "#FF862F" duration=1s easing=smooth
+at 2s:
+  animate square.scale from 1 to 0.3 duration=1s easing=smooth
+at 3s:
+  animate square.rotation from 0 to 22.918 duration=1s easing=smooth

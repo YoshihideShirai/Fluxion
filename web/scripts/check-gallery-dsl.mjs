@@ -34,6 +34,28 @@ const requiredFrontmatterFields = [
 
 const allowedStatuses = new Set(['ported', 'partial', 'blocker']);
 const allowedFidelities = new Set(['faithful', 'visual_approximation']);
+const faithfulLabelFreeExamples = new Set([
+  'animations-using-animate',
+  'gradient-image-from-array',
+  'simple-circle',
+  'square-to-circle',
+  'moving-dots',
+  'moving-group-to-destination',
+  'moving-around',
+  'orbital-dot',
+  'orbital_dot',
+  'rotation-updater',
+  'point-with-trace',
+  'special-camera',
+  'three-d-light-source-position',
+  'three-d-surface-plot',
+  'three-d-camera-rotation',
+  'three-d-camera-illusion-rotation',
+]);
+
+function isFaithfulLabelFreeExample(label) {
+  return [...faithfulLabelFreeExamples].some((slug) => label.includes(slug));
+}
 
 function readMarkdown(path) {
   const source = readFileSync(path, 'utf8');
@@ -141,14 +163,15 @@ function checkRenderableTimeline(label, documentData) {
   const bestVisibleCount = Math.max(...samples.map((sample) => sample.visibleCount));
   const colors = new Set(samples.flatMap((sample) => [...sample.colors]));
   const hasTextOrMath = samples.some((sample) => sample.hasTextOrMath);
+  const allowLabelFree = isFaithfulLabelFreeExample(label);
 
-  if (bestVisibleCount < 3) {
+  if (bestVisibleCount < (allowLabelFree ? 2 : 3)) {
     throw new Error(`${label}: rendered timeline has too few visible nodes.`);
   }
   if (colors.size < 2) {
     throw new Error(`${label}: rendered timeline should use at least two visible colors.`);
   }
-  if (!hasTextOrMath) {
+  if (!hasTextOrMath && !allowLabelFree) {
     throw new Error(`${label}: rendered timeline should include text or math labels for gallery readability.`);
   }
 }

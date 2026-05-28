@@ -57,6 +57,7 @@ interface CompileState {
   rootIds: Set<string>;
   currentTime: number;
   blockTime: number | null;
+  extentTime: number;
   braceTargetRefs: Array<{ braceId: string; targetId: string; lineNumber: number }>;
 }
 
@@ -82,6 +83,7 @@ export function compileTextDsl(source: string): FluxionDocument {
     rootIds: new Set(),
     currentTime: 0,
     blockTime: null,
+    extentTime: 0,
     braceTargetRefs: [],
   };
 
@@ -251,6 +253,7 @@ export function compileTextDsl(source: string): FluxionDocument {
   state.timeline.sort((a, b) => a.t - b.t);
   const duration = Math.max(
     0,
+    state.extentTime,
     ...state.timeline.map((op) => op.t + ("duration" in op ? op.duration : 0)),
   );
 
@@ -863,6 +866,7 @@ function statementTime(state: CompileState): number {
 function advanceStatementTime(state: CompileState, duration: number): void {
   if (state.blockTime === null) state.currentTime += duration;
   else state.blockTime += duration;
+  state.extentTime = Math.max(state.extentTime, statementTime(state));
 }
 
 
@@ -1164,7 +1168,7 @@ function parsePlay(
   }
 
   emitPlayCall(state, call, statementTime(state), duration, easing, lineNumber, color);
-  if (state.blockTime === null) advanceStatementTime(state, duration);
+  advanceStatementTime(state, duration);
 }
 
 function emitPlayCall(
@@ -1346,6 +1350,9 @@ function pushTransformMatchingTex(
       lineNumber,
     );
 
+  if (toNode.transform.opacity === 0)
+    state.timeline.push({ t: start - 0.0001, op: "delete", id: toId });
+
   const available = new Map<string, SceneNode[]>();
   for (const child of toTokens) {
     if (!child.latex) continue;
@@ -1379,6 +1386,12 @@ function pushTransformMatchingTex(
         duration,
         easing,
       );
+      state.timeline.push({
+        t: start + duration,
+        op: "create",
+        node: absolutizeTokenNode(match, toNode),
+      });
+      state.timeline.push({ t: start + duration, op: "delete", id: child.id });
     } else {
       pushFadeOutNode(state, start, child, duration, easing);
     }
@@ -1849,6 +1862,22 @@ function hiddenWritableClone(node: SceneNode): SceneNode {
   return clone;
 }
 
+function hiddenDrawableClone(node: SceneNode): SceneNode {
+  const clone = visibleZeroOpacityClone(node);
+  hideDrawableNodes(clone);
+  return clone;
+}
+
+function hideDrawableNodes(node: SceneNode): void {
+  if ((node.children ?? []).length === 0) {
+    if (supportsDrawProgress(node)) node.geometry.drawProgress = 0;
+    else node.transform.opacity = 0;
+    return;
+  }
+  node.transform.opacity = fadeInTargetOpacity(node);
+  for (const child of node.children) hideDrawableNodes(child);
+}
+
 function hideWritableNodes(node: SceneNode): void {
   if ((node.children ?? []).length === 0) {
     if (supportsWriteProgress(node)) node.geometry.writeProgress = 0;
@@ -1862,6 +1891,11 @@ function hideWritableNodes(node: SceneNode): void {
 function writableNodes(node: SceneNode): SceneNode[] {
   if ((node.children ?? []).length === 0) return [node];
   return node.children.flatMap((child) => writableNodes(child));
+}
+
+function leafNodes(node: SceneNode): SceneNode[] {
+  if ((node.children ?? []).length === 0) return [node];
+  return node.children.flatMap((child) => leafNodes(child));
 }
 
 function pushWrite(
@@ -1953,8 +1987,9 @@ function pushCreate(
   lineNumber: number,
 ): void {
   const node = requireNode(state, id, lineNumber);
-  const createNode = visibleZeroOpacityClone(node);
-  if (supportsDrawProgress(node)) createNode.geometry.drawProgress = 0;
+  const createNode = hiddenDrawableClone(node);
+  const sourceLeaves = leafNodes(visibleZeroOpacityClone(node));
+  const createLeaves = leafNodes(createNode);
   state.timeline.push({
     t: start,
     op: "create",
@@ -1968,14 +2003,30 @@ function pushCreate(
     duration,
     easing,
   });
-  if (supportsDrawProgress(node)) {
+  if (createLeaves.length > 0) {
+    const segments = createSegments(createLeaves, duration);
+    segments.forEach(({ node: leaf, index, offset, segmentDuration }) => {
+      const sourceLeaf = sourceLeaves[index] ?? leaf;
+      const isDrawable = supportsDrawProgress(leaf);
+      state.timeline.push({
+        t: start + offset,
+        op: "animate",
+        id: leaf.id,
+        path: isDrawable ? "geometry.drawProgress" : "transform.opacity",
+        from: 0,
+        to: isDrawable ? 1 : fadeInTargetOpacity(sourceLeaf),
+        duration: segmentDuration,
+        easing,
+      });
+    });
+  } else {
     state.timeline.push({
       t: start,
       op: "animate",
       id,
-      path: "geometry.drawProgress",
+      path: "transform.opacity",
       from: 0,
-      to: 1,
+      to: fadeInTargetOpacity(node),
       duration,
       easing,
     });
@@ -1984,7 +2035,45 @@ function pushCreate(
 }
 
 function supportsDrawProgress(node: SceneNode): boolean {
-  return node.geometry.shapeMatcher === "surroundingRect";
+  return (
+    node.type === "line" ||
+    node.type === "path" ||
+    node.type === "circle" ||
+    node.type === "rect" ||
+    node.type === "triangle" ||
+    node.geometry.shapeMatcher === "surroundingRect"
+  );
+}
+
+function createSegments(
+  leaves: SceneNode[],
+  duration: number,
+): Array<{ node: SceneNode; index: number; offset: number; segmentDuration: number }> {
+  if (leaves.length === 0) return [];
+  const entries = leaves.map((node, index) => {
+    const bounds = approximateNodeBounds(node);
+    return {
+      node,
+      index,
+      width: Math.max(1, bounds.maxX - bounds.minX),
+    };
+  });
+  const totalWidth = entries.reduce((sum, entry) => sum + entry.width, 0);
+  const overlap = duration * 0.08;
+  const offsetSpan = Math.max(0, duration - overlap);
+  let cursor = 0;
+
+  return entries.map((entry) => {
+    const offset = totalWidth <= 0 ? 0 : (cursor / totalWidth) * offsetSpan;
+    const proportionalDuration =
+      totalWidth <= 0 ? duration : (entry.width / totalWidth) * duration;
+    const segmentDuration = Math.max(
+      0,
+      Math.min(duration - offset, proportionalDuration + overlap),
+    );
+    cursor += entry.width;
+    return { ...entry, offset, segmentDuration };
+  });
 }
 
 function pushTransformAnimations(
@@ -1996,6 +2085,7 @@ function pushTransformAnimations(
   easing: string,
 ): void {
   const visibleToNode = visibleZeroOpacityClone(toNode);
+  const finish = start + duration;
   for (const key of ["x", "y", "scale", "rotation", "opacity"] as const) {
     if (fromNode.transform[key] !== visibleToNode.transform[key]) {
       state.timeline.push({
@@ -2047,6 +2137,18 @@ function pushTransformAnimations(
         duration,
         easing,
       });
+  }
+
+  for (const key of ["text", "latex", "renderer"] as const) {
+    if (fromNode[key] !== visibleToNode[key]) {
+      state.timeline.push({
+        t: finish,
+        op: "set",
+        id: fromNode.id,
+        path: key,
+        value: visibleToNode[key],
+      });
+    }
   }
 }
 

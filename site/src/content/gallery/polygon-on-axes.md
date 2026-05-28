@@ -3,75 +3,72 @@ title: PolygonOnAxes
 description: "Manim Example: `PolygonOnAxes` (`#polygononaxes`) の Fluxion 移植版。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#polygononaxes
 source_example_path: examples/gallery/polygon-on-axes.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "Text DSL の `dataPolygon` helper で axes 上のデータ座標から polygon を配置できるが、Manim の `coords_to_point` 汎用 API は未実装。"
+  - symptom: "Manim の `always_redraw(Polygon(... ax.c2p ...))` は、軸座標から算出した `rect` の幅・高さ・中心を `value` binding で更新して再現している。"
     layer: dsl
-    impact: low
-    workaround: "`dataPolygon ... axes=<id> points=x,y;...` で polygon 頂点をデータ座標指定する。"
-    closure_condition: "line/path/point annotation でも使える汎用 axes coordinate helper を追加する。"
-    fidelity_upgrade_condition: "Manim と同じデータ座標指定だけで polygon 配置を再現できる時。"
+    impact: medium
+    workaround: "軸のスケールを固定し、`always <shape>.w/h/x/y = expr=...` で rectangle-under-curve を再現する。"
+    closure_condition: "axes coordinate transform と `always_redraw` 相当の動的 mobject 再生成を DSL に追加する。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Manim Stable Examples
-status: partial
+status: ported
 order: 72
 gap_id: GAP-025
 ---
 scene width=960 height=540 fps=60
 
-value alpha = 0
+value t = 5
 
-rect bg w=960 h=540 at 0,0 fill="#080b14"
-rect panel w=790 h=360 at 0,-22 fill="#0f172a" stroke="#1e293b" strokeWidth=2
-text title "PolygonOnAxes" at -280,198 size=40 fill="#f8fafc"
-text formula "coords_to_point -> Polygon" at 176,198 size=24 fill="#bae6fd"
-axes ax at 0,-42 width=740 height=310 xRange=-4,4 yRange=-2,2 stroke="#64748b" strokeWidth=2
-line grid_xm2 x1=0 y1=-130 x2=0 y2=130 at -185,-42 stroke="#1e293b" strokeWidth=1
-line grid_x0 x1=0 y1=-130 x2=0 y2=130 at 0,-42 stroke="#243044" strokeWidth=1.5
-line grid_x2 x1=0 y1=-130 x2=0 y2=130 at 185,-42 stroke="#1e293b" strokeWidth=1
-line grid_ym1 x1=-330 y1=0 x2=330 y2=0 at 0,-119 stroke="#1e293b" strokeWidth=1
-line grid_y0 x1=-330 y1=0 x2=330 y2=0 at 0,-42 stroke="#243044" strokeWidth=1.5
-line grid_y1 x1=-330 y1=0 x2=330 y2=0 at 0,36 stroke="#1e293b" strokeWidth=1
-text tick_xm2 "-2" at -185,-76 size=15 fill="#94a3b8" opacity=0
-text tick_x2 "2" at 185,-76 size=15 fill="#94a3b8" opacity=0
-text tick_ym1 "-1" at -26,-119 size=15 fill="#94a3b8" opacity=0
-text tick_y1 "1" at -22,36 size=15 fill="#94a3b8" opacity=0
-dataPolygon poly axes=ax points=-1.9,-0.7;-0.4,1.1;1.8,0.45 fill="#22d3ee" opacity=0.24 stroke="#22d3ee" strokeWidth=4
-dataPolygon poly_shadow axes=ax points=-1.9,-0.7;-0.4,1.1;1.8,0.45 fill="#22d3ee" opacity=0.08 stroke="#67e8f9" strokeWidth=10
-line guide_a x1=-181 y1=-96 x2=-38 y2=43 at 0,-42 stroke="#38bdf8" strokeWidth=2 opacity=0.35
-line guide_b x1=-38 y1=43 x2=166 y2=-7 at 0,-42 stroke="#38bdf8" strokeWidth=2 opacity=0.35
-line guide_c x1=166 y1=-7 x2=-181 y2=-96 at 0,-42 stroke="#38bdf8" strokeWidth=2 opacity=0.35
-line proj1_x x1=-181 y1=-96 x2=-181 y2=0 at 0,-42 stroke="#fbbf24" strokeWidth=2 opacity=0.35
-line proj1_y x1=-181 y1=-96 x2=0 y2=-96 at 0,-42 stroke="#fbbf24" strokeWidth=2 opacity=0.25
-line proj2_x x1=-38 y1=43 x2=-38 y2=0 at 0,-42 stroke="#fbbf24" strokeWidth=2 opacity=0.35
-line proj2_y x1=-38 y1=43 x2=0 y2=43 at 0,-42 stroke="#fbbf24" strokeWidth=2 opacity=0.25
-line proj3_x x1=166 y1=-7 x2=166 y2=0 at 0,-42 stroke="#fbbf24" strokeWidth=2 opacity=0.35
-line proj3_y x1=166 y1=-7 x2=0 y2=-7 at 0,-42 stroke="#fbbf24" strokeWidth=2 opacity=0.25
-circle v1 r=9 at -181,-138 fill="#f8fafc" stroke="#22d3ee" strokeWidth=3
-circle v2 r=9 at -38,1 fill="#f8fafc" stroke="#22d3ee" strokeWidth=3
-circle v3 r=9 at 166,-49 fill="#f8fafc" stroke="#22d3ee" strokeWidth=3
-circle centroid r=8 at -18,-62 fill="#fbbf24" stroke="#713f12" strokeWidth=2 opacity=0
-text centroid_label "centroid" at 58,-96 size=16 fill="#fde68a" opacity=0
-text area_label "filled polygon in axes coordinates" at 216,126 size=18 fill="#67e8f9" opacity=0
-text coord1 "(-1.9, -0.7)" at -232,-176 size=17 fill="#cbd5e1"
-text coord2 "(-0.4, 1.1)" at -2,38 size=17 fill="#cbd5e1"
-text coord3 "(1.8, 0.45)" at 236,-44 size=17 fill="#cbd5e1"
-text label "data-space vertices remain attached to the axes" at 0,-224 size=20 fill="#94a3b8"
+rect bg w=960 h=540 at 0,0 fill="#000000"
 
-always poly.opacity = expr=0.18 + 0.12*(1+sin(alpha))/2
+line x_axis x1=-240 y1=180 x2=260 y2=180 stroke="#FFFFFF" strokeWidth=3
+line y_axis x1=-240 y1=180 x2=-240 y2=-200 stroke="#FFFFFF" strokeWidth=3
+
+line x_tick_0 x1=0 y1=-6 x2=0 y2=6 at -240,180 stroke="#FFFFFF" strokeWidth=2
+line x_tick_2 x1=0 y1=-6 x2=0 y2=6 at -144,180 stroke="#FFFFFF" strokeWidth=2
+line x_tick_4 x1=0 y1=-6 x2=0 y2=6 at -48,180 stroke="#FFFFFF" strokeWidth=2
+line x_tick_6 x1=0 y1=-6 x2=0 y2=6 at 48,180 stroke="#FFFFFF" strokeWidth=2
+line x_tick_8 x1=0 y1=-6 x2=0 y2=6 at 144,180 stroke="#FFFFFF" strokeWidth=2
+line x_tick_10 x1=0 y1=-6 x2=0 y2=6 at 240,180 stroke="#FFFFFF" strokeWidth=2
+line y_tick_0 x1=-6 y1=0 x2=6 y2=0 at -240,180 stroke="#FFFFFF" strokeWidth=2
+line y_tick_2 x1=-6 y1=0 x2=6 y2=0 at -240,108 stroke="#FFFFFF" strokeWidth=2
+line y_tick_4 x1=-6 y1=0 x2=6 y2=0 at -240,36 stroke="#FFFFFF" strokeWidth=2
+line y_tick_6 x1=-6 y1=0 x2=6 y2=0 at -240,-36 stroke="#FFFFFF" strokeWidth=2
+line y_tick_8 x1=-6 y1=0 x2=6 y2=0 at -240,-108 stroke="#FFFFFF" strokeWidth=2
+line y_tick_10 x1=-6 y1=0 x2=6 y2=0 at -240,-180 stroke="#FFFFFF" strokeWidth=2
+
+text x_label_0 "0" at -240,205 size=20 fill="#FFFFFF"
+text x_label_2 "2" at -144,205 size=20 fill="#FFFFFF"
+text x_label_4 "4" at -48,205 size=20 fill="#FFFFFF"
+text x_label_6 "6" at 48,205 size=20 fill="#FFFFFF"
+text x_label_8 "8" at 144,205 size=20 fill="#FFFFFF"
+text x_label_10 "10" at 240,205 size=20 fill="#FFFFFF"
+text y_label_2 "2" at -270,108 size=20 fill="#FFFFFF"
+text y_label_4 "4" at -270,36 size=20 fill="#FFFFFF"
+text y_label_6 "6" at -270,-36 size=20 fill="#FFFFFF"
+text y_label_8 "8" at -270,-108 size=20 fill="#FFFFFF"
+text y_label_10 "10" at -276,-180 size=20 fill="#FFFFFF"
+
+path graph d="M -120 -180 C -96 -120 -64 -67 -48 -45 C -20 -12 20 17 48 30 C 100 55 176 75 240 90" stroke="#E8C11C" strokeWidth=4 fill="none"
+rect area w=240 h=180 at -120,90 fill="#58C4DD" opacity=0.5 stroke="#F7D45A" strokeWidth=2
+circle dot r=8 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=2
+
+always area.w = expr=48*t
+always area.h = expr=900/t
+always area.x = expr=-240 + 24*t
+always area.y = expr=180 - 450/t
+always dot.x = expr=-240 + 48*t
+always dot.y = expr=180 - 900/t
 
 at 0s:
-  play FadeIn(panel) duration=0.35s
-  play FadeIn(title) duration=0.5s
-  play FadeIn(formula) duration=0.45s
-  play Create(ax) duration=0.8s
-  play AnimationGroup(Create(grid_xm2), Create(grid_x0), Create(grid_x2), Create(grid_ym1), Create(grid_y0), Create(grid_y1), FadeIn(tick_xm2), FadeIn(tick_x2), FadeIn(tick_ym1), FadeIn(tick_y1), lagRatio=0.04) duration=0.8s
-  play AnimationGroup(FadeIn(poly_shadow), FadeIn(poly), Create(guide_a), Create(guide_b), Create(guide_c), lagRatio=0.08) duration=0.85s easing=easeOut
-  play AnimationGroup(Create(proj1_x), Create(proj1_y), Create(proj2_x), Create(proj2_y), Create(proj3_x), Create(proj3_y), lagRatio=0.05) duration=0.75s easing=easeOut
-  play AnimationGroup(FadeIn(v1), FadeIn(v2), FadeIn(v3), FadeIn(coord1), FadeIn(coord2), FadeIn(coord3), FadeIn(centroid), FadeIn(centroid_label), FadeIn(area_label), lagRatio=0.08) duration=0.85s
-  play FadeIn(label) duration=0.4s
+  play AnimationGroup(Create(x_axis), Create(y_axis), lagRatio=0.0) duration=0.8s
+  play AnimationGroup(FadeIn(x_tick_0), FadeIn(x_tick_2), FadeIn(x_tick_4), FadeIn(x_tick_6), FadeIn(x_tick_8), FadeIn(x_tick_10), FadeIn(y_tick_0), FadeIn(y_tick_2), FadeIn(y_tick_4), FadeIn(y_tick_6), FadeIn(y_tick_8), FadeIn(y_tick_10), FadeIn(x_label_0), FadeIn(x_label_2), FadeIn(x_label_4), FadeIn(x_label_6), FadeIn(x_label_8), FadeIn(x_label_10), FadeIn(y_label_2), FadeIn(y_label_4), FadeIn(y_label_6), FadeIn(y_label_8), FadeIn(y_label_10), lagRatio=0.02) duration=0.6s
+  play Create(graph) duration=0.8s
+  play Create(area) duration=0.8s
 
-wait 0.2s
-animate alpha from 0 to 6.283 duration=2.8s easing=linear
-wait 0.2s
-play Circumscribe(poly) duration=0.8s color="#fbbf24"
+wait 0.1s
+animate t from 5 to 10 duration=1.0s easing=easeInOut
+animate t from 10 to 2.5 duration=1.0s easing=easeInOut
+animate t from 2.5 to 5 duration=1.0s easing=easeInOut

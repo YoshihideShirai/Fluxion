@@ -212,7 +212,7 @@ at 1.5s:
   animate c1.opacity from 1 to 0.5 duration=0.5s
 ```
 
-`at <time>:` は、indented statements の default start time を設定します。現在は block 内で `show`, `hide`, `set`, `wait`, `play`, `animate` を使えます。
+`at <time>:` は、indented statements の current cursor を指定時刻に設定します。現在は block 内で `show`, `hide`, `set`, `wait`, `play`, `animate` を使えます。`play` と `wait` は block cursor を進めるため、Manim 風の逐次手順を1つの block 内に書けます。同時開始したい処理には `AnimationGroup` か個別の `at` block を使います。
 
 Indentation は block 判定にだけ使います。空白数の厳密な意味はありません。
 

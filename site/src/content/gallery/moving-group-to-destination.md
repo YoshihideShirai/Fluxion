@@ -3,15 +3,15 @@ title: MovingGroupToDestination
 description: "Manim Example: `MovingGroupToDestination` (`#movinggrouptodestination`) の Fluxion 移植版。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#movinggrouptodestination
 source_example_path: examples/gallery/moving-group-to-destination.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "`arrange`/`nextTo` は導入済みだが、Manim `arrange(..., aligned_edge=...)` や微細な bounding-box 一致は未対応。"
+  - symptom: "Dot spacing and shift target are matched visually, but exact Manim point units are represented in gallery pixel coordinates."
     layer: dsl
     impact: low
-    workaround: "必要な微調整は `set` か `animate` の座標指定で補う。"
-    closure_condition: "aligned_edge などの追加レイアウト引数をサポートする。"
-    fidelity_upgrade_condition: "主要な Manim レイアウト引数を DSL で表現できる時。"
+    workaround: "必要な微調整は `animate` の座標指定で補う。"
+    closure_condition: "座標変換の Manim 単位系プリセットを導入する。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Manim Stable Examples
 status: ported
 order: 69
@@ -19,46 +19,16 @@ gap_id: GAP-022
 ---
 scene width=960 height=540 fps=60
 
-rect bg w=960 h=540 at 0,0 fill="#080b14"
-text title "MovingGroupToDestination" at -166,214 size=36 fill="#f8fafc"
-text formula "VGroup(...).arrange().animate.move_to(target)" at 0,180 size=22 fill="#bae6fd"
-rect panel w=790 h=335 at 0,-34 fill="#0f172a" stroke="#1e293b" strokeWidth=2
-path route d="M -240 -40 C -128 -12 -16 84 180 60" fill="none" stroke="#334155" strokeWidth=7 opacity=0.85
-path route_glow d="M -240 -40 C -128 -12 -16 84 180 60" fill="none" stroke="#38bdf8" strokeWidth=14 opacity=0.12
-rect sourceBox w=230 h=112 at -240,-40 fill="none" stroke="#475569" strokeWidth=2 opacity=0.65
-
-circle c1 r=26 at 0,-40 fill="#38bdf8" stroke="#0f172a" strokeWidth=3
-circle c2 r=26 at 0,-40 fill="#22d3ee" stroke="#0f172a" strokeWidth=3
-circle c3 r=26 at 0,-40 fill="#14b8a6" stroke="#0f172a" strokeWidth=3
-text label "group source" at 0,-118 size=20 fill="#bae6fd"
-group dots c1 c2 c3
-arrange dots direction=horizontal gap=8
-set dots.x to -240
-nextTo label dots direction=down buff=24
-
-rect target w=240 h=120 at 180,60 fill="none" stroke="#f59e0b" strokeWidth=4 opacity=0.92
-rect targetFill w=240 h=120 at 180,60 fill="#f59e0b" opacity=0.08
-text targetLabel "destination frame" at 180,-20 size=20 fill="#fcd34d"
-text note "the whole arranged group moves as one mobject" at 0,-224 size=20 fill="#94a3b8"
+rect bg w=960 h=540 at 0,0 fill="#000000"
+circle c1 r=22 at -72,0 fill="#ffffff" stroke="none"
+circle c2 r=22 at -24,0 fill="#ffffff" stroke="none"
+circle c3 r=22 at 24,0 fill="#ff0000" stroke="none"
+circle c4 r=22 at 72,0 fill="#ffffff" stroke="none"
+group dots c1 c2 c3 c4
+circle dest r=22 at 256,-144 fill="#ffff00" stroke="none"
 
 at 0s:
-  play FadeIn(title) duration=0.5s
-  play FadeIn(formula) duration=0.45s
-  play FadeIn(panel) duration=0.5s
-  play AnimationGroup(Create(route_glow), Create(route), Create(sourceBox), lagRatio=0.08) duration=0.8s easing=easeOut
-  play AnimationGroup(FadeIn(c1), FadeIn(c2), FadeIn(c3), lagRatio=0.1) duration=0.65s easing=easeOut
-  play FadeIn(label) duration=0.45s
-  play FadeIn(targetFill) duration=0.35s
-  play Create(target) duration=0.6s
-  play FadeIn(targetLabel) duration=0.4s
-  play FadeIn(note) duration=0.4s
-
-wait 0.2s
-animate dots.x from -240 to 180 duration=1.2s easing=easeInOut
-animate dots.y from 0 to 60 duration=1.2s easing=easeInOut
-animate label.x from -240 to 180 duration=1.2s easing=easeInOut
-animate label.y from -118 to 2 duration=1.2s easing=easeInOut
-wait 0.2s
-play Circumscribe(dots) duration=0.9s color="#fbbf24"
-wait 0.2s
-play FadeOut(label) duration=0.4s
+  animate dots.x from 0 to 232 duration=1s easing=smooth
+at 0s:
+  animate dots.y from 0 to -144 duration=1s easing=smooth
+wait 0.5s

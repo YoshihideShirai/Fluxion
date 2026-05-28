@@ -3,10 +3,10 @@ title: ManimCELogo
 description: "Manim Example: `ManimCELogo` (`#manimcelogo`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#manimcelogo
 source_example_path: examples/gallery/manim_ce_logo.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "Exact font metrics and layer blending differ from Manim output."
+  - symptom: "Exact MathTex glyph metrics differ slightly from Manim/LaTeX output."
     layer: renderer
     impact: low
     workaround: "必要に応じてスタイル値を手動調整する。"
@@ -18,38 +18,9 @@ order: 12
 ---
 scene width=960 height=540 fps=60
 rect bg w=960 h=540 at 0,0 fill="#ece6e2"
-rect backdrop_shadow w=632 h=342 at 44,0 fill="#cfc7c1" stroke="#cfc7c1" strokeWidth=0 opacity=0
-rect backdrop w=620 h=330 at 36,8 fill="#f7f1ed" stroke="#d8d0ca" strokeWidth=2 opacity=0
-line guide_h x1=-230 y1=0 x2=310 y2=0 at 36,8 stroke="#ded6d0" strokeWidth=1.5 opacity=0
-line guide_v x1=0 y1=-130 x2=0 y2=130 at 36,8 stroke="#ded6d0" strokeWidth=1.5 opacity=0
-text title "Manim Community Edition" at 88,-192 size=30 fill="#343434" opacity=0
-text subtitle "three primitive mobjects, one community mark" at 88,-222 size=18 fill="#6b625d" opacity=0
-circle c_shadow r=104 at -118,-34 fill="#343434" stroke="#343434" strokeWidth=0 opacity=0
-rect s_shadow w=208 h=208 at 10,70 fill="#343434" stroke="#343434" strokeWidth=0 opacity=0
-triangle t_shadow w=222 h=194 at 142,-32 fill="#343434" stroke="#343434" strokeWidth=0 opacity=0
-circle c_ring r=116 at -128,-24 fill="none" stroke="#87c2a5" strokeWidth=5 opacity=0
-rect s_ring w=228 h=228 at 0,80 fill="none" stroke="#525893" strokeWidth=5 opacity=0
-triangle t_ring w=244 h=214 at 132,-22 fill="none" stroke="#e07a5f" strokeWidth=5 opacity=0
-circle c r=104 at -128,-24 fill="#87c2a5" stroke="#343434" strokeWidth=0 opacity=0
-rect s w=208 h=208 at 0,80 fill="#525893" stroke="#343434" strokeWidth=0 opacity=0
-triangle t w=222 h=194 at 132,-22 fill="#e07a5f" stroke="#343434" strokeWidth=0 opacity=0
-math m "\\mathbb{M}" at -214,132 size=212 fill="#343434" renderer=katex opacity=0
-rect swatch_circle w=32 h=18 at 274,102 fill="#87c2a5" stroke="#343434" strokeWidth=1 opacity=0
-rect swatch_square w=32 h=18 at 274,70 fill="#525893" stroke="#343434" strokeWidth=1 opacity=0
-rect swatch_triangle w=32 h=18 at 274,38 fill="#e07a5f" stroke="#343434" strokeWidth=1 opacity=0
-text label_circle "Circle" at 330,102 size=17 fill="#343434" opacity=0
-text label_square "Square" at 331,70 size=17 fill="#343434" opacity=0
-text label_triangle "Triangle" at 340,38 size=17 fill="#343434" opacity=0
-circle ce_badge r=30 at 292,-88 fill="#343434" stroke="#343434" strokeWidth=0 opacity=0
-text ce_text "CE" at 292,-88 size=22 fill="#f7f1ed" opacity=0
-text note "layered vector logo approximation" at 88,-248 size=17 fill="#6b625d" opacity=0
-at 0s:
-  play AnimationGroup(FadeIn(backdrop_shadow), FadeIn(backdrop), lagRatio=0.08) duration=0.4s
-  play AnimationGroup(Create(guide_h), Create(guide_v), lagRatio=0.08) duration=0.35s
-  play AnimationGroup(FadeIn(c_shadow), FadeIn(s_shadow), FadeIn(t_shadow), lagRatio=0.12) duration=0.65s easing=easeOut
-  play LaggedStart(FadeIn(t_ring), FadeIn(s_ring), FadeIn(c_ring), lagRatio=0.12) duration=0.45s easing=easeOut
-  play LaggedStart(FadeIn(t), FadeIn(s), FadeIn(c), lagRatio=0.16) duration=1.2s easing=easeOut
-  play Write(m) duration=1s easing=easeOut
-  play AnimationGroup(FadeIn(swatch_circle), FadeIn(label_circle), FadeIn(swatch_square), FadeIn(label_square), FadeIn(swatch_triangle), FadeIn(label_triangle), lagRatio=0.05) duration=0.6s
-  play AnimationGroup(FadeIn(ce_badge), FadeIn(ce_text), FadeIn(title), FadeIn(subtitle), FadeIn(note), lagRatio=0.06) duration=0.65s
-  wait 0.8s
+triangle t w=120 h=104 at 110,-32 fill="#e07a5f" stroke="#e07a5f" strokeWidth=0
+rect s w=128 h=128 at 58,34 fill="#525893" stroke="#525893" strokeWidth=0
+circle c r=66 at -12,-32 fill="#87c2a5" stroke="#87c2a5" strokeWidth=0
+math m "\\mathbb{M}" at -110,78 size=174 fill="#343434" renderer=katex
+group logo t s c m
+wait 1s

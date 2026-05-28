@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import { compileTextDsl, DslCompileError } from "./compiler.js";
-import type { AnimateOperation } from "../types.js";
+import type { AnimateOperation, CreateOperation, SetOperation } from "../types.js";
 
 function mustFail(source: string): DslCompileError {
   try {
@@ -64,7 +64,7 @@ function assertNoOverlappingAnimations(
 test("compiles the playground demo without overlapping same-target animations", () => {
   const documentData = compileTextDsl(extractPlaygroundDemo());
 
-  assert.equal(documentData.duration, 9);
+  assert.equal(documentData.duration, 9.4);
   assertNoOverlappingAnimations(documentData);
 });
 
@@ -98,6 +98,23 @@ test("compiles every gallery Text DSL example", () => {
       throw new Error(`${file}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
+});
+
+test("includes wait-only tail time in document duration", () => {
+  const documentData = compileTextDsl(`circle c r=20
+play FadeIn(c) duration=1s
+wait 1.4s`);
+
+  assert.equal(documentData.duration, 2.4);
+});
+
+test("includes waits inside at blocks in document duration", () => {
+  const documentData = compileTextDsl(`circle c r=20
+at 3s:
+  play FadeIn(c) duration=1s
+  wait 2s`);
+
+  assert.equal(documentData.duration, 6);
 });
 
 test("compiles scene camera and camera animations", () => {
@@ -250,6 +267,38 @@ test("compiles path nodes with SVG d geometry", () => {
       op.op === "create" ? [op.node.id, op.node.geometry.d] : [],
     ),
     [["curve", "M 0 0 C 20 40 40 40 60 0"]],
+  );
+});
+
+test("compiles Create as draw-progress animations for drawable groups", () => {
+  const documentData = compileTextDsl(`line base x1=0 y1=0 x2=100 y2=0 stroke="#fff"
+arrow vec x1=0 y1=0 x2=100 y2=80 stroke="#22d3ee" tipLength=20 tipWidth=16
+
+at 0s:
+  play AnimationGroup(Create(base), Create(vec), lagRatio=0.1) duration=2s`);
+
+  const createBase = documentData.timeline.find(
+    (op): op is CreateOperation => op.op === "create" && op.node.id === "base",
+  );
+  if (!createBase) throw new Error("Expected create operation for base.");
+  assert.equal(createBase.node.geometry.drawProgress, 0);
+
+  const createArrow = documentData.timeline.find(
+    (op): op is CreateOperation => op.op === "create" && op.node.id === "vec",
+  );
+  if (!createArrow) throw new Error("Expected create operation for vec.");
+  assert.equal(createArrow.node.children?.[0]?.geometry.drawProgress, 0);
+  assert.equal(createArrow.node.children?.[1]?.geometry.drawProgress, 0);
+
+  equalJson(
+    documentData.timeline
+      .filter((op): op is AnimateOperation => op.op === "animate")
+      .map((op) => [op.id, op.path, op.from, op.to]),
+    [
+      ["base", "geometry.drawProgress", 0, 1],
+      ["vec:shaft", "geometry.drawProgress", 0, 1],
+      ["vec:tip", "geometry.drawProgress", 0, 1],
+    ],
   );
 });
 
@@ -484,7 +533,7 @@ at 5s:
   assert.equal(setOperation.value, "#38bdf8");
 });
 
-test("keeps play statements inside at blocks anchored to the block time", () => {
+test("advances play statements inside at blocks from the block time", () => {
   const documentData = compileTextDsl(`circle dot r=24 at 100,100 fill="#38bdf8" opacity=1
 text caption "Ready" at 100,160 fill="#e2e8f0" opacity=1
 
@@ -504,9 +553,9 @@ at 2s:
     [
       [2, "effect", "dot"],
       [2, "animate", "dot"],
-      [2, "animate", "dot"],
-      [2, "effect", "caption"],
-      [2, "animate", "caption"],
+      [2.4, "animate", "dot"],
+      [2.4, "effect", "caption"],
+      [2.4, "animate", "caption"],
     ],
   );
 });
@@ -563,7 +612,11 @@ play TransformMatchingTex(a, b) duration=1s easing=easeInOut`);
     documentData.timeline
       .filter((op) => op.op === "delete")
       .map((op) => [op.id, op.t]),
-    [["a:tex:1", 1]],
+    [
+      ["a:tex:0", 1],
+      ["a:tex:1", 1],
+      ["a:tex:2", 1],
+    ],
   );
 });
 
@@ -702,6 +755,39 @@ play TransformMatchingTex(equation, equation2) duration=0.5s`);
   );
 });
 
+test("materializes hidden TransformMatchingTex targets for chained transforms", () => {
+  const documentData = compileTextDsl(`math eq1 "x+y" expandTokens=true
+math eq2 "a+y" expandTokens=true opacity=0
+math eq3 "a-y" expandTokens=true opacity=0
+play TransformMatchingTex(eq1, eq2) duration=1s
+play TransformMatchingTex(eq2, eq3) duration=1s`);
+
+  assert.equal(
+    documentData.timeline.some(
+      (op) => op.op === "delete" && op.id === "eq2" && op.t < 0,
+    ),
+    true,
+  );
+  assert.equal(
+    documentData.timeline.some(
+      (op) => op.op === "create" && op.node.id === "eq2:tex:1" && op.t === 1,
+    ),
+    true,
+  );
+  assert.equal(
+    documentData.timeline.some(
+      (op) => op.op === "delete" && op.id === "eq1:tex:1" && op.t === 1,
+    ),
+    true,
+  );
+  assert.equal(
+    documentData.timeline.some(
+      (op) => op.op === "delete" && op.id === "eq3" && op.t > 0.9 && op.t < 1,
+    ),
+    true,
+  );
+});
+
 test("expands Write on groups into width-paced child write-progress reveals", () => {
   const documentData = compileTextDsl(`math a "a" at 0,0 opacity=0.8
 math b "b" at 40,0
@@ -836,6 +922,32 @@ play Transform(source, target) duration=1s`);
       op.path === "transform.opacity",
   );
   assert.equal(opacityAnimation, undefined);
+  const textSet = documentData.timeline.find(
+    (op): op is SetOperation =>
+      op.op === "set" && op.id === "source" && op.path === "text",
+  );
+  assert.equal(textSet?.op, "set");
+  assert.equal(textSet?.t, 1);
+  assert.equal(textSet?.value, "B");
+});
+
+test("transforms math content to the target latex at the end", () => {
+  const documentData = compileTextDsl(`math source "\\text{Before}" renderer=katex
+math target "\\text{After}" renderer=mathjax opacity=0
+
+play Transform(source, target) duration=1.5s`);
+
+  equalJson(
+    documentData.timeline
+      .filter(
+        (op): op is SetOperation => op.op === "set" && op.id === "source",
+      )
+      .map((op) => [op.t, op.path, op.value]),
+    [
+      [1.5, "latex", "\\text{After}"],
+      [1.5, "renderer", "mathjax"],
+    ],
+  );
 });
 
 test("compiles Circumscribe with top-level color option", () => {
@@ -967,9 +1079,20 @@ play Create(diagram) duration=0.25s`);
   assert.equal(group?.transform.y, 180);
   equalJson(
     documentData.timeline.map((op) =>
-      op.op === "create" ? op.node.id : op.op === "effect" ? op.id : "",
+      op.op === "create"
+        ? [op.op, op.node.id]
+        : op.op === "effect"
+          ? [op.op, op.id]
+          : op.op === "animate"
+            ? [op.op, op.id, op.path]
+            : [],
     ),
-    ["diagram", "diagram"],
+    [
+      ["create", "diagram"],
+      ["effect", "diagram"],
+      ["animate", "curve", "geometry.drawProgress"],
+      ["animate", "eq", "transform.opacity"],
+    ],
   );
 });
 

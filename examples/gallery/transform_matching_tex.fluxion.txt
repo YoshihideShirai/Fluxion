@@ -1,19 +1,16 @@
 scene width=960 height=540 fps=60
-rect bg w=960 h=540 at 0,0 fill="#080b14"
-rect panel w=780 h=340 at 0,-18 fill="#111827" stroke="#1e293b" strokeWidth=2
-text title "TransformMatchingTex" at -214,194 size=40 fill="#f8fafc"
-text subtitle "only matching TeX tokens stay visually anchored" at 118,158 size=21 fill="#94a3b8"
-math eq1 "x^2+y^2=(r)^2" at 0,-36 size=62 fill="#bae6fd" renderer=katex expandTokens=true
-math eq2 "x^2+y^2=(R)^2" at 0,-36 size=62 fill="#fde68a" renderer=katex expandTokens=true
-rect stableBand w=430 h=80 at -88,-36 fill="#38bdf8" opacity=0.08 stroke="#38bdf8" strokeWidth=2
-rect changingBand w=86 h=80 at 202,-36 fill="#fbbf24" opacity=0.12 stroke="#fbbf24" strokeWidth=2
-text stableLabel "matched tokens" at -126,-122 size=20 fill="#7dd3fc"
-text changingLabel "r -> R" at 202,-122 size=20 fill="#fde68a"
+rect bg w=960 h=540 at 0,0 fill="#000000"
+math variables "a\\quad b\\quad c" at 0,86 size=44 fill="#ffffff" renderer=katex expandTokens=true opacity=0
+math eq1 "x^2+y^2=z^2" at 0,0 size=58 fill="#ffffff" renderer=katex expandTokens=true
+math eq2 "a^2+b^2=c^2" at 0,0 size=58 fill="#ffffff" renderer=katex expandTokens=true opacity=0
+math eq3 "a^2=c^2-b^2" at 0,0 size=58 fill="#ffffff" renderer=katex expandTokens=true opacity=0
 at 0s:
-  play FadeIn(panel) duration=0.35s
-  play FadeIn(title) duration=0.5s
-  play FadeIn(subtitle) duration=0.4s
-  play AnimationGroup(FadeIn(stableBand), FadeIn(changingBand), FadeIn(stableLabel), FadeIn(changingLabel), lagRatio=0.08) duration=0.6s
-  play Write(eq1) duration=1.2s easing=easeOut
-wait 0.4s
-play TransformMatchingTex(eq1, eq2) duration=1.3s easing=easeInOut
+  show eq1
+  wait 0.5s
+  play AnimationGroup(TransformMatchingTex(eq1, eq2), FadeIn(variables), lagRatio=0.0) duration=1s easing=easeInOut
+  animate variables.y from 86 to 0 start=0.5s duration=1s easing=easeInOut
+  animate variables.scale from 1 to 1.32 start=0.5s duration=1s easing=easeInOut
+  animate variables.opacity from 1 to 0 start=1.15s duration=0.35s easing=easeInOut
+  wait 0.5s
+  play TransformMatchingTex(eq2, eq3) duration=1s easing=easeInOut
+  wait 0.5s
