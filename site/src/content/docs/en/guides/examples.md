@@ -56,10 +56,10 @@ Use this table as the canonical mapping for migration tracking and regression ch
 | --- | --- | --- | --- |
 | `examples/simple_circle.py` | `site/src/content/gallery/simple-circle.md` | `faithful` (忠実移植) | `faithful` | Core flow is matched; minor browser rendering differences may remain. |
 | `examples/basic_concepts_square_to_circle.py` | `site/src/content/gallery/square-to-circle.md` | `faithful` (忠実移植) | `faithful` | Create → Transform → FadeOut is preserved with interpolation caveats. |
-| `examples/animations_using_animate.py` | `site/src/content/gallery/animations-using-animate.md` | `faithful` (忠実移植) | `faithful` | `.animate` sequence is preserved; default easing may differ slightly. |
-| `examples/plotting_with_manim.py` | `site/src/content/gallery/plotting-sin-cos.md` | `visual_approximation` (視覚近似) | `visual_approximation` | Curves/axes are approximated for web runtime parity. |
-| `examples/special_camera_settings.py` | `site/src/content/gallery/special-camera.md` | `visual_approximation` (視覚近似) | `visual_approximation` | Camera behavior is approximated to current camera model. |
-| Manim `MovingFrameBox` | `site/src/content/gallery/moving-frame-box.md` | `visual_approximation` (視覚近似) | `visual_approximation` | `SurroundingRectangle` is represented by `surroundingRect`; MathTex parts use declared bounds. |
+| `examples/animations_using_animate.py` | `site/src/content/gallery/animations-using-animate.md` | `faithful` (忠実移植) | `faithful` | `.animate` sequence, including fill opacity, is preserved; default easing may differ slightly. |
+| `examples/plotting_with_manim.py` | `site/src/content/gallery/plotting-sin-cos.md` | `faithful` | `faithful` | `Axes(...)`, `axes.plot(...)`, and the `x=2π` vertical marker are represented by Text DSL helpers; graph labels remain explicit positions. |
+| `examples/gallery/special-camera.fluxion.txt` | `site/src/content/gallery/special-camera.md` | `visual_approximation` | `visual_approximation` | Official Axes default lengths and Dot radius are expanded at Manim frame scale, while MovingCameraScene frame-updater behavior is approximated with `camera.target.x/y` bindings and a restore blend. |
+| Manim `MovingFrameBox` | `site/src/content/gallery/moving-frame-box.md` | `faithful` | `faithful` | `SurroundingRectangle` is represented by `surroundingRect`, and `ReplacementTransform(framebox1, framebox2)` morphs the frame before replacing it with the target. |
 
 Interpretation rule: `fidelity=faithful` means behavior-oriented parity, while `fidelity=visual_approximation` means visual-first approximation with explicit known gaps.
 

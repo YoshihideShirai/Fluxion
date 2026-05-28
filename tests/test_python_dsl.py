@@ -48,6 +48,48 @@ class PythonDslTest(unittest.TestCase):
         self.assertEqual(data["timeline"][2]["to"], 1)
         self.assertEqual(data["timeline"][-1], {"t": 0.75, "op": "delete", "id": "fade"})
 
+    def test_fadein_preserves_target_opacity(self):
+        from fluxion import FadeIn
+
+        scene = Scene()
+        circle = Circle(id="half", r=10).set_opacity(0.4)
+        scene.play(FadeIn(circle), run_time=0.5)
+        data = scene.to_dict()
+
+        self.assertEqual(data["timeline"][0]["node"]["transform"]["opacity"], 0)
+        self.assertEqual(data["timeline"][2]["path"], "transform.opacity")
+        self.assertEqual(data["timeline"][2]["to"], 0.4)
+        self.assertEqual(data["nodes"][0]["transform"]["opacity"], 0.4)
+
+    def test_create_draws_drawable_geometry(self):
+        from fluxion import Create
+
+        scene = Scene()
+        circle = Circle(id="draw", r=10).set_fill("#ec4899", opacity=0.5)
+        scene.play(Create(circle), run_time=0.5)
+        data = scene.to_dict()
+
+        self.assertEqual(data["timeline"][0]["op"], "create")
+        self.assertEqual(data["timeline"][0]["node"]["geometry"]["drawProgress"], 0)
+        self.assertEqual(data["timeline"][2]["path"], "geometry.drawProgress")
+        self.assertEqual(data["timeline"][2]["from"], 0)
+        self.assertEqual(data["timeline"][2]["to"], 1)
+        self.assertEqual(data["timeline"][0]["node"]["style"]["fillOpacity"], 0.5)
+
+    def test_write_reveals_text_progressively(self):
+        from fluxion import Text, Write
+
+        scene = Scene()
+        text = Text(id="title", text="Fluxion")
+        scene.play(Write(text), run_time=0.5)
+        data = scene.to_dict()
+
+        self.assertEqual(data["timeline"][0]["op"], "create")
+        self.assertEqual(data["timeline"][0]["node"]["geometry"]["writeProgress"], 0)
+        self.assertEqual(data["timeline"][2]["path"], "geometry.writeProgress")
+        self.assertEqual(data["timeline"][2]["from"], 0)
+        self.assertEqual(data["timeline"][2]["to"], 1)
+
     def test_transform_and_animation_composition(self):
         from fluxion import AnimationGroup, Succession, Transform
 
@@ -96,7 +138,7 @@ class PythonDslTest(unittest.TestCase):
 
         square_ops = [op for op in data["timeline"] if op.get("id") == "sq2" and op["op"] == "animate"]
         self.assertIn("style.fill", [op["path"] for op in square_ops])
-        self.assertIn("transform.opacity", [op["path"] for op in square_ops])
+        self.assertIn("style.fillOpacity", [op["path"] for op in square_ops])
         self.assertIn("style.stroke", [op["path"] for op in square_ops])
         self.assertIn("style.strokeWidth", [op["path"] for op in square_ops])
 
@@ -113,11 +155,51 @@ class PythonDslTest(unittest.TestCase):
         self.assertEqual(data["nodes"][0]["geometry"], {"d": "M 0 0 C 20 40 40 40 60 0"})
         self.assertEqual(data["nodes"][0]["style"]["stroke"], "#38bdf8")
 
+    def test_image_mobject_exports_grayscale_matrix_geometry(self):
+        from fluxion import ImageMobject
+
+        image = ImageMobject(id="img", data=[[0, 127.6, 255], [300, -5, 64]], w=160, h=80)
+        data = image.to_dict()
+
+        self.assertEqual(data["type"], "image")
+        self.assertEqual(data["geometry"]["w"], 160)
+        self.assertEqual(data["geometry"]["h"], 80)
+        self.assertEqual(data["geometry"]["data"], "0,128,255;255,0,64")
+        self.assertEqual(data["geometry"]["sampling"], "nearest")
+
+    def test_wait_advances_scene_duration(self):
+        scene = Scene()
+        scene.wait(1.25)
+        data = scene.to_dict()
+
+        self.assertEqual(data["duration"], 1.25)
+        self.assertEqual(data["timeline"], [])
+
+    def test_transform_path_morph_exports_geometry_and_fill_opacity(self):
+        from fluxion import Path, Transform
+
+        square = Path(
+            id="square",
+            d="M 0 -84.853 C 0 -84.853 84.853 0 84.853 0 C 84.853 0 0 84.853 0 84.853 C 0 84.853 -84.853 0 -84.853 0 C -84.853 0 0 -84.853 0 -84.853 Z",
+        ).set_style(fill="#ec4899", fillOpacity=0, stroke="#ffffff", strokeWidth=4)
+        circle = Path(
+            id="circle",
+            d="M 0 -56 C 30.928 -56 56 -30.928 56 0 C 56 30.928 30.928 56 0 56 C -30.928 56 -56 30.928 -56 0 C -56 -30.928 -30.928 -56 0 -56 Z",
+        ).set_fill("#ec4899", opacity=0.5)
+        scene = Scene()
+        scene.add(square)
+        scene.play(Transform(square, circle), run_time=1)
+        data = scene.to_dict()
+
+        square_ops = [op for op in data["timeline"] if op.get("id") == "square" and op["op"] == "animate"]
+        self.assertIn("geometry.d", [op["path"] for op in square_ops])
+        self.assertIn("style.fillOpacity", [op["path"] for op in square_ops])
+
 
     def test_math_token_helpers_export_child_nodes(self):
         from fluxion import Math, tokenize_latex
 
-        self.assertEqual(tokenize_latex(r"e^{i\pi}+1=0"), ["e", "^", "{", "i", r"\pi", "}", "+", "1", "=", "0"])
+        self.assertEqual(tokenize_latex(r"e^{i\pi}+1=0"), [r"e^{i\pi}", "+", "1", "=", "0"])
 
         equation = Math(id="eq", latex=r"e^{i\pi}+1=0", expand_tokens=True)
         data = equation.to_dict()
@@ -126,7 +208,7 @@ class PythonDslTest(unittest.TestCase):
         self.assertEqual(data["latex"], r"e^{i\pi}+1=0")
         self.assertEqual(data["renderer"], "katex")
         self.assertEqual(data["geometry"], {"fontSize": 36})
-        self.assertEqual([child["latex"] for child in data["children"]], ["e", "^", "{", "i", r"\pi", "}", "+", "1", "=", "0"])
+        self.assertEqual([child["latex"] for child in data["children"]], [r"e^{i\pi}", "+", "1", "=", "0"])
         self.assertTrue(all(child["type"] == "math" for child in data["children"]))
 
     def test_transform_matching_tex_matches_tokens_and_fades_unmatched(self):

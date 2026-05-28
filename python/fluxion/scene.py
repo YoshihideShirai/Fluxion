@@ -48,6 +48,9 @@ class Scene:
             elapsed = max(elapsed, self._schedule(animation, self.time, run_time))
         self.time += elapsed if animations else run_time
 
+    def wait(self, duration: float = 1.0) -> None:
+        self.time += duration
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "version": "0.1",

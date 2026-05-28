@@ -6,7 +6,7 @@ source_example_path: examples/gallery/moving-group-to-destination.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "Dot spacing and shift target are matched visually, but exact Manim point units are represented in gallery pixel coordinates."
+  - symptom: "Dot spacing, radius, and shift target are expanded from Manim units into gallery pixel coordinates."
     layer: dsl
     impact: low
     workaround: "必要な微調整は `animate` の座標指定で補う。"
@@ -20,15 +20,15 @@ gap_id: GAP-022
 scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
-circle c1 r=22 at -72,0 fill="#ffffff" stroke="none"
-circle c2 r=22 at -24,0 fill="#ffffff" stroke="none"
-circle c3 r=22 at 24,0 fill="#ff0000" stroke="none"
-circle c4 r=22 at 72,0 fill="#ffffff" stroke="none"
+circle c1 r=8 at -108,0 fill="#FFFFFF" stroke="none"
+circle c2 r=8 at -13.5,0 fill="#FFFFFF" stroke="none"
+circle c3 r=8 at 81,0 fill="#FC6255" stroke="none"
+circle c4 r=8 at 175.5,0 fill="#FFFFFF" stroke="none"
 group dots c1 c2 c3 c4
-circle dest r=22 at 256,-144 fill="#ffff00" stroke="none"
+circle dest r=8 at 270,-202.5 fill="#FFFF00" stroke="none"
 
 at 0s:
-  animate dots.x from 0 to 232 duration=1s easing=smooth
+  animate dots.x from 0 to 189 duration=1s easing=smooth
 at 0s:
-  animate dots.y from 0 to -144 duration=1s easing=smooth
+  animate dots.y from 0 to -202.5 duration=1s easing=smooth
 wait 0.5s

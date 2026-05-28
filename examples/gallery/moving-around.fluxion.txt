@@ -4,7 +4,7 @@ rect bg w=960 h=540 at 0,0 fill="#000000"
 rect square w=135 h=135 at 0,0 fill="#58C4DD" stroke="#58C4DD" strokeWidth=4
 
 at 0s:
-  animate square.x from 0 to -68 duration=1s easing=smooth
+  animate square.x from 0 to -67.5 duration=1s easing=smooth
 at 1s:
   animate square.fill from "#58C4DD" to "#FF862F" duration=1s easing=smooth
 at 2s:

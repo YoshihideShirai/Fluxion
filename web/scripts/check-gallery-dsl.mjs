@@ -147,7 +147,12 @@ function visualSample(documentData, seconds) {
   const visible = flattened.filter(isVisible);
   return {
     colors: new Set(visible.flatMap(colorValues)),
-    hasTextOrMath: visible.some((node) => node.type === 'text' || node.type === 'math'),
+    hasTextOrMath: visible.some(
+      (node) =>
+        node.type === 'text' ||
+        node.type === 'math' ||
+        (node.type === 'brace' && typeof node.geometry?.label === 'string' && node.geometry.label.trim().length > 0),
+    ),
     visibleCount: visible.length,
   };
 }

@@ -236,8 +236,22 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
       ja: 'Axes helper declaration',
       en: 'Axes helper declaration',
     },
-    minimalExample: 'axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2',
-    source: 'scene width=960 height=540 fps=60\naxes ax at 480,270 width=700 height=300 xRange=-4,4 yRange=-2,2 stroke="#94a3b8" strokeWidth=3',
+    minimalExample: 'axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2 xNumbers=-4,0,4',
+    source: 'scene width=960 height=540 fps=60\naxes ax at 480,270 width=700 height=300 xRange=-4,4 yRange=-2,2 stroke="#94a3b8" strokeWidth=3 xTicks=-4,-2,0,2,4 yTicks=-2,-1,0,1,2',
+  },
+  {
+    key: 'numberPlane',
+    command: 'numberPlane',
+    description: {
+      ja: 'Manim NumberPlane 風の背景グリッドを生成します。',
+      en: 'Generate a Manim NumberPlane-style background grid.',
+    },
+    referencePurpose: {
+      ja: 'NumberPlane grid helper',
+      en: 'NumberPlane grid helper',
+    },
+    minimalExample: 'numberPlane plane xRange=-7,7 yRange=-4,4 unit=60',
+    source: 'scene width=960 height=540 fps=60\nnumberPlane plane at 480,270 xRange=-7,7 yRange=-4,4 unit=60 stroke="#00bcd4" axisStroke="#dff9ff" strokeWidth=1.4 axisStrokeWidth=1.8',
   },
   {
     key: 'plot',
@@ -268,6 +282,146 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     source: 'scene width=960 height=540 fps=60\naxes ax at 480,270 width=700 height=300 xRange=-4,4 yRange=-2,2 stroke="#94a3b8" strokeWidth=3\ndataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5 fill="#22d3ee" opacity=0.25 stroke="#22d3ee" strokeWidth=4',
   },
   {
+    key: 'dataRect',
+    command: 'dataRect',
+    description: {
+      ja: 'axes のデータ座標から更新可能な矩形を生成します。',
+      en: 'Generate an updatable rectangle from axes data coordinates.',
+    },
+    referencePurpose: {
+      ja: 'Axes data-coordinate rectangle helper',
+      en: 'Axes data-coordinate rectangle helper',
+    },
+    minimalExample: 'dataRect area axes=ax from=0,0 to=t,25/t',
+    source: 'scene width=960 height=540 fps=60\nvalue t = 5\naxes ax at 480,270 width=480 height=360 xRange=0,10 yRange=0,10 stroke="#94a3b8" strokeWidth=3\ndataRect area axes=ax from=0,0 to=t,25/t fill="#58C4DD" fillOpacity=0.5 stroke="#F7D45A"\nanimate t from 5 to 8 duration=1s',
+  },
+  {
+    key: 'dataDot',
+    command: 'dataDot',
+    description: {
+      ja: 'axes のデータ座標から更新可能な dot を生成します。',
+      en: 'Generate an updatable dot from axes data coordinates.',
+    },
+    referencePurpose: {
+      ja: 'Axes data-coordinate dot helper',
+      en: 'Axes data-coordinate dot helper',
+    },
+    minimalExample: 'dataDot dot axes=ax point=t,25/t',
+    source: 'scene width=960 height=540 fps=60\nvalue t = 5\naxes ax at 480,270 width=480 height=360 xRange=0,10 yRange=0,10 stroke="#94a3b8" strokeWidth=3\ndataDot dot axes=ax point=t,25/t r=10 fill="#ffffff"\nanimate t from 5 to 8 duration=1s',
+  },
+  {
+    key: 'dataLine',
+    command: 'dataLine',
+    description: {
+      ja: 'axes のデータ座標から線分を生成します。',
+      en: 'Generate a line segment from axes data coordinates.',
+    },
+    referencePurpose: {
+      ja: 'Axes data-coordinate line helper',
+      en: 'Axes data-coordinate line helper',
+    },
+    minimalExample: 'dataLine marker axes=ax from=2,0 to=2,4',
+    source: 'scene width=960 height=540 fps=60\naxes ax at 480,270 width=500 height=330 xRange=0,5 yRange=0,6 stroke="#94a3b8" strokeWidth=3\ndataLine marker axes=ax from=2,0 to=2,4 stroke="#FFFF00" strokeWidth=5',
+  },
+  {
+    key: 'dynamicLine',
+    command: 'dynamicLine',
+    description: {
+      ja: '式に追従する line endpoint を生成します。',
+      en: 'Generate line endpoints that follow expressions.',
+    },
+    referencePurpose: {
+      ja: 'Expression-bound line helper',
+      en: 'Expression-bound line helper',
+    },
+    minimalExample: 'dynamicLine connector x1=60*x y1=0 x2=72 y2=-60*y',
+    source: 'scene width=640 height=360 fps=60\nvalue x = 0\nvalue y = 0\ndynamicLine connector x1=80+60*x y1=180 x2=360 y2=180-60*y stroke="#FC6255" strokeWidth=5\ncircle d1 r=10 at 80,180 fill="#58C4DD"\ncircle d2 r=10 at 360,180 fill="#83C167"\nalways d1.x = expr=80+60*x\nalways d2.y = expr=180-60*y\nanimate x from 0 to 2 duration=1s easing=smooth\nanimate y from 0 to 2 duration=1s easing=smooth',
+  },
+  {
+    key: 'dataArea',
+    command: 'dataArea',
+    description: {
+      ja: '2つの関数の間の領域を axes 座標で生成します。',
+      en: 'Generate the area between two functions in axes coordinates.',
+    },
+    referencePurpose: {
+      ja: 'Axes bounded area helper',
+      en: 'Axes bounded area helper',
+    },
+    minimalExample: 'dataArea area axes=ax lower=t upper=2*t range=1,2',
+    source: 'scene width=960 height=540 fps=60\naxes ax at 480,270 width=500 height=330 xRange=0,5 yRange=0,6 stroke="#94a3b8" strokeWidth=3\ndataArea area axes=ax lower=t upper=2*t range=1,2 samples=32 fill="#888888" fillOpacity=0.5',
+  },
+  {
+    key: 'dataRiemannRects',
+    command: 'dataRiemannRects',
+    description: {
+      ja: '関数のリーマン矩形を axes 座標で生成します。',
+      en: 'Generate Riemann rectangles for a function in axes coordinates.',
+    },
+    referencePurpose: {
+      ja: 'Axes Riemann rectangles helper',
+      en: 'Axes Riemann rectangles helper',
+    },
+    minimalExample: 'dataRiemannRects bars axes=ax fn=4*t-t*t range=0.3,0.6 dx=0.03',
+    source: 'scene width=960 height=540 fps=60\naxes ax at 480,270 width=500 height=330 xRange=0,5 yRange=0,6 stroke="#94a3b8" strokeWidth=3\ndataRiemannRects bars axes=ax fn=4*t-t*t range=0.3,0.6 dx=0.03 fill="#0000FF" fillOpacity=0.5',
+  },
+  {
+    key: 'gaussianSurface',
+    command: 'gaussianSurface',
+    description: {
+      ja: 'Gaussian Surface を投影済み checkerboard mesh として生成します。',
+      en: 'Generate a projected checkerboard Gaussian surface mesh.',
+    },
+    referencePurpose: {
+      ja: 'Projected Gaussian surface helper',
+      en: 'Projected Gaussian surface helper',
+    },
+    minimalExample: 'gaussianSurface surface range=-2,2 resolution=24 scale=2',
+    source: 'scene width=960 height=540 fps=60\ngaussianSurface surface at 480,270 range=-2,2 resolution=12 scale=2 sigma=0.4 fillA="#FF862F" fillB="#58C4DD" stroke="#83C167" fillOpacity=0.5',
+  },
+  {
+    key: 'sphereSurface',
+    command: 'sphereSurface',
+    description: {
+      ja: '球面 Surface を投影済み checkerboard mesh として生成します。',
+      en: 'Generate a projected checkerboard sphere surface mesh.',
+    },
+    referencePurpose: {
+      ja: 'Projected sphere surface helper',
+      en: 'Projected sphere surface helper',
+    },
+    minimalExample: 'sphereSurface sphere radius=104 resolution=15,32',
+    source: 'scene width=640 height=360 fps=60\nsphereSurface sphere at 320,180 radius=104 resolution=15,32 fillA="#E65A4C" fillB="#CF5044" light=0,-0.35,1\ncircle rim r=104 at 320,180 fill="none" stroke="#4D0E0F" strokeWidth=2',
+  },
+  {
+    key: 'threeDAxes',
+    command: 'threeDAxes',
+    description: {
+      ja: 'ThreeDAxes を投影済み line/tick/tip 群として生成します。',
+      en: 'Generate projected ThreeDAxes lines, ticks, and tips.',
+    },
+    referencePurpose: {
+      ja: 'Projected ThreeDAxes helper',
+      en: 'Projected ThreeDAxes helper',
+    },
+    minimalExample: 'threeDAxes axes xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1',
+    source: 'scene width=640 height=360 fps=60\nthreeDAxes axes at 320,190 xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 includeTips=true stroke="#ffffff"',
+  },
+  {
+    key: 'projectedCircle',
+    command: 'projectedCircle',
+    description: {
+      ja: 'XY 平面の円を投影済み cubic path として生成します。',
+      en: 'Generate an XY-plane circle as a projected cubic path.',
+    },
+    referencePurpose: {
+      ja: 'Projected XY-plane circle helper',
+      en: 'Projected XY-plane circle helper',
+    },
+    minimalExample: 'projectedCircle circle radius=1 xBasis=-56.75,25.5 yBasis=87.75,13.25',
+    source: 'scene width=640 height=360 fps=60\nprojectedCircle circle at 320,180 radius=1 xBasis=-56.75,25.5 yBasis=87.75,13.25 fill="none" stroke="#ffffff" strokeWidth=4',
+  },
+  {
     key: 'arrow',
     command: 'arrow',
     description: {
@@ -280,6 +434,34 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     },
     minimalExample: 'arrow vec x1=0 y1=0 x2=190 y2=80',
     source: 'scene width=640 height=360 fps=60\narrow vec x1=120 y1=220 x2=500 y2=120 stroke="#22d3ee" fill="#22d3ee" strokeWidth=8 tipLength=32 tipWidth=30',
+  },
+  {
+    key: 'rotatingLine',
+    command: 'rotatingLine',
+    description: {
+      ja: '基準線を指定点まわりに回転させる line helper です。',
+      en: 'Generate a line by rotating a reference segment around a point.',
+    },
+    referencePurpose: {
+      ja: 'About-point rotating line helper',
+      en: 'About-point rotating line helper',
+    },
+    minimalExample: 'rotatingLine arm x1=-120 y1=0 x2=120 y2=0 about=-120,0 angle=-theta',
+    source: 'scene width=640 height=360 fps=60\nvalue theta = 0\nline base x1=200 y1=180 x2=440 y2=180 stroke="#64748b" strokeWidth=4\nrotatingLine arm x1=200 y1=180 x2=440 y2=180 about=200,180 angle=-theta stroke="#f59e0b" strokeWidth=6\nanimate theta from 0 to 2.4 duration=1.5s easing=easeInOut',
+  },
+  {
+    key: 'rotateUpdater',
+    command: 'rotateUpdater',
+    description: {
+      ja: 'dt ベースの回転 updater を累積 rotation animation に展開します。',
+      en: 'Expand a dt-based rotation updater into cumulative rotation animation.',
+    },
+    referencePurpose: {
+      ja: 'dt rotation updater expansion',
+      en: 'dt rotation updater expansion',
+    },
+    minimalExample: 'rotateUpdater arm rate=1 duration=2s',
+    source: 'scene width=640 height=360 fps=60\nline arm x1=320 y1=180 x2=140 y2=180 stroke="#FFFF00" strokeWidth=8\nrotateUpdater arm rate=1 duration=2s\nrotateUpdater arm rate=-1 duration=2s',
   },
   {
     key: 'angle',

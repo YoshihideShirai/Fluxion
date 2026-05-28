@@ -7,7 +7,7 @@ class AnimationsUsingAnimate(Scene):
         self.add(square)
 
         self.play(square.animate.shift(-120, 0), run_time=1)
-        self.play(square.animate.set_fill("#f97316"), run_time=1)
+        self.play(square.animate.set_fill("#f97316", opacity=0.5), run_time=1)
         self.play(square.animate.scale(0.3), run_time=1)
         self.play(square.animate.rotate(22.918), run_time=1)
 

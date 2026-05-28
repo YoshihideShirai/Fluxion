@@ -1,9 +1,11 @@
-export type NodeType = "group" | "circle" | "rect" | "triangle" | "line" | "path" | "text" | "math" | "brace";
+export type NodeType = "group" | "circle" | "rect" | "triangle" | "line" | "path" | "text" | "math" | "brace" | "image";
 
 export interface Transform {
   x: number;
   y: number;
   scale: number;
+  scaleX?: number;
+  scaleY?: number;
   rotation: number;
   opacity: number;
 }
@@ -22,7 +24,9 @@ export type InterpolatableGeometryValue = number | string | number[] | boolean;
 
 export interface Style {
   fill?: string;
+  fillOpacity?: number;
   stroke?: string;
+  strokeOpacity?: number;
   strokeWidth?: number;
 }
 

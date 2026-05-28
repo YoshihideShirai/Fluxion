@@ -4,6 +4,6 @@ rect bg w=960 h=540 at 0,0 fill="#000000"
 line line_reference x1=0 y1=0 x2=-180 y2=0 stroke="#FFFFFF" strokeWidth=8
 line line_moving x1=0 y1=0 x2=-180 y2=0 stroke="#FFFF00" strokeWidth=8
 
-animate line_moving.rotation from 0 to 114.592 duration=2s easing=linear
-animate line_moving.rotation from 114.592 to 0 duration=2s easing=linear
+rotateUpdater line_moving rate=1 duration=2s
+rotateUpdater line_moving rate=-1 duration=2s
 wait 0.5s

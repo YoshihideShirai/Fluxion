@@ -20,10 +20,19 @@ export function clamp01(value: number): number {
 export function ease(name: EasingName, t: number): number {
   const x = clamp01(t);
   if (name === "linear") return x;
-  if (name === "smooth" || name === "easeInOut") return x * x * (3 - 2 * x);
+  if (name === "smooth" || name === "easeInOut") return smooth(x);
   if (name === "easeIn") return x * x;
   if (name === "easeOut") return 1 - (1 - x) * (1 - x);
   return x;
+}
+
+function sigmoid(value: number): number {
+  return 1 / (1 + Math.exp(-value));
+}
+
+function smooth(t: number, inflection = 10): number {
+  const error = sigmoid(-inflection / 2);
+  return clamp01((sigmoid(inflection * (t - 0.5)) - error) / (1 - 2 * error));
 }
 
 export function interpolate(from: unknown, to: unknown, t: number): unknown {

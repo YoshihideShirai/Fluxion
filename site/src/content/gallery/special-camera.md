@@ -6,10 +6,10 @@ source_example_path: examples/gallery/special-camera.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "Camera DSL now supports target follow / frame-fit channels, but auto-bounds fitting from arbitrary node sets is still simplified."
+  - symptom: "Axes and plot are helper-generated, but Manim's actual camera frame updater object lifecycle is still represented with value bindings."
     layer: dsl
     impact: medium
-    workaround: "moving_dot と同じ sin 曲線上の36サンプル点へ1秒間の animateFrame をつなぎ、frame updater の追従を近似する。"
+    workaround: "公式の `Axes(x_range=[-1, 10], y_range=[-1, 10])` は Manim `Axes` 既定 `x_length=round(frame_width)-2=12` / `y_length=round(frame_height)-2=6` を 67.5px/unit で 810x405px に展開し、`plot(..., x_range=[0, 3*PI])` と default `Dot()` 半径 0.08 も同じ frame scale に合わせる。`self.add(...)` 初期表示、1秒の zoom-in、1秒の `MoveAlongPath(..., rate_func=linear)`、1秒の `Restore` に合わせ、moving_dot と同じ式を `camera.target.x/y` に連続 bind して追従を再現する。"
     closure_condition: "不足 DSL 機能が追加され、近似なしで同等記述が可能になる。"
     fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Special Camera Settings
@@ -17,91 +17,25 @@ status: ported
 order: 40
 ---
 scene width=960 height=540 fps=60
+camera mode=target target=0,0 scale=1
 cameraFrame at 0,0 scale=1
 value theta = 0
+value cameraFollow = 0
+value cameraRestore = 0
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
-rect world w=780 h=350 at 0,-20 fill="#0f172a" stroke="#1e293b" strokeWidth=2 opacity=0
-text title "FollowingGraphCamera" at -236,198 size=40 fill="#f8fafc" opacity=0
-text formula "frame.add_updater(lambda m: m.move_to(moving_dot))" at 150,198 size=20 fill="#bae6fd" opacity=0
-rect codeCard w=380 h=86 at 172,-158 fill="#111827" stroke="#334155" strokeWidth=2 opacity=0
-text code1 "self.camera.frame.save_state()" at 172,-130 size=17 fill="#fde68a" opacity=0
-text code2 "MoveAlongPath(moving_dot, graph, rate_func=linear)" at 172,-158 size=16 fill="#67e8f9" opacity=0
-text code3 "Restore(self.camera.frame)" at 172,-186 size=17 fill="#f8fafc" opacity=0
-line x_axis x1=-300 y1=0 x2=300 y2=0 at 0,-16 stroke="#334155" strokeWidth=2
-line y_axis x1=0 y1=-105 x2=0 y2=105 at -300,-16 stroke="#334155" strokeWidth=2
-line y_top x1=-300 y1=72 x2=300 y2=72 at 0,-16 stroke="#1e293b" strokeWidth=1
-line y_bottom x1=-300 y1=-72 x2=300 y2=-72 at 0,-16 stroke="#1e293b" strokeWidth=1
-line x_pi x1=0 y1=-98 x2=0 y2=98 at -126,-16 stroke="#1e293b" strokeWidth=1
-line x_2pi x1=0 y1=-98 x2=0 y2=98 at 47,-16 stroke="#1e293b" strokeWidth=1
-line x_3pi x1=0 y1=-98 x2=0 y2=98 at 220,-16 stroke="#1e293b" strokeWidth=1
-text pi_label "pi" at -126,-128 size=15 fill="#94a3b8" opacity=0
-text two_pi_label "2pi" at 47,-128 size=15 fill="#94a3b8" opacity=0
-text three_pi_label "3pi" at 220,-128 size=15 fill="#94a3b8" opacity=0
-tracedPath graph_shadow x=-260+(t/(3*pi))*520 y=72*sin(t) from=0 to=9.42477796076938 samples=220 at 0,-16 stroke="#0f172a" strokeWidth=13 opacity=0.62
-tracedPath graph x=-260+(t/(3*pi))*520 y=72*sin(t) from=0 to=9.42477796076938 samples=220 at 0,-16 stroke="#3b82f6" strokeWidth=5
-tracedPath traveled x=-260+(t/(3*pi))*520 y=72*sin(t) from=0 to=theta samples=160 at 0,-16 stroke="#f97316" strokeWidth=7 opacity=0.55
-circle dot_start r=7 at -260,-16 fill="#e2e8f0" stroke="#0f172a" strokeWidth=2 opacity=0
-circle dot_end r=7 at 260,-16 fill="#e2e8f0" stroke="#0f172a" strokeWidth=2 opacity=0
-circle moving_dot r=12 at -260,-16 fill="#f97316" stroke="#ffedd5" strokeWidth=3
-circle dot_halo r=26 at -260,-16 fill="#f97316" opacity=0.12 stroke="#fed7aa" strokeWidth=2
-rect saved_frame w=680 h=300 at 0,-16 fill="none" stroke="#64748b" strokeWidth=2 opacity=0
-rect zoom_frame_1 w=240 h=150 at -260,-16 fill="none" stroke="#fbbf24" strokeWidth=3 opacity=0
-rect zoom_frame_2 w=240 h=150 at -86,-16 fill="none" stroke="#fbbf24" strokeWidth=3 opacity=0
-rect zoom_frame_3 w=240 h=150 at 87,-16 fill="none" stroke="#fbbf24" strokeWidth=3 opacity=0
-rect zoom_frame_4 w=240 h=150 at 260,-16 fill="none" stroke="#fbbf24" strokeWidth=3 opacity=0
-line frame_trace x1=-260 y1=102 x2=260 y2=102 at 0,-16 stroke="#fbbf24" strokeWidth=2 opacity=0
-text label "camera frame follows the orange dot along y = sin(x)" at 0,126 size=22 fill="#e2e8f0" opacity=0
-text restoreLabel "restore saved frame" at -232,-186 size=18 fill="#cbd5e1" opacity=0
-text note "Fluxion approximates the frame updater with sampled animateFrame moves." at 0,-224 size=18 fill="#94a3b8" opacity=0
-always moving_dot.x = expr=-260 + (theta/(3*3.141592653589793))*520
-always moving_dot.y = expr=-16 + 72*sin(theta)
-always dot_halo.x = expr=-260 + (theta/(3*3.141592653589793))*520
-always dot_halo.y = expr=-16 + 72*sin(theta)
-at 0s:
-  show bg
-  play AnimationGroup(Create(x_axis), Create(y_axis), Create(y_top), Create(y_bottom), Create(x_pi), Create(x_2pi), Create(x_3pi), lagRatio=0.04) duration=0.85s easing=easeOut
-  play AnimationGroup(Create(graph_shadow), Create(graph), FadeIn(dot_start), FadeIn(dot_end), lagRatio=0.05) duration=0.95s easing=easeOut
-  play AnimationGroup(FadeIn(dot_halo), FadeIn(moving_dot), lagRatio=0.08) duration=0.7s easing=easeOut
-at 3.5s:
+axes ax at 0,0 width=810 height=405 xRange=-1,10 yRange=-1,10 stroke="#8a8a8a" strokeWidth=2 xTicks=-1,0,1,2,3,4,5,6,7,8,9,10 yTicks=-1,0,1,2,3,4,5,6,7,8,9,10 tickLength=12 tickStrokeWidth=2
+plot graph fn="sin(t)" range=0,9.42477796076938 samples=220 at=-331.364,165.682 scaleX=73.636 scaleY=36.818 stroke="#58C4DD" strokeWidth=5
+circle dot_start r=5.4 at -331.364,165.682 fill="#ffffff" stroke="none"
+circle dot_end r=5.4 at 362.643,165.682 fill="#ffffff" stroke="none"
+circle moving_dot r=5.4 at -331.364,165.682 fill="#ff862f" stroke="none"
+always moving_dot.x = expr=-331.364 + (theta/(3*3.141592653589793))*694.007
+always moving_dot.y = expr=165.682 - 36.818*sin(theta)
+always camera.target.x = expr=cameraFollow*(1-cameraRestore)*(-331.364 + (theta/(3*pi))*694.007)
+always camera.target.y = expr=cameraFollow*(1-cameraRestore)*(165.682 - 36.818*sin(theta))
+at 1s:
   animate theta from 0 to 9.42477796076938 duration=1s easing=linear
-animateFrame to -260,-16 scale=2 start=2.5s duration=1s easing=easeInOut
-animateFrame to -246,3 scale=2 start=3.528s duration=0.028s easing=linear
-animateFrame to -231,20 scale=2 start=3.556s duration=0.028s easing=linear
-animateFrame to -217,35 scale=2 start=3.583s duration=0.028s easing=linear
-animateFrame to -202,46 scale=2 start=3.611s duration=0.028s easing=linear
-animateFrame to -188,54 scale=2 start=3.639s duration=0.028s easing=linear
-animateFrame to -173,56 scale=2 start=3.667s duration=0.028s easing=linear
-animateFrame to -159,54 scale=2 start=3.694s duration=0.028s easing=linear
-animateFrame to -144,46 scale=2 start=3.722s duration=0.028s easing=linear
-animateFrame to -130,35 scale=2 start=3.750s duration=0.028s easing=linear
-animateFrame to -116,20 scale=2 start=3.778s duration=0.028s easing=linear
-animateFrame to -101,3 scale=2 start=3.806s duration=0.028s easing=linear
-animateFrame to -87,-16 scale=2 start=3.833s duration=0.028s easing=linear
-animateFrame to -72,-35 scale=2 start=3.861s duration=0.028s easing=linear
-animateFrame to -58,-52 scale=2 start=3.889s duration=0.028s easing=linear
-animateFrame to -43,-67 scale=2 start=3.917s duration=0.028s easing=linear
-animateFrame to -29,-78 scale=2 start=3.944s duration=0.028s easing=linear
-animateFrame to -14,-86 scale=2 start=3.972s duration=0.028s easing=linear
-animateFrame to 0,-88 scale=2 start=4.000s duration=0.028s easing=linear
-animateFrame to 14,-86 scale=2 start=4.028s duration=0.028s easing=linear
-animateFrame to 29,-78 scale=2 start=4.056s duration=0.028s easing=linear
-animateFrame to 43,-67 scale=2 start=4.083s duration=0.028s easing=linear
-animateFrame to 58,-52 scale=2 start=4.111s duration=0.028s easing=linear
-animateFrame to 72,-35 scale=2 start=4.139s duration=0.028s easing=linear
-animateFrame to 87,-16 scale=2 start=4.167s duration=0.028s easing=linear
-animateFrame to 101,3 scale=2 start=4.194s duration=0.028s easing=linear
-animateFrame to 116,20 scale=2 start=4.222s duration=0.028s easing=linear
-animateFrame to 130,35 scale=2 start=4.250s duration=0.028s easing=linear
-animateFrame to 144,46 scale=2 start=4.278s duration=0.028s easing=linear
-animateFrame to 159,54 scale=2 start=4.306s duration=0.028s easing=linear
-animateFrame to 173,56 scale=2 start=4.333s duration=0.028s easing=linear
-animateFrame to 188,54 scale=2 start=4.361s duration=0.028s easing=linear
-animateFrame to 202,46 scale=2 start=4.389s duration=0.028s easing=linear
-animateFrame to 217,35 scale=2 start=4.417s duration=0.028s easing=linear
-animateFrame to 231,20 scale=2 start=4.444s duration=0.028s easing=linear
-animateFrame to 246,3 scale=2 start=4.472s duration=0.028s easing=linear
-animateFrame to 260,-16 scale=2 start=4.500s duration=0.028s easing=linear
-animateFrame to 0,-16 scale=1 start=4.6s duration=1.0s easing=easeInOut
-at 4.55s:
-  play FadeOut(dot_halo) duration=0.35s
+animate cameraFollow from 0 to 1 start=0s duration=1s easing=easeInOut
+animate camera.scale from 1 to 2 start=0s duration=1s easing=easeInOut
+animate cameraRestore from 0 to 1 start=2s duration=1s easing=easeInOut
+animate camera.scale from 2 to 1 start=2s duration=1s easing=easeInOut

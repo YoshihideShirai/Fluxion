@@ -32,9 +32,17 @@ PYTHONPATH=python python examples/simple_circle.py
 
 - `Scene`: node と timeline を保持し、`export_json()` で `.fluxion.json` を書き出す root。
 - `Mobject`: transform、style、geometry、children を持つ Scene Graph node。
-- `Circle`, `Rectangle`, `Line`, `Path`, `Text`, `Math`, `Group`: Runtime が描画できる node type。
+- `Circle`, `Rectangle`, `Line`, `Path`, `Text`, `Math`, `ImageMobject`, `Group`: Runtime が描画できる node type。
 - `self.add()`: node を scene に追加し、Runtime の初期 graph / create operation に反映する。
 - `self.play()`: `.animate` builder や animation helper から Timeline operation を生成する。
+
+`ImageMobject` は Manim の `ImageMobject(np.uint8(...))` と同じ用途の primitive で、2D のグレースケール行列を `image` node の `geometry.data` として export します。
+
+```python
+from fluxion import ImageMobject
+
+image = ImageMobject(id="gradient", data=[[0, 128, 255], [0, 128, 255]], w=240, h=120)
+```
 
 ## 関連ページ
 

@@ -35,14 +35,14 @@ Fluxion JSON は、Python DSL と Text DSL が共通で出力する editable ani
 {
   "id": "c1",
   "type": "circle",
-  "transform": { "x": 220, "y": 360, "scale": 1, "rotation": 0, "opacity": 1 },
-  "style": { "fill": "#38bdf8", "stroke": "#0f172a", "strokeWidth": 4 },
+  "transform": { "x": 220, "y": 360, "scale": 1, "scaleX": 1, "scaleY": 1, "rotation": 0, "opacity": 1 },
+  "style": { "fill": "#38bdf8", "fillOpacity": 0.8, "stroke": "#0f172a", "strokeOpacity": 1, "strokeWidth": 4 },
   "geometry": { "r": 48 },
   "children": []
 }
 ```
 
-Node は `id` で参照され、`transform`、`style`、`geometry`、`children` を持ちます。`group` node は children に他の node を含め、camera transform はすべての node の外側に合成されます。
+Node は `id` で参照され、`transform`、`style`、`geometry`、`children` を持ちます。`scaleX` / `scaleY` は任意の非等方 scale multiplier で、省略時は `1` として扱われます。`group` node は children に他の node を含め、camera transform はすべての node の外側に合成されます。
 
 ## Supported node types
 

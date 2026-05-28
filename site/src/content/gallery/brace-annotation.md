@@ -3,15 +3,15 @@ title: BraceAnnotation
 description: "Manim Example: `BraceAnnotation` (`#braceannotation`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#braceannotation
 source_example_path: examples/gallery/brace_annotation.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "Brace は Manim の SVG テンプレート由来の塗り形状に寄せた renderer 近似で、細部のカール形状は完全一致しない。"
+  - symptom: "Brace shape and labels are generated from the primitive, but SVG mobject point sampling / browser text metrics may still differ slightly from Manim."
     layer: renderer
     impact: low
-    workaround: "塗りつぶし brace と tip 近傍のラベル配置で公式出力に近づける。"
+    workaround: "Manim の Brace source と同じ path template / `default_min_width=0.90552` / `linear_section_length` モデルを使った塗りつぶし brace と、`get_text` / `get_tex` 相当の primitive label を tip 近傍へ配置する。"
     closure_condition: "該当レンダリング差分が解消され、Manim 出力との視覚差が許容範囲に収まる。"
-    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Basic Concepts
 status: ported
 order: 13
@@ -22,8 +22,7 @@ rect bg w=960 h=540 at 0,0 fill="#000000"
 circle dotA r=8 at -160,80 fill="#ffffff" stroke="none"
 circle dotB r=8 at 160,-80 fill="#ffffff" stroke="none"
 line segment x1=-160 y1=80 x2=160 y2=-80 at 0,0 stroke="#ff862f" strokeWidth=4
-brace horizontal target=segment direction=down buff=22 label="Horizontal distance" labelSize=26 fill="#ffffff" stroke="none"
-brace perpendicular target=segment direction=perpendicular buff=22 fill="#ffffff" stroke="none"
-math perpendicularText "x-x_1" at 62,108 size=28 fill="#ffffff"
+brace horizontal target=segment direction=down buff=22 sharpness=2 label="Horizontal distance" labelSize=30 labelColor="#ffffff" fill="#ffffff" stroke="none"
+brace perpendicular target=segment direction=perpendicular buff=22 sharpness=2 label="x-x_1" labelRenderer=katex labelSize=28 labelW=90 labelH=70 labelOffset=8 labelColor="#ffffff" fill="#ffffff" stroke="none"
 
 wait 1s

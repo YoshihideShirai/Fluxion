@@ -4,6 +4,7 @@ import type {
   TimelineOperation,
   FluxionDocument,
   Camera,
+  Transform,
 } from "../types.js";
 import { ExpressionError, validateExpression, collectExpressionDependencies, evaluateExpression } from "../runtime/expression.js";
 import { DslCompileError } from "./errors.js";
@@ -66,6 +67,12 @@ interface CameraFrameCursor {
   y: number;
   scale: number;
   rotation: number;
+}
+
+interface TexTokenEntry {
+  node: SceneNode;
+  parentTransform: Transform;
+  absoluteNode: SceneNode;
 }
 
 export function compileTextDsl(source: string): FluxionDocument {
@@ -180,6 +187,7 @@ export function compileTextDsl(source: string): FluxionDocument {
       keyword === "text" ||
       keyword === "math" ||
       keyword === "brace" ||
+      keyword === "image" ||
       keyword === "group"
     ) {
       parseNode(tokens, state, lineNumber);
@@ -196,6 +204,11 @@ export function compileTextDsl(source: string): FluxionDocument {
       return;
     }
 
+    if (keyword === "numberPlane") {
+      parseNumberPlane(tokens, state, lineNumber);
+      return;
+    }
+
     if (keyword === "plot") {
       parsePlot(tokens, state, lineNumber);
       return;
@@ -203,6 +216,71 @@ export function compileTextDsl(source: string): FluxionDocument {
 
     if (keyword === "dataPolygon") {
       parseDataPolygon(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "dataLineGraph") {
+      parseDataLineGraph(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "dataRect") {
+      parseDataRect(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "dataDot") {
+      parseDataDot(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "dataLine") {
+      parseDataLine(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "dynamicLine") {
+      parseDynamicLine(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "dataArea") {
+      parseDataArea(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "dataRiemannRects") {
+      parseDataRiemannRects(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "gaussianSurface") {
+      parseGaussianSurface(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "sphereSurface") {
+      parseSphereSurface(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "threeDAxes") {
+      parseThreeDAxes(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "projectedCircle") {
+      parseProjectedCircle(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "rotatingLine") {
+      parseRotatingLine(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "rotateUpdater") {
+      parseRotateUpdater(tokens, state, lineNumber, statementTime(state));
       return;
     }
 
@@ -547,19 +625,25 @@ function parseAxes(tokens: string[], state: CompileState, lineNumber: number): v
   const height = parseNumber(options.get("height") ?? "360", lineNumber);
   const stroke = options.get("stroke") ?? "#94a3b8";
   const strokeWidth = parseNumber(options.get("strokeWidth") ?? "3", lineNumber);
+  const axesGeometryValue = { xMin: xRange[0]!, xMax: xRange[1]!, yMin: yRange[0]!, yMax: yRange[1]!, width, height };
+  const origin = axesDataToPoint({ x: 0, y: 0 }, axesGeometryValue);
 
   const xAxis = createBaseNode(`${id}_x`, "line");
   xAxis.transform.x = cx!; xAxis.transform.y = cy!;
-  xAxis.geometry.x1 = -width / 2; xAxis.geometry.y1 = 0; xAxis.geometry.x2 = width / 2; xAxis.geometry.y2 = 0;
+  xAxis.geometry.x1 = -width / 2; xAxis.geometry.y1 = origin.y; xAxis.geometry.x2 = width / 2; xAxis.geometry.y2 = origin.y;
   xAxis.style.stroke = stroke; xAxis.style.strokeWidth = strokeWidth;
 
   const yAxis = createBaseNode(`${id}_y`, "line");
   yAxis.transform.x = cx!; yAxis.transform.y = cy!;
-  yAxis.geometry.x1 = 0; yAxis.geometry.y1 = -height / 2; yAxis.geometry.x2 = 0; yAxis.geometry.y2 = height / 2;
+  yAxis.geometry.x1 = origin.x; yAxis.geometry.y1 = -height / 2; yAxis.geometry.x2 = origin.x; yAxis.geometry.y2 = height / 2;
   yAxis.style.stroke = stroke; yAxis.style.strokeWidth = strokeWidth;
 
   const group = createBaseNode(id, "group");
-  group.children = [xAxis, yAxis];
+  group.children = [
+    xAxis,
+    yAxis,
+    ...buildAxesNumberChildren(id, options, axesGeometryValue, origin, cx!, cy!, lineNumber),
+  ];
   group.metadata = { plot: { range: [xRange[0]!, xRange[1]!] } };
   group.geometry.xMin = xRange[0]!;
   group.geometry.xMax = xRange[1]!;
@@ -569,8 +653,172 @@ function parseAxes(tokens: string[], state: CompileState, lineNumber: number): v
   group.geometry.height = height;
   group.geometry.centerX = cx!;
   group.geometry.centerY = cy!;
+  group.geometry.originX = origin.x;
+  group.geometry.originY = origin.y;
   state.nodes.set(id, group);
   state.rootIds.add(id);
+}
+
+function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after numberPlane.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const [cx, cy] = parsePointOption(options.get("at") ?? "0,0", "at", lineNumber);
+  const [xMin, xMax] = parseRangeOption(options.get("xRange") ?? "-7,7", "xRange", lineNumber);
+  const [yMin, yMax] = parseRangeOption(options.get("yRange") ?? "-4,4", "yRange", lineNumber);
+  const xStep = parseNumber(options.get("xStep") ?? "1", lineNumber);
+  const yStep = parseNumber(options.get("yStep") ?? "1", lineNumber);
+  const xUnit = parseNumber(options.get("xUnit") ?? options.get("unit") ?? "60", lineNumber);
+  const yUnit = parseNumber(options.get("yUnit") ?? options.get("unit") ?? "60", lineNumber);
+  const color = options.get("stroke") ?? options.get("color") ?? "#00bcd4";
+  const axisColor = options.get("axisStroke") ?? options.get("axisColor") ?? "#dff9ff";
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "1.4", lineNumber);
+  const axisStrokeWidth = parseNumber(options.get("axisStrokeWidth") ?? "1.8", lineNumber);
+  const opacity = parseNumber(options.get("opacity") ?? "0.9", lineNumber);
+  const axisOpacity = parseNumber(options.get("axisOpacity") ?? "0.95", lineNumber);
+  const children: SceneNode[] = [];
+
+  for (const y of steppedValues(yMin, yMax, yStep)) {
+    const line = createBaseNode(`${id}:h:${formatAxisValueId(y)}`, "line");
+    line.geometry.x1 = xMin * xUnit;
+    line.geometry.y1 = -y * yUnit;
+    line.geometry.x2 = xMax * xUnit;
+    line.geometry.y2 = -y * yUnit;
+    line.style.stroke = Math.abs(y) < 1e-9 ? axisColor : color;
+    line.style.strokeWidth = Math.abs(y) < 1e-9 ? axisStrokeWidth : strokeWidth;
+    line.transform.opacity = Math.abs(y) < 1e-9 ? axisOpacity : opacity;
+    children.push(line);
+  }
+
+  for (const x of steppedValues(xMin, xMax, xStep)) {
+    const line = createBaseNode(`${id}:v:${formatAxisValueId(x)}`, "line");
+    line.geometry.x1 = x * xUnit;
+    line.geometry.y1 = -yMax * yUnit;
+    line.geometry.x2 = x * xUnit;
+    line.geometry.y2 = -yMin * yUnit;
+    line.style.stroke = Math.abs(x) < 1e-9 ? axisColor : color;
+    line.style.strokeWidth = Math.abs(x) < 1e-9 ? axisStrokeWidth : strokeWidth;
+    line.transform.opacity = Math.abs(x) < 1e-9 ? axisOpacity : opacity;
+    children.push(line);
+  }
+
+  const group = createBaseNode(id, "group");
+  group.transform.x = cx;
+  group.transform.y = cy;
+  group.children = children;
+  group.geometry.numberPlane = true;
+  group.geometry.xMin = xMin;
+  group.geometry.xMax = xMax;
+  group.geometry.yMin = yMin;
+  group.geometry.yMax = yMax;
+  group.geometry.xStep = xStep;
+  group.geometry.yStep = yStep;
+  group.geometry.xUnit = xUnit;
+  group.geometry.yUnit = yUnit;
+  for (const [key, value] of options) {
+    if (
+      [
+        "at",
+        "xRange",
+        "yRange",
+        "xStep",
+        "yStep",
+        "unit",
+        "xUnit",
+        "yUnit",
+        "stroke",
+        "color",
+        "axisStroke",
+        "axisColor",
+        "strokeWidth",
+        "axisStrokeWidth",
+        "opacity",
+        "axisOpacity",
+      ].includes(key)
+    )
+      continue;
+    applyNodeOption(group, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, group);
+  state.rootIds.add(id);
+}
+
+function buildAxesNumberChildren(
+  id: string,
+  options: Map<string, string>,
+  axes: { xMin: number; xMax: number; yMin: number; yMax: number; width: number; height: number },
+  origin: { x: number; y: number },
+  centerX: number,
+  centerY: number,
+  lineNumber: number,
+): SceneNode[] {
+  const tickLength = parseNumber(options.get("tickLength") ?? "14", lineNumber);
+  const tickStrokeWidth = parseNumber(options.get("tickStrokeWidth") ?? "2", lineNumber);
+  const labelSize = parseNumber(options.get("numberSize") ?? "18", lineNumber);
+  const color = options.get("numberColor") ?? options.get("stroke") ?? "#ffffff";
+  const xLabelOffset = parseNumber(options.get("xNumberOffset") ?? "36", lineNumber);
+  const yLabelOffset = parseNumber(options.get("yNumberOffset") ?? "-38", lineNumber);
+  const children: SceneNode[] = [];
+  const xNumbers = parseNumberListOption(options.get("xNumbers"), lineNumber);
+  const yNumbers = parseNumberListOption(options.get("yNumbers"), lineNumber);
+  const xNumberKeys = new Set(xNumbers.map(formatAxisValueId));
+  const yNumberKeys = new Set(yNumbers.map(formatAxisValueId));
+  const xTickValues = uniqueAxisValues([...parseNumberListOption(options.get("xTicks"), lineNumber), ...xNumbers]);
+  const yTickValues = uniqueAxisValues([...parseNumberListOption(options.get("yTicks"), lineNumber), ...yNumbers]);
+
+  for (const value of xTickValues) {
+    const point = axesDataToPoint({ x: value, y: 0 }, axes);
+    const suffix = formatAxisValueId(value);
+    const tick = createBaseNode(`${id}:x_tick:${suffix}`, "line");
+    tick.transform.x = centerX + point.x;
+    tick.transform.y = centerY + origin.y;
+    tick.geometry.x1 = 0;
+    tick.geometry.y1 = -tickLength / 2;
+    tick.geometry.x2 = 0;
+    tick.geometry.y2 = tickLength / 2;
+    tick.style.stroke = color;
+    tick.style.strokeWidth = tickStrokeWidth;
+    children.push(tick);
+    if (!xNumberKeys.has(suffix)) continue;
+    const label = createBaseNode(`${id}:x_number:${suffix}`, "text");
+    label.transform.x = centerX + point.x;
+    label.transform.y = centerY + origin.y + xLabelOffset;
+    label.geometry.fontSize = labelSize;
+    label.text = formatAxisNumber(value);
+    label.style.fill = color;
+    label.style.stroke = "none";
+    label.style.strokeWidth = 0;
+    children.push(label);
+  }
+
+  for (const value of yTickValues) {
+    const point = axesDataToPoint({ x: 0, y: value }, axes);
+    const suffix = formatAxisValueId(value);
+    const tick = createBaseNode(`${id}:y_tick:${suffix}`, "line");
+    tick.transform.x = centerX + origin.x;
+    tick.transform.y = centerY + point.y;
+    tick.geometry.x1 = -tickLength / 2;
+    tick.geometry.y1 = 0;
+    tick.geometry.x2 = tickLength / 2;
+    tick.geometry.y2 = 0;
+    tick.style.stroke = color;
+    tick.style.strokeWidth = tickStrokeWidth;
+    children.push(tick);
+    if (!yNumberKeys.has(suffix)) continue;
+    const label = createBaseNode(`${id}:y_number:${suffix}`, "text");
+    label.transform.x = centerX + origin.x + yLabelOffset;
+    label.transform.y = centerY + point.y;
+    label.geometry.fontSize = labelSize;
+    label.text = formatAxisNumber(value);
+    label.style.fill = color;
+    label.style.stroke = "none";
+    label.style.strokeWidth = 0;
+    children.push(label);
+  }
+
+  return children;
 }
 
 function parseDataPolygon(tokens: string[], state: CompileState, lineNumber: number): void {
@@ -586,18 +834,9 @@ function parseDataPolygon(tokens: string[], state: CompileState, lineNumber: num
   const pointsRaw = options.get("points");
   if (!pointsRaw) throw new DslCompileError("dataPolygon requires points=<x,y;...>.", lineNumber);
 
-  const xMin = Number(axes.geometry.xMin);
-  const xMax = Number(axes.geometry.xMax);
-  const yMin = Number(axes.geometry.yMin);
-  const yMax = Number(axes.geometry.yMax);
-  const width = Number(axes.geometry.width);
-  const height = Number(axes.geometry.height);
   const centerX = Number(axes.geometry.centerX ?? axes.transform.x);
   const centerY = Number(axes.geometry.centerY ?? axes.transform.y);
-  const points = parseDataPointList(pointsRaw, lineNumber).map(([x, y]) => ({
-    x: ((x - xMin) / (xMax - xMin) - 0.5) * width,
-    y: ((y - yMin) / (yMax - yMin) - 0.5) * height,
-  }));
+  const points = parseDataPointList(pointsRaw, lineNumber).map(([x, y]) => axesDataToPoint({ x, y }, axesGeometry(axes)));
 
   const node = createBaseNode(id, "path");
   node.transform.x = centerX;
@@ -620,20 +859,1094 @@ function parseDataPolygon(tokens: string[], state: CompileState, lineNumber: num
   state.rootIds.add(id);
 }
 
-function parseDataPointList(raw: string, lineNumber: number): Array<[number, number]> {
+function parseDataLineGraph(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after dataLineGraph.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const axesId = options.get("axes");
+  if (!axesId) throw new DslCompileError("dataLineGraph requires axes=<axesId>.", lineNumber);
+  const axes = requireNode(state, axesId, lineNumber);
+  if (axes.type !== "group" || axes.geometry.xMin === undefined || axes.geometry.yMin === undefined)
+    throw new DslCompileError(`dataLineGraph axes '${axesId}' is not an axes helper.`, lineNumber);
+  const pointsRaw = options.get("points");
+  if (!pointsRaw) throw new DslCompileError("dataLineGraph requires points=<x,y;...>.", lineNumber);
+
+  const centerX = Number(axes.geometry.centerX ?? axes.transform.x);
+  const centerY = Number(axes.geometry.centerY ?? axes.transform.y);
+  const points = parseDataPointList(pointsRaw, lineNumber, 2).map(([x, y]) => axesDataToPoint({ x, y }, axesGeometry(axes)));
+  const lineColor = options.get("lineColor") ?? options.get("stroke") ?? "#FFFF00";
+  const vertexColor = options.get("vertexColor") ?? lineColor;
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "4", lineNumber);
+  const vertexRadius = parseNumber(options.get("vertexRadius") ?? "5", lineNumber);
+
+  const line = createBaseNode(`${id}:line_graph`, "path");
+  line.geometry.d = points
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${formatPathNumber(point.x)} ${formatPathNumber(point.y)}`)
+    .join(" ");
+  line.style.fill = "none";
+  line.style.stroke = lineColor;
+  line.style.strokeWidth = strokeWidth;
+
+  const dots = points.map((point, index) => {
+    const dot = createBaseNode(`${id}:vertex:${index}`, "circle");
+    dot.transform.x = point.x;
+    dot.transform.y = point.y;
+    dot.geometry.r = vertexRadius;
+    dot.style.fill = vertexColor;
+    dot.style.stroke = vertexColor;
+    dot.style.strokeWidth = 0;
+    return dot;
+  });
+
+  const group = createBaseNode(id, "group");
+  group.transform.x = centerX;
+  group.transform.y = centerY;
+  group.children = [line, ...dots];
+  group.geometry.dataLineGraph = true;
+  group.geometry.axes = axesId;
+  group.geometry.points = pointsRaw;
+  for (const [key, value] of options) {
+    if (["axes", "points", "lineColor", "vertexColor", "stroke", "strokeWidth", "vertexRadius"].includes(key)) continue;
+    applyNodeOption(group, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, group);
+  state.rootIds.add(id);
+}
+
+function parseDataRect(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after dataRect.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const axesId = options.get("axes");
+  if (!axesId) throw new DslCompileError("dataRect requires axes=<axesId>.", lineNumber);
+  const axes = requireAxesNode(state, axesId, lineNumber, "dataRect");
+  const from = parseDataCoordExpressionOption(options.get("from") ?? "0,0", "from", state, lineNumber);
+  const to = parseDataCoordExpressionOption(options.get("to"), "to", state, lineNumber);
+  const centerX = Number(axes.geometry.centerX ?? axes.transform.x);
+  const centerY = Number(axes.geometry.centerY ?? axes.transform.y);
+  const geometry = axesGeometry(axes);
+  const x0 = axesDataExpression("x", from.x, geometry, centerX, centerY);
+  const y0 = axesDataExpression("y", from.y, geometry, centerX, centerY);
+  const x1 = axesDataExpression("x", to.x, geometry, centerX, centerY);
+  const y1 = axesDataExpression("y", to.y, geometry, centerX, centerY);
+  const expressions = {
+    w: `abs((${x1})-(${x0}))`,
+    h: `abs((${y1})-(${y0}))`,
+    x: `((${x0})+(${x1}))/2`,
+    y: `((${y0})+(${y1}))/2`,
+  };
+
+  const node = createBaseNode(id, "rect");
+  node.geometry.w = evaluateDslExpression(expressions.w, state, lineNumber);
+  node.geometry.h = evaluateDslExpression(expressions.h, state, lineNumber);
+  node.transform.x = evaluateDslExpression(expressions.x, state, lineNumber);
+  node.transform.y = evaluateDslExpression(expressions.y, state, lineNumber);
+  node.geometry.dataRect = true;
+  node.geometry.axes = axesId;
+  node.geometry.from = `${from.x},${from.y}`;
+  node.geometry.to = `${to.x},${to.y}`;
+  node.style.fill = "#58C4DD";
+  node.style.fillOpacity = 0.5;
+  node.style.stroke = "#F7D45A";
+  node.style.strokeWidth = 1;
+  for (const [key, value] of options) {
+    if (["axes", "from", "to"].includes(key)) continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+  pushBindExpr(state, id, propertyPath("w"), expressions.w, statementTime(state));
+  pushBindExpr(state, id, propertyPath("h"), expressions.h, statementTime(state));
+  pushBindExpr(state, id, propertyPath("x"), expressions.x, statementTime(state));
+  pushBindExpr(state, id, propertyPath("y"), expressions.y, statementTime(state));
+}
+
+function parseDataDot(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after dataDot.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const axesId = options.get("axes");
+  if (!axesId) throw new DslCompileError("dataDot requires axes=<axesId>.", lineNumber);
+  const axes = requireAxesNode(state, axesId, lineNumber, "dataDot");
+  const point = parseDataCoordExpressionOption(options.get("point"), "point", state, lineNumber);
+  const centerX = Number(axes.geometry.centerX ?? axes.transform.x);
+  const centerY = Number(axes.geometry.centerY ?? axes.transform.y);
+  const geometry = axesGeometry(axes);
+  const xExpr = axesDataExpression("x", point.x, geometry, centerX, centerY);
+  const yExpr = axesDataExpression("y", point.y, geometry, centerX, centerY);
+
+  const node = createBaseNode(id, "circle");
+  node.transform.x = evaluateDslExpression(xExpr, state, lineNumber);
+  node.transform.y = evaluateDslExpression(yExpr, state, lineNumber);
+  node.geometry.r = parseNumber(options.get("r") ?? "8", lineNumber);
+  node.geometry.dataDot = true;
+  node.geometry.axes = axesId;
+  node.geometry.point = `${point.x},${point.y}`;
+  node.style.fill = "#ffffff";
+  node.style.stroke = "#ffffff";
+  node.style.strokeWidth = 2;
+  for (const [key, value] of options) {
+    if (["axes", "point", "r"].includes(key)) continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+  pushBindExpr(state, id, propertyPath("x"), xExpr, statementTime(state));
+  pushBindExpr(state, id, propertyPath("y"), yExpr, statementTime(state));
+}
+
+function parseDataLine(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after dataLine.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const axesId = options.get("axes");
+  if (!axesId) throw new DslCompileError("dataLine requires axes=<axesId>.", lineNumber);
+  const axes = requireAxesNode(state, axesId, lineNumber, "dataLine");
+  const from = parseDataCoordExpressionOption(options.get("from"), "from", state, lineNumber);
+  const to = parseDataCoordExpressionOption(options.get("to"), "to", state, lineNumber);
+  const centerX = Number(axes.geometry.centerX ?? axes.transform.x);
+  const centerY = Number(axes.geometry.centerY ?? axes.transform.y);
+  const geometry = axesGeometry(axes);
+  const expressions = {
+    x1: axesDataExpression("x", from.x, geometry, centerX, centerY),
+    y1: axesDataExpression("y", from.y, geometry, centerX, centerY),
+    x2: axesDataExpression("x", to.x, geometry, centerX, centerY),
+    y2: axesDataExpression("y", to.y, geometry, centerX, centerY),
+  };
+
+  const node = createBaseNode(id, "line");
+  node.geometry.x1 = evaluateDslExpression(expressions.x1, state, lineNumber);
+  node.geometry.y1 = evaluateDslExpression(expressions.y1, state, lineNumber);
+  node.geometry.x2 = evaluateDslExpression(expressions.x2, state, lineNumber);
+  node.geometry.y2 = evaluateDslExpression(expressions.y2, state, lineNumber);
+  node.geometry.dataLine = true;
+  node.geometry.axes = axesId;
+  node.geometry.from = `${from.x},${from.y}`;
+  node.geometry.to = `${to.x},${to.y}`;
+  node.style.fill = "none";
+  node.style.stroke = "#ffffff";
+  node.style.strokeWidth = 4;
+  for (const [key, value] of options) {
+    if (["axes", "from", "to"].includes(key)) continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+  for (const [property, expression] of Object.entries(expressions)) {
+    pushBindExpr(state, id, propertyPath(property), expression, statementTime(state));
+  }
+}
+
+function parseDynamicLine(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after dynamicLine.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const expressions = {
+    x1: options.get("x1") ?? "0",
+    y1: options.get("y1") ?? "0",
+    x2: options.get("x2") ?? "100",
+    y2: options.get("y2") ?? "0",
+  };
+  for (const expression of Object.values(expressions)) validateDslExpression(expression, state, lineNumber);
+
+  const node = createBaseNode(id, "line");
+  node.geometry.x1 = evaluateDslExpression(expressions.x1, state, lineNumber);
+  node.geometry.y1 = evaluateDslExpression(expressions.y1, state, lineNumber);
+  node.geometry.x2 = evaluateDslExpression(expressions.x2, state, lineNumber);
+  node.geometry.y2 = evaluateDslExpression(expressions.y2, state, lineNumber);
+  node.geometry.dynamicLine = true;
+  node.style.fill = "none";
+  node.style.stroke = "#ffffff";
+  node.style.strokeWidth = 4;
+  for (const [key, value] of options) {
+    if (["x1", "y1", "x2", "y2"].includes(key)) continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+  for (const [property, expression] of Object.entries(expressions)) {
+    pushBindExpr(state, id, propertyPath(property), expression, statementTime(state));
+  }
+}
+
+function parseDataArea(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after dataArea.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const axesId = options.get("axes");
+  if (!axesId) throw new DslCompileError("dataArea requires axes=<axesId>.", lineNumber);
+  const axes = requireAxesNode(state, axesId, lineNumber, "dataArea");
+  const lower = options.get("lower");
+  const upper = options.get("upper");
+  if (!lower || !upper) throw new DslCompileError("dataArea requires lower=<expr> and upper=<expr>.", lineNumber);
+  validateGraphExpression(lower, state, lineNumber);
+  validateGraphExpression(upper, state, lineNumber);
+  const [x0, x1] = parseRangeOption(options.get("range"), "range", lineNumber);
+  const samples = Math.max(2, Math.round(parseNumber(options.get("samples") ?? "48", lineNumber)));
+  const centerX = Number(axes.geometry.centerX ?? axes.transform.x);
+  const centerY = Number(axes.geometry.centerY ?? axes.transform.y);
+  const geometry = axesGeometry(axes);
+  const upperPoints = sampleDataFunctionPoints(upper, x0, x1, samples, state, lineNumber, geometry, centerX, centerY);
+  const lowerPoints = sampleDataFunctionPoints(lower, x1, x0, samples, state, lineNumber, geometry, centerX, centerY);
+
+  const node = createBaseNode(id, "path");
+  node.geometry.d = [...upperPoints, ...lowerPoints]
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${formatPathNumber(point.x)} ${formatPathNumber(point.y)}`)
+    .concat("Z")
+    .join(" ");
+  node.geometry.dataArea = true;
+  node.geometry.axes = axesId;
+  node.geometry.lower = lower;
+  node.geometry.upper = upper;
+  node.style.fill = "#888888";
+  node.style.fillOpacity = 0.5;
+  node.style.stroke = "none";
+  node.style.strokeWidth = 0;
+  for (const [key, value] of options) {
+    if (["axes", "lower", "upper", "range", "samples"].includes(key)) continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+}
+
+function parseDataRiemannRects(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after dataRiemannRects.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const axesId = options.get("axes");
+  if (!axesId) throw new DslCompileError("dataRiemannRects requires axes=<axesId>.", lineNumber);
+  const axes = requireAxesNode(state, axesId, lineNumber, "dataRiemannRects");
+  const fn = options.get("fn");
+  if (!fn) throw new DslCompileError("dataRiemannRects requires fn=<expr>.", lineNumber);
+  validateGraphExpression(fn, state, lineNumber);
+  const [x0, x1] = parseRangeOption(options.get("range"), "range", lineNumber);
+  const dx = parseNumber(options.get("dx") ?? "0.1", lineNumber);
+  const centerX = Number(axes.geometry.centerX ?? axes.transform.x);
+  const centerY = Number(axes.geometry.centerY ?? axes.transform.y);
+  const geometry = axesGeometry(axes);
+  const fill = options.get("fill") ?? options.get("color") ?? "#0000FF";
+  const stroke = options.get("stroke") ?? options.get("strokeColor") ?? "#000000";
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "1", lineNumber);
+  const fillOpacity = parseNumber(options.get("fillOpacity") ?? "0.5", lineNumber);
+  const children: SceneNode[] = [];
+  const count = Math.max(0, Math.ceil((x1 - x0) / dx - 1e-9));
+  for (let index = 0; index < count; index++) {
+    const left = x0 + index * dx;
+    const right = Math.min(left + dx, x1);
+    const y = evaluateGraphExpression(fn, left, state, lineNumber);
+    const p0 = axesDataToScenePoint({ x: left, y: 0 }, geometry, centerX, centerY);
+    const p1 = axesDataToScenePoint({ x: right, y }, geometry, centerX, centerY);
+    const rect = createBaseNode(`${id}:rect:${index}`, "rect");
+    rect.geometry.w = Math.abs(p1.x - p0.x);
+    rect.geometry.h = Math.abs(p1.y - p0.y);
+    rect.transform.x = (p0.x + p1.x) / 2;
+    rect.transform.y = (p0.y + p1.y) / 2;
+    rect.style.fill = fill;
+    rect.style.fillOpacity = fillOpacity;
+    rect.style.stroke = stroke;
+    rect.style.strokeWidth = strokeWidth;
+    children.push(rect);
+  }
+
+  const group = createBaseNode(id, "group");
+  group.children = children;
+  group.geometry.dataRiemannRects = true;
+  group.geometry.axes = axesId;
+  group.geometry.fn = fn;
+  group.geometry.dx = dx;
+  for (const [key, value] of options) {
+    if (["axes", "fn", "range", "dx", "fill", "color", "stroke", "strokeColor", "strokeWidth", "fillOpacity"].includes(key)) continue;
+    applyNodeOption(group, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, group);
+  state.rootIds.add(id);
+}
+
+function parseGaussianSurface(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after gaussianSurface.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const [cx, cy] = parsePointOption(options.get("at") ?? "0,0", "at", lineNumber);
+  const [u0, u1] = parseRangeOption(options.get("uRange") ?? options.get("range") ?? "-2,2", "uRange", lineNumber);
+  const [v0, v1] = parseRangeOption(options.get("vRange") ?? options.get("range") ?? "-2,2", "vRange", lineNumber);
+  const resolution = Math.max(1, Math.round(parseNumber(options.get("resolution") ?? "24", lineNumber)));
+  const scale = parseNumber(options.get("scale") ?? "2", lineNumber);
+  const sigma = parseNumber(options.get("sigma") ?? "0.4", lineNumber);
+  const [basisXX, basisXY] = parsePointOption(options.get("xBasis") ?? "63,31", "xBasis", lineNumber);
+  const [basisYX, basisYY] = parsePointOption(options.get("yBasis") ?? "-60,30", "yBasis", lineNumber);
+  const [basisZX, basisZY] = parsePointOption(options.get("zBasis") ?? "0,-130", "zBasis", lineNumber);
+  const fillA = options.get("fillA") ?? "#FF862F";
+  const fillB = options.get("fillB") ?? "#58C4DD";
+  const stroke = options.get("stroke") ?? "#83C167";
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "1", lineNumber);
+  const fillOpacity = parseNumber(options.get("fillOpacity") ?? "0.5", lineNumber);
+  const shade = parseBoolean(options.get("shade") ?? "false", lineNumber);
+  const shadeStrength = parseNumber(options.get("shadeStrength") ?? "0.18", lineNumber);
+
+  const project = (u: number, v: number): { x: number; y: number; z: number; depth: number } => {
+    const d = Math.hypot(u, v);
+    const z = Math.exp(-(d ** 2 / (2 * sigma ** 2)));
+    const x = u * scale;
+    const y = v * scale;
+    const projectedZ = z * scale;
+    return {
+      x: x * basisXX + y * basisYX + projectedZ * basisZX,
+      y: x * basisXY + y * basisYY + projectedZ * basisZY,
+      z,
+      depth: x + y - projectedZ,
+    };
+  };
+
+  const faces: Array<{ row: number; col: number; height: number; depth: number; points: Array<{ x: number; y: number }> }> = [];
+  for (let row = 0; row < resolution; row += 1) {
+    const va = v0 + (v1 - v0) * (row / resolution);
+    const vb = v0 + (v1 - v0) * ((row + 1) / resolution);
+    for (let col = 0; col < resolution; col += 1) {
+      const ua = u0 + (u1 - u0) * (col / resolution);
+      const ub = u0 + (u1 - u0) * ((col + 1) / resolution);
+      const points = [project(ua, va), project(ub, va), project(ub, vb), project(ua, vb)];
+      faces.push({
+        row,
+        col,
+        height: points.reduce((sum, point) => sum + point.z, 0) / points.length,
+        depth: points.reduce((sum, point) => sum + point.depth, 0) / points.length,
+        points,
+      });
+    }
+  }
+  faces.sort((left, right) => left.depth - right.depth);
+
+  const group = createBaseNode(id, "group");
+  group.transform.x = cx;
+  group.transform.y = cy;
+  group.geometry.gaussianSurface = true;
+  group.geometry.uMin = u0;
+  group.geometry.uMax = u1;
+  group.geometry.vMin = v0;
+  group.geometry.vMax = v1;
+  group.geometry.resolution = resolution;
+  group.geometry.sigma = sigma;
+  group.geometry.scale = scale;
+  group.geometry.shade = shade;
+  group.children = faces.map((face, index) => {
+    const node = createBaseNode(`${id}:face:${index}`, "path");
+    node.geometry.d = face.points
+      .map((point, pointIndex) => `${pointIndex === 0 ? "M" : "L"} ${formatPathNumber(point.x)} ${formatPathNumber(point.y)}`)
+      .concat("Z")
+      .join(" ");
+    const baseFill = (face.row + face.col) % 2 === 0 ? fillA : fillB;
+    node.style.fill = shade ? shadeHexColor(baseFill, 1 - shadeStrength + face.height * shadeStrength * 2) : baseFill;
+    node.style.fillOpacity = fillOpacity;
+    node.style.stroke = stroke;
+    node.style.strokeWidth = strokeWidth;
+    return node;
+  });
+
+  for (const [key, value] of options) {
+    if (
+      [
+        "at",
+        "range",
+        "uRange",
+        "vRange",
+        "resolution",
+        "scale",
+        "sigma",
+        "xBasis",
+        "yBasis",
+        "zBasis",
+        "fillA",
+        "fillB",
+        "stroke",
+        "strokeWidth",
+        "fillOpacity",
+        "shade",
+        "shadeStrength",
+      ].includes(key)
+    )
+      continue;
+    applyNodeOption(group, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, group);
+  state.rootIds.add(id);
+}
+
+function parseSphereSurface(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after sphereSurface.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const [cx, cy] = parsePointOption(options.get("at") ?? "0,0", "at", lineNumber);
+  const [u0, u1] = parseRangeOption(options.get("uRange") ?? "-1.57079632679,1.57079632679", "uRange", lineNumber);
+  const [v0, v1] = parseRangeOption(options.get("vRange") ?? "0,6.28318530718", "vRange", lineNumber);
+  const [uResolution, vResolution] = parseResolutionOption(options.get("resolution") ?? "15,32", lineNumber);
+  const radius = parseNumber(options.get("radius") ?? "104", lineNumber);
+  const fillA = options.get("fillA") ?? "#E65A4C";
+  const fillB = options.get("fillB") ?? "#CF5044";
+  const stroke = options.get("stroke") ?? "none";
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "0", lineNumber);
+  const fillOpacity = parseNumber(options.get("fillOpacity") ?? "1", lineNumber);
+  const shade = parseBoolean(options.get("shade") ?? "true", lineNumber);
+  const [lightX, lightY, lightZ] = parseVector3Option(options.get("light") ?? "0,-0.35,1", "light", lineNumber);
+  const lightLength = Math.hypot(lightX, lightY, lightZ) || 1;
+  const light = { x: lightX / lightLength, y: lightY / lightLength, z: lightZ / lightLength };
+
+  const project = (u: number, v: number): { x: number; y: number; z: number; depth: number } => {
+    const cu = Math.cos(u);
+    const x = cu * Math.cos(v);
+    const y = cu * Math.sin(v);
+    const z = Math.sin(u);
+    return {
+      x: radius * x,
+      y: radius * (-z + 0.18 * y),
+      z,
+      depth: 0.25 * x + 0.35 * y + z,
+    };
+  };
+
+  const faces: Array<{ row: number; col: number; shade: number; depth: number; points: Array<{ x: number; y: number }> }> = [];
+  for (let row = 0; row < uResolution; row += 1) {
+    const ua = u0 + (u1 - u0) * (row / uResolution);
+    const ub = u0 + (u1 - u0) * ((row + 1) / uResolution);
+    for (let col = 0; col < vResolution; col += 1) {
+      const va = v0 + (v1 - v0) * (col / vResolution);
+      const vb = v0 + (v1 - v0) * ((col + 1) / vResolution);
+      const points3d = [project(ua, va), project(ub, va), project(ub, vb), project(ua, vb)];
+      const midU = (ua + ub) / 2;
+      const midV = (va + vb) / 2;
+      const cm = Math.cos(midU);
+      const normal = { x: cm * Math.cos(midV), y: cm * Math.sin(midV), z: Math.sin(midU) };
+      const lightAmount = Math.max(0, normal.x * light.x + normal.y * light.y + normal.z * light.z);
+      faces.push({
+        row,
+        col,
+        shade: shade ? 0.38 + lightAmount * 0.62 : 1,
+        depth: points3d.reduce((sum, point) => sum + point.depth, 0) / points3d.length,
+        points: points3d,
+      });
+    }
+  }
+  faces.sort((left, right) => left.depth - right.depth);
+
+  const group = createBaseNode(id, "group");
+  group.transform.x = cx;
+  group.transform.y = cy;
+  group.geometry.sphereSurface = true;
+  group.geometry.uMin = u0;
+  group.geometry.uMax = u1;
+  group.geometry.vMin = v0;
+  group.geometry.vMax = v1;
+  group.geometry.uResolution = uResolution;
+  group.geometry.vResolution = vResolution;
+  group.geometry.radius = radius;
+  group.children = faces.map((face, index) => {
+    const node = createBaseNode(`${id}:face:${index}`, "path");
+    node.geometry.d = face.points
+      .map((point, pointIndex) => `${pointIndex === 0 ? "M" : "L"} ${formatPathNumber(point.x)} ${formatPathNumber(point.y)}`)
+      .concat("Z")
+      .join(" ");
+    const baseFill = (face.row + face.col) % 2 === 0 ? fillA : fillB;
+    node.style.fill = shade ? shadeHexColor(baseFill, face.shade) : baseFill;
+    node.style.fillOpacity = fillOpacity;
+    node.style.stroke = stroke;
+    node.style.strokeWidth = strokeWidth;
+    return node;
+  });
+
+  for (const [key, value] of options) {
+    if (
+      [
+        "at",
+        "uRange",
+        "vRange",
+        "resolution",
+        "radius",
+        "fillA",
+        "fillB",
+        "stroke",
+        "strokeWidth",
+        "fillOpacity",
+        "shade",
+        "light",
+      ].includes(key)
+    )
+      continue;
+    applyNodeOption(group, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, group);
+  state.rootIds.add(id);
+}
+
+function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after threeDAxes.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const [cx, cy] = parsePointOption(options.get("at") ?? "0,0", "at", lineNumber);
+  const [xMin, xMax, xStep] = parseRange3Option(options.get("xRange") ?? "-6,6,1", "xRange", lineNumber);
+  const [yMin, yMax, yStep] = parseRange3Option(options.get("yRange") ?? "-5,5,1", "yRange", lineNumber);
+  const [zMin, zMax, zStep] = parseRange3Option(options.get("zRange") ?? "-4,4,1", "zRange", lineNumber);
+  const [xBasisX, xBasisY] = parsePointOption(options.get("xBasis") ?? "43.333333,21.333333", "xBasis", lineNumber);
+  const [yBasisX, yBasisY] = parsePointOption(options.get("yBasis") ?? "-47.6,23.6", "yBasis", lineNumber);
+  const [zBasisX, zBasisY] = parsePointOption(options.get("zBasis") ?? "0,-60", "zBasis", lineNumber);
+  const stroke = options.get("stroke") ?? "#FFFFFF";
+  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "4", lineNumber);
+  const tickSize = parseNumber(options.get("tickSize") ?? "10", lineNumber);
+  const tickStrokeWidth = parseNumber(options.get("tickStrokeWidth") ?? "2", lineNumber);
+  const includeTicks = parseBoolean(options.get("includeTicks") ?? "true", lineNumber);
+  const includeTips = parseBoolean(options.get("includeTips") ?? "true", lineNumber);
+  const tipLength = parseNumber(options.get("tipLength") ?? "18", lineNumber);
+  const tipWidth = parseNumber(options.get("tipWidth") ?? "14", lineNumber);
+
+  const children: SceneNode[] = [];
+  const basis = {
+    x: { x: xBasisX, y: xBasisY, tick: { x: -xBasisY, y: xBasisX } },
+    y: { x: yBasisX, y: yBasisY, tick: { x: -yBasisY, y: yBasisX } },
+    z: { x: zBasisX, y: zBasisY, tick: { x: 1, y: 0 } },
+  };
+
+  addProjectedAxis(children, id, "x", xMin, xMax, xStep, basis.x, {
+    stroke,
+    strokeWidth,
+    tickSize,
+    tickStrokeWidth,
+    includeTicks,
+    includeTips,
+    tipLength,
+    tipWidth,
+  });
+  addProjectedAxis(children, id, "y", yMin, yMax, yStep, basis.y, {
+    stroke,
+    strokeWidth,
+    tickSize,
+    tickStrokeWidth,
+    includeTicks,
+    includeTips,
+    tipLength,
+    tipWidth,
+  });
+  addProjectedAxis(children, id, "z", zMin, zMax, zStep, basis.z, {
+    stroke,
+    strokeWidth,
+    tickSize,
+    tickStrokeWidth,
+    includeTicks,
+    includeTips,
+    tipLength,
+    tipWidth,
+  });
+
+  const group = createBaseNode(id, "group");
+  group.transform.x = cx;
+  group.transform.y = cy;
+  group.geometry.threeDAxes = true;
+  group.geometry.xRange = [xMin, xMax, xStep];
+  group.geometry.yRange = [yMin, yMax, yStep];
+  group.geometry.zRange = [zMin, zMax, zStep];
+  group.children = children;
+
+  for (const [key, value] of options) {
+    if (
+      [
+        "at",
+        "xRange",
+        "yRange",
+        "zRange",
+        "xBasis",
+        "yBasis",
+        "zBasis",
+        "stroke",
+        "strokeWidth",
+        "tickSize",
+        "tickStrokeWidth",
+        "includeTicks",
+        "includeTips",
+        "tipLength",
+        "tipWidth",
+      ].includes(key)
+    )
+      continue;
+    applyNodeOption(group, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, group);
+  state.rootIds.add(id);
+}
+
+function parseProjectedCircle(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after projectedCircle.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const [cx, cy] = parsePointOption(options.get("at") ?? "0,0", "at", lineNumber);
+  const radius = parseNumber(options.get("radius") ?? "1", lineNumber);
+  const [xBasisX, xBasisY] = parsePointOption(options.get("xBasis") ?? "-56.75,25.5", "xBasis", lineNumber);
+  const [yBasisX, yBasisY] = parsePointOption(options.get("yBasis") ?? "87.75,13.25", "yBasis", lineNumber);
+
+  const path = createBaseNode(id, "path");
+  path.transform.x = cx;
+  path.transform.y = cy;
+  path.geometry.d = projectedCirclePath(
+    radius,
+    { x: xBasisX, y: xBasisY },
+    { x: yBasisX, y: yBasisY },
+  );
+  path.geometry.projectedCircle = true;
+  path.geometry.radius = radius;
+  path.style.fill = options.get("fill") ?? "none";
+  path.style.stroke = options.get("stroke") ?? "#FFFFFF";
+  path.style.strokeWidth = parseNumber(options.get("strokeWidth") ?? "4", lineNumber);
+
+  for (const [key, value] of options) {
+    if (["at", "radius", "xBasis", "yBasis", "fill", "stroke", "strokeWidth"].includes(key)) continue;
+    applyNodeOption(path, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, path);
+  state.rootIds.add(id);
+}
+
+function projectedCirclePath(
+  radius: number,
+  xBasis: { x: number; y: number },
+  yBasis: { x: number; y: number },
+): string {
+  const kappa = 0.5522847498307936;
+  const p = (x: number, y: number): string =>
+    `${formatPathNumber(radius * (x * xBasis.x + y * yBasis.x))} ${formatPathNumber(radius * (x * xBasis.y + y * yBasis.y))}`;
+  return [
+    `M ${p(1, 0)}`,
+    `C ${p(1, kappa)} ${p(kappa, 1)} ${p(0, 1)}`,
+    `C ${p(-kappa, 1)} ${p(-1, kappa)} ${p(-1, 0)}`,
+    `C ${p(-1, -kappa)} ${p(-kappa, -1)} ${p(0, -1)}`,
+    `C ${p(kappa, -1)} ${p(1, -kappa)} ${p(1, 0)}`,
+    "Z",
+  ].join(" ");
+}
+
+function parseDataPointList(raw: string, lineNumber: number, minPoints = 3): Array<[number, number]> {
   const points = raw.split(";").map((point) => {
     const [xRaw, yRaw] = point.split(",");
     if (xRaw === undefined || yRaw === undefined)
-      throw new DslCompileError("Expected dataPolygon points as x,y;x,y;...", lineNumber);
+      throw new DslCompileError("Expected data points as x,y;x,y;...", lineNumber);
     return [parseNumber(xRaw, lineNumber), parseNumber(yRaw, lineNumber)] as [number, number];
   });
-  if (points.length < 3)
-    throw new DslCompileError("dataPolygon requires at least three points.", lineNumber);
+  if (points.length < minPoints)
+    throw new DslCompileError(`Expected at least ${minPoints} data points.`, lineNumber);
   return points;
+}
+
+function parseNumberListOption(raw: string | undefined, lineNumber: number): number[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .filter((value) => value.length > 0)
+    .map((value) => parseNumber(value, lineNumber));
+}
+
+function uniqueAxisValues(values: number[]): number[] {
+  const byId = new Map<string, number>();
+  for (const value of values) byId.set(formatAxisValueId(value), value);
+  return [...byId.values()];
+}
+
+function steppedValues(min: number, max: number, step: number): number[] {
+  const delta = Math.abs(step) > 1e-9 ? Math.abs(step) : 1;
+  const values: number[] = [];
+  const start = Math.ceil(min / delta) * delta;
+  for (let value = start; value <= max + 1e-9; value += delta) values.push(Number(value.toFixed(8)));
+  return values;
+}
+
+function requireAxesNode(
+  state: CompileState,
+  axesId: string,
+  lineNumber: number,
+  caller: string,
+): SceneNode {
+  const axes = requireNode(state, axesId, lineNumber);
+  if (axes.type !== "group" || axes.geometry.xMin === undefined || axes.geometry.yMin === undefined)
+    throw new DslCompileError(`${caller} axes '${axesId}' is not an axes helper.`, lineNumber);
+  return axes;
+}
+
+function axesGeometry(axes: SceneNode): { xMin: number; xMax: number; yMin: number; yMax: number; width: number; height: number } {
+  return {
+    xMin: Number(axes.geometry.xMin),
+    xMax: Number(axes.geometry.xMax),
+    yMin: Number(axes.geometry.yMin),
+    yMax: Number(axes.geometry.yMax),
+    width: Number(axes.geometry.width),
+    height: Number(axes.geometry.height),
+  };
+}
+
+function parseDataCoordExpressionOption(
+  raw: string | undefined,
+  optionName: string,
+  state: CompileState,
+  lineNumber: number,
+): { x: string; y: string } {
+  if (!raw) throw new DslCompileError(`Expected ${optionName}=x,y.`, lineNumber);
+  const commaIndex = raw.indexOf(",");
+  if (commaIndex === -1) throw new DslCompileError(`Expected ${optionName}=x,y.`, lineNumber);
+  const x = raw.slice(0, commaIndex);
+  const y = raw.slice(commaIndex + 1);
+  validateDslExpression(x, state, lineNumber);
+  validateDslExpression(y, state, lineNumber);
+  return { x, y };
+}
+
+function axesDataExpression(
+  axis: "x" | "y",
+  valueExpression: string,
+  axes: { xMin: number; xMax: number; yMin: number; yMax: number; width: number; height: number },
+  centerX: number,
+  centerY: number,
+): string {
+  if (axis === "x") {
+    return `${formatPathNumber(centerX)}+(((${valueExpression})-${formatPathNumber(axes.xMin)})/${formatPathNumber(axes.xMax - axes.xMin)}-0.5)*${formatPathNumber(axes.width)}`;
+  }
+  return `${formatPathNumber(centerY)}-(((${valueExpression})-${formatPathNumber(axes.yMin)})/${formatPathNumber(axes.yMax - axes.yMin)}-0.5)*${formatPathNumber(axes.height)}`;
+}
+
+function axesDataToPoint(
+  point: { x: number; y: number },
+  axes: { xMin: number; xMax: number; yMin: number; yMax: number; width: number; height: number },
+): { x: number; y: number } {
+  return {
+    x: ((point.x - axes.xMin) / (axes.xMax - axes.xMin) - 0.5) * axes.width,
+    y: -((point.y - axes.yMin) / (axes.yMax - axes.yMin) - 0.5) * axes.height,
+  };
+}
+
+function axesDataToScenePoint(
+  point: { x: number; y: number },
+  axes: { xMin: number; xMax: number; yMin: number; yMax: number; width: number; height: number },
+  centerX: number,
+  centerY: number,
+): { x: number; y: number } {
+  const local = axesDataToPoint(point, axes);
+  return { x: centerX + local.x, y: centerY + local.y };
+}
+
+function parseRangeOption(raw: string | undefined, optionName: string, lineNumber: number): [number, number] {
+  if (!raw) throw new DslCompileError(`Expected ${optionName}=min,max.`, lineNumber);
+  const [min, max] = raw.split(",").map((value) => parseNumber(value, lineNumber));
+  if (min === undefined || max === undefined || Number.isNaN(min) || Number.isNaN(max))
+    throw new DslCompileError(`Expected ${optionName}=min,max.`, lineNumber);
+  return [min, max];
+}
+
+function parseRange3Option(raw: string | undefined, optionName: string, lineNumber: number): [number, number, number] {
+  if (!raw) throw new DslCompileError(`Expected ${optionName}=min,max,step.`, lineNumber);
+  const [min, max, step] = raw.split(",").map((value) => parseNumber(value, lineNumber));
+  if (
+    min === undefined ||
+    max === undefined ||
+    step === undefined ||
+    Number.isNaN(min) ||
+    Number.isNaN(max) ||
+    Number.isNaN(step) ||
+    step === 0
+  )
+    throw new DslCompileError(`Expected ${optionName}=min,max,step with nonzero step.`, lineNumber);
+  return [min, max, step];
+}
+
+function sampleDataFunctionPoints(
+  expression: string,
+  x0: number,
+  x1: number,
+  samples: number,
+  state: CompileState,
+  lineNumber: number,
+  axes: { xMin: number; xMax: number; yMin: number; yMax: number; width: number; height: number },
+  centerX: number,
+  centerY: number,
+): Array<{ x: number; y: number }> {
+  const points: Array<{ x: number; y: number }> = [];
+  for (let index = 0; index < samples; index++) {
+    const u = samples === 1 ? 0 : index / (samples - 1);
+    const t = x0 + (x1 - x0) * u;
+    points.push(axesDataToScenePoint({ x: t, y: evaluateGraphExpression(expression, t, state, lineNumber) }, axes, centerX, centerY));
+  }
+  return points;
+}
+
+function validateGraphExpression(expression: string, state: CompileState, lineNumber: number): void {
+  try {
+    validateExpression(expression, [...state.values.keys(), "t"]);
+  } catch (error) {
+    if (error instanceof ExpressionError)
+      throw new DslCompileError(
+        `Invalid expression: ${error.message}`,
+        lineNumber,
+      );
+    throw error;
+  }
+}
+
+function evaluateGraphExpression(
+  expression: string,
+  t: number,
+  state: CompileState,
+  lineNumber: number,
+): number {
+  try {
+    return evaluateExpression(expression, { ...Object.fromEntries(state.values), t });
+  } catch (error) {
+    if (error instanceof ExpressionError)
+      throw new DslCompileError(
+        `Invalid expression: ${error.message}`,
+        lineNumber,
+      );
+    throw error;
+  }
 }
 
 function formatPathNumber(value: number): string {
   return String(Number(value.toFixed(6)));
+}
+
+function formatAxisValueId(value: number): string {
+  if (Object.is(value, -0) || value === 0) return "0";
+  return String(Number(value.toFixed(6))).replace("-", "m").replace(/\./g, "p");
+}
+
+function formatAxisNumber(value: number): string {
+  return String(Number(value.toFixed(6)));
+}
+
+function parseRotatingLine(tokens: string[], state: CompileState, lineNumber: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after rotatingLine.", lineNumber);
+  if (state.nodes.has(id)) throw new DslCompileError(`Duplicate node id '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const x1 = parseNumber(options.get("x1") ?? "-120", lineNumber);
+  const y1 = parseNumber(options.get("y1") ?? "0", lineNumber);
+  const x2 = parseNumber(options.get("x2") ?? "120", lineNumber);
+  const y2 = parseNumber(options.get("y2") ?? "0", lineNumber);
+  const [aboutX, aboutY] = parsePointOption(options.get("about") ?? `${x1},${y1}`, "about", lineNumber);
+  const angle = options.get("angle") ?? "0";
+  validateDslExpression(angle, state, lineNumber);
+
+  const endpointExpressions = {
+    x1: rotatedPointExpression("x", x1, y1, aboutX, aboutY, angle),
+    y1: rotatedPointExpression("y", x1, y1, aboutX, aboutY, angle),
+    x2: rotatedPointExpression("x", x2, y2, aboutX, aboutY, angle),
+    y2: rotatedPointExpression("y", x2, y2, aboutX, aboutY, angle),
+  };
+
+  const node = createBaseNode(id, "line");
+  node.geometry.x1 = evaluateDslExpression(endpointExpressions.x1, state, lineNumber);
+  node.geometry.y1 = evaluateDslExpression(endpointExpressions.y1, state, lineNumber);
+  node.geometry.x2 = evaluateDslExpression(endpointExpressions.x2, state, lineNumber);
+  node.geometry.y2 = evaluateDslExpression(endpointExpressions.y2, state, lineNumber);
+  node.geometry.rotationAboutX = aboutX;
+  node.geometry.rotationAboutY = aboutY;
+  node.geometry.rotationAngle = angle;
+  node.style.stroke = "#ffffff";
+  node.style.strokeWidth = 4;
+  for (const [key, value] of options) {
+    if (["x1", "y1", "x2", "y2", "about", "angle"].includes(key)) continue;
+    applyNodeOption(node, key, value, lineNumber);
+  }
+
+  state.nodes.set(id, node);
+  state.rootIds.add(id);
+  for (const [property, expression] of Object.entries(endpointExpressions)) {
+    pushBindExpr(state, id, propertyPath(property), expression, statementTime(state));
+  }
+}
+
+function parseRotateUpdater(tokens: string[], state: CompileState, lineNumber: number, fallbackStart: number): void {
+  const id = tokens[1];
+  if (!id) throw new DslCompileError("Expected id after rotateUpdater.", lineNumber);
+  const node = state.nodes.get(id);
+  if (!node) throw new DslCompileError(`Unknown node '${id}'.`, lineNumber);
+  const options = new Map(readNodeArguments(tokens.slice(2), lineNumber));
+  const rate = parseNumber(options.get("rate") ?? "1", lineNumber);
+  const duration = parseSeconds(options.get("duration") ?? "1s", lineNumber);
+  const easing = parseEasing(options.get("easing") ?? "linear", lineNumber);
+  const start = options.get("start") ? parseSeconds(options.get("start")!, lineNumber) : fallbackStart;
+  const from = options.get("from")
+    ? parseNumber(options.get("from")!, lineNumber)
+    : Number(node.transform.rotation ?? 0);
+  const to = from + rate * duration * (180 / Math.PI);
+
+  for (const key of options.keys()) {
+    if (["rate", "duration", "easing", "start", "from"].includes(key)) continue;
+    throw new DslCompileError(`Unknown rotateUpdater option '${key}'.`, lineNumber);
+  }
+
+  state.timeline.push({
+    t: start,
+    op: "animate",
+    id,
+    path: propertyPath("rotation"),
+    from,
+    to,
+    duration,
+    easing,
+  });
+  node.transform.rotation = to;
+  if (!options.has("start")) advanceStatementTime(state, duration);
+}
+
+function parsePointOption(raw: string, optionName: string, lineNumber: number): [number, number] {
+  const [x, y] = raw.split(",").map((value) => parseNumber(value, lineNumber));
+  if (x === undefined || y === undefined || Number.isNaN(x) || Number.isNaN(y))
+    throw new DslCompileError(`Expected ${optionName}=x,y.`, lineNumber);
+  return [x, y];
+}
+
+function parseVector3Option(raw: string, optionName: string, lineNumber: number): [number, number, number] {
+  const [x, y, z] = raw.split(",").map((value) => parseNumber(value, lineNumber));
+  if (x === undefined || y === undefined || z === undefined || Number.isNaN(x) || Number.isNaN(y) || Number.isNaN(z))
+    throw new DslCompileError(`Expected ${optionName}=x,y,z.`, lineNumber);
+  return [x, y, z];
+}
+
+function parseResolutionOption(raw: string, lineNumber: number): [number, number] {
+  const parts = raw.split(",");
+  const first = Math.max(1, Math.round(parseNumber(parts[0], lineNumber)));
+  const second = Math.max(1, Math.round(parseNumber(parts[1] ?? parts[0], lineNumber)));
+  return [first, second];
+}
+
+function addProjectedAxis(
+  children: SceneNode[],
+  groupId: string,
+  axis: "x" | "y" | "z",
+  min: number,
+  max: number,
+  step: number,
+  basis: { x: number; y: number; tick: { x: number; y: number } },
+  style: {
+    stroke: string;
+    strokeWidth: number;
+    tickSize: number;
+    tickStrokeWidth: number;
+    includeTicks: boolean;
+    includeTips: boolean;
+    tipLength: number;
+    tipWidth: number;
+  },
+): void {
+  const line = createBaseNode(`${groupId}:${axis}:axis`, "line");
+  line.geometry.x1 = min * basis.x;
+  line.geometry.y1 = min * basis.y;
+  line.geometry.x2 = max * basis.x;
+  line.geometry.y2 = max * basis.y;
+  line.style.stroke = style.stroke;
+  line.style.strokeWidth = style.strokeWidth;
+  children.push(line);
+
+  if (style.includeTicks) {
+    const tickNormal = normalize2d(basis.tick);
+    for (const value of rangeTickValues(min, max, step)) {
+      if (Math.abs(value) < 1e-9) continue;
+      const tick = createBaseNode(`${groupId}:${axis}:tick:${formatAxisValueId(value)}`, "line");
+      const x = value * basis.x;
+      const y = value * basis.y;
+      tick.geometry.x1 = x - tickNormal.x * style.tickSize;
+      tick.geometry.y1 = y - tickNormal.y * style.tickSize;
+      tick.geometry.x2 = x + tickNormal.x * style.tickSize;
+      tick.geometry.y2 = y + tickNormal.y * style.tickSize;
+      tick.style.stroke = style.stroke;
+      tick.style.strokeWidth = style.tickStrokeWidth;
+      children.push(tick);
+    }
+  }
+
+  if (style.includeTips) {
+    const direction = normalize2d({ x: basis.x, y: basis.y });
+    const tip = createBaseNode(`${groupId}:${axis}:tip`, "path");
+    const tipPoint = { x: max * basis.x, y: max * basis.y };
+    const base = {
+      x: tipPoint.x - direction.x * style.tipLength,
+      y: tipPoint.y - direction.y * style.tipLength,
+    };
+    const normal = { x: -direction.y, y: direction.x };
+    tip.geometry.d = [
+      `M ${formatPathNumber(tipPoint.x)} ${formatPathNumber(tipPoint.y)}`,
+      `L ${formatPathNumber(base.x + normal.x * style.tipWidth / 2)} ${formatPathNumber(base.y + normal.y * style.tipWidth / 2)}`,
+      `L ${formatPathNumber(base.x - normal.x * style.tipWidth / 2)} ${formatPathNumber(base.y - normal.y * style.tipWidth / 2)}`,
+      "Z",
+    ].join(" ");
+    tip.style.fill = style.stroke;
+    tip.style.stroke = style.stroke;
+    tip.style.strokeWidth = 0;
+    children.push(tip);
+  }
+}
+
+function rangeTickValues(min: number, max: number, step: number): number[] {
+  const values: number[] = [];
+  if (step > 0) {
+    for (let value = Math.ceil(min / step) * step; value <= max + 1e-9; value += step) {
+      values.push(Number(value.toFixed(8)));
+    }
+  } else {
+    for (let value = Math.floor(max / step) * step; value >= min - 1e-9; value += step) {
+      values.push(Number(value.toFixed(8)));
+    }
+  }
+  return values;
+}
+
+function normalize2d(vector: { x: number; y: number }): { x: number; y: number } {
+  const length = Math.hypot(vector.x, vector.y) || 1;
+  return { x: vector.x / length, y: vector.y / length };
+}
+
+function shadeHexColor(hex: string, amount: number): string {
+  const match = /^#?([0-9a-f]{6})$/iu.exec(hex);
+  if (!match) return hex;
+  const value = match[1]!;
+  const rgb = [0, 2, 4].map((offset) => Number.parseInt(value.slice(offset, offset + 2), 16));
+  const target = amount >= 1 ? 255 : 0;
+  const weight = amount >= 1 ? amount - 1 : 1 - amount;
+  return `#${rgb
+    .map((component) => {
+      const mixed = Math.round(component + (target - component) * weight);
+      return mixed.toString(16).padStart(2, "0");
+    })
+    .join("")}`;
+}
+
+function rotatedPointExpression(
+  axis: "x" | "y",
+  x: number,
+  y: number,
+  aboutX: number,
+  aboutY: number,
+  angle: string,
+): string {
+  const dx = formatPathNumber(x - aboutX);
+  const dy = formatPathNumber(y - aboutY);
+  if (axis === "x")
+    return `${formatPathNumber(aboutX)}+(${dx})*cos(${angle})-(${dy})*sin(${angle})`;
+  return `${formatPathNumber(aboutY)}+(${dx})*sin(${angle})+(${dy})*cos(${angle})`;
 }
 
 function parseArrow(tokens: string[], state: CompileState, lineNumber: number): void {
@@ -645,24 +1958,34 @@ function parseArrow(tokens: string[], state: CompileState, lineNumber: number): 
   const y1 = parseNumber(options.get("y1") ?? "0", lineNumber);
   const x2 = parseNumber(options.get("x2") ?? "100", lineNumber);
   const y2 = parseNumber(options.get("y2") ?? "0", lineNumber);
-  const tipLength = parseNumber(options.get("tipLength") ?? "24", lineNumber);
-  const tipWidth = parseNumber(options.get("tipWidth") ?? "20", lineNumber);
   const stroke = options.get("stroke") ?? "#ffffff";
   const fill = options.get("fill") ?? stroke;
-  const strokeWidth = parseNumber(options.get("strokeWidth") ?? "4", lineNumber);
+  const requestedStrokeWidth = parseNumber(options.get("strokeWidth") ?? "6", lineNumber);
   const dx = x2 - x1;
   const dy = y2 - y1;
   const length = Math.hypot(dx, dy) || 1;
   const ux = dx / length;
   const uy = dy / length;
+  const buff = Math.max(0, parseNumber(options.get("buff") ?? "0", lineNumber));
+  const maxTipRatio = parseNumber(options.get("maxTipLengthToLengthRatio") ?? "0.25", lineNumber);
+  const maxStrokeRatio = parseNumber(options.get("maxStrokeWidthToLengthRatio") ?? "5", lineNumber);
+  const drawableLength = Math.max(1, length - buff * 2);
+  const startX = x1 + ux * buff;
+  const startY = y1 + uy * buff;
+  const endX = x2 - ux * buff;
+  const endY = y2 - uy * buff;
+  const requestedTipLength = parseNumber(options.get("tipLength") ?? "21", lineNumber);
+  const tipLength = Math.max(0, Math.min(requestedTipLength, drawableLength * maxTipRatio));
+  const tipWidth = parseNumber(options.get("tipWidth") ?? String(tipLength), lineNumber);
+  const strokeWidth = Math.max(0, Math.min(requestedStrokeWidth, drawableLength * maxStrokeRatio));
   const px = -uy;
   const py = ux;
-  const baseX = x2 - ux * tipLength;
-  const baseY = y2 - uy * tipLength;
+  const baseX = endX - ux * tipLength;
+  const baseY = endY - uy * tipLength;
 
   const shaft = createBaseNode(`${id}:shaft`, "line");
-  shaft.geometry.x1 = x1;
-  shaft.geometry.y1 = y1;
+  shaft.geometry.x1 = startX;
+  shaft.geometry.y1 = startY;
   shaft.geometry.x2 = baseX;
   shaft.geometry.y2 = baseY;
   shaft.style.fill = "none";
@@ -671,7 +1994,7 @@ function parseArrow(tokens: string[], state: CompileState, lineNumber: number): 
 
   const tip = createBaseNode(`${id}:tip`, "path");
   tip.geometry.d = [
-    `M ${formatPathNumber(x2)} ${formatPathNumber(y2)}`,
+    `M ${formatPathNumber(endX)} ${formatPathNumber(endY)}`,
     `L ${formatPathNumber(baseX + px * tipWidth / 2)} ${formatPathNumber(baseY + py * tipWidth / 2)}`,
     `L ${formatPathNumber(baseX - px * tipWidth / 2)} ${formatPathNumber(baseY - py * tipWidth / 2)}`,
     "Z",
@@ -687,10 +2010,29 @@ function parseArrow(tokens: string[], state: CompileState, lineNumber: number): 
   group.geometry.y1 = y1;
   group.geometry.x2 = x2;
   group.geometry.y2 = y2;
+  group.geometry.buff = buff;
   group.geometry.tipLength = tipLength;
   group.geometry.tipWidth = tipWidth;
+  group.geometry.maxTipLengthToLengthRatio = maxTipRatio;
+  group.geometry.maxStrokeWidthToLengthRatio = maxStrokeRatio;
   for (const [key, value] of options) {
-    if (["x1", "y1", "x2", "y2", "tipLength", "tipWidth", "stroke", "fill", "strokeWidth"].includes(key)) continue;
+    if (
+      [
+        "x1",
+        "y1",
+        "x2",
+        "y2",
+        "buff",
+        "tipLength",
+        "tipWidth",
+        "maxTipLengthToLengthRatio",
+        "maxStrokeWidthToLengthRatio",
+        "stroke",
+        "fill",
+        "strokeWidth",
+      ].includes(key)
+    )
+      continue;
     applyNodeOption(group, key, value, lineNumber);
   }
 
@@ -859,6 +2201,23 @@ function pushBindPath(
   });
 }
 
+function pushBindExpr(
+  state: CompileState,
+  id: string,
+  path: string,
+  expr: string,
+  time: number,
+): void {
+  state.timeline.push({
+    t: time,
+    op: "bindExpr",
+    id,
+    path,
+    expr,
+    deps: collectExpressionDependencies(expr).filter((name) => state.values.has(name)),
+  });
+}
+
 function statementTime(state: CompileState): number {
   return state.blockTime ?? state.currentTime;
 }
@@ -987,7 +2346,7 @@ function parseSet(
   const target = tokens[1];
   if (!target)
     throw new DslCompileError("Expected target after set.", lineNumber);
-  const [id, property] = target.split(".");
+  const [id, property] = splitTargetPath(target);
   if (!id || !property)
     throw new DslCompileError("Expected set target like 'c1.x' or 'camera.x'.", lineNumber);
   const isCameraTarget = id === "camera" && isCameraProperty(property);
@@ -1031,7 +2390,7 @@ function parseAlways(
 ): void {
   const target = tokens[1];
   if (!target) throw new DslCompileError("Expected target after always.", lineNumber);
-  const [id, property] = target.split(".");
+  const [id, property] = splitTargetPath(target);
   if (!id || !property) throw new DslCompileError("Expected always target like 'c1.x'.", lineNumber);
   const isCameraTarget = id === "camera" && isCameraProperty(property);
   if (!isCameraTarget && !state.nodes.has(id)) throw new DslCompileError(`Unknown node '${id}'.`, lineNumber);
@@ -1054,14 +2413,13 @@ function parseAlways(
       "always requires expr=... or path(...).",
       lineNumber,
     );
-  state.timeline.push({
-    t: time,
-    op: "bindExpr",
+  pushBindExpr(
+    state,
     id,
-    path: isCameraTarget ? cameraPropertyPath(property) : propertyPath(property),
-    expr: expression,
-    deps: collectExpressionDependencies(expression).filter((name) => state.values.has(name)),
-  });
+    isCameraTarget ? cameraPropertyPath(property) : propertyPath(property),
+    expression,
+    time,
+  );
 }
 
 function readPathGeneratorAssignment(
@@ -1199,8 +2557,25 @@ function emitPlayCall(
     const ids = expectPlayIdArgs(call, 2, lineNumber);
     const fromId = ids[0]!;
     const toId = ids[1]!;
-    pushFadeOut(state, start, fromId, duration, easing, lineNumber);
-    pushFadeIn(state, start, toId, duration, easing, lineNumber);
+    const fromNode = requireNode(state, fromId, lineNumber);
+    const toNode = requireNode(state, toId, lineNumber);
+    state.timeline.push({
+      t: start,
+      op: "effect",
+      id: fromId,
+      effect: "replacementTransform",
+      duration,
+      easing,
+    });
+    pushTransformAnimations(state, start, fromNode, toNode, duration, easing);
+    state.timeline.push({ t: start + duration, op: "delete", id: fromId });
+    state.timeline.push({
+      t: start + duration,
+      op: "create",
+      node: visibleZeroOpacityClone(toNode),
+    });
+    state.shown.delete(fromId);
+    state.shown.add(toId);
     return;
   }
 
@@ -1342,8 +2717,8 @@ function pushTransformMatchingTex(
 ): void {
   const fromNode = requireNode(state, fromId, lineNumber);
   const toNode = requireNode(state, toId, lineNumber);
-  const fromTokens = texTokenChildren(fromNode);
-  const toTokens = texTokenChildren(toNode);
+  const fromTokens = texTokenEntries(fromNode);
+  const toTokens = texTokenEntries(toNode);
   if (fromTokens.length === 0 || toTokens.length === 0)
     throw new DslCompileError(
       "TransformMatchingTex requires math nodes declared with expandTokens=true.",
@@ -1353,23 +2728,25 @@ function pushTransformMatchingTex(
   if (toNode.transform.opacity === 0)
     state.timeline.push({ t: start - 0.0001, op: "delete", id: toId });
 
-  const available = new Map<string, SceneNode[]>();
-  for (const child of toTokens) {
-    if (!child.latex) continue;
-    const matches = available.get(child.latex) ?? [];
-    matches.push(child);
-    available.set(child.latex, matches);
+  const available = new Map<string, TexTokenEntry[]>();
+  for (const entry of toTokens) {
+    const latex = entry.node.latex;
+    if (!latex) continue;
+    const matches = available.get(latex) ?? [];
+    matches.push(entry);
+    available.set(latex, matches);
   }
 
   const matchedTo = new Set<string>();
-  for (const child of fromTokens) {
+  for (const entry of fromTokens) {
+    const child = entry.node;
     const matches = child.latex ? available.get(child.latex) : undefined;
     // Duplicate-token priority rule (Manim-compatible enough for stable output):
     // match each source token to the earliest still-unmatched target token with
     // the same LaTeX string, scanning strictly left-to-right.
     const match = matches?.shift();
     if (match) {
-      matchedTo.add(match.id);
+      matchedTo.add(match.node.id);
       state.timeline.push({
         t: start,
         op: "effect",
@@ -1382,14 +2759,14 @@ function pushTransformMatchingTex(
         state,
         start,
         child,
-        retargetTokenNode(match, fromNode, toNode),
+        retargetTokenNode(match.absoluteNode, entry.parentTransform),
         duration,
         easing,
       );
       state.timeline.push({
         t: start + duration,
         op: "create",
-        node: absolutizeTokenNode(match, toNode),
+        node: match.absoluteNode,
       });
       state.timeline.push({ t: start + duration, op: "delete", id: child.id });
     } else {
@@ -1397,12 +2774,12 @@ function pushTransformMatchingTex(
     }
   }
 
-  for (const child of toTokens) {
-    if (!matchedTo.has(child.id))
+  for (const entry of toTokens) {
+    if (!matchedTo.has(entry.node.id))
       pushFadeInNode(
         state,
         start,
-        absolutizeTokenNode(child, toNode),
+        entry.absoluteNode,
         duration,
         easing,
       );
@@ -1411,41 +2788,82 @@ function pushTransformMatchingTex(
   state.shown.add(toId);
 }
 
-function texTokenChildren(node: SceneNode): SceneNode[] {
-  return node.children.filter(
-    (child) => child.type === "math" && typeof child.latex === "string",
-  );
+function texTokenEntries(
+  node: SceneNode,
+  parentTransform: Transform = identityTransform(),
+): TexTokenEntry[] {
+  const currentTransform = composeTransform(parentTransform, node.transform);
+  const entries: TexTokenEntry[] = [];
+  for (const child of node.children ?? []) {
+    if (
+      child.type === "math" &&
+      typeof child.latex === "string" &&
+      (child.children ?? []).length === 0
+    ) {
+      entries.push({
+        node: child,
+        parentTransform: currentTransform,
+        absoluteNode: nodeWithTransform(
+          child,
+          composeTransform(currentTransform, child.transform),
+        ),
+      });
+      continue;
+    }
+    entries.push(...texTokenEntries(child, currentTransform));
+  }
+  return entries;
 }
 
 function retargetTokenNode(
-  targetChild: SceneNode,
-  sourceParent: SceneNode,
-  targetParent: SceneNode,
+  targetNode: SceneNode,
+  sourceParentTransform: Transform,
 ): SceneNode {
-  const clone = structuredClone(targetChild);
-  clone.transform.x += targetParent.transform.x - sourceParent.transform.x;
-  clone.transform.y += targetParent.transform.y - sourceParent.transform.y;
-  clone.transform.rotation +=
-    targetParent.transform.rotation - sourceParent.transform.rotation;
-  clone.transform.scale *= safeRatio(
-    targetParent.transform.scale,
-    sourceParent.transform.scale,
-  );
-  clone.transform.opacity *= safeRatio(
-    targetParent.transform.opacity,
-    sourceParent.transform.opacity,
-  );
+  const clone = structuredClone(targetNode);
+  clone.transform = relativeTransform(targetNode.transform, sourceParentTransform);
   return clone;
 }
 
-function absolutizeTokenNode(child: SceneNode, parent: SceneNode): SceneNode {
-  const clone = structuredClone(child);
-  clone.transform.x += parent.transform.x;
-  clone.transform.y += parent.transform.y;
-  clone.transform.rotation += parent.transform.rotation;
-  clone.transform.scale *= parent.transform.scale;
-  clone.transform.opacity *= parent.transform.opacity;
+function nodeWithTransform(node: SceneNode, transform: Transform): SceneNode {
+  const clone = structuredClone(node);
+  clone.transform = transform;
   return clone;
+}
+
+function identityTransform(): Transform {
+  return { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 };
+}
+
+function composeTransform(parent: Transform, child: Transform): Transform {
+  const parentScaleX = parent.scale * Number(parent.scaleX ?? 1);
+  const parentScaleY = parent.scale * Number(parent.scaleY ?? 1);
+  const scaleX = Number(parent.scaleX ?? 1) * Number(child.scaleX ?? 1);
+  const scaleY = Number(parent.scaleY ?? 1) * Number(child.scaleY ?? 1);
+  return {
+    x: parent.x + child.x * parentScaleX,
+    y: parent.y + child.y * parentScaleY,
+    scale: parent.scale * child.scale,
+    ...(scaleX === 1 ? {} : { scaleX }),
+    ...(scaleY === 1 ? {} : { scaleY }),
+    rotation: parent.rotation + child.rotation,
+    opacity: parent.opacity * child.opacity,
+  };
+}
+
+function relativeTransform(absolute: Transform, parent: Transform): Transform {
+  const parentScaleX = parent.scale * Number(parent.scaleX ?? 1);
+  const parentScaleY = parent.scale * Number(parent.scaleY ?? 1);
+  const scaleX = safeRatio(Number(absolute.scaleX ?? 1), Number(parent.scaleX ?? 1));
+  const scaleY = safeRatio(Number(absolute.scaleY ?? 1), Number(parent.scaleY ?? 1));
+  return {
+    x: safeRatio(absolute.x - parent.x, parentScaleX),
+    y: safeRatio(absolute.y - parent.y, parentScaleY),
+    scale: safeRatio(absolute.scale, parent.scale),
+    ...(scaleX === 1 ? {} : { scaleX }),
+    ...(scaleY === 1 ? {} : { scaleY }),
+    rotation: absolute.rotation - parent.rotation,
+    opacity: safeRatio(absolute.opacity, parent.opacity),
+  };
 }
 
 function safeRatio(numerator: number, denominator: number): number {
@@ -1586,7 +3004,7 @@ function parseAnimate(
   if (!target)
     throw new DslCompileError("Expected target after animate.", lineNumber);
 
-  const [id, property] = target.split(".");
+  const [id, property] = splitTargetPath(target);
   const isTrackerTarget = !property && state.values.has(target);
   const isCameraTarget = id === "camera" && isCameraProperty(property);
   if (!isTrackerTarget && !isCameraTarget) {
@@ -1749,6 +3167,12 @@ function requireNode(
   return node;
 }
 
+function splitTargetPath(target: string): [string | undefined, string | undefined] {
+  const dotIndex = target.indexOf(".");
+  if (dotIndex === -1) return [target, undefined];
+  return [target.slice(0, dotIndex), target.slice(dotIndex + 1)];
+}
+
 function findNode(state: CompileState, id: string): SceneNode | undefined {
   const root = state.nodes.get(id);
   if (root) return root;
@@ -1788,15 +3212,17 @@ function approximateNodeBounds(node: SceneNode): {
   const x = Number(node.transform.x ?? 0);
   const y = Number(node.transform.y ?? 0);
   const scale = Number(node.transform.scale ?? 1);
+  const scaleX = scale * Number(node.transform.scaleX ?? 1);
+  const scaleY = scale * Number(node.transform.scaleY ?? 1);
   if (node.type === "circle") {
-    const r = Number(node.geometry.r ?? 40) * scale;
+    const r = Number(node.geometry.r ?? 40) * Math.max(scaleX, scaleY);
     return { minX: x - r, maxX: x + r, minY: y - r, maxY: y + r };
   }
   if (node.type === "line") {
-    const x1 = Number(node.geometry.x1 ?? 0) * scale;
-    const x2 = Number(node.geometry.x2 ?? 0) * scale;
-    const y1 = Number(node.geometry.y1 ?? 0) * scale;
-    const y2 = Number(node.geometry.y2 ?? 0) * scale;
+    const x1 = Number(node.geometry.x1 ?? 0) * scaleX;
+    const x2 = Number(node.geometry.x2 ?? 0) * scaleX;
+    const y1 = Number(node.geometry.y1 ?? 0) * scaleY;
+    const y2 = Number(node.geometry.y2 ?? 0) * scaleY;
     return {
       minX: x + Math.min(x1, x2),
       maxX: x + Math.max(x1, x2),
@@ -1810,8 +3236,8 @@ function approximateNodeBounds(node: SceneNode): {
     : String(node.text ?? "").length;
   const fallbackWidth = Math.max(fontSize * 2, contentLength * fontSize * 0.55);
   const fallbackHeight = node.type === "math" ? fontSize * 2.5 : fontSize * 1.5;
-  const w = Number(node.geometry.w ?? fallbackWidth) * scale;
-  const h = Number(node.geometry.h ?? fallbackHeight) * scale;
+  const w = Number(node.geometry.w ?? fallbackWidth) * scaleX;
+  const h = Number(node.geometry.h ?? fallbackHeight) * scaleY;
   return { minX: x - w / 2, maxX: x + w / 2, minY: y - h / 2, maxY: y + h / 2 };
 }
 
@@ -2160,6 +3586,15 @@ function readExpressionAssignment(
   if (!token.startsWith("expr=")) return null;
   const [key, expression] = readAssignment(token, lineNumber);
   if (key !== "expr") return null;
+  validateDslExpression(expression, state, lineNumber);
+  return expression;
+}
+
+function validateDslExpression(
+  expression: string,
+  state: CompileState,
+  lineNumber: number,
+): void {
   try {
     validateExpression(expression, state.values.keys());
   } catch (error) {
@@ -2170,5 +3605,21 @@ function readExpressionAssignment(
       );
     throw error;
   }
-  return expression;
+}
+
+function evaluateDslExpression(
+  expression: string,
+  state: CompileState,
+  lineNumber: number,
+): number {
+  try {
+    return evaluateExpression(expression, Object.fromEntries(state.values));
+  } catch (error) {
+    if (error instanceof ExpressionError)
+      throw new DslCompileError(
+        `Invalid expression: ${error.message}`,
+        lineNumber,
+      );
+    throw error;
+  }
 }

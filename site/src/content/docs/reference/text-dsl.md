@@ -22,10 +22,23 @@ Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション
 | `math` | Math equation node declaration | `math equation "e^{i\pi}+1=0" at 0,160 size=36 renderer=katex` |
 | `group` | Grouped node declaration | `group intro title equation` |
 | `surroundingRect` | Target-bounds rectangle declaration | `surroundingRect frame target=equation buff=10 stroke="#fbbf24"` |
-| `axes` | Axes helper declaration | `axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2` |
+| `axes` | Axes helper declaration | `axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2 xNumbers=-4,0,4` |
+| `numberPlane` | NumberPlane grid helper | `numberPlane plane xRange=-7,7 yRange=-4,4 unit=60` |
 | `plot` | Function plot path declaration | `plot curve fn=sin(t) range=-3.14,3.14 scaleX=80 scaleY=60` |
 | `dataPolygon` | Axes data-coordinate polygon helper | `dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5` |
+| `dataRect` | Axes data-coordinate rectangle helper | `dataRect area axes=ax from=0,0 to=t,25/t` |
+| `dataDot` | Axes data-coordinate dot helper | `dataDot dot axes=ax point=t,25/t` |
+| `dataLine` | Axes data-coordinate line helper | `dataLine marker axes=ax from=2,0 to=2,4` |
+| `dynamicLine` | Expression-bound line helper | `dynamicLine connector x1=60*x y1=0 x2=72 y2=-60*y` |
+| `dataArea` | Axes bounded area helper | `dataArea area axes=ax lower=t upper=2*t range=1,2` |
+| `dataRiemannRects` | Axes Riemann rectangles helper | `dataRiemannRects bars axes=ax fn=4*t-t*t range=0.3,0.6 dx=0.03` |
+| `gaussianSurface` | Projected Gaussian surface helper | `gaussianSurface surface range=-2,2 resolution=24 scale=2` |
+| `sphereSurface` | Projected sphere surface helper | `sphereSurface sphere radius=104 resolution=15,32` |
+| `threeDAxes` | Projected ThreeDAxes helper | `threeDAxes axes xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1` |
+| `projectedCircle` | Projected XY-plane circle helper | `projectedCircle circle radius=1 xBasis=-56.75,25.5 yBasis=87.75,13.25` |
 | `arrow` | Arrow helper declaration | `arrow vec x1=0 y1=0 x2=190 y2=80` |
+| `rotatingLine` | About-point rotating line helper | `rotatingLine arm x1=-120 y1=0 x2=120 y2=0 about=-120,0 angle=-theta` |
+| `rotateUpdater` | dt rotation updater expansion | `rotateUpdater arm rate=1 duration=2s` |
 | `angle` | Updating angle arc helper | `angle arc radius=60 from=0 to=theta samples=72` |
 | `tracedPath` | Updating trace path helper | `tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta` |
 | `arrange` | Group auto-layout sugar | `arrange dots direction=horizontal gap=20` |
@@ -130,11 +143,13 @@ text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"
 math equation "e^{i\\pi}+1=0" at 640,200 size=36 expandTokens=true
 group intro title equation
 surroundingRect frame target=equation buff=10 stroke="#fbbf24"
+brace brace1 target=axis direction=down label="Horizontal distance"
 axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2
 dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5 fill="#22d3ee"
 arrow vec x1=0 y1=0 x2=190 y2=80 stroke="#22d3ee" fill="#22d3ee"
 angle arc radius=60 from=0 to=theta samples=72 stroke="#f59e0b"
 tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120
+projectedCircle circle3d radius=1 xBasis=-56.75,25.5 yBasis=87.75,13.25
 cameraFrame at 0,0 scale=1
 ```
 
@@ -149,12 +164,14 @@ Supported node types:
 - `math <id> "<latex>"`
 - `group <id> [child-id...]`
 - `surroundingRect <id> target=<node-id>`
+- `brace <id> target=<node-id>`
 - `axes <id>`
 - `plot <id> fn=<expr>`
 - `dataPolygon <id> axes=<axes-id> points=<x,y;...>`
 - `arrow <id> x1=<number> y1=<number> x2=<number> y2=<number>`
 - `angle <id> radius=<number> from=<expr> to=<expr>`
 - `tracedPath <id> x=<expr> y=<expr>`
+- `projectedCircle <id> radius=<number>`
 
 `id` は document 内で一意である必要があります。
 
@@ -163,10 +180,11 @@ Common options:
 - `at x,y`: shortcut for `transform.x` and `transform.y`
 - `x`, `y`
 - `scale`
+- `scaleX`, `scaleY`: optional nonuniform scale multipliers composed with `scale`
 - `rotation`
 - `opacity`
-- `fill`
-- `stroke`
+- `fill`, `fillOpacity`
+- `stroke`, `strokeOpacity`
 - `strokeWidth`
 
 Geometry options:
@@ -177,19 +195,35 @@ Geometry options:
 - `path`: `d` (SVG path data string)
 - `text`: `size` or `fontSize`
 - `math`: `size` or `fontSize`, `renderer=katex|mathjax`, `expandTokens=true|false`
+- `image`: `w`, `h`, `data=<row;row;...>`; `data` は `0,128,255;...` のようなグレースケール値行列で、Manim `ImageMobject(np.uint8(...))` 風の pixel image を生成します。
 - `group`: child ids are copied into `children` and removed from top-level roots
 - `surroundingRect`: `target=<node-id>`, `buff=<number>`; target の宣言/推定 bounds に基づく frame-like な `rect` node として出力されます。`play Create(frame)` では `geometry.drawProgress` により Manim 風に外枠が描画されます。
-- `axes`: `xRange=<min,max>`, `yRange=<min,max>`, `width`, `height`; x/y 軸の line を持つ `group` node を生成します。
+- `brace`: `target=<node-id>`, `direction=up|down|left|right|perpendicular`, `buff`, `sharpness`, `label`, `labelRenderer=text|katex|mathjax`, `labelSize`, `labelColor`, `labelOffset`, `labelAlignment=start|center|end`, `labelW`, `labelH`; Manim `Brace(...)` 風に source SVG template model から塗りつぶし brace を生成し、`get_text` / `get_tex` 相当の label を計算済み tip 近傍に配置できます。
+- `axes`: `xRange=<min,max>`, `yRange=<min,max>`, `width`, `height`, `xTicks=<n,n,...>`, `yTicks=<n,n,...>`, `xNumbers=<n,n,...>`, `yNumbers=<n,n,...>`, `tickLength`, `tickStrokeWidth`, `numberSize`, `numberColor`, `xNumberOffset`, `yNumberOffset`; 非対称 range の原点に x/y 軸を置き、必要に応じて tick line と number text を持つ `group` node を生成します。
+- `numberPlane`: `xRange=<min,max>`, `yRange=<min,max>`, `xStep`, `yStep`, `unit`, `xUnit`, `yUnit`, `stroke`, `axisStroke`, `strokeWidth`, `axisStrokeWidth`, `opacity`, `axisOpacity`; Manim `NumberPlane()` 風の背景 grid line と強調 x/y 軸を持つ `group` node を生成します。
 - `plot`: `fn=<expr>`, `range=<min,max>`, `samples`, `scaleX`, `scaleY`, `close=true|false`; 関数をサンプリングした `path` geometry を生成します。
 - `dataPolygon`: `axes=<axes-id>`, `points=<x,y;...>`; 3 点以上のデータ座標を参照先 `axes` helper で scene 座標に変換し、閉じた `path` を生成します。
-- `arrow`: `x1`, `y1`, `x2`, `y2`, `tipLength`, `tipWidth`; line shaft と filled path tip を持つ `group` を生成します。
+- `dataLineGraph`: `axes=<axes-id>`, `points=<x,y;...>`, `lineColor`, `strokeWidth`, `vertexRadius`; Manim `Axes.plot_line_graph` 風に、参照先 `axes` のデータ座標から折れ線 path と vertex dot を持つ `group` を生成します。
+- `dataRect`: `axes=<axes-id>`, `from=<x,y>`, `to=<x,y>`; 参照先 `axes` のデータ座標から `rect` の中心と幅/高さを生成します。`from`/`to` は value tracker を参照する式にでき、Manim `always_redraw(Polygon(... ax.c2p ...))` の rectangle 型ケースを `bindExpr` へ展開できます。
+- `dataDot`: `axes=<axes-id>`, `point=<x,y>`, `r`; 参照先 `axes` のデータ座標から `circle` dot を生成します。`point` は value tracker を参照する式にできます。
+- `dataLine`: `axes=<axes-id>`, `from=<x,y>`, `to=<x,y>`; 参照先 `axes` のデータ座標から `line` を生成します。Manim `Axes.get_vertical_line(...)` のような axis-to-graph marker を表現できます。
+- `dynamicLine`: `x1=<expr>`, `y1=<expr>`, `x2=<expr>`, `y2=<expr>`; value tracker を参照する endpoint 式から `line` と `bindExpr` を生成します。Manim の `Line(...).become(...)` updater 型の connector を表現できます。
+- `dataArea`: `axes=<axes-id>`, `lower=<expr>`, `upper=<expr>`, `range=<min,max>`, `samples`; 2つの関数をサンプリングし、Manim `Axes.get_area(..., bounded_graph=...)` 風の閉じた `path` を生成します。
+- `dataRiemannRects`: `axes=<axes-id>`, `fn=<expr>`, `range=<min,max>`, `dx`; 関数を left-sample し、Manim `Axes.get_riemann_rectangles` 風の `rect` 群を持つ `group` を生成します。
+- `gaussianSurface`: `range=<min,max>`, `uRange=<min,max>`, `vRange=<min,max>`, `resolution`, `scale`, `sigma`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `fillA`, `fillB`, `shade=true|false`, `shadeStrength`; Manim `Surface(param_gauss).set_fill_by_checkerboard(...)` 風の投影済み checkerboard mesh を `path` 群の `group` として生成します。
+- `sphereSurface`: `radius`, `uRange`, `vRange`, `resolution=<u,v>`, `fillA`, `fillB`, `light=<x,y,z>`, `shade=true|false`; Manim `Surface(..., checkerboard_colors=[RED_D, RED_E], resolution=(15, 32))` 風の球面 checkerboard を投影済み `path` 群として生成します。
+- `threeDAxes`: `xRange=<min,max,step>`, `yRange`, `zRange`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `includeTicks`, `includeTips`; Manim `ThreeDAxes()` の既定 range を投影済み line/tick/tip 群として生成します。
+- `projectedCircle`: `radius`, `xBasis=<x,y>`, `yBasis=<x,y>`; projected 3D axes と同じ basis vector から、Manim `Circle()` を XY 平面へ投影した cubic `path` を生成します。
+- `arrow`: `x1`, `y1`, `x2`, `y2`, `buff`, `tipLength`, `tipWidth`, `maxTipLengthToLengthRatio`, `maxStrokeWidthToLengthRatio`; line shaft と filled triangle tip を持つ `group` を生成します。`tipLength` と `strokeWidth` は Manim `Arrow` と同じく drawable length に対する上限比で clamp されます。
+- `rotatingLine`: `x1`, `y1`, `x2`, `y2`, `about=<x,y>`, `angle=<expr>`; 基準線分を指定点まわりに回転した `line` を生成し、`angle` が value tracker を参照する場合は endpoint を `bindExpr` で更新します。Manim の `Line(...).rotate(angle, about_point=...)` を DSL で展開する helper です。
+- `rotateUpdater`: `rate=<radians-per-second>`, `duration`, `easing`, `from`; Manim の `mobject.add_updater(lambda m, dt: m.rotate_about_origin(rate * dt))` 型 callback updater を、累積した `rotation` animation として展開します。
 - `angle`: `radius` / `r`, `from`, `to`, `samples`, `close=true|false`; 円弧の `path` と `bindPath` updater を生成します。式は value tracker を参照できるため、`to=theta` のように animated tracker に追従できます。
 - `tracedPath`: `x`, `y`, `from`, `to`, `samples`, `close=true|false`; `path` と `bindPath` updater を生成します。現時点では parametric motion 用の declarative trace helper で、Manim `TracedPath` の履歴ベース追跡 clone ではありません。
 
 Default values:
 
-- transform: `x=0`, `y=0`, `scale=1`, `rotation=0`, `opacity=1`
-- style: `fill="#ffffff"`, `stroke="none"`, `strokeWidth=0`
+- transform: `x=0`, `y=0`, `scale=1`, `rotation=0`, `opacity=1`; `scaleX` / `scaleY` are optional and default to `1`
+- style: `fill="#ffffff"`, `fillOpacity=1`, `stroke="none"`, `strokeOpacity=1`, `strokeWidth=0`
 - circle: `r=40`
 - rect: `w=100`, `h=80`
 - line: `x1=0`, `y1=0`, `x2=100`, `y2=0`
@@ -248,7 +282,7 @@ set dot.y to expr="240 + 100 * sin(theta)"
 
 `value` declares a scalar tracker that lives separately from scene nodes. A tracker can be animated with `animate <name> from <number> to <number> ...`, and node properties can depend on tracker values through `set <id>.<property> to expr="..."`.
 
-Dependent expressions are intentionally static and analyzable. Fluxion does **not** execute arbitrary JavaScript and does not aim for full Manim updater compatibility. Expressions may reference declared tracker names, numeric literals, parentheses, arithmetic operators (`+`, `-`, `*`, `/`, `%`, `**`), constants (`pi`, `e`), and allowlisted math functions such as `sin`, `cos`, `tan`, `sqrt`, `abs`, `min`, `max`, and `pow`.
+Dependent expressions are intentionally static and analyzable. Fluxion does **not** execute arbitrary JavaScript and does not aim for full Manim updater compatibility. Expressions may reference declared tracker names, numeric literals, parentheses, arithmetic operators (`+`, `-`, `*`, `/`, `%`, `**`), constants (`pi`, `e`), and allowlisted math functions such as `sin`, `cos`, `tan`, `sqrt`, `abs`, `min`, `max`, `pow`, `clip01`, and `clipPi`.
 
 ### always
 
@@ -320,7 +354,7 @@ Supported primitives:
 - `Write(id)`: writable leaf を `geometry.writeProgress=0` で `create` し、semantic `effect=write` と、幅に応じた left-to-right reveal を生成して Manim の書き出し表示を近似します。
 - `Transform(a, b)`: `a` を target として、`b` と異なる transform/style/geometry property ごとに `animate` operation を生成します。
 - `TransformMatchingTex(a, b)`: `math` node の token child を同一 token 文字列で対応付け、対応 token は `Transform`、消える token は `FadeOut`、新規 token は `FadeIn` に展開します。
-- `ReplacementTransform(from, to)`: `from` の `FadeOut` と `to` の `FadeIn` を同時に生成します。
+- `ReplacementTransform(from, to)`: `from` を `to` へ morph し、終了時に `from` を削除して `to` を materialize します。
 - `Circumscribe(id)`: highlight outline 用の semantic circumscribe effect を生成します。`color=<css-color>` は play statement 側または call 内で指定できます。
 - `AnimationGroup(<animations...>, lagRatio=0)`: child animation を並列に展開します。`lagRatio` は child start のずれを child duration に対する比率で指定し、group 全体は `duration` に収まるように正規化されます。
 - `Succession(<animations...>)`: child animation を左から右へ逐次展開します。各 child の duration は `play` の `duration` を child 数で等分します。
@@ -397,8 +431,8 @@ Supported easing names:
 
 Supported property aliases:
 
-- `x`, `y`, `scale`, `rotation`, `opacity` -> `transform.*`
-- `fill`, `stroke`, `strokeWidth` -> `style.*`
+- `x`, `y`, `scale`, `scaleX`, `scaleY`, `rotation`, `opacity` -> `transform.*`
+- `fill`, `fillOpacity`, `stroke`, `strokeOpacity`, `strokeWidth` -> `style.*`
 - `r`, `w`, `h`, `fontSize`, `x1`, `y1`, `x2`, `y2`, `d` -> `geometry.*`
 - `text` -> `text`
 

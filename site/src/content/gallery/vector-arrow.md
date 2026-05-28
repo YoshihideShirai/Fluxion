@@ -6,11 +6,11 @@ source_example_path: examples/gallery/vector-arrow.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "NumberPlane の細かな tick/axis style と Arrow tip geometry は Fluxion の近似プリミティブで描画している。"
+  - symptom: "NumberPlane は `numberPlane` helper で Manim 16:9 frame の 1 unit = 67.5px に展開するが、細かな faded line / axis style 全オプションは未実装。Arrow は buff と tip/stroke length clamp を Manim 風に反映するが、全 tip_shape オプションは未実装。"
     layer: dsl
     impact: low
-    workaround: "`line` と `arrow` の寸法・色を Manim 出力に合わせて調整する。"
-    closure_condition: "NumberPlane/Arrow の Manim 引数互換が実装される。"
+    workaround: "`numberPlane` と `arrow` の寸法・色を Manim 出力に合わせて調整する。"
+    closure_condition: "NumberPlane と Arrow の tip_shape 互換が実装される。"
     fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
 category: Manim Stable Examples
 status: ported
@@ -19,35 +19,11 @@ order: 78
 ---
 scene width=960 height=540 fps=60
 rect bg w=960 h=540 at 0,0 fill="#000000"
-line grid_hm4 x1=-520 y1=-240 x2=520 y2=-240 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_hm3 x1=-520 y1=-180 x2=520 y2=-180 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_hm2 x1=-520 y1=-120 x2=520 y2=-120 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_hm1 x1=-520 y1=-60 x2=520 y2=-60 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_h0 x1=-520 y1=0 x2=520 y2=0 stroke="#dff9ff" strokeWidth=1.8 opacity=0.95
-line grid_h1 x1=-520 y1=60 x2=520 y2=60 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_h2 x1=-520 y1=120 x2=520 y2=120 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_h3 x1=-520 y1=180 x2=520 y2=180 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_h4 x1=-520 y1=240 x2=520 y2=240 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_vm7 x1=-420 y1=-300 x2=-420 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_vm6 x1=-360 y1=-300 x2=-360 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_vm5 x1=-300 y1=-300 x2=-300 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_vm4 x1=-240 y1=-300 x2=-240 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_vm3 x1=-180 y1=-300 x2=-180 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_vm2 x1=-120 y1=-300 x2=-120 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_vm1 x1=-60 y1=-300 x2=-60 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_v0 x1=0 y1=-300 x2=0 y2=300 stroke="#dff9ff" strokeWidth=1.8 opacity=0.95
-line grid_v1 x1=60 y1=-300 x2=60 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_v2 x1=120 y1=-300 x2=120 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_v3 x1=180 y1=-300 x2=180 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_v4 x1=240 y1=-300 x2=240 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_v5 x1=300 y1=-300 x2=300 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_v6 x1=360 y1=-300 x2=360 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-line grid_v7 x1=420 y1=-300 x2=420 y2=300 stroke="#00bcd4" strokeWidth=1.4 opacity=0.9
-group plane grid_hm4 grid_hm3 grid_hm2 grid_hm1 grid_h0 grid_h1 grid_h2 grid_h3 grid_h4 grid_vm7 grid_vm6 grid_vm5 grid_vm4 grid_vm3 grid_vm2 grid_vm1 grid_v0 grid_v1 grid_v2 grid_v3 grid_v4 grid_v5 grid_v6 grid_v7
-arrow vec x1=0 y1=0 x2=120 y2=-120 stroke="#f8fafc" fill="#f8fafc" strokeWidth=5 tipLength=28 tipWidth=30
+numberPlane plane xRange=-7,7 yRange=-4,4 unit=67.5 stroke="#00bcd4" axisStroke="#dff9ff" strokeWidth=1.4 axisStrokeWidth=1.8 opacity=0.9 axisOpacity=0.95
+arrow vec x1=0 y1=0 x2=135 y2=-135 buff=0 stroke="#f8fafc" fill="#f8fafc" strokeWidth=6 tipLength=21 tipWidth=21
 circle origin r=5.5 at 0,0 fill="#f8fafc" stroke="#f8fafc" strokeWidth=0
-text origin_label "(0, 0)" at 0,42 size=42 fill="#f8fafc"
-text tip_label "(2, 2)" at 196,-126 size=42 fill="#f8fafc"
+text origin_label "(0, 0)" at 0,54 size=42 fill="#f8fafc"
+text tip_label "(2, 2)" at 210,-135 size=42 fill="#f8fafc"
 at 0s:
-  play AnimationGroup(Create(plane), FadeIn(origin), Create(vec), FadeIn(origin_label), FadeIn(tip_label), lagRatio=0.04) duration=1s easing=easeOut
+  play AnimationGroup(Create(plane), FadeIn(origin), Create(vec), FadeIn(origin_label), FadeIn(tip_label), lagRatio=0.04) duration=1s easing=smooth
   wait 1.4s

@@ -15,8 +15,8 @@ DEFAULT_TRANSFORM = {
 
 DEFAULT_STYLE = {
     "fill": "#ffffff",
-    "stroke": "#111827",
-    "strokeWidth": 2,
+    "stroke": "none",
+    "strokeWidth": 0,
 }
 
 

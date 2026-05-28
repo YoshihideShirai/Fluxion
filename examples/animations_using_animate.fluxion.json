@@ -23,8 +23,10 @@
       },
       "style": {
         "fill": "#f97316",
-        "stroke": "#111827",
-        "strokeWidth": 2
+        "stroke": "#ffffff",
+        "strokeWidth": 4,
+        "fillOpacity": 0.5,
+        "strokeOpacity": 1
       },
       "geometry": {
         "w": 120,
@@ -49,8 +51,10 @@
         },
         "style": {
           "fill": "#ffffff",
-          "stroke": "#111827",
-          "strokeWidth": 2
+          "stroke": "#ffffff",
+          "strokeWidth": 4,
+          "fillOpacity": 0,
+          "strokeOpacity": 1
         },
         "geometry": {
           "w": 120,
@@ -86,6 +90,16 @@
       "path": "style.fill",
       "from": "#ffffff",
       "to": "#f97316",
+      "duration": 1,
+      "easing": "easeInOut"
+    },
+    {
+      "t": 1.0,
+      "op": "animate",
+      "id": "square",
+      "path": "style.fillOpacity",
+      "from": 0,
+      "to": 0.5,
       "duration": 1,
       "easing": "easeInOut"
     },

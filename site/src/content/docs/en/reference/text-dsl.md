@@ -22,10 +22,23 @@ The current Text DSL scope is intentionally small: place shapes, math, paths, an
 | `math` | Math equation node declaration | `math equation "e^{i\pi}+1=0" at 0,160 size=36 renderer=katex` |
 | `group` | Grouped node declaration | `group intro title equation` |
 | `surroundingRect` | Target-bounds rectangle declaration | `surroundingRect frame target=equation buff=10 stroke="#fbbf24"` |
-| `axes` | Axes helper declaration | `axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2` |
+| `axes` | Axes helper declaration | `axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2 xNumbers=-4,0,4` |
+| `numberPlane` | NumberPlane grid helper | `numberPlane plane xRange=-7,7 yRange=-4,4 unit=60` |
 | `plot` | Function plot path declaration | `plot curve fn=sin(t) range=-3.14,3.14 scaleX=80 scaleY=60` |
 | `dataPolygon` | Axes data-coordinate polygon helper | `dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5` |
+| `dataRect` | Axes data-coordinate rectangle helper | `dataRect area axes=ax from=0,0 to=t,25/t` |
+| `dataDot` | Axes data-coordinate dot helper | `dataDot dot axes=ax point=t,25/t` |
+| `dataLine` | Axes data-coordinate line helper | `dataLine marker axes=ax from=2,0 to=2,4` |
+| `dynamicLine` | Expression-bound line helper | `dynamicLine connector x1=60*x y1=0 x2=72 y2=-60*y` |
+| `dataArea` | Axes bounded area helper | `dataArea area axes=ax lower=t upper=2*t range=1,2` |
+| `dataRiemannRects` | Axes Riemann rectangles helper | `dataRiemannRects bars axes=ax fn=4*t-t*t range=0.3,0.6 dx=0.03` |
+| `gaussianSurface` | Projected Gaussian surface helper | `gaussianSurface surface range=-2,2 resolution=24 scale=2` |
+| `sphereSurface` | Projected sphere surface helper | `sphereSurface sphere radius=104 resolution=15,32` |
+| `threeDAxes` | Projected ThreeDAxes helper | `threeDAxes axes xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1` |
+| `projectedCircle` | Projected XY-plane circle helper | `projectedCircle circle radius=1 xBasis=-56.75,25.5 yBasis=87.75,13.25` |
 | `arrow` | Arrow helper declaration | `arrow vec x1=0 y1=0 x2=190 y2=80` |
+| `rotatingLine` | About-point rotating line helper | `rotatingLine arm x1=-120 y1=0 x2=120 y2=0 about=-120,0 angle=-theta` |
+| `rotateUpdater` | dt rotation updater expansion | `rotateUpdater arm rate=1 duration=2s` |
 | `angle` | Updating angle arc helper | `angle arc radius=60 from=0 to=theta samples=72` |
 | `tracedPath` | Updating trace path helper | `tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta` |
 | `arrange` | Group auto-layout sugar | `arrange dots direction=horizontal gap=20` |
@@ -131,11 +144,13 @@ text title "Fluxion" at 640,120 size=32 fill="#e2e8f0"
 math equation "e^{i\\pi}+1=0" at 640,200 size=36 expandTokens=true
 group intro title equation
 surroundingRect frame target=equation buff=10 stroke="#fbbf24"
+brace brace1 target=axis direction=down label="Horizontal distance"
 axes ax at 0,-40 width=720 height=320 xRange=-4,4 yRange=-2,2
 dataPolygon poly axes=ax points=-2,-0.5;0,1;2,0.5 fill="#22d3ee"
 arrow vec x1=0 y1=0 x2=190 y2=80 stroke="#22d3ee" fill="#22d3ee"
 angle arc radius=60 from=0 to=theta samples=72 stroke="#f59e0b"
 tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120
+projectedCircle circle3d radius=1 xBasis=-56.75,25.5 yBasis=87.75,13.25
 cameraFrame at 0,0 scale=1
 ```
 
@@ -150,12 +165,14 @@ Supported node types:
 - `math <id> "<latex>"`
 - `group <id> [child-id...]`
 - `surroundingRect <id> target=<node-id>`
+- `brace <id> target=<node-id>`
 - `axes <id>`
 - `plot <id> fn=<expr>`
 - `dataPolygon <id> axes=<axes-id> points=<x,y;...>`
 - `arrow <id> x1=<number> y1=<number> x2=<number> y2=<number>`
 - `angle <id> radius=<number> from=<expr> to=<expr>`
 - `tracedPath <id> x=<expr> y=<expr>`
+- `projectedCircle <id> radius=<number>`
 
 `id` values must be unique in a document.
 
@@ -164,16 +181,33 @@ Common options:
 - `at x,y`: shortcut for `transform.x` and `transform.y`
 - `x`, `y`
 - `scale`
+- `scaleX`, `scaleY`: optional nonuniform scale multipliers composed with `scale`
 - `rotation`
 - `opacity`
-- `fill`, `stroke`, `strokeWidth`
+- `fill`, `fillOpacity`, `stroke`, `strokeOpacity`, `strokeWidth`
 - `size` / `fontSize`
 - `math` only: `renderer=katex|mathjax`, `expandTokens=true|false`
+- `image` only: `w`, `h`, `data=<row;row;...>`; `data` is a grayscale value matrix such as `0,128,255;...`, producing a pixel image similar to Manim `ImageMobject(np.uint8(...))`.
 - `surroundingRect` only: `target=<node-id>`, `buff=<number>`; emits a frame-like `rect` node sized from the target node's declared/estimated bounds. `play Create(frame)` animates its border with `geometry.drawProgress` for a Manim-like outline draw.
-- `axes` only: `xRange=<min,max>`, `yRange=<min,max>`, `width`, `height`; emits a `group` with x/y axis lines.
+- `brace` only: `target=<node-id>`, `direction=up|down|left|right|perpendicular`, `buff`, `sharpness`, `label`, `labelRenderer=text|katex|mathjax`, `labelSize`, `labelColor`, `labelOffset`, `labelAlignment=start|center|end`, `labelW`, `labelH`; emits a Manim `Brace(...)`-style filled brace using the source SVG template model and can place `get_text` / `get_tex`-style labels at the computed brace tip.
+- `axes` only: `xRange=<min,max>`, `yRange=<min,max>`, `width`, `height`, `xTicks=<n,n,...>`, `yTicks=<n,n,...>`, `xNumbers=<n,n,...>`, `yNumbers=<n,n,...>`, `tickLength`, `tickStrokeWidth`, `numberSize`, `numberColor`, `xNumberOffset`, `yNumberOffset`; places x/y axis lines at the origin for asymmetric ranges and optionally emits tick lines plus number text.
+- `numberPlane` only: `xRange=<min,max>`, `yRange=<min,max>`, `xStep`, `yStep`, `unit`, `xUnit`, `yUnit`, `stroke`, `axisStroke`, `strokeWidth`, `axisStrokeWidth`, `opacity`, `axisOpacity`; emits a Manim `NumberPlane()`-style `group` with background grid lines and emphasized x/y axes.
 - `plot` only: `fn=<expr>`, `range=<min,max>`, `samples`, `scaleX`, `scaleY`, `close=true|false`; emits a generated `path` geometry from the sampled function.
 - `dataPolygon` only: `axes=<axes-id>`, `points=<x,y;...>`; maps at least three data-coordinate points through the referenced `axes` helper and emits a closed `path`.
-- `arrow` only: `x1`, `y1`, `x2`, `y2`, `tipLength`, `tipWidth`; emits a `group` with a line shaft and filled path tip.
+- `dataLineGraph` only: `axes=<axes-id>`, `points=<x,y;...>`, `lineColor`, `strokeWidth`, `vertexRadius`; maps data-coordinate points through the referenced `axes` helper and emits a Manim `Axes.plot_line_graph`-style `group` with a line path and vertex dots.
+- `dataRect` only: `axes=<axes-id>`, `from=<x,y>`, `to=<x,y>`; maps two data-coordinate points through the referenced `axes` helper and emits a `rect` center plus width/height. `from`/`to` may reference value trackers, which expands Manim rectangle-shaped `always_redraw(Polygon(... ax.c2p ...))` cases into `bindExpr`.
+- `dataDot` only: `axes=<axes-id>`, `point=<x,y>`, `r`; maps a data-coordinate point through the referenced `axes` helper and emits a `circle` dot. `point` may reference value trackers.
+- `dataLine` only: `axes=<axes-id>`, `from=<x,y>`, `to=<x,y>`; maps two data-coordinate points through the referenced `axes` helper and emits a `line`, useful for Manim-style axis-to-graph markers such as `Axes.get_vertical_line(...)`.
+- `dynamicLine` only: `x1=<expr>`, `y1=<expr>`, `x2=<expr>`, `y2=<expr>`; emits a `line` and `bindExpr` operations from endpoint expressions that may reference value trackers. This represents Manim connector updaters shaped like `Line(...).become(...)`.
+- `dataArea` only: `axes=<axes-id>`, `lower=<expr>`, `upper=<expr>`, `range=<min,max>`, `samples`; samples two functions and emits a closed `path` similar to Manim `Axes.get_area(..., bounded_graph=...)`.
+- `dataRiemannRects` only: `axes=<axes-id>`, `fn=<expr>`, `range=<min,max>`, `dx`; left-samples a function and emits a `group` of `rect` children similar to Manim `Axes.get_riemann_rectangles`.
+- `gaussianSurface` only: `range=<min,max>`, `uRange=<min,max>`, `vRange=<min,max>`, `resolution`, `scale`, `sigma`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `fillA`, `fillB`, `shade=true|false`, `shadeStrength`; emits a `group` of projected checkerboard mesh `path` faces similar to Manim `Surface(param_gauss).set_fill_by_checkerboard(...)`.
+- `sphereSurface` only: `radius`, `uRange`, `vRange`, `resolution=<u,v>`, `fillA`, `fillB`, `light=<x,y,z>`, `shade=true|false`; emits projected checkerboard sphere `path` faces similar to Manim `Surface(..., checkerboard_colors=[RED_D, RED_E], resolution=(15, 32))`.
+- `threeDAxes` only: `xRange=<min,max,step>`, `yRange`, `zRange`, `xBasis=<x,y>`, `yBasis=<x,y>`, `zBasis=<x,y>`, `includeTicks`, `includeTips`; emits projected line/tick/tip groups for Manim `ThreeDAxes()` default ranges.
+- `projectedCircle` only: `radius`, `xBasis=<x,y>`, `yBasis=<x,y>`; emits a cubic `path` for a Manim `Circle()` projected into the XY plane using the same basis vectors as projected 3D axes.
+- `arrow` only: `x1`, `y1`, `x2`, `y2`, `buff`, `tipLength`, `tipWidth`, `maxTipLengthToLengthRatio`, `maxStrokeWidthToLengthRatio`; emits a `group` with a line shaft and filled triangle tip. `tipLength` and `strokeWidth` are clamped against drawable length ratios like Manim `Arrow`.
+- `rotatingLine` only: `x1`, `y1`, `x2`, `y2`, `about=<x,y>`, `angle=<expr>`; emits a `line` made by rotating the reference segment around the given point, and updates endpoints with `bindExpr` when `angle` references a value tracker. This expands Manim-style `Line(...).rotate(angle, about_point=...)` into DSL.
+- `rotateUpdater` only: `rate=<radians-per-second>`, `duration`, `easing`, `from`; expands Manim callback updaters shaped like `mobject.add_updater(lambda m, dt: m.rotate_about_origin(rate * dt))` into cumulative `rotation` animation.
 - `angle` only: `radius` / `r`, `from`, `to`, `samples`, `close=true|false`; emits a generated `path` arc and a `bindPath` updater. Expressions can reference value trackers, so `to=theta` follows an animated tracker.
 - `tracedPath` only: `x`, `y`, `from`, `to`, `samples`, `close=true|false`; emits a generated `path` and a `bindPath` updater. This is a declarative trace helper for parametric motion, not a full history-based Manim `TracedPath` clone yet.
 
@@ -217,7 +251,7 @@ set dot.y to expr="240 + 100 * sin(theta)"
 
 `value` declares a scalar tracker that lives separately from scene nodes. A tracker can be animated with `animate <name> from <number> to <number> ...`, and node properties can depend on tracker values through `set <id>.<property> to expr="..."`.
 
-Dependent expressions are intentionally static and analyzable. Fluxion does **not** execute arbitrary JavaScript and does not aim for full Manim updater compatibility. Expressions may reference declared tracker names, numeric literals, parentheses, arithmetic operators (`+`, `-`, `*`, `/`, `%`, `**`), constants (`pi`, `e`), and allowlisted math functions such as `sin`, `cos`, `tan`, `sqrt`, `abs`, `min`, `max`, and `pow`.
+Dependent expressions are intentionally static and analyzable. Fluxion does **not** execute arbitrary JavaScript and does not aim for full Manim updater compatibility. Expressions may reference declared tracker names, numeric literals, parentheses, arithmetic operators (`+`, `-`, `*`, `/`, `%`, `**`), constants (`pi`, `e`), and allowlisted math functions such as `sin`, `cos`, `tan`, `sqrt`, `abs`, `min`, `max`, `pow`, `clip01`, and `clipPi`.
 
 ### always
 
@@ -270,7 +304,7 @@ Supported primitives include:
 - `Write(id)`: creates writable leaves with `geometry.writeProgress=0`, emits `effect=write`, and reveals each leaf with width-paced left-to-right timing to approximate Manim's written-on appearance.
 - `Transform(source, target)`: animates the source node toward transform/style/geometry properties from the target node.
 - `TransformMatchingTex(source, target)`: matches expanded `math` token children by identical token text. Matched tokens expand to `Transform`, source-only tokens expand to `FadeOut`, and target-only tokens expand to `FadeIn`.
-- `ReplacementTransform(from, to)`: expands into a simultaneous `FadeOut(from)` and `FadeIn(to)`.
+- `ReplacementTransform(from, to)`: morphs `from` toward `to`, deletes `from`, and materializes `to` at the end.
 - `Circumscribe(id)`: emits a semantic circumscribe effect for renderers that support highlight outlines. `color=<css-color>` is accepted on the play statement or inside the call.
 - `AnimationGroup(<animations...>, lagRatio=0)`: expands child animations in parallel. `lagRatio` offsets child starts by a ratio of child duration, and the group is normalized to fit the outer `duration`.
 - `LaggedStart(<animations...>, lagRatio=0.05)`: alias of `AnimationGroup` tuned for staggered starts (Manim-like naming).

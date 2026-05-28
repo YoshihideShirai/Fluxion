@@ -142,6 +142,24 @@ animate camera.scale from 1.5 to 2 duration=2s`);
   );
 });
 
+test("compiles nested camera target properties", () => {
+  const documentData = compileTextDsl(`camera mode=target target=0,0 scale=1
+value theta = 0
+always camera.target.x = expr=100*cos(theta)
+animate camera.target.y from 0 to 120 duration=1s
+animate theta from 0 to 3.141592654 duration=1s`);
+
+  const bind = documentData.timeline.find((op) => op.op === "bindExpr" && op.path === "camera.target.x");
+  if (bind?.op !== "bindExpr") throw new Error("Expected camera target bindExpr.");
+  assert.equal(bind.id, "camera");
+  assert.equal(bind.expr, "100*cos(theta)");
+
+  const animate = documentData.timeline.find((op) => op.op === "animate" && op.path === "camera.target.y");
+  if (animate?.op !== "animate") throw new Error("Expected camera target animate operation.");
+  assert.equal(animate.id, "camera");
+  assert.equal(animate.to, 120);
+});
+
 test("compiles cameraFrame and animateFrame sugar", () => {
   const documentData = compileTextDsl(`cameraFrame at 10,20 scale=1.5 rotation=5
 animateFrame to 110,45 scale=2 rotation=15 duration=2s easing=linear
@@ -176,7 +194,7 @@ animateFrame to -20,-30 scale=1.25 duration=1s easing=easeInOut`);
 test("compiles scene, nodes, styles, animation, and at blocks", () => {
   const documentData = compileTextDsl(`scene width=800 height=450 fps=30
 
-circle c1 r=24 at 100,200 fill="#38bdf8" stroke="#0f172a" strokeWidth=3
+circle c1 r=24 at 100,200 fill="#38bdf8" fillOpacity=0.75 stroke="#0f172a" strokeOpacity=0.6 strokeWidth=3
 rect box w=80 h=40 at 300,200 fill="#f97316" opacity=0.8
 line axis x1=-50 y1=0 x2=50 y2=0 at 400,350 stroke="#e2e8f0" strokeWidth=2
 text title "Fluxion Text DSL" at 400,80 size=28 fill="#e2e8f0"
@@ -205,6 +223,8 @@ at 1s:
   assert.equal(circle?.transform.y, 200);
   assert.equal(circle?.geometry.r, 24);
   assert.equal(circle?.style.fill, "#38bdf8");
+  assert.equal(circle?.style.fillOpacity, 0.75);
+  assert.equal(circle?.style.strokeOpacity, 0.6);
   assert.equal(circle?.style.strokeWidth, 3);
 
   const line = documentData.nodes.find((node) => node.id === "axis");
@@ -270,6 +290,40 @@ test("compiles path nodes with SVG d geometry", () => {
   );
 });
 
+test("compiles path-to-path Transform as drawable morph", () => {
+  const square =
+    "M 0 -84.853 C 0 -84.853 84.853 0 84.853 0 C 84.853 0 0 84.853 0 84.853 C 0 84.853 -84.853 0 -84.853 0 C -84.853 0 0 -84.853 0 -84.853 Z";
+  const circle =
+    "M 0 -56 C 30.928 -56 56 -30.928 56 0 C 56 30.928 30.928 56 0 56 C -30.928 56 -56 30.928 -56 0 C -56 -30.928 -30.928 -56 0 -56 Z";
+  const documentData = compileTextDsl(`path square d="${square}" fill="#ec4899" fillOpacity=0 stroke="#ffffff" strokeWidth=4
+path circle d="${circle}" fill="#ec4899" fillOpacity=0.5 stroke="#ffffff" strokeWidth=4
+play Transform(square, circle) duration=1s`);
+
+  const animations = documentData.timeline.filter(
+    (op): op is AnimateOperation => op.op === "animate" && op.id === "square",
+  );
+  assert.equal(animations.some((op) => op.path === "geometry.d" && op.from === square && op.to === circle), true);
+  assert.equal(animations.some((op) => op.path === "style.fillOpacity" && op.from === 0 && op.to === 0.5), true);
+});
+
+test("compiles brace sharpness and label placement options", () => {
+  const documentData = compileTextDsl(`line segment x1=-80 y1=20 x2=80 y2=-20 stroke="#ff862f"
+brace br target=segment direction=perpendicular buff=22 sharpness=2 label="x-x_1" labelRenderer=katex labelW=90 labelH=70 labelOffset=4 labelAlignment=end fill="#ffffff"`);
+
+  const brace = documentData.nodes.find((node) => node.id === "br");
+  assert.equal(brace?.type, "brace");
+  assert.equal(brace?.geometry.target, "segment");
+  assert.equal(brace?.geometry.direction, "perpendicular");
+  assert.equal(brace?.geometry.buff, 22);
+  assert.equal(brace?.geometry.sharpness, 2);
+  assert.equal(brace?.geometry.labelOffset, 4);
+  assert.equal(brace?.geometry.labelAlignment, "end");
+  assert.equal(brace?.geometry.label, "x-x_1");
+  assert.equal(brace?.geometry.labelRenderer, "katex");
+  assert.equal(brace?.geometry.labelW, 90);
+  assert.equal(brace?.geometry.labelH, 70);
+});
+
 test("compiles Create as draw-progress animations for drawable groups", () => {
   const documentData = compileTextDsl(`line base x1=0 y1=0 x2=100 y2=0 stroke="#fff"
 arrow vec x1=0 y1=0 x2=100 y2=80 stroke="#22d3ee" tipLength=20 tipWidth=16
@@ -333,8 +387,194 @@ dataPolygon poly axes=ax points=-2,-0.5;-0.4,1.1;1.8,0.4 fill="#22d3ee" opacity=
   assert.equal(polygon?.transform.opacity, 0.2);
   assert.equal(
     polygon?.geometry.d,
-    "M -190 -42.5 L -38 93.5 L 171 34 Z",
+    "M -190 42.5 L -38 -93.5 L 171 -34 Z",
   );
+});
+
+test("compiles dataLineGraph through Manim-style axes coordinates", () => {
+  const documentData = compileTextDsl(`axes ax at 0,-20 width=540 height=360 xRange=0,40 yRange=-8,32 stroke="#fff" strokeWidth=3 xTicks=10 xNumbers=0,5 yNumbers=-5,0 numberSize=18
+dataLineGraph graph axes=ax points=0,20;8,0;38,0;39,-5 lineColor="#FFFF00" strokeWidth=4 vertexRadius=5`);
+
+  const axes = documentData.nodes.find((node) => node.id === "ax");
+  assert.equal(axes?.children[0]?.geometry.y1, 108);
+  assert.equal(axes?.children[1]?.geometry.x1, -270);
+  assert.equal(axes?.children.some((child) => child.id === "ax:x_tick:10"), true);
+  assert.equal(axes?.children.some((child) => child.id === "ax:x_number:10"), false);
+  assert.equal(axes?.children.some((child) => child.id === "ax:x_tick:5"), true);
+  assert.equal(axes?.children.find((child) => child.id === "ax:x_number:5")?.text, "5");
+  assert.equal(axes?.children.find((child) => child.id === "ax:y_number:m5")?.text, "-5");
+  assert.equal(axes?.children.find((child) => child.id === "ax:y_tick:m5")?.transform.y, 133);
+
+  const graph = documentData.nodes.find((node) => node.id === "graph");
+  assert.equal(graph?.type, "group");
+  assert.equal(graph?.transform.x, 0);
+  assert.equal(graph?.transform.y, -20);
+  assert.equal(graph?.children[0]?.geometry.d, "M -270 -72 L -162 108 L 243 108 L 256.5 153");
+  assert.equal(graph?.children[1]?.transform.x, -270);
+  assert.equal(Math.round(Number(graph?.children[1]?.transform.y)), -72);
+  assert.equal(graph?.children[1]?.style.fill, "#FFFF00");
+});
+
+test("compiles numberPlane helper as background grid lines", () => {
+  const documentData = compileTextDsl(`numberPlane plane xRange=-2,2 yRange=-1,1 unit=60 stroke="#00bcd4" axisStroke="#dff9ff"`);
+
+  const plane = documentData.nodes[0];
+  assert.equal(plane?.type, "group");
+  assert.equal(plane?.geometry.numberPlane, true);
+  assert.equal(plane?.children.length, 8);
+  const xAxis = plane?.children.find((child) => child.id === "plane:h:0");
+  const yAxis = plane?.children.find((child) => child.id === "plane:v:0");
+  assert.equal(xAxis?.style.stroke, "#dff9ff");
+  assert.equal(yAxis?.style.stroke, "#dff9ff");
+  assert.equal(plane?.children.find((child) => child.id === "plane:v:m2")?.geometry.x1, -120);
+  assert.equal(plane?.children.find((child) => child.id === "plane:h:m1")?.geometry.y1, 60);
+});
+
+test("compiles dataRect and dataDot through dynamic axes coordinates", () => {
+  const documentData = compileTextDsl(`value t = 5
+axes ax at 0,0 width=480 height=360 xRange=0,10 yRange=0,10
+dataRect area axes=ax from=0,0 to=t,25/t fill="#58C4DD" fillOpacity=0.5
+dataDot dot axes=ax point=t,25/t r=8`);
+
+  const area = documentData.nodes.find((node) => node.id === "area");
+  assert.equal(area?.type, "rect");
+  assert.equal(area?.geometry.dataRect, true);
+  assert.equal(area?.geometry.w, 240);
+  assert.equal(area?.geometry.h, 180);
+  assert.equal(area?.transform.x, -120);
+  assert.equal(area?.transform.y, 90);
+
+  const dot = documentData.nodes.find((node) => node.id === "dot");
+  assert.equal(dot?.type, "circle");
+  assert.equal(dot?.geometry.dataDot, true);
+  assert.equal(dot?.transform.x, 0);
+  assert.equal(dot?.transform.y, 0);
+
+  const areaBindings = documentData.timeline.filter((op) => op.op === "bindExpr" && op.id === "area");
+  assert.equal(areaBindings.length, 4);
+  assert.equal(areaBindings.every((op) => op.op === "bindExpr" && op.deps?.includes("t")), true);
+});
+
+test("compiles dynamicLine helper into endpoint bindings", () => {
+  const documentData = compileTextDsl(`value x = 0
+value y = 0
+dynamicLine connector x1=60*x y1=0 x2=72 y2=-60*y stroke="#FC6255" strokeWidth=4`);
+
+  const connector = documentData.nodes[0];
+  assert.equal(connector?.type, "line");
+  assert.equal(connector?.geometry.dynamicLine, true);
+  assert.equal(connector?.geometry.x2, 72);
+  assert.equal(connector?.style.stroke, "#FC6255");
+
+  const bindings = documentData.timeline.filter((op) => op.op === "bindExpr" && op.id === "connector");
+  assert.equal(bindings.length, 4);
+  assert.equal(bindings.some((op) => op.op === "bindExpr" && op.path === "geometry.x1" && op.expr === "60*x"), true);
+  assert.equal(bindings.some((op) => op.op === "bindExpr" && op.path === "geometry.y2" && op.expr === "-60*y"), true);
+});
+
+test("compiles graph area helpers through axes coordinates", () => {
+  const documentData = compileTextDsl(`axes ax at 0,15 width=500 height=330 xRange=0,5 yRange=0,6
+dataLine line_1 axes=ax from=2,0 to=2,4*2-2*2 stroke="#FFFF00" strokeWidth=4
+dataArea area axes=ax lower=0.8*t*t-3*t+4 upper=4*t-t*t range=2,3 samples=6 fill="#888888" fillOpacity=0.5
+dataRiemannRects riemann axes=ax fn=4*t-t*t range=0.3,0.6 dx=0.03 fill="#0000FF" fillOpacity=0.5`);
+
+  const line = documentData.nodes.find((node) => node.id === "line_1");
+  assert.equal(line?.type, "line");
+  assert.equal(Math.round(Number(line?.geometry.x1)), -50);
+  assert.equal(line?.geometry.y1, 180);
+  assert.equal(Math.round(Number(line?.geometry.x2)), -50);
+  assert.equal(Math.round(Number(line?.geometry.y2)), -40);
+
+  const area = documentData.nodes.find((node) => node.id === "area");
+  assert.equal(area?.type, "path");
+  assert.equal(area?.geometry.dataArea, true);
+  assert.equal(String(area?.geometry.d).startsWith("M -50 -40 L "), true);
+  assert.equal(String(area?.geometry.d).endsWith(" Z"), true);
+
+  const riemann = documentData.nodes.find((node) => node.id === "riemann");
+  assert.equal(riemann?.type, "group");
+  assert.equal(riemann?.geometry.dataRiemannRects, true);
+  assert.equal(riemann?.children.length, 10);
+  assert.equal(Math.round(Number(riemann?.children[0]?.geometry.w)), 3);
+});
+
+test("compiles gaussianSurface into checkerboard surface faces", () => {
+  const documentData = compileTextDsl(
+    `gaussianSurface surface at -38,124 range=-2,2 resolution=4 scale=2 sigma=0.4 fillA="#FF862F" fillB="#58C4DD" stroke="#83C167" fillOpacity=0.5`,
+  );
+
+  const surface = documentData.nodes[0];
+  assert.equal(surface?.type, "group");
+  assert.equal(surface?.geometry.gaussianSurface, true);
+  assert.equal(surface?.geometry.resolution, 4);
+  assert.equal(surface?.children.length, 16);
+  assert.equal(surface?.children.every((child) => child.type === "path"), true);
+  assert.equal(surface?.children.some((child) => child.style.fill === "#FF862F"), true);
+  assert.equal(surface?.children.some((child) => child.style.fill === "#58C4DD"), true);
+  assert.equal(surface?.children[0]?.style.fillOpacity, 0.5);
+  assert.equal(String(surface?.children[0]?.geometry.d).endsWith(" Z"), true);
+});
+
+test("compiles gaussianSurface with optional height shading", () => {
+  const documentData = compileTextDsl(
+    `gaussianSurface surface range=-2,2 resolution=4 scale=2 sigma=0.4 fillA="#FF862F" fillB="#58C4DD" shade=true shadeStrength=0.18`,
+  );
+
+  const surface = documentData.nodes[0];
+  assert.equal(surface?.geometry.shade, true);
+  assert.equal(surface?.children.some((child) => child.style.fill !== "#FF862F" && child.style.fill !== "#58C4DD"), true);
+});
+
+test("compiles sphereSurface into shaded checkerboard surface faces", () => {
+  const documentData = compileTextDsl(
+    `sphereSurface sphere at 0,28 radius=104 resolution=3,4 fillA="#E65A4C" fillB="#CF5044" light=0,-0.35,1`,
+  );
+
+  const sphere = documentData.nodes[0];
+  assert.equal(sphere?.type, "group");
+  assert.equal(sphere?.geometry.sphereSurface, true);
+  assert.equal(sphere?.geometry.uResolution, 3);
+  assert.equal(sphere?.geometry.vResolution, 4);
+  assert.equal(sphere?.children.length, 12);
+  assert.equal(sphere?.children.every((child) => child.type === "path"), true);
+  assert.equal(sphere?.children.every((child) => String(child.geometry.d).endsWith(" Z")), true);
+  assert.equal(sphere?.children.some((child) => child.style.fill !== "#E65A4C" && child.style.fill !== "#CF5044"), true);
+});
+
+test("compiles threeDAxes into projected axes with ticks and tips", () => {
+  const documentData = compileTextDsl(
+    `threeDAxes axes at -40,42 xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 includeTips=true`,
+  );
+
+  const axes = documentData.nodes[0];
+  assert.equal(axes?.type, "group");
+  assert.equal(axes?.geometry.threeDAxes, true);
+  equalJson(axes?.geometry.xRange, [-6, 6, 1]);
+  assert.equal(axes?.children.filter((child) => child.type === "line").length, 33);
+  assert.equal(axes?.children.filter((child) => child.type === "path").length, 3);
+  assert.equal(axes?.children.some((child) => child.id === "axes:x:tip"), true);
+});
+
+test("compiles threeDAxes without ticks when requested", () => {
+  const documentData = compileTextDsl(`threeDAxes axes includeTicks=false includeTips=true`);
+
+  const axes = documentData.nodes[0];
+  assert.equal(axes?.children.filter((child) => child.type === "line").length, 3);
+  assert.equal(axes?.children.filter((child) => child.type === "path").length, 3);
+});
+
+test("compiles projectedCircle into a projected XY-plane path", () => {
+  const documentData = compileTextDsl(
+    `projectedCircle circle_xy radius=0.67 at 0,28 xBasis=-56.75,25.5 yBasis=87.75,13.25 fill="none" stroke="#FFFFFF" strokeWidth=4`,
+  );
+
+  const circle = documentData.nodes[0];
+  assert.equal(circle?.type, "path");
+  assert.equal(circle?.geometry.projectedCircle, true);
+  assert.equal(circle?.geometry.radius, 0.67);
+  assert.equal(circle?.geometry.d, "M -38.0225 17.085 C -5.552299 21.987908 37.793253 18.313285 58.7925 8.8775 C 79.791747 -0.558285 70.492701 -12.182092 38.0225 -17.085 C 5.552299 -21.987908 -37.793253 -18.313285 -58.7925 -8.8775 C -79.791747 0.558285 -70.492701 12.182092 -38.0225 17.085 Z");
+  assert.equal(circle?.transform.y, 28);
+  assert.equal(circle?.style.fill, "none");
 });
 
 test("compiles arrow helper as grouped shaft and tip paths", () => {
@@ -358,6 +598,32 @@ test("compiles arrow helper as grouped shaft and tip paths", () => {
   assert.equal(String(arrow?.children[1]?.geometry.d).startsWith("M 190 80 L "), true);
 });
 
+test("compiles arrow helper with Manim-like buff and length-ratio clamps", () => {
+  const documentData = compileTextDsl(
+    `arrow vec x1=0 y1=0 x2=100 y2=0 buff=10 strokeWidth=100 maxStrokeWidthToLengthRatio=0.1 tipLength=50 tipWidth=20 maxTipLengthToLengthRatio=0.25`,
+  );
+
+  const arrow = documentData.nodes[0];
+  assert.equal(arrow?.geometry.buff, 10);
+  assert.equal(arrow?.geometry.tipLength, 20);
+  assert.equal(arrow?.children[0]?.geometry.x1, 10);
+  assert.equal(arrow?.children[0]?.geometry.x2, 70);
+  assert.equal(arrow?.children[0]?.style.strokeWidth, 8);
+  assert.equal(arrow?.children[1]?.geometry.d, "M 90 0 L 70 10 L 70 -10 Z");
+});
+
+test("compiles image helper with grayscale array data", () => {
+  const documentData = compileTextDsl(
+    `image img w=160 h=80 data="0,128,255;255,128,0"`,
+  );
+
+  const image = documentData.nodes[0];
+  assert.equal(image?.type, "image");
+  assert.equal(image?.geometry.w, 160);
+  assert.equal(image?.geometry.h, 80);
+  assert.equal(image?.geometry.data, "0,128,255;255,128,0");
+});
+
 test("compiles plot with close and style overrides", () => {
   const documentData = compileTextDsl(
     `plot area fn=sin(t) range=-3.14,3.14 samples=64 scaleX=60 scaleY=50 close=true fill="#38bdf8" opacity=0.3 stroke="#0ea5e9" strokeWidth=2`,
@@ -370,6 +636,22 @@ test("compiles plot with close and style overrides", () => {
   assert.equal(area?.style.stroke, "#0ea5e9");
   assert.equal(area?.style.strokeWidth, 2);
   assert.equal(String(area?.geometry.d).endsWith(" Z"), true);
+});
+
+test("compiles nonuniform transform scale properties", () => {
+  const documentData = compileTextDsl(`rect display w=360 h=60 at 220,-120 scaleX=0.5 scaleY=1.5
+animate display.scaleX from 1 to 0.5 duration=0.7s easing=easeInOut
+animate display.scaleY from 1 to 1.5 duration=0.7s easing=easeInOut`);
+
+  const display = documentData.nodes[0];
+  assert.equal(display?.transform.scaleX, 0.5);
+  assert.equal(display?.transform.scaleY, 1.5);
+
+  const animations = documentData.timeline.filter((op) => op.op === "animate");
+  assert.equal(animations[0]?.op, "animate");
+  assert.equal(animations[0]?.path, "transform.scaleX");
+  assert.equal(animations[1]?.op, "animate");
+  assert.equal(animations[1]?.path, "transform.scaleY");
 });
 
 test("compiles angle helper into an updating path", () => {
@@ -390,6 +672,39 @@ angle arc at 0,-20 radius=60 from=0 to=theta samples=72 stroke="#f59e0b" strokeW
   assert.equal(bind.path, "geometry.d");
   assert.equal(bind.tMaxExpr, "theta");
   equalJson(bind.deps, ["theta"]);
+});
+
+test("compiles rotatingLine helper around an explicit about point", () => {
+  const documentData = compileTextDsl(`value theta = 1.570796327
+rotatingLine line_moving x1=-120 y1=0 x2=120 y2=0 about=-120,0 angle=-theta stroke="#ffffff" strokeWidth=4`);
+
+  const line = documentData.nodes.find((node) => node.id === "line_moving");
+  assert.equal(line?.type, "line");
+  assert.equal(line?.geometry.x1, -120);
+  assert.equal(Math.round(Number(line?.geometry.x2)), -120);
+  assert.equal(Math.round(Number(line?.geometry.y2)), -240);
+  assert.equal(line?.geometry.rotationAboutX, -120);
+  assert.equal(line?.geometry.rotationAngle, "-theta");
+
+  const bindings = documentData.timeline.filter((op) => op.op === "bindExpr" && op.id === "line_moving");
+  assert.equal(bindings.length, 4);
+  assert.equal(bindings.some((op) => op.op === "bindExpr" && op.path === "geometry.x2" && op.deps?.includes("theta")), true);
+});
+
+test("compiles rotateUpdater helper as cumulative dt rotation", () => {
+  const documentData = compileTextDsl(`line arm x1=0 y1=0 x2=-180 y2=0
+rotateUpdater arm rate=1 duration=2s
+rotateUpdater arm rate=-1 duration=2s`);
+
+  const rotations = documentData.timeline.filter(
+    (op): op is AnimateOperation => op.op === "animate" && op.id === "arm" && op.path === "transform.rotation",
+  );
+  assert.equal(rotations.length, 2);
+  assert.equal(rotations[0]?.op, "animate");
+  assert.equal(Math.round(Number(rotations[0]?.to) * 1000) / 1000, 114.592);
+  assert.equal(rotations[1]?.op, "animate");
+  assert.equal(rotations[1]?.t, 2);
+  assert.equal(Math.round(Number(rotations[1]?.to) * 1000) / 1000, 0);
 });
 
 test("compiles tracedPath helper into an updating path", () => {
@@ -788,6 +1103,42 @@ play TransformMatchingTex(eq2, eq3) duration=1s`);
   );
 });
 
+test("matches TransformMatchingTex tokens from nested source groups", () => {
+  const documentData = compileTextDsl(`math varA "a" at -80,80
+math varB "b" at 0,80
+group variables varA varB
+math eq1 "x+b" expandTokens=true
+math eq2 "a+b" expandTokens=true opacity=0
+group source eq1 variables
+show eq1
+show variables
+play TransformMatchingTex(source, eq2) duration=1s`);
+
+  assert.equal(
+    documentData.timeline.some(
+      (op) => op.op === "effect" && op.id === "varA" && op.effect === "transform",
+    ),
+    true,
+  );
+  assert.equal(
+    documentData.timeline.some(
+      (op) =>
+        op.op === "animate" &&
+        op.id === "varA" &&
+        op.path === "transform.y" &&
+        typeof op.to === "number" &&
+        op.to < 80,
+    ),
+    true,
+  );
+  assert.equal(
+    documentData.timeline.some(
+      (op) => op.op === "delete" && op.id === "varA" && op.t === 1,
+    ),
+    true,
+  );
+});
+
 test("expands Write on groups into width-paced child write-progress reveals", () => {
   const documentData = compileTextDsl(`math a "a" at 0,0 opacity=0.8
 math b "b" at 40,0
@@ -818,9 +1169,9 @@ play Write(text) duration=1s easing=linear`);
   );
 });
 
-test("expands ReplacementTransform into simultaneous FadeOut and FadeIn", () => {
-  const documentData = compileTextDsl(`circle from at 0,0 opacity=0.75
-rect to at 100,0 opacity=0.5
+test("expands ReplacementTransform into source morph plus target replacement", () => {
+  const documentData = compileTextDsl(`rect from w=40 h=40 at 0,0 opacity=0.75
+rect to w=80 h=90 at 100,0 opacity=0.5
 
 play ReplacementTransform(from, to) duration=1.25s easing=linear`);
 
@@ -828,10 +1179,7 @@ play ReplacementTransform(from, to) duration=1.25s easing=linear`);
     documentData.timeline
       .filter((op) => op.op === "effect")
       .map((op) => [op.id, op.effect, op.t, op.duration, op.easing]),
-    [
-      ["from", "fadeOut", 0, 1.25, "linear"],
-      ["to", "fadeIn", 0, 1.25, "linear"],
-    ],
+    [["from", "replacementTransform", 0, 1.25, "linear"]],
   );
 
   const toCreate = documentData.timeline.find(
@@ -840,15 +1188,18 @@ play ReplacementTransform(from, to) duration=1.25s easing=linear`);
   assert.equal(toCreate?.op, "create");
   if (toCreate?.op !== "create")
     throw new Error("Expected ReplacementTransform target create.");
-  assert.equal(toCreate.node.transform.opacity, 0);
+  assert.equal(toCreate.t, 1.25);
+  assert.equal(toCreate.node.transform.opacity, 0.5);
 
   equalJson(
     documentData.timeline
       .filter((op): op is AnimateOperation => op.op === "animate")
       .map((op) => [op.id, op.path, op.from, op.to, op.t, op.duration]),
     [
-      ["from", "transform.opacity", 0.75, 0, 0, 1.25],
-      ["to", "transform.opacity", 0, 0.5, 0, 1.25],
+      ["from", "transform.x", 0, 100, 0, 1.25],
+      ["from", "transform.opacity", 0.75, 0.5, 0, 1.25],
+      ["from", "geometry.w", 40, 80, 0, 1.25],
+      ["from", "geometry.h", 40, 90, 0, 1.25],
     ],
   );
   equalJson(
@@ -1152,7 +1503,8 @@ test("compiles scalar value trackers and dependent expressions", () => {
 value theta = 0
 animate theta from 0 to 6.28 duration=2s easing=linear
 set dot.x to expr="320 + 100 * cos(theta)"
-set dot.y to expr="240 + 100 * sin(theta)"`);
+set dot.y to expr="240 + 100 * sin(theta)"
+set dot.rotation to expr="clipPi(theta)+clip01(theta-1)"`);
 
   equalJson(documentData.values, [{ id: "theta", initial: 0 }]);
   equalJson(
@@ -1168,6 +1520,7 @@ set dot.y to expr="240 + 100 * sin(theta)"`);
     [
       ["dot", "transform.x", "320 + 100 * cos(theta)"],
       ["dot", "transform.y", "240 + 100 * sin(theta)"],
+      ["dot", "transform.rotation", "clipPi(theta)+clip01(theta-1)"],
     ],
   );
 });

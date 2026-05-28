@@ -32,9 +32,17 @@ The generated `examples/simple_circle.fluxion.json` is Fluxion IR that can be lo
 
 - `Scene`: root object that stores nodes and timeline operations, then writes `.fluxion.json` with `export_json()`.
 - `Mobject`: Scene Graph node with transform, style, geometry, and children.
-- `Circle`, `Rectangle`, `Line`, `Path`, `Text`, `Math`, `Group`: node types renderable by the Runtime.
+- `Circle`, `Rectangle`, `Line`, `Path`, `Text`, `Math`, `ImageMobject`, `Group`: node types renderable by the Runtime.
 - `self.add()`: adds nodes to the scene and contributes to the initial graph / create operations.
 - `self.play()`: turns `.animate` builders and animation helpers into Timeline operations.
+
+`ImageMobject` mirrors Manim's `ImageMobject(np.uint8(...))` use case by exporting a 2D grayscale matrix as an `image` node with `geometry.data`.
+
+```python
+from fluxion import ImageMobject
+
+image = ImageMobject(id="gradient", data=[[0, 128, 255], [0, 128, 255]], w=240, h=120)
+```
 
 ## Related pages
 

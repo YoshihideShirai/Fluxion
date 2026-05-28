@@ -9,7 +9,7 @@ known_gaps:
   - symptom: "Fluxion は Manim の `.animate` target-copy pipeline ではなく、等価な transform/style property interpolation に展開している。"
     layer: runtime
     impact: low
-    workaround: "shift, set_fill, scale, rotate を同じ順序・duration・色定数で明示的な property animation として記述する。"
+    workaround: "default `Square()` の side_length=2 を Manim 16:9 frame scale の 135px に展開し、`shift(LEFT)` は 1 unit = 67.5px として x=-67.5 へ移動する。`set_fill(ORANGE)`、`scale(0.3)`、`rotate(0.4)` も同じ順序・duration・色定数で明示的な property animation として記述する。"
     closure_condition: "`.animate` の target-state 補間をDSLで直接表現できる。"
     fidelity_upgrade_condition: "Manim と同等の `.animate` 補間挙動で同等の視覚結果を表現できる時。"
 category: Manim Stable Examples
@@ -22,7 +22,7 @@ scene width=960 height=540 fps=60
 rect bg w=960 h=540 at 0,0 fill="#000000"
 rect square w=135 h=135 at 0,0 fill="#58C4DD" stroke="#58C4DD" strokeWidth=4
 at 0s:
-  animate square.x from 0 to -68 duration=1s easing=smooth
+  animate square.x from 0 to -67.5 duration=1s easing=smooth
 at 1s:
   animate square.fill from "#58C4DD" to "#FF862F" duration=1s easing=smooth
 at 2s:

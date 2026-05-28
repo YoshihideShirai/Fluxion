@@ -4,14 +4,12 @@ value theta = 1.919862177
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 line line1 x1=-120 y1=0 x2=120 y2=0 stroke="#FFFFFF" strokeWidth=4
-line line_moving x1=-120 y1=0 x2=-202.085 y2=-225.526 stroke="#FFFFFF" strokeWidth=4
+rotatingLine line_moving x1=-120 y1=0 x2=120 y2=0 about=-120,0 angle=-theta stroke="#FFFFFF" strokeWidth=4
 angle a at -120,0 radius=60 from=0 to=-theta samples=120 stroke="#FFFFFF" strokeWidth=4
-math tex "\\theta" at -82,-62 size=36 fill="#FFFFFF"
+math tex "\\theta" at -65,-79 size=36 fill="#FFFFFF"
 
-always line_moving.x2 = expr=-120 + 240*cos(theta)
-always line_moving.y2 = expr=-240*sin(theta)
-always tex.x = expr=-120 + 76*cos(theta/2)
-always tex.y = expr=-76*sin(theta/2)
+always tex.x = expr=-120 + 96*cos(theta/2)
+always tex.y = expr=-96*sin(theta/2)
 
 wait 1s
 animate theta from 1.919862177 to 0.698131701 duration=1s

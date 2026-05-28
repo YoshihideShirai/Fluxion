@@ -2,42 +2,16 @@ scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 
-line x_axis x1=-250 y1=180 x2=270 y2=180 stroke="#FFFFFF" strokeWidth=3
-line y_axis x1=-250 y1=180 x2=-250 y2=-170 stroke="#FFFFFF" strokeWidth=3
+axes ax at 0,0 width=810 height=405 xRange=0,5 yRange=0,6 stroke="#FFFFFF" strokeWidth=3 xTicks=0,1,2,3,4,5 yTicks=1,2,3,4,5,6 xNumbers=2,3 tickLength=12 tickStrokeWidth=2 numberSize=22 numberColor="#FFFFFF" xNumberOffset=28
+math x_label "x" at 447,225 size=28 fill="#FFFFFF"
+math y_label "y" at -409,-253 size=28 fill="#FFFFFF"
 
-line x_tick_0 x1=0 y1=-6 x2=0 y2=6 at -250,180 stroke="#FFFFFF" strokeWidth=2
-line x_tick_1 x1=0 y1=-6 x2=0 y2=6 at -150,180 stroke="#FFFFFF" strokeWidth=2
-line x_tick_2 x1=0 y1=-6 x2=0 y2=6 at -50,180 stroke="#FFFFFF" strokeWidth=2
-line x_tick_3 x1=0 y1=-6 x2=0 y2=6 at 50,180 stroke="#FFFFFF" strokeWidth=2
-line x_tick_4 x1=0 y1=-6 x2=0 y2=6 at 150,180 stroke="#FFFFFF" strokeWidth=2
-line x_tick_5 x1=0 y1=-6 x2=0 y2=6 at 250,180 stroke="#FFFFFF" strokeWidth=2
-line y_tick_1 x1=-6 y1=0 x2=6 y2=0 at -250,125 stroke="#FFFFFF" strokeWidth=2
-line y_tick_2 x1=-6 y1=0 x2=6 y2=0 at -250,70 stroke="#FFFFFF" strokeWidth=2
-line y_tick_3 x1=-6 y1=0 x2=6 y2=0 at -250,15 stroke="#FFFFFF" strokeWidth=2
-line y_tick_4 x1=-6 y1=0 x2=6 y2=0 at -250,-40 stroke="#FFFFFF" strokeWidth=2
-line y_tick_5 x1=-6 y1=0 x2=6 y2=0 at -250,-95 stroke="#FFFFFF" strokeWidth=2
-line y_tick_6 x1=-6 y1=0 x2=6 y2=0 at -250,-150 stroke="#FFFFFF" strokeWidth=2
-text x_num_2 "2" at -50,208 size=22 fill="#FFFFFF"
-text x_num_3 "3" at 50,208 size=22 fill="#FFFFFF"
-math x_label "x" at 292,182 size=28 fill="#FFFFFF"
-math y_label "y" at -254,-198 size=28 fill="#FFFFFF"
+dataRiemannRects riemann axes=ax fn=4*t-t*t range=0.3,0.6 dx=0.03 fill="#0000FF" stroke="#000000" strokeWidth=1 fillOpacity=0.5
+dataArea bounded_area axes=ax lower=0.8*t*t-3*t+4 upper=4*t-t*t range=2,3 samples=48 fill="#888888" fillOpacity=0.5 stroke="none"
+plot curve_1 fn=4*t-t*t range=0,4 samples=180 scaleX=162 scaleY=67.5 at -405,202.5 stroke="#58C4DD" strokeWidth=4 fill="none"
+plot curve_2 fn=0.8*t*t-3*t+4 range=0,4 samples=180 scaleX=162 scaleY=67.5 at -405,202.5 stroke="#83C167" strokeWidth=4 fill="none"
 
-rect r01 w=3 h=61 at -218.5,149.5 fill="#0000FF" stroke="#0000FF" strokeWidth=1 opacity=0.5
-rect r02 w=3 h=67 at -215.5,146.5 fill="#0000FF" stroke="#0000FF" strokeWidth=1 opacity=0.5
-rect r03 w=3 h=72 at -212.5,144 fill="#0000FF" stroke="#0000FF" strokeWidth=1 opacity=0.5
-rect r04 w=3 h=78 at -209.5,141 fill="#0000FF" stroke="#0000FF" strokeWidth=1 opacity=0.5
-rect r05 w=3 h=83 at -206.5,138.5 fill="#0000FF" stroke="#0000FF" strokeWidth=1 opacity=0.5
-rect r06 w=3 h=88 at -203.5,136 fill="#0000FF" stroke="#0000FF" strokeWidth=1 opacity=0.5
-rect r07 w=3 h=93 at -200.5,133.5 fill="#0000FF" stroke="#0000FF" strokeWidth=1 opacity=0.5
-rect r08 w=3 h=98 at -197.5,131 fill="#0000FF" stroke="#0000FF" strokeWidth=1 opacity=0.5
-rect r09 w=3 h=103 at -194.5,128.5 fill="#0000FF" stroke="#0000FF" strokeWidth=1 opacity=0.5
-rect r10 w=3 h=108 at -191.5,126 fill="#0000FF" stroke="#0000FF" strokeWidth=1 opacity=0.5
-
-path bounded_area d="M -50 -40 C -22 -39 24 -11 50 15 L 50 59 C 23 82 -24 109 -50 114 Z" fill="#888888" opacity=0.5 stroke="none"
-plot curve_1 fn=4*t-t*t range=0,4 samples=180 scaleX=100 scaleY=55 at -250,180 stroke="#58C4DD" strokeWidth=4 fill="none"
-plot curve_2 fn=0.8*t*t-3*t+4 range=0,4 samples=180 scaleX=100 scaleY=55 at -250,180 stroke="#83C167" strokeWidth=4 fill="none"
-
-line line_1 x1=-50 y1=180 x2=-50 y2=-40 stroke="#FFFF00" strokeWidth=4
-line line_2 x1=50 y1=180 x2=50 y2=15 stroke="#FFFF00" strokeWidth=4
+dataLine line_1 axes=ax from=2,0 to=2,4*2-2*2 stroke="#FFFF00" strokeWidth=4
+dataLine line_2 axes=ax from=3,0 to=3,4*3-3*3 stroke="#FFFF00" strokeWidth=4
 
 wait 1s

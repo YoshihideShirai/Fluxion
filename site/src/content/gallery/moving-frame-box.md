@@ -32,5 +32,5 @@ surroundingRect frameB target=termBFrameTarget buff=7 stroke="#ffff00" strokeWid
 play Write(productRule) duration=1.2s easing=smooth
 play Create(frameA) duration=1s easing=smooth
 wait 1s
-play Transform(frameA, frameB) duration=1s easing=smooth
+play ReplacementTransform(frameA, frameB) duration=1s easing=smooth
 wait 1s

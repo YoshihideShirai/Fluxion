@@ -6,11 +6,11 @@ source_example_path: examples/gallery/arg-min-example.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "Manim の `Axes.coords_to_point` / dot updater は、軸スケールを固定した `value` binding に展開している。"
+  - symptom: "Manim の `Axes.coords_to_point` / dot updater は、`axes` と `dataDot` がデータ座標から `bindExpr` へ展開している。"
     layer: dsl
     impact: low
-    workaround: "`t` value を animate し、dot の `x/y` を `f(t)=2(t-5)^2` から再計算する。"
-    closure_condition: "Axes coordinate transform と updater callback を DSL/runtime に追加する。"
+    workaround: "`t` value を animate し、`dataDot point=t,2*(t-5)*(t-5)` で dot の scene 座標を再計算する。"
+    closure_condition: "updater callback を DSL/runtime で直接扱えるようにする。"
     fidelity_upgrade_condition: "追加対応不要。"
 category: Manim Stable Examples
 status: ported
@@ -23,39 +23,12 @@ value t = 0
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 
-line x_axis x1=-250 y1=160 x2=270 y2=160 stroke="#FFFFFF" strokeWidth=3
-line y_axis x1=-250 y1=160 x2=-250 y2=-180 stroke="#FFFFFF" strokeWidth=3
+axes ax at 0,0 width=810 height=405 xRange=0,10 yRange=0,100 stroke="#FFFFFF" strokeWidth=3 xTicks=0,1,2,3,4,5,6,7,8,9,10 yTicks=10,20,30,40,50,60,70,80,90,100 tickLength=12 tickStrokeWidth=2
+math x_label "x" at 447,203 size=28 fill="#FFFFFF"
+math y_label "f(x)" at -403,-253 size=28 fill="#FFFFFF"
 
-line x_tick_0 x1=0 y1=-6 x2=0 y2=6 at -250,160 stroke="#FFFFFF" strokeWidth=2
-line x_tick_1 x1=0 y1=-6 x2=0 y2=6 at -200,160 stroke="#FFFFFF" strokeWidth=2
-line x_tick_2 x1=0 y1=-6 x2=0 y2=6 at -150,160 stroke="#FFFFFF" strokeWidth=2
-line x_tick_3 x1=0 y1=-6 x2=0 y2=6 at -100,160 stroke="#FFFFFF" strokeWidth=2
-line x_tick_4 x1=0 y1=-6 x2=0 y2=6 at -50,160 stroke="#FFFFFF" strokeWidth=2
-line x_tick_5 x1=0 y1=-6 x2=0 y2=6 at 0,160 stroke="#FFFFFF" strokeWidth=2
-line x_tick_6 x1=0 y1=-6 x2=0 y2=6 at 50,160 stroke="#FFFFFF" strokeWidth=2
-line x_tick_7 x1=0 y1=-6 x2=0 y2=6 at 100,160 stroke="#FFFFFF" strokeWidth=2
-line x_tick_8 x1=0 y1=-6 x2=0 y2=6 at 150,160 stroke="#FFFFFF" strokeWidth=2
-line x_tick_9 x1=0 y1=-6 x2=0 y2=6 at 200,160 stroke="#FFFFFF" strokeWidth=2
-line x_tick_10 x1=0 y1=-6 x2=0 y2=6 at 250,160 stroke="#FFFFFF" strokeWidth=2
-line y_tick_10 x1=-6 y1=0 x2=6 y2=0 at -250,128 stroke="#FFFFFF" strokeWidth=2
-line y_tick_20 x1=-6 y1=0 x2=6 y2=0 at -250,96 stroke="#FFFFFF" strokeWidth=2
-line y_tick_30 x1=-6 y1=0 x2=6 y2=0 at -250,64 stroke="#FFFFFF" strokeWidth=2
-line y_tick_40 x1=-6 y1=0 x2=6 y2=0 at -250,32 stroke="#FFFFFF" strokeWidth=2
-line y_tick_50 x1=-6 y1=0 x2=6 y2=0 at -250,0 stroke="#FFFFFF" strokeWidth=2
-line y_tick_60 x1=-6 y1=0 x2=6 y2=0 at -250,-32 stroke="#FFFFFF" strokeWidth=2
-line y_tick_70 x1=-6 y1=0 x2=6 y2=0 at -250,-64 stroke="#FFFFFF" strokeWidth=2
-line y_tick_80 x1=-6 y1=0 x2=6 y2=0 at -250,-96 stroke="#FFFFFF" strokeWidth=2
-line y_tick_90 x1=-6 y1=0 x2=6 y2=0 at -250,-128 stroke="#FFFFFF" strokeWidth=2
-line y_tick_100 x1=-6 y1=0 x2=6 y2=0 at -250,-160 stroke="#FFFFFF" strokeWidth=2
+plot graph fn=2*(t-5)*(t-5) range=0,10 samples=220 scaleX=81 scaleY=4.05 at -405,202.5 stroke="#C55F73" strokeWidth=4 fill="none"
+dataDot dot axes=ax point=t,2*(t-5)*(t-5) r=8 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=2
 
-math x_label "x" at 292,160 size=28 fill="#FFFFFF"
-math y_label "f(x)" at -248,-210 size=28 fill="#FFFFFF"
-
-plot graph fn=2*(t-5)*(t-5) range=0,10 samples=220 scaleX=50 scaleY=3.2 at -250,160 stroke="#C55F73" strokeWidth=4 fill="none"
-circle dot r=8 at -250,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=2
-
-always dot.x = expr=-250+50*t
-always dot.y = expr=160-6.4*(t-5)*(t-5)
-
-animate t from 0 to 5 duration=1s
+animate t from 0 to 4.974874372 duration=1s
 wait 1s

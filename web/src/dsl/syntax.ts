@@ -154,7 +154,8 @@ export function isNodeType(value: string | undefined): value is NodeType {
     value === "path" ||
     value === "text" ||
     value === "math" ||
-    value === "brace"
+    value === "brace" ||
+    value === "image"
   );
 }
 

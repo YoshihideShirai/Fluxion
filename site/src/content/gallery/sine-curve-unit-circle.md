@@ -22,27 +22,27 @@ value theta = 0
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 
-line x_axis x1=-360 y1=0 x2=360 y2=0 stroke="#FFFFFF" strokeWidth=4
-line y_axis x1=0 y1=-120 x2=0 y2=120 at -240,0 stroke="#FFFFFF" strokeWidth=4
-math pi_label "\\pi" at -60,36 size=28 fill="#FFFFFF"
-math two_pi_label "2\\pi" at 60,36 size=28 fill="#FFFFFF"
-math three_pi_label "3\\pi" at 180,36 size=28 fill="#FFFFFF"
-math four_pi_label "4\\pi" at 300,36 size=28 fill="#FFFFFF"
+line x_axis x1=-405 y1=0 x2=405 y2=0 stroke="#FFFFFF" strokeWidth=4
+line y_axis x1=0 y1=-135 x2=0 y2=135 at -270,0 stroke="#FFFFFF" strokeWidth=4
+math pi_label "\\pi" at -67.5,42 size=30 fill="#FFFFFF"
+math two_pi_label "2\\pi" at 67.5,42 size=30 fill="#FFFFFF"
+math three_pi_label "3\\pi" at 202.5,42 size=30 fill="#FFFFFF"
+math four_pi_label "4\\pi" at 337.5,42 size=30 fill="#FFFFFF"
 
-circle unit r=60 at -240,0 fill="none" stroke="#FFFFFF" strokeWidth=4
-line origin_to_circle x1=0 y1=0 x2=60 y2=0 at -240,0 stroke="#58C4DD" strokeWidth=4
-line dot_to_curve x1=-180 y1=0 x2=-180 y2=0 stroke="#FFF1A6" strokeWidth=2
-tracedPath sine_curve x=-180+(t/(2*pi))*240 y=-60*sin(t) from=0 to=theta samples=320 stroke="#F4D03F" strokeWidth=4
-circle dot r=5 at -180,0 fill="#FFFF00" stroke="#FFFF00" strokeWidth=2
+circle unit r=67.5 at -270,0 fill="none" stroke="#FFFFFF" strokeWidth=4
+line origin_to_circle x1=0 y1=0 x2=67.5 y2=0 at -270,0 stroke="#58C4DD" strokeWidth=4
+line dot_to_curve x1=-202.5 y1=0 x2=-202.5 y2=0 stroke="#FFF1A6" strokeWidth=2
+tracedPath sine_curve x=-202.5+(t/(2*pi))*270 y=-67.5*sin(t) from=0 to=theta samples=320 stroke="#F4D03F" strokeWidth=4
+circle dot r=5.4 at -202.5,0 fill="#FFFF00" stroke="#FFFF00" strokeWidth=2
 
-always dot.x = expr=-240+60*cos(theta)
-always dot.y = expr=-60*sin(theta)
-always origin_to_circle.x2 = expr=60*cos(theta)
-always origin_to_circle.y2 = expr=-60*sin(theta)
-always dot_to_curve.x1 = expr=-240+60*cos(theta)
-always dot_to_curve.y1 = expr=-60*sin(theta)
-always dot_to_curve.x2 = expr=-180+(theta/(2*pi))*240
-always dot_to_curve.y2 = expr=-60*sin(theta)
+always dot.x = expr=-270+67.5*cos(theta)
+always dot.y = expr=-67.5*sin(theta)
+always origin_to_circle.x2 = expr=67.5*cos(theta)
+always origin_to_circle.y2 = expr=-67.5*sin(theta)
+always dot_to_curve.x1 = expr=-270+67.5*cos(theta)
+always dot_to_curve.y1 = expr=-67.5*sin(theta)
+always dot_to_curve.x2 = expr=-202.5+(theta/(2*pi))*270
+always dot_to_curve.y2 = expr=-67.5*sin(theta)
 
 animate theta from 0 to 13.351768778 duration=8.5s easing=linear
 wait 1s

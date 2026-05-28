@@ -23,8 +23,8 @@
       },
       "style": {
         "fill": "#ffffff",
-        "stroke": "#111827",
-        "strokeWidth": 2
+        "stroke": "none",
+        "strokeWidth": 0
       },
       "geometry": {
         "fontSize": 32
@@ -45,7 +45,9 @@
       "style": {
         "fill": "#22d3ee",
         "stroke": "#0891b2",
-        "strokeWidth": 3
+        "strokeWidth": 3,
+        "fillOpacity": 1,
+        "strokeOpacity": 1
       },
       "geometry": {
         "r": 28
@@ -69,8 +71,8 @@
         },
         "style": {
           "fill": "#ffffff",
-          "stroke": "#111827",
-          "strokeWidth": 2
+          "stroke": "none",
+          "strokeWidth": 0
         },
         "geometry": {
           "fontSize": 32
@@ -95,7 +97,9 @@
         "style": {
           "fill": "#22d3ee",
           "stroke": "#0891b2",
-          "strokeWidth": 3
+          "strokeWidth": 3,
+          "fillOpacity": 1,
+          "strokeOpacity": 1
         },
         "geometry": {
           "r": 28

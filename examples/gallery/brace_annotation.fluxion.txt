@@ -4,8 +4,7 @@ rect bg w=960 h=540 at 0,0 fill="#000000"
 circle dotA r=8 at -160,80 fill="#ffffff" stroke="none"
 circle dotB r=8 at 160,-80 fill="#ffffff" stroke="none"
 line segment x1=-160 y1=80 x2=160 y2=-80 at 0,0 stroke="#ff862f" strokeWidth=4
-brace horizontal target=segment direction=down buff=22 label="Horizontal distance" labelSize=26 fill="#ffffff" stroke="none"
-brace perpendicular target=segment direction=perpendicular buff=22 fill="#ffffff" stroke="none"
-math perpendicularText "x-x_1" at 62,108 size=28 fill="#ffffff"
+brace horizontal target=segment direction=down buff=22 sharpness=2 label="Horizontal distance" labelSize=30 labelColor="#ffffff" fill="#ffffff" stroke="none"
+brace perpendicular target=segment direction=perpendicular buff=22 sharpness=2 label="x-x_1" labelRenderer=katex labelSize=28 labelW=90 labelH=70 labelOffset=8 labelColor="#ffffff" fill="#ffffff" stroke="none"
 
 wait 1s

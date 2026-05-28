@@ -19,8 +19,8 @@ order: 11
 scene width=1280 height=720 fps=60
 
 rect bg w=1280 h=720 at 640,360 fill="#000000"
-rect square w=120 h=120 at 640,360 fill="#ffffff" stroke="#111827" strokeWidth=2 rotation=45 opacity=0
-circle circle r=56 at 640,360 fill="#ec4899" stroke="#ec4899" strokeWidth=2 opacity=0.5
+path square d="M 0 -84.853 C 0 -84.853 84.853 0 84.853 0 C 84.853 0 0 84.853 0 84.853 C 0 84.853 -84.853 0 -84.853 0 C -84.853 0 0 -84.853 0 -84.853 Z" at 640,360 fill="#ec4899" fillOpacity=0 stroke="#ffffff" strokeWidth=4
+path circle d="M 0 -56 C 30.928 -56 56 -30.928 56 0 C 56 30.928 30.928 56 0 56 C -30.928 56 -56 30.928 -56 0 C -56 -30.928 -30.928 -56 0 -56 Z" at 640,360 fill="#ec4899" fillOpacity=0.5 stroke="#ffffff" strokeWidth=4
 
 play Create(square) duration=1s easing=easeInOut
 play Transform(square, circle) duration=1s easing=easeInOut

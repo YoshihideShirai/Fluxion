@@ -65,4 +65,4 @@ npm test
 
 Value trackers live outside the scene graph as scalar tracks declared by Text DSL `value` statements or JSON `values` entries. Runtime initializes these tracks on every seek, applies `setValue` and `animateValue`, then evaluates `setExpr` operations against the current tracker map.
 
-`setExpr` uses Fluxion's small arithmetic evaluator rather than JavaScript execution. It supports numeric literals, tracker identifiers, parentheses, arithmetic operators, constants (`pi`, `e`), and allowlisted math functions such as `sin`, `cos`, `tan`, `sqrt`, `abs`, `min`, `max`, and `pow`. This is a static dependency-expression feature, not full compatibility with Manim updaters.
+`setExpr` uses Fluxion's small arithmetic evaluator rather than JavaScript execution. It supports numeric literals, tracker identifiers, parentheses, arithmetic operators, constants (`pi`, `e`), and allowlisted math functions such as `sin`, `cos`, `tan`, `sqrt`, `abs`, `min`, `max`, `pow`, `clip01`, and `clipPi`. This is a static dependency-expression feature, not full compatibility with Manim updaters.

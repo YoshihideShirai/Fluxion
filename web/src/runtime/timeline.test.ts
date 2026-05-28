@@ -4,6 +4,7 @@ import { SceneGraph } from "./sceneGraph.js";
 import { applyTimelineAt } from "./timeline.js";
 import { Player } from "./player.js";
 import { buildCameraTransform } from "../renderers/svgRenderer.js";
+import { ease } from "../easing.js";
 import type { SceneNode, TimelineOperation, FluxionDocument } from "../types.js";
 
 const node: SceneNode = {
@@ -39,6 +40,16 @@ test("applies numeric animation interpolation", () => {
   assert.equal(graph.get("c1")?.transform.x, 50);
 });
 
+test("matches Manim smooth rate function samples", () => {
+  assert.equal(ease("smooth", -0.5), 0);
+  assert.equal(ease("smooth", 0), 0);
+  assert.equal(ease("smooth", 0.5), 0.5);
+  assert.equal(ease("smooth", 1), 1);
+  assert.equal(ease("smooth", 1.5), 1);
+  assert.equal(Math.abs(ease("smooth", 0.25) - 0.07010371654510815) < 1e-12, true);
+  assert.equal(Math.abs(ease("smooth", 0.75) - 0.9298962834548918) < 1e-12, true);
+  assert.equal(ease("easeInOut", 0.25), ease("smooth", 0.25));
+});
 
 test("applies camera animation interpolation", () => {
   const graph = new SceneGraph([node]);

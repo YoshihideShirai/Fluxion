@@ -49,14 +49,14 @@ path warpCue3 d="M -18 86 C 28 126 94 126 144 88" at 0,0 fill="none" stroke="#34
 text warpEq "p -> p + [sin(y), sin(x), 0]" at 226,-198 size=18 fill="#fde68a" opacity=0
 text createLag "Create(grid, run_time=3, lag_ratio=0.1)" at 214,-224 size=15 fill="#93c5fd" opacity=0
 at 0s:
-  play AnimationGroup(Write(title), FadeIn(basel), lagRatio=0.12) duration=1.45s easing=easeOut
-  animate basel.y from -102 to -62 start=0s duration=1.45s easing=easeOut
+  play AnimationGroup(Write(title), FadeIn(basel), lagRatio=0.12) duration=1.45s easing=smooth
+  animate basel.y from -102 to -62 start=0s duration=1.45s easing=smooth
   wait 0.8s
   play AnimationGroup(Transform(title, transformTitle), FadeOut(basel), lagRatio=0.12) duration=1s easing=easeInOut
   animate basel.y from -62 to -102 start=2.25s duration=1s easing=easeInOut
   wait 1s
-  play AnimationGroup(FadeOut(title), FadeIn(gridTitle), Create(grid), Create(xAxis), Create(yAxis), lagRatio=0.05) duration=3s easing=easeOut
-  animate gridTitle.y from 246 to 206 duration=3s easing=easeOut
+  play AnimationGroup(FadeOut(title), FadeIn(gridTitle), Create(grid), Create(xAxis), Create(yAxis), lagRatio=0.05) duration=3s easing=smooth
+  animate gridTitle.y from 246 to 206 duration=3s easing=smooth
   wait 1s
   animate grid_h0.d from "M -430 -170 L 430 -170" to "M -430 -118 C -214 -210 214 -128 430 -202" duration=3s easing=easeInOut
   animate grid_h1.d from "M -430 -118 L 430 -118" to "M -430 -68 C -204 -156 196 -68 430 -152" duration=3s easing=easeInOut

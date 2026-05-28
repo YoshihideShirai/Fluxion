@@ -6,7 +6,7 @@ source_example_path: examples/gallery/orbital_dot.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "MoveAlongPath and Rotating are expanded to value trackers and expression bindings, preserving the source motion visually."
+  - symptom: "MoveAlongPath and Rotating are expanded to value trackers and expression bindings; GrowFromCenter and Transform are ordered to match the source choreography."
     layer: dsl
     impact: low
     workaround: "必要な微調整は value tracker の式と duration で補う。"
@@ -28,7 +28,8 @@ line guide x1=240 y1=0 x2=400 y2=0 stroke="#FFFFFF" strokeWidth=4
 at 0s:
   animate orbit.opacity from 0 to 1 duration=1s easing=smooth
   animate orbit.scale from 0 to 1 duration=1s easing=smooth
-animate dot.x from 0 to 80 duration=1s easing=smooth
+at 1s:
+  animate dot.x from 0 to 80 duration=1s easing=smooth
 at 2s:
   always dot.x = expr=80*cos(theta)
   always dot.y = expr=80*sin(theta)

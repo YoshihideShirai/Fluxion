@@ -5,6 +5,31 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 from .node import Node
 
+VMOBJECT_STYLE = {
+    "fill": "#ffffff",
+    "fillOpacity": 0,
+    "stroke": "#ffffff",
+    "strokeOpacity": 1,
+    "strokeWidth": 4,
+}
+
+STROKE_ONLY_STYLE = {
+    "fill": "none",
+    "stroke": "#ffffff",
+    "strokeOpacity": 1,
+    "strokeWidth": 4,
+}
+
+FILL_ONLY_STYLE = {
+    "fill": "#ffffff",
+    "stroke": "none",
+    "strokeWidth": 0,
+}
+
+
+def with_default_style(default_style: Dict[str, Any], kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    return {**kwargs, "style": {**default_style, **(kwargs.get("style") or {})}}
+
 
 class Mobject:
     """Manim-like base object backed by a serializable Node."""
@@ -68,7 +93,7 @@ class Mobject:
     def set_fill(self, color: str, opacity: float | None = None) -> "Mobject":
         self.node.style["fill"] = color
         if opacity is not None:
-            self.node.transform["opacity"] = opacity
+            self.node.style["fillOpacity"] = opacity
         return self
 
     def set_stroke(self, color: str, width: float | None = None) -> "Mobject":
@@ -88,7 +113,9 @@ class Mobject:
             "transform.rotation": self.node.transform["rotation"],
             "transform.opacity": self.node.transform["opacity"],
             "style.fill": self.node.style.get("fill"),
+            "style.fillOpacity": self.node.style.get("fillOpacity"),
             "style.stroke": self.node.style.get("stroke"),
+            "style.strokeOpacity": self.node.style.get("strokeOpacity"),
             "style.strokeWidth": self.node.style.get("strokeWidth"),
             **{f"geometry.{key}": value for key, value in self.node.geometry.items()},
         }

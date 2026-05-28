@@ -47,7 +47,7 @@ export function applyNodeOption(
     return;
   }
 
-  if (["x", "y", "scale", "rotation", "opacity"].includes(key)) {
+  if (["x", "y", "scale", "scaleX", "scaleY", "rotation", "opacity"].includes(key)) {
     node.transform[key as keyof Transform] = parseNumber(value, lineNumber);
     return;
   }
@@ -57,8 +57,8 @@ export function applyNodeOption(
     return;
   }
 
-  if (key === "strokeWidth") {
-    node.style.strokeWidth = parseNumber(value, lineNumber);
+  if (key === "strokeWidth" || key === "fillOpacity" || key === "strokeOpacity") {
+    node.style[key] = parseNumber(value, lineNumber);
     return;
   }
 
@@ -93,8 +93,20 @@ export function applyNodeOption(
     node.geometry.direction = value;
     return;
   }
-  if (key === "buff") {
-    node.geometry.buff = parseNumber(value, lineNumber);
+  if (["buff", "sharpness", "curvature", "tip", "labelOffset", "labelW", "labelH"].includes(key)) {
+    node.geometry[key] = parseNumber(value, lineNumber);
+    return;
+  }
+  if (key === "labelRenderer") {
+    if (!["text", "katex", "mathjax"].includes(value))
+      throw new DslCompileError("Brace labelRenderer must be one of text/katex/mathjax.", lineNumber);
+    node.geometry.labelRenderer = value;
+    return;
+  }
+  if (key === "labelAlignment") {
+    if (!["start", "center", "end"].includes(value))
+      throw new DslCompileError("Brace labelAlignment must be one of start/center/end.", lineNumber);
+    node.geometry.labelAlignment = value;
     return;
   }
   if (key === "label") {
@@ -126,6 +138,11 @@ export function applyNodeOption(
     return;
   }
 
+  if (key === "data" || key === "sampling") {
+    node.geometry[key] = value;
+    return;
+  }
+
   throw new DslCompileError(`Unknown node option '${key}'.`, lineNumber);
 }
 
@@ -139,12 +156,12 @@ export function isCameraProperty(property: string | undefined): boolean {
 }
 
 export function propertyPath(property: string): string {
-  if (["x", "y", "scale", "rotation", "opacity"].includes(property))
+  if (["x", "y", "scale", "scaleX", "scaleY", "rotation", "opacity"].includes(property))
     return `transform.${property}`;
-  if (["fill", "stroke", "strokeWidth"].includes(property))
+  if (["fill", "fillOpacity", "stroke", "strokeOpacity", "strokeWidth"].includes(property))
     return `style.${property}`;
   if (
-    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "target", "direction", "buff", "label", "labelSize", "labelColor", "fillRule"].includes(property)
+    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "data", "sampling", "target", "direction", "buff", "sharpness", "curvature", "tip", "label", "labelSize", "labelColor", "labelOffset", "labelAlignment", "labelRenderer", "labelW", "labelH", "fillRule"].includes(property)
   )
     return `geometry.${property}`;
   if (property === "renderer") return "renderer";
@@ -165,6 +182,7 @@ function defaultGeometry(type: NodeType): Record<string, number | string> {
   if (type === "text") return { fontSize: 32 };
   if (type === "math") return { fontSize: 36 };
   if (type === "brace")
-    return { target: "", direction: "down", buff: 8, label: "", labelSize: 24, labelColor: "#ffffff" };
+    return { target: "", direction: "down", buff: 8, sharpness: 2, label: "", labelSize: 24, labelColor: "#ffffff", labelRenderer: "text" };
+  if (type === "image") return { w: 100, h: 100, data: "", sampling: "nearest" };
   return {};
 }

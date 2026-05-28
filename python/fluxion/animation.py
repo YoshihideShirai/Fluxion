@@ -104,7 +104,7 @@ class AnimationBuilder:
         self.target.set_fill(color, opacity)
         paths = [self._animation("style.fill")]
         if opacity is not None:
-            paths.append(self._animation("transform.opacity"))
+            paths.append(self._animation("style.fillOpacity"))
         return paths
 
     def set_stroke(self, color: str, width: float | None = None) -> List[Animation]:
@@ -118,8 +118,9 @@ class AnimationBuilder:
 def FadeIn(mobject: "Mobject", *, easing: str = "easeInOut") -> EffectAnimation:
     create_state = mobject.to_dict()
     create_state["transform"]["opacity"] = 0
-    mobject.set_opacity(1)
-    animation = Animation(mobject, "transform.opacity", 0, 1, easing=easing)
+    target_opacity = _target_opacity(mobject)
+    mobject.set_opacity(target_opacity)
+    animation = Animation(mobject, "transform.opacity", 0, target_opacity, easing=easing)
     return EffectAnimation(
         target=mobject,
         effect="fadeIn",
@@ -228,9 +229,16 @@ def _mobject_from_node(node: Any) -> "Mobject":
 
 def _reveal_effect(mobject: "Mobject", effect: str, *, easing: str) -> EffectAnimation:
     create_state = mobject.to_dict()
-    create_state["transform"]["opacity"] = 0
-    mobject.set_opacity(1)
-    animation = Animation(mobject, "transform.opacity", 0, 1, easing=easing)
+    progress_path = _reveal_progress_path(mobject, effect)
+    if progress_path is not None:
+        section, key = progress_path.split(".", 1)
+        create_state.setdefault(section, {})[key] = 0
+        animation = Animation(mobject, progress_path, 0, 1, easing=easing)
+    else:
+        create_state["transform"]["opacity"] = 0
+        target_opacity = _target_opacity(mobject)
+        mobject.set_opacity(target_opacity)
+        animation = Animation(mobject, "transform.opacity", 0, target_opacity, easing=easing)
     return EffectAnimation(
         target=mobject,
         effect=effect,
@@ -239,6 +247,22 @@ def _reveal_effect(mobject: "Mobject", effect: str, *, easing: str) -> EffectAni
         create_on_start=True,
         create_state=create_state,
     )
+
+
+def _reveal_progress_path(mobject: "Mobject", effect: str) -> str | None:
+    if effect == "write" and mobject.node.type in {"math", "text"}:
+        return "geometry.writeProgress"
+    if effect == "create" and (
+        mobject.node.type in {"circle", "rect", "line", "path", "triangle"}
+        or mobject.node.geometry.get("shapeMatcher") == "surroundingRect"
+    ):
+        return "geometry.drawProgress"
+    return None
+
+
+def _target_opacity(mobject: "Mobject") -> float:
+    opacity = mobject.node.transform.get("opacity", 1)
+    return opacity if opacity > 0 else 1
 
 
 def _diff_sections(src: "Mobject", before: dict[str, Any], after: dict[str, Any], *, easing: str) -> List[Animation]:
