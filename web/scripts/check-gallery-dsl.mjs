@@ -1304,11 +1304,19 @@ function checkGallerySpecificStructure(label, documentData) {
     const sinLabel = findNode(documentData, 'sinLabel');
     const cosLabel = findNode(documentData, 'cosLabel');
     const tauLabel = findNode(documentData, 'tauLabel');
+    const renderedAxisX = renderedNodeAt(documentData, 1, 'ax_x');
+    const renderedAxisY = renderedNodeAt(documentData, 1, 'ax_y');
+    const renderedTauLine = renderedNodeAt(documentData, 1, 'tauLine');
+    const renderedSinLabel = renderedNodeAt(documentData, 1, 'sinLabel');
+    const renderedCosLabel = renderedNodeAt(documentData, 1, 'cosLabel');
+    const renderedTauLabel = renderedNodeAt(documentData, 1, 'tauLabel');
     assertGalleryCondition(label, axes?.type === 'group', 'expected Axes helper group.');
     assertGalleryCondition(label, axes?.geometry?.xMin === -10 && axes?.geometry?.xMax === 10.3 && axes?.geometry?.yMin === -1.5 && axes?.geometry?.yMax === 1.5, 'expected official sine/cosine axes ranges.');
     assertGalleryCondition(label, approximatelyEqual(axes?.geometry?.width ?? 0, 675) && approximatelyEqual(axes?.geometry?.height ?? 0, 405), 'expected official sine/cosine axes dimensions.');
+    assertGalleryCondition(label, approximatelyEqual(axes?.geometry?.originX ?? 0, -4.987685) && axes?.geometry?.originY === 0, 'expected asymmetric axes origin from x_range [-10, 10.3].');
     assertGalleryCondition(label, axes?.children?.length === 34, `expected numbered/ticked axes with 34 children, got ${axes?.children?.length ?? 0}.`);
     assertGalleryCondition(label, labels?.children?.length === 2 && labels.children.every((child) => child.type === 'math'), 'expected x/y MathTex axis labels.');
+    assertGalleryCondition(label, renderedAxisX?.style?.stroke === '#83C167' && renderedAxisY?.style?.stroke === '#83C167' && approximatelyEqual(renderedAxisY?.geometry?.x1 ?? 0, -4.987685), 'expected GREEN axes crossing at Manim c2p origin.');
     assertGalleryCondition(label, sinCurve?.geometry?.fn === 'sin(t)' && sinCurve?.geometry?.range?.join(',') === '-10,10.3', 'expected sine plot with official range.');
     assertGalleryCondition(label, cosCurve?.geometry?.fn === 'cos(t)' && cosCurve?.geometry?.range?.join(',') === '-10,10.3', 'expected cosine plot with official range.');
     assertGalleryCondition(label, approximatelyEqual(sinCurve?.geometry?.scaleX ?? 0, 33.251232) && approximatelyEqual(sinCurve?.geometry?.scaleY ?? 0, 135), 'expected sine plot to use axes coordinate scaling.');
@@ -1317,11 +1325,20 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, tauLine?.geometry?.dataLine === true && tauLine.geometry?.axes === 'ax', 'expected x=2pi dataLine tied to axes.');
     assertGalleryCondition(label, tauLine?.geometry?.from === '6.283185,0' && tauLine?.geometry?.to === '6.283185,1', 'expected x=2pi vertical dataLine endpoint.');
     assertGalleryCondition(label, tauLine?.style?.stroke === '#FFFF00' && approximatelyEqual(tauLine?.style?.strokeWidth ?? 0, 4), 'expected YELLOW x=2pi line.');
+    assertGalleryCondition(label, approximatelyEqual(renderedTauLine?.geometry?.x1 ?? 0, 203.935954) && approximatelyEqual(renderedTauLine?.geometry?.x2 ?? 0, 203.935954) && renderedTauLine?.geometry?.y1 === 0 && approximatelyEqual(renderedTauLine?.geometry?.y2 ?? 0, -135), 'expected rendered x=2pi vertical line from cosine point to x-axis.');
     assertGalleryCondition(label, [sinLabel, cosLabel, tauLabel].every((node) => node?.geometry?.graphLabel === true), 'expected graph labels attached to plots.');
     assertGalleryCondition(label, sinLabel?.geometry?.plot === 'sinCurve' && sinLabel?.style?.fill === '#58C4DD', 'expected sine label attached to sine curve.');
     assertGalleryCondition(label, cosLabel?.geometry?.plot === 'cosCurve' && cosLabel?.style?.fill === '#FC6255', 'expected cosine label attached to cosine curve.');
     assertGalleryCondition(label, tauLabel?.geometry?.xVal === 6.283185 && tauLabel?.style?.fill === '#ffffff', 'expected x=2pi graph label at the tau coordinate.');
+    assertGalleryCondition(label, approximatelyEqual(renderedSinLabel?.transform?.x ?? 0, -356.000005) && approximatelyEqual(renderedSinLabel?.transform?.y ?? 0, -112.00285), 'expected sine graph label at the left sine endpoint.');
+    assertGalleryCondition(label, approximatelyEqual(renderedCosLabel?.transform?.x ?? 0, 388.000005) && approximatelyEqual(renderedCosLabel?.transform?.y ?? 0, 86.011566), 'expected cosine graph label shifted to the right of the curve.');
+    assertGalleryCondition(label, approximatelyEqual(renderedTauLabel?.transform?.x ?? 0, 245.999888) && approximatelyEqual(renderedTauLabel?.transform?.y ?? 0, -169.999629), 'expected x=2pi label above-right of the tau marker.');
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'bindExpr' && op.id === 'tauLine').length === 4, 'expected tauLine endpoint bindings to axes coordinates.');
+    const svg = svgSampleAt(documentData, 1);
+    assertGalleryCondition(label, svgElementTag(svg, 'ax_y').includes('x1="-4.987685"') && svgElementTag(svg, 'ax_y').includes('stroke="#83C167"'), 'expected SVG y-axis at shifted x-origin in GREEN.');
+    assertGalleryCondition(label, svgGroupPathData(svg, 'sinCurve').startsWith('M -332.51232000000005 -73.442849') && svgGroupPathData(svg, 'cosCurve').startsWith('M -332.51232000000005 113.274656'), 'expected SVG sine/cosine plot paths to start at official x_min samples.');
+    assertGalleryCondition(label, svgElementTag(svg, 'tauLine').includes('x1="203.935954"') && svgElementTag(svg, 'tauLine').includes('y2="-135"') && svgElementTag(svg, 'tauLine').includes('stroke="#FFFF00"'), 'expected SVG x=2pi vertical yellow line.');
+    assertGalleryCondition(label, svgElementTag(svg, 'sinLabel').includes('transform="translate(-356.000005 -112.00285)"') && svgElementTag(svg, 'cosLabel').includes('transform="translate(388.000005 86.011566)"') && svgElementTag(svg, 'tauLabel').includes('transform="translate(245.999888 -169.999629)"'), 'expected SVG graph labels at Manim-derived positions.');
   }
 
   if (label.includes('arg-min-example')) {
