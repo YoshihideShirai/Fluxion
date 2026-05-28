@@ -1004,6 +1004,11 @@ function checkGallerySpecificStructure(label, documentData) {
 
   if (label.includes('animations-using-animate') || label.includes('moving-around')) {
     const square = findNode(documentData, 'square');
+    const shiftMidSquare = renderedNodeAt(documentData, 0.5, 'square');
+    const fillMidSquare = renderedNodeAt(documentData, 1.5, 'square');
+    const scaleMidSquare = renderedNodeAt(documentData, 2.5, 'square');
+    const rotateMidSquare = renderedNodeAt(documentData, 3.5, 'square');
+    const finalSquare = renderedNodeAt(documentData, 4, 'square');
     assertGalleryCondition(label, square?.type === 'rect', 'expected default Square mobject as rect.');
     assertGalleryCondition(label, approximatelyEqual(square?.geometry?.w ?? 0, 135) && approximatelyEqual(square?.geometry?.h ?? 0, 135), 'expected Manim default Square side length at frame scale.');
     assertGalleryCondition(label, square?.style?.stroke === '#58C4DD' && approximatelyEqual(square?.style?.strokeWidth ?? 0, 4), 'expected Manim BLUE stroke on square.');
@@ -1012,6 +1017,21 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'square', path: 'transform.scale', from: 1, to: 0.3, t: 2, duration: 1, easing: 'smooth' }), 'expected .animate.scale(0.3).');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'square', path: 'transform.rotation', from: 0, to: 22.918311805232932, t: 3, duration: 1, easing: 'smooth' }), 'expected .animate.rotate(0.4 radians).');
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'effect' && op.id === 'square' && op.effect === 'animate').length === 4, 'expected four sequential Animate effects.');
+    assertGalleryCondition(label, approximatelyEqual(shiftMidSquare?.transform?.x ?? 0, -33.75) && shiftMidSquare?.style?.fill === '#58C4DD', 'expected smooth shift midpoint to keep the BLUE square halfway left.');
+    assertGalleryCondition(label, approximatelyEqual(fillMidSquare?.transform?.x ?? 0, -67.5) && fillMidSquare?.style?.fill === 'rgb(172, 165, 134)' && fillMidSquare?.transform?.scale === 1, 'expected smooth fill midpoint to blend BLUE toward ORANGE without moving.');
+    assertGalleryCondition(label, approximatelyEqual(scaleMidSquare?.transform?.scale ?? 0, 0.65) && scaleMidSquare?.style?.fill === '#FF862F', 'expected smooth scale midpoint to shrink the ORANGE square.');
+    assertGalleryCondition(label, approximatelyEqual(rotateMidSquare?.transform?.rotation ?? 0, 11.459156) && approximatelyEqual(rotateMidSquare?.transform?.scale ?? 0, 0.3), 'expected smooth rotation midpoint after scale target is reached.');
+    assertGalleryCondition(label, approximatelyEqual(finalSquare?.transform?.x ?? 0, -67.5) && approximatelyEqual(finalSquare?.transform?.scale ?? 0, 0.3) && approximatelyEqual(finalSquare?.transform?.rotation ?? 0, 22.918312) && finalSquare?.style?.fill === '#FF862F', 'expected final MovingAround target state.');
+    const shiftMidSvg = svgSampleAt(documentData, 0.5);
+    const fillMidSvg = svgSampleAt(documentData, 1.5);
+    const scaleMidSvg = svgSampleAt(documentData, 2.5);
+    const rotateMidSvg = svgSampleAt(documentData, 3.5);
+    const finalSvg = svgSampleAt(documentData, 4);
+    assertGalleryCondition(label, svgElementTag(shiftMidSvg, 'square').includes('transform="translate(-33.75 0)"') && svgElementTag(shiftMidSvg, 'square').includes('fill="#58C4DD"'), 'expected SVG shift midpoint to serialize halfway-left BLUE square.');
+    assertGalleryCondition(label, svgElementTag(fillMidSvg, 'square').includes('transform="translate(-67.5 0)"') && svgElementTag(fillMidSvg, 'square').includes('fill="rgb(172, 165, 134)"'), 'expected SVG fill midpoint to serialize blended Manim color.');
+    assertGalleryCondition(label, svgElementTag(scaleMidSvg, 'square').includes('transform="translate(-67.5 0) scale(0.65 0.65)"') && svgElementTag(scaleMidSvg, 'square').includes('fill="#FF862F"'), 'expected SVG scale midpoint to serialize the shrinking ORANGE square.');
+    assertGalleryCondition(label, svgElementTag(rotateMidSvg, 'square').includes('rotate(11.459156) scale(0.3 0.3)'), 'expected SVG rotation midpoint to serialize rotated scaled square.');
+    assertGalleryCondition(label, svgElementTag(finalSvg, 'square').includes('transform="translate(-67.5 0) rotate(22.918312) scale(0.3 0.3)"'), 'expected SVG final square transform to match MovingAround target state.');
   }
 
   if (label.includes('gradient-image-from-array')) {
