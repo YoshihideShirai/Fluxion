@@ -1025,6 +1025,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const axes = findNode(documentData, 'axes');
     const text = findNode(documentData, 'text3d');
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected ThreeDAxes helper.');
+    assertGalleryCondition(label, axes?.transform?.x === 0 && axes?.transform?.y === 0, 'expected ThreeDAxes to stay at the unshifted Manim scene origin.');
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === -45, 'expected fixed-frame example axes to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
     assertGalleryCondition(label, text?.type === 'text' && text.text === 'This is a 3D text', 'expected fixed-in-frame text label.');
