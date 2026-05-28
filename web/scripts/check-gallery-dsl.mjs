@@ -1378,6 +1378,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const circle = findNode(documentData, 'circle_xy');
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected ThreeDAxes helper.');
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === 30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
+    assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
     assertGalleryCondition(label, circle?.geometry?.projectedCircle === true, 'expected projected default Circle(radius=1).');
     assertGalleryCondition(label, circle?.geometry?.cameraProjection === 'manim' && circle.geometry?.phi === 75 && circle.geometry?.theta === 30, 'expected Circle(radius=1) to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, findNode(documentData, 'axes:x:tip')?.type === 'path', 'expected projected x-axis arrow tip.');
@@ -1386,17 +1387,17 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'axes:x:tick:') === 12, 'expected projected x-axis ticks.');
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'axes:y:tick:') === 10, 'expected projected y-axis ticks.');
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'axes:z:tick:') === 8, 'expected projected z-axis ticks.');
-    assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:x:axis', path: 'geometry.x2', from: -270.344199, to: -309.251053, t: 0, duration: 1, easing: 'linear' }), 'expected one-second ambient theta sweep.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:x:axis', path: 'geometry.x2', from: -227.042817, to: -260.575741, t: 0, duration: 1, easing: 'linear' }), 'expected one-second ambient theta sweep.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'circle_xy', path: 'geometry.d', t: 0, duration: 1, easing: 'linear' }), 'expected projected circle to move during ambient sweep.');
-    assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:x:axis', path: 'geometry.x2', from: -309.251053, to: -270.344199, t: 1, duration: 1, easing: 'easeInOut' }), 'expected one-second move_camera restore of theta.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:x:axis', path: 'geometry.x2', from: -260.575741, to: -227.042817, t: 1, duration: 1, easing: 'easeInOut' }), 'expected one-second move_camera restore of theta.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'circle_xy', path: 'geometry.d', t: 1, duration: 1, easing: 'easeInOut' }), 'expected projected circle to restore during move_camera.');
     const initialSvg = svgSampleAt(documentData, 0);
     const sweptSvg = svgSampleAt(documentData, 1);
     const restoredSvg = svgSampleAt(documentData, 2);
     assertGalleryCondition(label, countSvgOccurrences(initialSvg, /id="axes:[xyz]:tick:/gu) === 30, 'expected all camera-projected axis ticks to serialize into SVG.');
     assertGalleryCondition(label, countSvgOccurrences(initialSvg, /id="axes:[xyz]:tip"/gu) === 3 && initialSvg.includes('id="circle_xy"'), 'expected SVG camera-projected axis tips and circle.');
-    assertGalleryCondition(label, /id="axes:x:axis"[^>]*x2="-309\.251053"/u.test(sweptSvg), 'expected SVG ambient sweep to reach the camera-projected x-axis endpoint.');
-    assertGalleryCondition(label, /id="axes:x:axis"[^>]*x2="-270\.344199"/u.test(restoredSvg), 'expected SVG move_camera restore to return the x-axis endpoint.');
+    assertGalleryCondition(label, /id="axes:x:axis"[^>]*x2="-260\.575741"/u.test(sweptSvg), 'expected SVG ambient sweep to reach the camera-projected x-axis endpoint.');
+    assertGalleryCondition(label, /id="axes:x:axis"[^>]*x2="-227\.042817"/u.test(restoredSvg), 'expected SVG move_camera restore to return the x-axis endpoint.');
   }
 
   if (label.includes('three-d-camera-illusion-rotation')) {
@@ -1404,15 +1405,16 @@ function checkGallerySpecificStructure(label, documentData) {
     const circle = findNode(documentData, 'circle_xy');
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected ThreeDAxes helper.');
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === 30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
+    assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
     assertGalleryCondition(label, circle?.geometry?.projectedCircle === true, 'expected projected default Circle(radius=1).');
     assertGalleryCondition(label, circle?.geometry?.cameraProjection === 'manim' && circle.geometry?.phi === 75 && circle.geometry?.theta === 30, 'expected Circle(radius=1) to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'axes:x:tick:') === 12, 'expected projected x-axis ticks.');
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'axes:y:tick:') === 10, 'expected projected y-axis ticks.');
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'axes:z:tick:') === 8, 'expected projected z-axis ticks.');
-    assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:x:axis', path: 'geometry.x2', from: -270.344199, to: -342.53155, t: 0, duration: 0.785398, easing: 'easeInOut' }), 'expected first illusion theta keyframe from source sine updater.');
-    assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:z:axis', path: 'geometry.y2', from: -275.036932, to: -275.036932, t: 0, duration: 0.785398, easing: 'easeInOut' }) === false, 'expected first illusion segment to keep phi at its origin.');
-    assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:x:axis', path: 'geometry.x2', from: -342.53155, to: -263.875742, t: 0.785398, duration: 0.785398, easing: 'easeInOut' }), 'expected second illusion keyframe over PI/2 wait.');
-    assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:z:axis', path: 'geometry.y2', from: -275.036932, to: -265.365317, t: 0.785398, duration: 0.785398, easing: 'easeInOut' }), 'expected second illusion phi keyframe over PI/2 wait.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:x:axis', path: 'geometry.x2', from: -227.042817, to: -289.670334, t: 0, duration: 0.785398, easing: 'easeInOut' }), 'expected first illusion theta keyframe from source sine updater.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:z:axis', path: 'geometry.y2', from: -221.20337, to: -221.20337, t: 0, duration: 0.785398, easing: 'easeInOut' }) === false, 'expected first illusion segment to keep phi at its origin.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:x:axis', path: 'geometry.x2', from: -289.670334, to: -222.462984, t: 0.785398, duration: 0.785398, easing: 'easeInOut' }), 'expected second illusion keyframe over PI/2 wait.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:z:axis', path: 'geometry.y2', from: -221.20337, to: -211.725621, t: 0.785398, duration: 0.785398, easing: 'easeInOut' }), 'expected second illusion phi keyframe over PI/2 wait.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'circle_xy', path: 'geometry.d', t: 0, duration: 0.785, easing: 'easeInOut' }), 'expected projected circle to wobble in first illusion segment.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'circle_xy', path: 'geometry.d', t: 0.785, duration: 0.785, easing: 'easeInOut' }), 'expected projected circle to wobble in second illusion segment.');
     const initialSvg = svgSampleAt(documentData, 0);
@@ -1420,8 +1422,8 @@ function checkGallerySpecificStructure(label, documentData) {
     const phiDropSvg = svgSampleAt(documentData, Math.PI / 2);
     assertGalleryCondition(label, countSvgOccurrences(initialSvg, /id="axes:[xyz]:tick:/gu) === 30, 'expected all illusion camera-projected axis ticks to serialize into SVG.');
     assertGalleryCondition(label, countSvgOccurrences(initialSvg, /id="axes:[xyz]:tip"/gu) === 3 && initialSvg.includes('id="circle_xy"'), 'expected SVG illusion axis tips and circle.');
-    assertGalleryCondition(label, /id="axes:x:axis"[^>]*x2="-342\.531549"/u.test(thetaPeakSvg), 'expected SVG illusion theta peak to reach the projected x-axis endpoint.');
-    assertGalleryCondition(label, /id="axes:z:axis"[^>]*y2="-265\.365317"/u.test(phiDropSvg), 'expected SVG illusion phi drop to move the projected z-axis endpoint.');
+    assertGalleryCondition(label, /id="axes:x:axis"[^>]*x2="-289\.67033[34]"/u.test(thetaPeakSvg), 'expected SVG illusion theta peak to reach the projected x-axis endpoint.');
+    assertGalleryCondition(label, /id="axes:z:axis"[^>]*y2="-211\.725621"/u.test(phiDropSvg), 'expected SVG illusion phi drop to move the projected z-axis endpoint.');
   }
 
   if (label.includes('moving-zoomed-scene-around')) {

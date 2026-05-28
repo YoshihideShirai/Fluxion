@@ -44,7 +44,7 @@ from fluxion import ImageMobject
 image = ImageMobject(id="gradient", data=[[0, 128, 255], [0, 128, 255]], w=240, h=120)
 ```
 
-`ThreeDAxes`, `ProjectedCircle`, `GaussianSurface`, and `SphereSurface` export the projected geometry used by the Manim gallery 3D ports. They are not native 3D runtime objects; they generate the same IR shape as the Text DSL `threeDAxes` / `projectedCircle` / `gaussianSurface` / `sphereSurface` helpers from Python. With `phi=75, theta=30, ...`, they can export projected geometry sampled with Manim `ThreeDCamera`'s rotation-matrix order and perspective factor.
+`ThreeDAxes`, `ProjectedCircle`, `GaussianSurface`, and `SphereSurface` export the projected geometry used by the Manim gallery 3D ports. They are not native 3D runtime objects; they generate the same IR shape as the Text DSL `threeDAxes` / `projectedCircle` / `gaussianSurface` / `sphereSurface` helpers from Python. `ThreeDAxes` defaults to Manim's axis lengths: `x_length=10.5`, `y_length=10.5`, and `z_length=6.5`. With `phi=75, theta=30, ...`, they can export projected geometry sampled with Manim `ThreeDCamera`'s rotation-matrix order and perspective factor.
 
 ```python
 from fluxion import GaussianSurface, ThreeDAxes

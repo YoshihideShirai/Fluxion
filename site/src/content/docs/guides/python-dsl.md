@@ -44,7 +44,7 @@ from fluxion import ImageMobject
 image = ImageMobject(id="gradient", data=[[0, 128, 255], [0, 128, 255]], w=240, h=120)
 ```
 
-`ThreeDAxes`, `ProjectedCircle`, `GaussianSurface`, `SphereSurface` は、Manim gallery の 3D 移植で使う投影済み geometry を export します。ネイティブ 3D runtime ではなく、Text DSL の `threeDAxes` / `projectedCircle` / `gaussianSurface` / `sphereSurface` helper と同じ IR 形状を Python から生成するための primitive です。`phi=75, theta=30, ...` を指定すると、Manim `ThreeDCamera` の回転行列順と透視係数を使って投影済み geometry を export できます。
+`ThreeDAxes`, `ProjectedCircle`, `GaussianSurface`, `SphereSurface` は、Manim gallery の 3D 移植で使う投影済み geometry を export します。ネイティブ 3D runtime ではなく、Text DSL の `threeDAxes` / `projectedCircle` / `gaussianSurface` / `sphereSurface` helper と同じ IR 形状を Python から生成するための primitive です。`ThreeDAxes` の既定 axis length は Manim に合わせて `x_length=10.5`, `y_length=10.5`, `z_length=6.5` です。`phi=75, theta=30, ...` を指定すると、Manim `ThreeDCamera` の回転行列順と透視係数を使って投影済み geometry を export できます。
 
 ```python
 from fluxion import GaussianSurface, ThreeDAxes

@@ -1921,9 +1921,9 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
   const includeTips = parseBoolean(options.get("includeTips") ?? "true", lineNumber);
   const tipLength = parseNumber(options.get("tipLength") ?? "18", lineNumber);
   const tipWidth = parseNumber(options.get("tipWidth") ?? "14", lineNumber);
-  const xLength = parseNumber(options.get("xLength") ?? String(xMax - xMin), lineNumber);
-  const yLength = parseNumber(options.get("yLength") ?? String(yMax - yMin), lineNumber);
-  const zLength = parseNumber(options.get("zLength") ?? String(zMax - zMin), lineNumber);
+  const xLength = parseNumber(options.get("xLength") ?? "10.5", lineNumber);
+  const yLength = parseNumber(options.get("yLength") ?? "10.5", lineNumber);
+  const zLength = parseNumber(options.get("zLength") ?? "6.5", lineNumber);
   const hasCameraProjection = options.has("phi") || options.has("theta") || options.has("gamma");
 
   const children: SceneNode[] = [];

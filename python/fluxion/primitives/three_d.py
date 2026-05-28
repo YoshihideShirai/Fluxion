@@ -266,9 +266,9 @@ class ThreeDAxes(Mobject):
         include_tips: bool = True,
         tip_length: float = 18,
         tip_width: float = 14,
-        x_length: float | None = None,
-        y_length: float | None = None,
-        z_length: float | None = None,
+        x_length: float | None = 10.5,
+        y_length: float | None = 10.5,
+        z_length: float | None = 6.5,
         phi: float | None = None,
         theta: float | None = None,
         gamma: float = 0,
@@ -279,9 +279,9 @@ class ThreeDAxes(Mobject):
     ) -> None:
         children = []
         has_camera_projection = phi is not None or theta is not None
-        x_length = x_range[1] - x_range[0] if x_length is None else x_length
-        y_length = y_range[1] - y_range[0] if y_length is None else y_length
-        z_length = z_range[1] - z_range[0] if z_length is None else z_length
+        x_length = 10.5 if x_length is None else x_length
+        y_length = 10.5 if y_length is None else y_length
+        z_length = 6.5 if z_length is None else z_length
         if has_camera_projection:
             camera_kwargs = {
                 "phi": 75 if phi is None else phi,

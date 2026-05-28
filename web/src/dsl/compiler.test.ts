@@ -809,6 +809,9 @@ test("compiles threeDAxes into projected axes with ticks and tips", () => {
   assert.equal(axes?.type, "group");
   assert.equal(axes?.geometry.threeDAxes, true);
   equalJson(axes?.geometry.xRange, [-6, 6, 1]);
+  assert.equal(axes?.geometry.xLength, 10.5);
+  assert.equal(axes?.geometry.yLength, 10.5);
+  assert.equal(axes?.geometry.zLength, 6.5);
   assert.equal(axes?.children.filter((child) => child.type === "line").length, 33);
   assert.equal(axes?.children.filter((child) => child.type === "path").length, 3);
   assert.equal(axes?.children.find((child) => child.id === "axes:x:axis")?.style.strokeWidth, 2);
@@ -832,13 +835,16 @@ test("compiles threeDAxes through Manim ThreeDCamera projection", () => {
   assert.equal(axes?.geometry.cameraProjection, "manim");
   assert.equal(axes?.geometry.phi, 75);
   assert.equal(axes?.geometry.theta, 30);
+  assert.equal(axes?.geometry.xLength, 10.5);
+  assert.equal(axes?.geometry.yLength, 10.5);
+  assert.equal(axes?.geometry.zLength, 6.5);
   assert.equal(axes?.children.length, 16);
   const xAxis = axes?.children.find((child) => child.id === "axes:x:axis");
   assert.equal(xAxis?.style.strokeWidth, 2);
-  assert.equal(Number(xAxis?.geometry.x1).toFixed(6), "100.355130");
-  assert.equal(Number(xAxis?.geometry.x2).toFixed(6), "-118.677572");
+  assert.equal(Number(xAxis?.geometry.x1).toFixed(6), "234.070299");
+  assert.equal(Number(xAxis?.geometry.x2).toFixed(6), "-365.791206");
   const zTip = axes?.children.find((child) => child.id === "axes:z:tip");
-  assert.equal(zTip?.geometry.d, "M 0 -106.421631 L 7 -88.421631 L -7 -88.421631 Z");
+  assert.equal(zTip?.geometry.d, "M 0 -356.383208 L 7 -338.383208 L -7 -338.383208 Z");
 });
 
 test("compiles threeDAxes with Manim axis lengths independent from ranges", () => {
