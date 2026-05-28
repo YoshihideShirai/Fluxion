@@ -9,7 +9,7 @@ known_gaps:
   - symptom: "3D Surface / camera projection は runtime ネイティブ未実装のため、公式 ThreeDAxes と Gaussian surface を `threeDAxes` / `gaussianSurface` helper で投影済みに展開している。"
     layer: runtime
     impact: medium
-    workaround: "`ThreeDAxes()` は tick/tip 付き `threeDAxes` helper、公式既定の `x_range=(-6,6,1)`, `y_range=(-5,5,1)`, `z_range=(-4,4,1)`, `x_length=10.5`, `y_length=10.5`, `z_length=6.5`、公式の `param_gauss`（`sigma=0.4`, `mu=[0,0]`）、`resolution=(24,24)`、`scale(2)`、`Surface` 既定の `stroke_width=0.5`、`set_style(..., stroke_color=GREEN)`、`set_fill_by_checkerboard(ORANGE, BLUE, opacity=0.5)` は `gaussianSurface` helper で 24x24 の path face 群として生成し、`phi=75`, `theta=-30` の Manim `ThreeDCamera` 由来の透視投影、面法線、default light source `[-7,-9,10]` から Manim `get_shaded_rgb` 風の明暗を付ける。"
+    workaround: "`ThreeDAxes()` は tick/tip 付き `threeDAxes` helper、公式既定の `x_range=(-6,6,1)`, `y_range=(-5,5,1)`, `z_range=(-4,4,1)`, `x_length=10.5`, `y_length=10.5`, `z_length=6.5`、公式の `param_gauss`（`sigma=0.4`, `mu=[0,0]`）、`resolution=(24,24)`、`scale(2)`、`Surface` 既定の `stroke_width=0.5`、`set_style(..., stroke_color=GREEN)`、`set_fill_by_checkerboard(ORANGE, BLUE, opacity=0.5)` は `gaussianSurface` helper で 24x24 の path face 群として生成し、公式 `self.add(axes, gauss_plane)` と同じく axes の上に描画する。`phi=75`, `theta=-30` の Manim `ThreeDCamera` 由来の透視投影、面法線、default light source `[-7,-9,10]` から Manim `get_shaded_rgb` 風の明暗を付ける。"
     closure_condition: "Surface primitive と 3D camera projection を runtime でネイティブ実装する。"
     fidelity_upgrade_condition: "Manim の `Surface(param_gauss)` と checkerboard fill を同等パラメータで再現できる時。"
 category: Manim Stable Examples

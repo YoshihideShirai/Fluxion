@@ -1304,6 +1304,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const surfaceFaces = surface?.children ?? [];
     const surfaceFills = new Set(surfaceFaces.map((child) => child.style?.fill).filter(Boolean));
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected projected ThreeDAxes helper.');
+    assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'axes') < documentData.nodes.findIndex((node) => node.id === 'gauss'), 'expected official self.add(axes, gauss_plane) z-order.');
     assertGalleryCondition(label, axes?.children?.length === 36, `expected projected default ThreeDAxes with ticks and tips, got ${axes?.children?.length ?? 0} children.`);
     assertGalleryCondition(label, axes?.geometry?.xRange?.join(',') === '-6,6,1', 'expected official default ThreeDAxes xRange.');
     assertGalleryCondition(label, axes?.geometry?.yRange?.join(',') === '-5,5,1', 'expected official default ThreeDAxes yRange.');
@@ -1328,6 +1329,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="gauss:face:/gu) === 24 * 24, 'expected all gaussian mesh faces to serialize into SVG.');
     assertGalleryCondition(label, svg.includes('stroke="#83C167"') && svg.includes('fill-opacity="0.5"'), 'expected SVG gaussian surface strokes and opacity.');
+    assertGalleryCondition(label, svg.indexOf('id="axes:x:axis"') < svg.indexOf('id="gauss:face:'), 'expected SVG gaussian surface to render over the axes like self.add(axes, gauss_plane).');
   }
 
   if (label.includes('three-d-light-source-position')) {
@@ -1343,6 +1345,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const sphereFaces = sphere?.children ?? [];
     const sphereFills = new Set(sphereFaces.map((child) => child.style?.fill).filter(Boolean));
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected projected ThreeDAxes helper.');
+    assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'axes') < documentData.nodes.findIndex((node) => node.id === 'sphere'), 'expected official self.add(axes, sphere) z-order.');
     assertGalleryCondition(label, axes?.children?.length === 36, `expected projected default ThreeDAxes with ticks and tips, got ${axes?.children?.length ?? 0} children.`);
     assertGalleryCondition(label, axes?.geometry?.xRange?.join(',') === '-6,6,1', 'expected official default ThreeDAxes xRange.');
     assertGalleryCondition(label, axes?.geometry?.yRange?.join(',') === '-5,5,1', 'expected official default ThreeDAxes yRange.');
@@ -1365,6 +1368,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, sphereFills.size >= 24, `expected light-shaded checkerboard sphere faces, got ${sphereFills.size}.`);
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="sphere_mesh:face:/gu) === 15 * 32, 'expected all sphere mesh faces to serialize into SVG.');
+    assertGalleryCondition(label, svg.indexOf('id="axes:x:axis"') < svg.indexOf('id="sphere"'), 'expected SVG lit sphere group to render over the axes like self.add(axes, sphere).');
     assertGalleryCondition(label, svg.includes('id="highlight_core"') && svg.includes('id="terminator_left"'), 'expected SVG lit sphere highlight and terminator overlays.');
     assertGalleryCondition(label, shadow?.style?.fill === '#260404' && approximatelyEqual(shadow?.transform?.opacity ?? 0, 0.22), 'expected broad opposite-side sphere shadow.');
     assertGalleryCondition(label, rim?.style?.stroke === '#4D0E0F' && approximatelyEqual(rim?.transform?.opacity ?? 0, 0.65), 'expected dark sphere rim.');
