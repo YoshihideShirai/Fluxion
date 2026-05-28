@@ -1861,6 +1861,26 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'dot', path: 'transform.x', from: 0, to: 67.5, t: 1, duration: 1, easing: 'smooth' }), 'expected dot move to circle start.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'animateValue' && String(op.id).startsWith('__moveAlongPath_dot_orbit') && approximatelyEqual(op.to, Math.PI * 2) && op.t === 2 && op.duration === 2), 'expected MoveAlongPath around orbit.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'animateValue' && String(op.id).startsWith('__rotating_dot') && approximatelyEqual(op.to, Math.PI * 2) && op.t === 4 && op.duration === 1.5), 'expected Rotating phase about offset point.');
+    const growMidOrbit = renderedNodeAt(documentData, 0.5, 'orbit');
+    const shiftMidDot = renderedNodeAt(documentData, 1.5, 'dot');
+    const orbitMidDot = renderedNodeAt(documentData, 3, 'dot');
+    const rotatingMidDot = renderedNodeAt(documentData, 4.75, 'dot');
+    const finalDot = renderedNodeAt(documentData, 6.5, 'dot');
+    assertGalleryCondition(label, approximatelyEqual(growMidOrbit?.transform?.scale ?? 0, 0.5) && approximatelyEqual(growMidOrbit?.transform?.opacity ?? 0, 1), 'expected GrowFromCenter midpoint to scale the orbit without fading.');
+    assertGalleryCondition(label, approximatelyEqual(shiftMidDot?.transform?.x ?? 0, 33.75) && approximatelyEqual(shiftMidDot?.transform?.y ?? 1, 0), 'expected dot transform midpoint to move halfway to the orbit start.');
+    assertGalleryCondition(label, approximatelyEqual(orbitMidDot?.transform?.x ?? 0, -67.5) && approximatelyEqual(orbitMidDot?.transform?.y ?? 1, 0), 'expected MoveAlongPath midpoint to place the dot opposite the start of the orbit.');
+    assertGalleryCondition(label, approximatelyEqual(rotatingMidDot?.transform?.x ?? 0, 202.5) && approximatelyEqual(rotatingMidDot?.transform?.y ?? 1, 0) && approximatelyEqual(rotatingMidDot?.transform?.rotation ?? 0, -180), 'expected Rotating midpoint around the offset point to move the dot to the far side.');
+    assertGalleryCondition(label, approximatelyEqual(finalDot?.transform?.x ?? 0, 67.5) && approximatelyEqual(finalDot?.transform?.y ?? 1, 0) && approximatelyEqual(finalDot?.transform?.rotation ?? 0, -360), 'expected final wait to hold the completed offset rotation.');
+    const growMidSvg = svgSampleAt(documentData, 0.5);
+    const shiftMidSvg = svgSampleAt(documentData, 1.5);
+    const orbitMidSvg = svgSampleAt(documentData, 3);
+    const rotatingMidSvg = svgSampleAt(documentData, 4.75);
+    const finalSvg = svgSampleAt(documentData, 6.5);
+    assertGalleryCondition(label, svgElementTag(growMidSvg, 'orbit').includes('scale(0.5 0.5)') && svgElementTag(growMidSvg, 'orbit').includes('opacity="1"'), 'expected SVG orbit midpoint to grow at full opacity.');
+    assertGalleryCondition(label, svgElementTag(shiftMidSvg, 'dot').includes('transform="translate(33.75 0)'), 'expected SVG dot halfway to orbit start.');
+    assertGalleryCondition(label, svgElementTag(orbitMidSvg, 'dot').includes('transform="translate(-67.5'), 'expected SVG dot opposite the orbit start halfway through MoveAlongPath.');
+    assertGalleryCondition(label, svgElementTag(rotatingMidSvg, 'dot').includes('transform="translate(202.5') && svgElementTag(rotatingMidSvg, 'dot').includes('rotate(-180'), 'expected SVG dot halfway through offset Rotating phase.');
+    assertGalleryCondition(label, svgElementTag(finalSvg, 'dot').includes('transform="translate(67.5') && svgElementTag(finalSvg, 'dot').includes('rotate(-360'), 'expected final SVG dot to hold completed offset rotation.');
   }
 
   if (label.includes('moving-angle')) {
