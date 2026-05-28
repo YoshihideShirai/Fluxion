@@ -1551,8 +1551,10 @@ function checkGallerySpecificStructure(label, documentData) {
   }
 
   if (label.includes('point-with-trace')) {
+    const tracedScene = findNode(documentData, 'traced_scene');
     const trace = findNode(documentData, 'trace');
     const dot = findNode(documentData, 'dot');
+    assertGalleryCondition(label, tracedScene?.children?.map((child) => child.id).join(',') === 'trace,dot', 'expected official self.add(path,dot) z-order with dot above its trace.');
     assertGalleryCondition(label, dot?.type === 'circle' && approximatelyEqual(dot?.geometry?.r ?? 0, 5.4) && approximatelyEqual(dot?.style?.strokeWidth ?? -1, 0), 'expected default Dot radius and stroke width for traced point.');
     assertGalleryCondition(label, trace?.style?.stroke === '#FFFFFF' && approximatelyEqual(trace?.style?.strokeWidth ?? 0, 4), 'expected white VMobject trace stroke.');
     assertGalleryCondition(label, trace?.geometry?.tracedTarget === 'dot', 'expected trace to follow dot target history.');
@@ -1576,6 +1578,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, finalPoint && approximatelyEqual(finalPoint.x, 67.5) && approximatelyEqual(finalPoint.y, -67.5) && finalPoint.count === 361, 'expected final SVG trace to hold the last point with full 60fps history.');
     assertGalleryCondition(label, finalPath.startsWith('M 0 0 C ') && finalPoints.some((point) => approximatelyEqual(point.x, 135) && approximatelyEqual(point.y, 0)), 'expected final SVG trace to retain origin and post-rotation endpoint as a smooth path.');
     assertGalleryCondition(label, finalPoints.some((point) => approximatelyEqual(point.x, 135) && point.y < -67.3), 'expected final SVG trace to retain the vertical segment after rotation.');
+    assertGalleryCondition(label, finalSvg.indexOf('id="trace"') < finalSvg.indexOf('id="dot"'), 'expected SVG trace to render below the dot like Manim self.add(path,dot).');
     assertGalleryCondition(label, /id="trace"[^>]*><path [^>]*stroke-linecap="round"[^>]*stroke-linejoin="round"/u.test(finalSvg), 'expected SVG trace to use round VMobject stroke caps and joins.');
   }
 
