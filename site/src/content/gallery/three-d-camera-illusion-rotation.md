@@ -9,7 +9,7 @@ known_gaps:
   - symptom: "3D camera illusion はネイティブな runtime カメラとしては未実装のため、Manim `ThreeDCamera` 投影済み ThreeDAxes と滑らかな projected Circle path を `0.2*sin(t)` theta / `0.1*cos(t)-0.1` phi の2段階変化として補間している。"
     layer: runtime
     impact: medium
-    workaround: "公式の `self.add(circle, axes)` z-order、`ThreeDAxes()` axis length (`x_length=10.5`, `y_length=10.5`, `z_length=6.5`)、`begin_3dillusion_camera_rotation(rate=2)`、`wait(PI/2)` に合わせ、`projectedCircle` を先に宣言してから `threeDAxes` を重ね、Manim camera 投影を使って、途中の theta 最大点と終了時の phi 低下点を axes/tick の座標補間と circle の閉じた cubic path 補間へ展開する。"
+    workaround: "公式の `self.add(circle, axes)` z-order、未移動の Manim scene origin、`ThreeDAxes()` axis length (`x_length=10.5`, `y_length=10.5`, `z_length=6.5`)、`begin_3dillusion_camera_rotation(rate=2)`、`wait(PI/2)` に合わせ、`projectedCircle` を先に宣言してから `threeDAxes` を重ね、Manim camera 投影を使って、途中の theta 最大点と終了時の phi 低下点を axes/tick の座標補間と circle の閉じた cubic path 補間へ展開する。"
     closure_condition: "3Dカメラ姿勢パラメータ（phi/theta/gamma）と透視投影、Dot3D を runtime へ実装する。"
     fidelity_upgrade_condition: "Manim の `begin_3dillusion_camera_rotation` を同等パラメータで再現できる時。"
 category: Manim Stable Examples
@@ -22,8 +22,8 @@ scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 
-projectedCircle circle_xy radius=1 at 0,28 phi=75 theta=30 unitScale=67.5 samples=96 fill="none" stroke="#FFFFFF" strokeWidth=4
-threeDAxes axes at 0,28 xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 xLength=10.5 yLength=10.5 zLength=6.5 phi=75 theta=30 unitScale=67.5 includeTips=true
+projectedCircle circle_xy radius=1 at 0,0 phi=75 theta=30 unitScale=67.5 samples=96 fill="none" stroke="#FFFFFF" strokeWidth=4
+threeDAxes axes at 0,0 xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 xLength=10.5 yLength=10.5 zLength=6.5 phi=75 theta=30 unitScale=67.5 includeTips=true
 
 animate axes:x:axis.x1 from 145.285013 to 197.161733 duration=0.785398s easing=easeInOut
 animate axes:x:axis.y1 from -65.12949 to -57.760949 duration=0.785398s easing=easeInOut

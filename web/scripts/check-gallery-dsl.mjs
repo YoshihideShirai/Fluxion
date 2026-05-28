@@ -1410,6 +1410,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const circle = findNode(documentData, 'circle_xy');
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected ThreeDAxes helper.');
     assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'circle_xy') < documentData.nodes.findIndex((node) => node.id === 'axes'), 'expected official self.add(circle, axes) z-order.');
+    assertGalleryCondition(label, axes?.transform?.x === 0 && axes?.transform?.y === 0 && circle?.transform?.x === 0 && circle?.transform?.y === 0, 'expected circle and ThreeDAxes to stay at the unshifted Manim scene origin.');
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === 30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
     assertGalleryCondition(label, circle?.geometry?.projectedCircle === true, 'expected projected default Circle(radius=1).');
@@ -1438,6 +1439,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const circle = findNode(documentData, 'circle_xy');
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected ThreeDAxes helper.');
     assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'circle_xy') < documentData.nodes.findIndex((node) => node.id === 'axes'), 'expected official self.add(circle, axes) z-order.');
+    assertGalleryCondition(label, axes?.transform?.x === 0 && axes?.transform?.y === 0 && circle?.transform?.x === 0 && circle?.transform?.y === 0, 'expected circle and ThreeDAxes to stay at the unshifted Manim scene origin.');
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === 30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
     assertGalleryCondition(label, circle?.geometry?.projectedCircle === true, 'expected projected default Circle(radius=1).');
