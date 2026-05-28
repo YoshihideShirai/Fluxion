@@ -1361,9 +1361,11 @@ function checkGallerySpecificStructure(label, documentData) {
 
   if (label.includes('three-d-surface-plot')) {
     const axes = findNode(documentData, 'axes');
+    const xAxis = findNode(documentData, 'axes:x:axis');
+    const xTick = findNode(documentData, 'axes:x:tick:m1');
     const surface = findNode(documentData, 'gauss');
     const surfaceFaces = surface?.children ?? [];
-    const surfaceFills = new Set(surfaceFaces.map((child) => child.style?.fill).filter(Boolean));
+    const surfaceFills = new Set(surfaceFaces.map((child) => child.style?.fill?.toLowerCase()).filter(Boolean));
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected projected ThreeDAxes helper.');
     assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'axes') < documentData.nodes.findIndex((node) => node.id === 'gauss'), 'expected official self.add(axes, gauss_plane) z-order.');
     assertGalleryCondition(label, axes?.transform?.x === 0 && axes?.transform?.y === 0, 'expected ThreeDAxes to stay at the unshifted Manim scene origin.');
@@ -1372,7 +1374,8 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, axes?.geometry?.yRange?.join(',') === '-5,5,1', 'expected official default ThreeDAxes yRange.');
     assertGalleryCondition(label, axes?.geometry?.zRange?.join(',') === '-4,4,1', 'expected official default ThreeDAxes zRange.');
     assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
-    assertGalleryCondition(label, findNode(documentData, 'axes:x:axis')?.style?.strokeWidth === 2, 'expected ThreeDAxes axis stroke width to match NumberLine default.');
+    assertGalleryCondition(label, xAxis?.style?.stroke === '#FFFFFF' && xAxis.style?.strokeWidth === 2, 'expected Manim default white 2px ThreeDAxes strokes.');
+    assertGalleryCondition(label, xTick?.style?.strokeWidth === 2 && approximatelyEqual(xTick?.geometry?.x1 ?? 0, -24.397985) && approximatelyEqual(xTick?.geometry?.x2 ?? 0, -32.579284), 'expected Manim default ThreeDAxes tick size and stroke for theta=-30.');
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === -30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, surface?.geometry?.gaussianSurface === true, 'expected gaussianSurface group gauss.');
     assertGalleryCondition(label, surface?.transform?.x === 0 && surface?.transform?.y === 0, 'expected gaussianSurface to share the unshifted axes placement.');
@@ -1388,6 +1391,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, Math.max(...surfaceFaces.map((face) => Number(face.metadata?.surfaceFace?.shade ?? 0))) > 0.2 && Math.min(...surfaceFaces.map((face) => Number(face.metadata?.surfaceFace?.shade ?? 0))) < -0.005, 'expected gaussian metadata to preserve Manim get_shaded_rgb light and shadow deltas.');
     assertGalleryCondition(label, surfaceFaces.every((child) => child.style?.stroke === '#83C167' && approximatelyEqual(child.style?.strokeWidth ?? 0, 0.5)), 'expected green 0.5px surface face strokes.');
     assertGalleryCondition(label, surfaceFaces.every((child) => approximatelyEqual(child.style?.fillOpacity ?? 0, 0.5)), 'expected checkerboard fill opacity 0.5.');
+    assertGalleryCondition(label, surfaceFills.has('#ff862f') && surfaceFills.has('#58c4dd'), 'expected official ORANGE/BLUE checkerboard base colors to survive among shaded gaussian faces.');
     assertGalleryCondition(label, surfaceFills.size >= 20, `expected light/normal-shaded checkerboard face colors, got ${surfaceFills.size}.`);
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="gauss:face:/gu) === 24 * 24, 'expected all gaussian mesh faces to serialize into SVG.');
@@ -1397,9 +1401,11 @@ function checkGallerySpecificStructure(label, documentData) {
 
   if (label.includes('three-d-light-source-position')) {
     const axes = findNode(documentData, 'axes');
+    const xAxis = findNode(documentData, 'axes:x:axis');
+    const xTick = findNode(documentData, 'axes:x:tick:m1');
     const sphere = findNode(documentData, 'sphere');
     const sphereFaces = sphere?.children ?? [];
-    const sphereFills = new Set(sphereFaces.map((child) => child.style?.fill).filter(Boolean));
+    const sphereFills = new Set(sphereFaces.map((child) => child.style?.fill?.toLowerCase()).filter(Boolean));
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected projected ThreeDAxes helper.');
     assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'axes') < documentData.nodes.findIndex((node) => node.id === 'sphere'), 'expected official self.add(axes, sphere) z-order.');
     assertGalleryCondition(label, axes?.transform?.x === 0 && axes?.transform?.y === 0, 'expected ThreeDAxes to stay at the unshifted Manim scene origin.');
@@ -1408,7 +1414,8 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, axes?.geometry?.yRange?.join(',') === '-5,5,1', 'expected official default ThreeDAxes yRange.');
     assertGalleryCondition(label, axes?.geometry?.zRange?.join(',') === '-4,4,1', 'expected official default ThreeDAxes zRange.');
     assertGalleryCondition(label, axes?.geometry?.xLength === 10.5 && axes.geometry?.yLength === 10.5 && axes.geometry?.zLength === 6.5, 'expected Manim default ThreeDAxes axis lengths.');
-    assertGalleryCondition(label, findNode(documentData, 'axes:x:axis')?.style?.strokeWidth === 2, 'expected ThreeDAxes axis stroke width to match NumberLine default.');
+    assertGalleryCondition(label, xAxis?.style?.stroke === '#FFFFFF' && xAxis.style?.strokeWidth === 2, 'expected Manim default white 2px ThreeDAxes strokes.');
+    assertGalleryCondition(label, xTick?.style?.strokeWidth === 2 && approximatelyEqual(xTick?.geometry?.x1 ?? 0, 32.579284) && approximatelyEqual(xTick?.geometry?.x2 ?? 0, 24.397985), 'expected Manim default ThreeDAxes tick size and stroke for theta=30.');
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === 30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, sphere?.geometry?.sphereSurface === true, 'expected sphereSurface mesh.');
     assertGalleryCondition(label, sphere?.transform?.x === 0 && sphere?.transform?.y === 0, 'expected sphereSurface to share the unshifted axes placement.');
@@ -1422,6 +1429,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, sphereFaces.every((face, index, faces) => index === 0 || Number(faces[index - 1]?.metadata?.surfaceFace?.depth) <= Number(face.metadata?.surfaceFace?.depth)), 'expected sphere faces to be serialized in increasing camera-depth order.');
     assertGalleryCondition(label, Math.max(...sphereFaces.map((face) => Number(face.metadata?.surfaceFace?.shade ?? 0))) > 0.4 && Math.min(...sphereFaces.map((face) => Number(face.metadata?.surfaceFace?.shade ?? 0))) < -0.2, 'expected sphere metadata to preserve Manim get_shaded_rgb light and shadow deltas.');
     assertGalleryCondition(label, sphereFaces.every((child) => child.style?.stroke === '#BBBBBB' && approximatelyEqual(child.style?.strokeWidth ?? 0, 0.5)), 'expected LIGHT_GREY 0.5px sphere face strokes.');
+    assertGalleryCondition(label, sphereFills.has('#e65a4c') && sphereFills.has('#cf5044'), 'expected official RED_D/RED_E checkerboard base colors to survive among shaded sphere faces.');
     assertGalleryCondition(label, sphereFills.size >= 24, `expected light-shaded checkerboard sphere faces, got ${sphereFills.size}.`);
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="sphere:face:/gu) === 15 * 32, 'expected all sphere mesh faces to serialize into SVG.');
