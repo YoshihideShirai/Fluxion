@@ -952,17 +952,35 @@ function checkGallerySpecificStructure(label, documentData) {
   if (label.includes('simple-circle')) {
     assertGalleryCondition(label, documentData.width === 960 && documentData.height === 540, 'expected 960x540 frame so Circle(radius=1) maps to 67.5px.');
     const circle = findNode(documentData, 'circle');
+    const createStartCircle = renderedNodeAt(documentData, 0, 'circle');
+    const createMidCircle = renderedNodeAt(documentData, 0.5, 'circle');
+    const createEndCircle = renderedNodeAt(documentData, 1, 'circle');
+    const holdCircle = renderedNodeAt(documentData, 2, 'circle');
     assertGalleryCondition(label, circle?.type === 'circle', 'expected Circle mobject.');
     assertGalleryCondition(label, approximatelyEqual(circle?.geometry?.r ?? 0, 67.5), 'expected Manim default Circle radius at frame scale.');
     assertGalleryCondition(label, circle?.style?.fill === '#D147BD' && approximatelyEqual(circle?.style?.fillOpacity ?? 0, 0.5), 'expected PINK fill with opacity 0.5.');
     assertGalleryCondition(label, circle?.style?.stroke === '#ffffff' && approximatelyEqual(circle?.style?.strokeWidth ?? 0, 4), 'expected default white stroke.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'circle', path: 'geometry.drawProgress', from: 0, to: 1, t: 0, duration: 1, easing: 'easeInOut' }), 'expected one-second Create(circle) draw progress.');
+    assertGalleryCondition(label, createStartCircle?.geometry?.drawProgress === 0 && createMidCircle?.geometry?.drawProgress === 0.5 && createEndCircle?.geometry?.drawProgress === 1 && holdCircle?.geometry?.drawProgress === 1, 'expected Create(circle) draw progress to reveal then hold.');
+    const startSvg = svgSampleAt(documentData, 0);
+    const midSvg = svgSampleAt(documentData, 0.5);
+    const endSvg = svgSampleAt(documentData, 1);
+    assertGalleryCondition(label, svgElementTag(startSvg, 'circle').includes('r="67.5"') && svgElementTag(startSvg, 'circle').includes('fill="#D147BD"') && svgElementTag(startSvg, 'circle').includes('stroke-dashoffset="1"'), 'expected SVG Circle start to be an undrawn Manim PINK circle.');
+    assertGalleryCondition(label, svgElementTag(midSvg, 'circle').includes('stroke-dashoffset="0.5"') && svgElementTag(midSvg, 'circle').includes('fill-opacity="0"'), 'expected SVG Circle midpoint to show half stroke before fill reveal.');
+    assertGalleryCondition(label, svgElementTag(endSvg, 'circle').includes('stroke-dashoffset="0"') && svgElementTag(endSvg, 'circle').includes('fill-opacity="0.5"'), 'expected SVG Circle end to show full PINK fill opacity.');
   }
 
   if (label.includes('square-to-circle')) {
     assertGalleryCondition(label, documentData.width === 960 && documentData.height === 540, 'expected 960x540 frame so Square side length maps to 135px.');
     const square = findNode(documentData, 'square');
     const targetCircle = findNode(documentData, 'circle');
+    const createStartSquare = renderedNodeAt(documentData, 0, 'square');
+    const createMidSquare = renderedNodeAt(documentData, 0.5, 'square');
+    const createEndSquare = renderedNodeAt(documentData, 1, 'square');
+    const transformMidSquare = renderedNodeAt(documentData, 1.5, 'square');
+    const transformEndSquare = renderedNodeAt(documentData, 2, 'square');
+    const fadeMidSquare = renderedNodeAt(documentData, 2.5, 'square');
+    const fadeEndSquare = renderedNodeAt(documentData, 3, 'square');
     assertGalleryCondition(label, square?.type === 'path' && targetCircle?.type === 'path', 'expected same-topology path square and circle for Transform.');
     assertGalleryCondition(label, square?.style?.stroke === '#ffffff' && approximatelyEqual(square?.style?.fillOpacity ?? -1, 0), 'expected rotated white square outline start.');
     assertGalleryCondition(label, targetCircle?.style?.fill === '#D147BD' && approximatelyEqual(targetCircle?.style?.fillOpacity ?? 0, 0.5), 'expected target PINK circle fill opacity 0.5.');
@@ -972,6 +990,16 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'square', path: 'style.fillOpacity', from: 0, to: 0.5, t: 1, duration: 1, easing: 'easeInOut' }), 'expected Transform to interpolate fill opacity.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'square', path: 'geometry.d', t: 1, duration: 1, easing: 'easeInOut' }), 'expected Transform path morph from rotated square to circle.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'square', path: 'transform.opacity', from: 1, to: 0, t: 2, duration: 1, easing: 'easeInOut' }), 'expected final FadeOut(square).');
+    assertGalleryCondition(label, createStartSquare?.geometry?.drawProgress === 0 && createMidSquare?.geometry?.drawProgress === 0.5 && createEndSquare?.geometry?.drawProgress === 1, 'expected Create(square) draw progress to reveal the rotated square outline.');
+    assertGalleryCondition(label, transformMidSquare?.style?.fill === 'rgb(232, 163, 222)' && approximatelyEqual(transformMidSquare.style?.fillOpacity ?? 0, 0.25) && String(transformMidSquare.geometry?.d ?? '').includes('M 0 -81.4795'), 'expected Transform midpoint to blend diamond geometry toward PINK circle.');
+    assertGalleryCondition(label, transformEndSquare?.style?.fill === '#D147BD' && approximatelyEqual(transformEndSquare.style?.fillOpacity ?? 0, 0.5) && String(transformEndSquare.geometry?.d ?? '').startsWith('M 0 -67.5 C 37.279 -67.5'), 'expected Transform end to match the target PINK circle path.');
+    assertGalleryCondition(label, approximatelyEqual(fadeMidSquare?.transform?.opacity ?? 0, 0.5) && fadeEndSquare === undefined, 'expected final FadeOut to fade the transformed circle away completely.');
+    const createSvg = svgSampleAt(documentData, 0);
+    const transformSvg = svgSampleAt(documentData, 1.5);
+    const fadeSvg = svgSampleAt(documentData, 2.5);
+    assertGalleryCondition(label, svgGroupPathData(createSvg, 'square').includes('M 0 -95.459') && createSvg.includes('stroke-dashoffset="1"'), 'expected SVG square start to be an undrawn rotated diamond.');
+    assertGalleryCondition(label, svgGroupPathData(transformSvg, 'square').includes('M 0 -81.4795') && transformSvg.includes('fill="rgb(232, 163, 222)"') && transformSvg.includes('fill-opacity="0.25"'), 'expected SVG Transform midpoint to serialize blended geometry and color.');
+    assertGalleryCondition(label, svgElementTag(fadeSvg, 'square').includes('opacity="0.5"') && svgGroupPathData(fadeSvg, 'square').startsWith('M 0 -67.5'), 'expected SVG FadeOut midpoint to keep the final circle path while fading.');
   }
 
   if (label.includes('animations-using-animate') || label.includes('moving-around')) {
