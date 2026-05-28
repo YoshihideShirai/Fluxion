@@ -3149,10 +3149,11 @@ function parseTracedPath(tokens: string[], state: CompileState, lineNumber: numb
     node.geometry.tracedTarget = target;
     node.geometry.traceStart = parseSeconds(options.get("start") ?? `${statementTime(state)}s`, lineNumber);
     node.geometry.traceSamples = parseNumber(options.get("samples") ?? "96", lineNumber);
+    node.geometry.traceSampling = options.get("sampling") ?? "fixed";
     const targetNode = requireNode(state, target, lineNumber);
     node.geometry.d = `M ${targetNode.transform.x} ${targetNode.transform.y}`;
     for (const [key, value] of options) {
-      if (["target", "start", "samples"].includes(key)) continue;
+      if (["target", "start", "samples", "sampling"].includes(key)) continue;
       applyNodeOption(node, key, value, lineNumber);
     }
     state.nodes.set(id, node);

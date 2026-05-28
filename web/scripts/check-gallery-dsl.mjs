@@ -1506,7 +1506,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, dot?.type === 'circle' && approximatelyEqual(dot?.geometry?.r ?? 0, 5.4) && approximatelyEqual(dot?.style?.strokeWidth ?? -1, 0), 'expected default Dot radius and stroke width for traced point.');
     assertGalleryCondition(label, trace?.style?.stroke === '#FFFFFF' && approximatelyEqual(trace?.style?.strokeWidth ?? 0, 4), 'expected white VMobject trace stroke.');
     assertGalleryCondition(label, trace?.geometry?.tracedTarget === 'dot', 'expected trace to follow dot target history.');
-    assertGalleryCondition(label, trace?.geometry?.traceSamples === 240 && trace?.geometry?.traceStart === 0, 'expected high-sample trace history from scene start.');
+    assertGalleryCondition(label, trace?.geometry?.traceSamples === 361 && trace?.geometry?.traceSampling === 'frame' && trace?.geometry?.traceStart === 0, 'expected frame-sampled trace history from scene start.');
     assertGalleryCondition(label, !documentData.timeline.some((op) => op.op === 'bindPath' && op.id === 'trace'), 'expected target tracedPath, not parametric bindPath fallback.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'animateValue' && String(op.id).startsWith('__rotating_dot') && approximatelyEqual(op.to, Math.PI) && op.t === 0 && op.duration === 2 && op.easing === 'linear'), 'expected Rotating(dot, PI, about=RIGHT) as linear value animation.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'dot', path: 'transform.x', from: 135, to: 67.5, t: 4, duration: 1, easing: 'smooth' }), 'expected final left shift from the post-rotation point.');
@@ -1519,11 +1519,11 @@ function checkGallerySpecificStructure(label, documentData) {
     const finalSvg = svgSampleAt(documentData, 6);
     const finalPoint = svgPathLastPoint(finalPath);
     const finalPoints = svgPathPoints(finalPath);
-    assertGalleryCondition(label, arcPeak && approximatelyEqual(arcPeak.x, 67.5) && approximatelyEqual(arcPeak.y, 67.5) && arcPeak.count === 240, 'expected trace to reach the top of the half-rotation arc at 1s.');
-    assertGalleryCondition(label, halfTurn && approximatelyEqual(halfTurn.x, 135) && approximatelyEqual(halfTurn.y, 0) && halfTurn.count === 240, 'expected trace to reach the right endpoint after the half rotation.');
-    assertGalleryCondition(label, upShift && approximatelyEqual(upShift.x, 135) && approximatelyEqual(upShift.y, -67.5) && upShift.count === 240, 'expected trace to include the upward smooth shift.');
-    assertGalleryCondition(label, leftShift && approximatelyEqual(leftShift.x, 67.5) && approximatelyEqual(leftShift.y, -67.5) && leftShift.count === 240, 'expected trace to include the final left smooth shift.');
-    assertGalleryCondition(label, finalPoint && approximatelyEqual(finalPoint.x, 67.5) && approximatelyEqual(finalPoint.y, -67.5) && finalPoint.count === 240, 'expected final SVG trace to hold the last point.');
+    assertGalleryCondition(label, arcPeak && approximatelyEqual(arcPeak.x, 67.5) && approximatelyEqual(arcPeak.y, 67.5) && arcPeak.count === 61, 'expected trace to reach the top of the half-rotation arc with 60fps history at 1s.');
+    assertGalleryCondition(label, halfTurn && approximatelyEqual(halfTurn.x, 135) && approximatelyEqual(halfTurn.y, 0) && halfTurn.count === 121, 'expected trace to reach the right endpoint after the half rotation with frame history.');
+    assertGalleryCondition(label, upShift && approximatelyEqual(upShift.x, 135) && approximatelyEqual(upShift.y, -67.5) && upShift.count === 241, 'expected trace to include the upward smooth shift with frame history.');
+    assertGalleryCondition(label, leftShift && approximatelyEqual(leftShift.x, 67.5) && approximatelyEqual(leftShift.y, -67.5) && leftShift.count === 301, 'expected trace to include the final left smooth shift with frame history.');
+    assertGalleryCondition(label, finalPoint && approximatelyEqual(finalPoint.x, 67.5) && approximatelyEqual(finalPoint.y, -67.5) && finalPoint.count === 361, 'expected final SVG trace to hold the last point with full 60fps history.');
     assertGalleryCondition(label, finalPath.startsWith('M 0 0 C ') && finalPoints.some((point) => approximatelyEqual(point.x, 135) && approximatelyEqual(point.y, 0)), 'expected final SVG trace to retain origin and post-rotation endpoint as a smooth path.');
     assertGalleryCondition(label, finalPoints.some((point) => approximatelyEqual(point.x, 135) && point.y < -67.3), 'expected final SVG trace to retain the vertical segment after rotation.');
     assertGalleryCondition(label, /id="trace"[^>]*><path [^>]*stroke-linecap="round"[^>]*stroke-linejoin="round"/u.test(finalSvg), 'expected SVG trace to use round VMobject stroke caps and joins.');

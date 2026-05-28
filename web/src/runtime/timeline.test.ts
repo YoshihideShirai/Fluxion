@@ -267,7 +267,7 @@ test("rebuilds target traced paths from sampled timeline history", () => {
     type: "path",
     transform: { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
     style: { fill: "none", stroke: "#fff", strokeWidth: 2 },
-    geometry: { d: "", tracedPath: true, tracedTarget: "c1", traceStart: 0, traceSamples: 3 },
+    geometry: { d: "", tracedPath: true, tracedTarget: "c1", traceStart: 0, traceSamples: 3, traceSampling: "fixed" },
     children: [],
   };
   const documentData: FluxionDocument = {
@@ -289,6 +289,36 @@ test("rebuilds target traced paths from sampled timeline history", () => {
   assert.equal(
     graph.get("trace")?.geometry.d,
     "M 0 0 C 8.333333333333334 -4.166666666666667 33.33333333333333 -16.666666666666664 50 -25 C 66.66666666666667 -33.333333333333336 91.66666666666667 -45.833333333333336 100 -50",
+  );
+});
+
+test("rebuilds target traced paths from frame-timed history", () => {
+  const traceNode: SceneNode = {
+    id: "trace",
+    type: "path",
+    transform: { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+    style: { fill: "none", stroke: "#fff", strokeWidth: 2 },
+    geometry: { d: "", tracedPath: true, tracedTarget: "c1", traceStart: 0, traceSamples: 120, traceSampling: "frame" },
+    children: [],
+  };
+  const documentData: FluxionDocument = {
+    version: "0.1",
+    width: 1280,
+    height: 720,
+    fps: 10,
+    duration: 2,
+    camera: { x: 0, y: 0, scale: 1, rotation: 0 },
+    nodes: [node, traceNode],
+    timeline: [
+      { t: 0, op: "animate", id: "c1", path: "transform.x", from: 0, to: 100, duration: 2, easing: "linear" },
+    ],
+  };
+  const graph = new SceneGraph(documentData.nodes);
+  applyTimelineAt(graph, documentData.timeline, 0.5, documentData.values);
+  applyTargetTraces(graph, documentData, 0.5);
+  assert.equal(
+    graph.get("trace")?.geometry.d,
+    "M 0 0 C 0.8333333333333334 0 3.333333333333333 0 5 0 C 6.666666666666667 0 8.333333333333334 0 10 0 C 11.666666666666666 0 13.333333333333334 0 15 0 C 16.666666666666668 0 18.333333333333332 0 20 0 C 21.666666666666668 0 24.166666666666668 0 25 0",
   );
 });
 

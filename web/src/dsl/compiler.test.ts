@@ -1093,7 +1093,7 @@ tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120 at 0,-20 
 
 test("compiles tracedPath helper from a target node", () => {
   const documentData = compileTextDsl(`circle dot r=5 at 12,-8
-tracedPath trace target=dot start=0s samples=24 stroke="#ffffff"`);
+tracedPath trace target=dot start=0s samples=24 sampling=frame stroke="#ffffff"`);
 
   const trace = documentData.nodes.find((node) => node.id === "trace");
   assert.equal(trace?.type, "path");
@@ -1101,6 +1101,7 @@ tracedPath trace target=dot start=0s samples=24 stroke="#ffffff"`);
   assert.equal(trace?.geometry.tracedTarget, "dot");
   assert.equal(trace?.geometry.traceStart, 0);
   assert.equal(trace?.geometry.traceSamples, 24);
+  assert.equal(trace?.geometry.traceSampling, "frame");
   assert.equal(trace?.geometry.d, "M 12 -8");
   assert.equal(trace?.style.strokeLinecap, "round");
   assert.equal(trace?.style.strokeLinejoin, "round");

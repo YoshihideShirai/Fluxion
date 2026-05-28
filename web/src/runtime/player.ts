@@ -85,7 +85,8 @@ export function applyTargetTraces(graph: SceneGraph, documentData: FluxionDocume
     if (!targetId) continue;
     const start = Number(node.geometry.traceStart ?? 0);
     const samples = Math.max(2, Math.round(Number(node.geometry.traceSamples ?? 96)));
-    const d = buildTargetTracePath(documentData, targetId, start, seconds, samples);
+    const sampling = typeof node.geometry.traceSampling === "string" ? node.geometry.traceSampling : "fixed";
+    const d = buildTargetTracePath(documentData, targetId, start, seconds, samples, sampling);
     if (d) graph.setPathData(node.id, d);
   }
 }
@@ -96,9 +97,12 @@ function buildTargetTracePath(
   start: number,
   end: number,
   samples: number,
+  sampling: string,
 ): string {
   const to = Math.max(start, end);
-  const effectiveSamples = Math.min(samples, 512);
+  const frameSamples = Math.floor(Math.max(0, to - start) * Number(documentData.fps ?? 60)) + 1;
+  const requestedSamples = sampling === "frame" ? Math.min(samples, Math.max(2, frameSamples)) : samples;
+  const effectiveSamples = Math.min(requestedSamples, 512);
   const points: Array<{ x: number; y: number }> = [];
   for (let index = 0; index < effectiveSamples; index += 1) {
     const alpha = effectiveSamples === 1 ? 0 : index / (effectiveSamples - 1);

@@ -216,7 +216,7 @@ Common options:
 - `rotatingLine` only: `x1`, `y1`, `x2`, `y2`, `about=<x,y>`, `angle=<expr>`; emits a `line` made by rotating the reference segment around the given point, and updates endpoints with `bindExpr` when `angle` references a value tracker. This expands Manim-style `Line(...).rotate(angle, about_point=...)` into DSL.
 - `rotateUpdater` only: `rate=<radians-per-second>`, `duration`, `easing`, `from`; expands Manim callback updaters shaped like `mobject.add_updater(lambda m, dt: m.rotate_about_origin(rate * dt))` into cumulative `rotation` animation.
 - `angle` only: `radius` / `r`, `from`, `to`, `samples`, `close=true|false`; emits a generated `path` arc and a `bindPath` updater. Expressions can reference value trackers, so `to=theta` follows an animated tracker.
-- `tracedPath` only: either `x`, `y`, `from`, `to`, `samples`, `close=true|false` for a generated parametric `path` plus `bindPath` updater, or `target=<node-id>`, `start=<time>`, `samples` to rebuild the target node's center history from the timeline at seek time, similar to Manim `TracedPath(mobject.get_center)`.
+- `tracedPath` only: either `x`, `y`, `from`, `to`, `samples`, `close=true|false` for a generated parametric `path` plus `bindPath` updater, or `target=<node-id>`, `start=<time>`, `samples`, `sampling=fixed|frame` to rebuild the target node's center history from the timeline at seek time, similar to Manim `TracedPath(mobject.get_center)`. `sampling=frame` uses the document fps up to `samples`, so partial traces grow with elapsed frames.
 
 
 ### Path morphing constraints

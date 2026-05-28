@@ -2,7 +2,7 @@ scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 circle dot r=5.4 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=0
-tracedPath trace target=dot start=0s samples=240 stroke="#FFFFFF" strokeWidth=4
+tracedPath trace target=dot start=0s samples=361 sampling=frame stroke="#FFFFFF" strokeWidth=4
 
 at 0s:
   play Rotating(dot, 3.141592654, about=RIGHT) duration=2s easing=linear
