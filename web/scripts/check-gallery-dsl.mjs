@@ -1380,6 +1380,8 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, axes?.type === 'group' && axes.geometry?.xMin === 0 && axes.geometry?.xMax === 10 && axes.geometry?.yMin === 0 && axes.geometry?.yMax === 100, 'expected official argmin axes ranges.');
     assertGalleryCondition(label, axes?.geometry?.originX === -405 && axes?.geometry?.originY === 202.5 && approximatelyEqual(axes?.geometry?.width ?? 0, 810) && approximatelyEqual(axes?.geometry?.height ?? 0, 405), 'expected Manim default Axes dimensions and lower-left origin.');
     assertGalleryCondition(label, axes?.children?.length === 23, `expected numbered/ticked argmin axes with 23 children, got ${axes?.children?.length ?? 0}.`);
+    assertGalleryCondition(label, axes.children.filter((child) => /^ax:x_tick:/u.test(child.id)).length === 11 && axes.children.filter((child) => /^ax:y_tick:/u.test(child.id)).length === 10, 'expected argmin x ticks 0..10 and y ticks 10..100.');
+    assertGalleryCondition(label, axes.children.every((child) => !/^ax:[xy]_number:/u.test(child.id)), 'expected argmin axes without numeric tick labels.');
     assertGalleryCondition(label, axisLabels?.children?.length === 2 && axisLabels.children.every((child) => child.type === 'math'), 'expected x and f(x) axis labels.');
     assertGalleryCondition(label, renderedAxisX?.geometry?.x1 === -405 && renderedAxisX.geometry?.x2 === 405 && renderedAxisX.geometry?.y1 === 202.5 && renderedAxisX.style?.stroke === '#FFFFFF', 'expected white x-axis across the lower edge.');
     assertGalleryCondition(label, renderedAxisY?.geometry?.x1 === -405 && renderedAxisY.geometry?.y1 === -202.5 && renderedAxisY.geometry?.y2 === 202.5 && renderedAxisY.style?.stroke === '#FFFFFF', 'expected white y-axis on the left edge.');
@@ -1391,7 +1393,9 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, dot?.geometry?.dataDot === true && dot.geometry?.axes === 'ax', 'expected dataDot tied to axes.');
     assertGalleryCondition(label, dot?.geometry?.point === 't,2*(t-5)*(t-5)', 'expected dot to track the animated function point.');
     assertGalleryCondition(label, approximatelyEqual(dot?.geometry?.r ?? 0, 5.4) && dot?.style?.fill === '#FFFFFF' && approximatelyEqual(dot?.style?.strokeWidth ?? -1, 0), 'expected white tracked Dot with Manim default stroke width.');
+    assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'graph') < documentData.nodes.findIndex((node) => node.id === 'dot'), 'expected moving dot to render above the quadratic graph.');
     assertGalleryCondition(label, approximatelyEqual(renderedMinDot?.transform?.x ?? 0, -2.035176) && approximatelyEqual(renderedMinDot?.transform?.y ?? 0, 202.494886), 'expected rendered dot to land at sampled argmin.');
+    assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'create').length === 5 && documentData.timeline.filter((op) => op.op === 'animateValue').length === 1, 'expected static axes/graph plus one ValueTracker animation.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'animateValue' && op.id === 't' && op.from === 0 && approximatelyEqual(op.to, 4.974874372) && (op.t ?? 0) === 0 && op.duration === 1), 'expected t ValueTracker animation to the sampled argmin.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindExpr' && op.id === 'dot' && op.path === 'transform.x' && op.deps?.includes('t')), 'expected dot x binding to animated t.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindExpr' && op.id === 'dot' && op.path === 'transform.y' && op.deps?.includes('t')), 'expected dot y binding to animated t.');
