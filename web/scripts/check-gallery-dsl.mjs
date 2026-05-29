@@ -2041,6 +2041,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, dot?.geometry?.dataDot === true, 'expected dataDot tied to axes coordinates.');
     assertGalleryCondition(label, area?.style?.fill === '#58C4DD' && approximatelyEqual(area.style?.fillOpacity ?? 0, 0.5) && area.style?.stroke === '#FFEA94', 'expected BLUE rectangle fill and YELLOW_B stroke.');
     assertGalleryCondition(label, dot?.geometry?.point === 't,25/t' && approximatelyEqual(dot.geometry?.r ?? 0, 5.4) && approximatelyEqual(dot.style?.strokeWidth ?? -1, 0), 'expected default Dot tracking k/t on the axes.');
+    assertGalleryCondition(label, ['ax', 'graph', 'area', 'dot'].every((id, index, ids) => index === 0 || documentData.nodes.findIndex((node) => node.id === ids[index - 1]) < documentData.nodes.findIndex((node) => node.id === id)), 'expected polygon scene z-order to keep the created area above the graph and below the z-indexed dot.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindExpr' && op.id === 'area'), 'expected area updater bindings.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindExpr' && op.id === 'dot'), 'expected dot updater bindings.');
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'animateValue' && op.id === 't').map((op) => op.to).join(',') === '10,2.5,5', 'expected official ValueTracker keyframes 5 -> 10 -> k/10 -> 5.');
@@ -2059,6 +2060,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const tallSvg = svgSampleAt(documentData, 3);
     const finalSvg = svgSampleAt(documentData, 4);
     assertGalleryCondition(label, countSvgOccurrences(initialSvg, /id="ax:[xy]_tick:/gu) === 22, 'expected x/y ticks from 0 through 10.');
+    assertGalleryCondition(label, initialSvg.indexOf('id="graph"') < initialSvg.indexOf('id="area"') && initialSvg.indexOf('id="area"') < initialSvg.indexOf('id="dot"'), 'expected SVG order to render polygon above the reciprocal graph but below dot.set_z_index(10).');
     assertGalleryCondition(label, svgGroupPathData(initialSvg, 'graph').startsWith('M 101.25 -405 C') && svgGroupPathData(initialSvg, 'graph').endsWith('405 -101.25') && initialSvg.includes('stroke="#F4D345"'), 'expected SVG reciprocal graph to span x=2.5..10 in Manim YELLOW_D.');
     assertGalleryCondition(label, /id="area"[^>]*width="202\.5"[^>]*height="202\.5"[^>]*transform="translate\(-101\.25 101\.25\)"[^>]*fill-opacity="0"[^>]*stroke-dashoffset="1"/u.test(createSvg), 'expected Create(area) to start with hidden fill and undrawn stroke.');
     assertGalleryCondition(label, /id="area"[^>]*width="202\.5"[^>]*height="202\.5"[^>]*transform="translate\(-101\.25 101\.25\)"[^>]*fill-opacity="0\.5"[^>]*stroke-dashoffset="0"/u.test(initialSvg), 'expected initial 5 by 5 rectangle after Create.');

@@ -11,6 +11,7 @@ dataDot dot axes=ax point=t,25/t fill="#FFFFFF"
 
 at 0s:
   play Create(area) duration=1s
+  show dot
 
 animate t from 5 to 10 start=1s duration=1s easing=smooth
 animate t from 10 to 2.5 start=2s duration=1s easing=smooth

@@ -6,10 +6,10 @@ source_example_path: examples/gallery/polygon-on-axes.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "Manim の `always_redraw(Polygon(... ax.c2p ...))` は、`dataRect` と `dataDot` が `axes` のデータ座標を `bindExpr` へ展開して再現している。"
+  - symptom: "Manim の `always_redraw(Polygon(... ax.c2p ...))` は、`dataRect` と `dataDot` が `axes` のデータ座標を `bindExpr` へ展開して再現している。公式の `dot.set_z_index(10)` は dot を作成済みpolygonより前面に置く描画順で表している。"
     layer: dsl
     impact: low
-    workaround: "公式 `Axes(..., x_length=6, y_length=6, include_tip=False)` を 405x405px の正方形軸へ展開し、`axes` helper の座標変換を使って `dataRect from=0,0 to=t,25/t` と `dataDot point=t,25/t` で updater 結果を生成する。`Create(polygon)` だけを1秒で描き、その後の3つの `t.animate.set_value(...)` を公式 cadence で連続させる。"
+    workaround: "公式 `Axes(..., x_length=6, y_length=6, include_tip=False)` を 405x405px の正方形軸へ展開し、`axes` helper の座標変換を使って `dataRect from=0,0 to=t,25/t` と `dataDot point=t,25/t` で updater 結果を生成する。`Create(polygon)` を1秒で描き、同じ0秒で `show dot` を後置して `dot.set_z_index(10)` 相当の前面描画を保ち、その後の3つの `t.animate.set_value(...)` を公式 cadence で連続させる。"
     closure_condition: "`always_redraw` 相当の動的 mobject 再生成を DSL/runtime で直接扱えるようにする。"
     fidelity_upgrade_condition: "追加対応不要。"
 category: Manim Stable Examples
@@ -30,6 +30,7 @@ dataDot dot axes=ax point=t,25/t fill="#FFFFFF"
 
 at 0s:
   play Create(area) duration=1s
+  show dot
 
 animate t from 5 to 10 start=1s duration=1s easing=smooth
 animate t from 10 to 2.5 start=2s duration=1s easing=smooth
