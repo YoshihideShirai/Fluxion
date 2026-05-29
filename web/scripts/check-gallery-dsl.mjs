@@ -1163,6 +1163,7 @@ function checkGallerySpecificStructure(label, documentData) {
 
   if (label.includes('boolean-operations')) {
     const title = findNode(documentData, 'title');
+    const titleUnderline = findNode(documentData, 'title_underline');
     const ellipseA = findNode(documentData, 'ellipse_a');
     const ellipseB = findNode(documentData, 'ellipse_b');
     const intersection = findNode(documentData, 'intersection');
@@ -1171,7 +1172,9 @@ function checkGallerySpecificStructure(label, documentData) {
     const difference = findNode(documentData, 'difference');
     const labels = ['intersection_label', 'union_label', 'exclusion_label', 'difference_label'].map((id) => findNode(documentData, id));
     assertGalleryCondition(label, title?.text === 'Boolean Operation' && title.style?.fill === '#ffffff' && title.geometry?.fontSize === 48, 'expected title text with Manim MarkupText default font size.');
+    assertGalleryCondition(label, title?.transform?.x === -248 && title?.transform?.y === -174 && titleUnderline?.geometry?.x1 === -128 && titleUnderline?.geometry?.x2 === 128 && titleUnderline?.transform?.y === -151, 'expected title and underline at the official upper-left placement.');
     assertGalleryCondition(label, ellipseA?.children?.length === 2 && ellipseB?.children?.length === 2, 'expected two colored source ellipses with fill and stroke paths.');
+    assertGalleryCondition(label, ellipseA?.transform?.x === -300 && ellipseB?.transform?.x === -165 && findNode(documentData, 'ellipse_a_fill')?.transform?.opacity === 0.5 && findNode(documentData, 'ellipse_b_fill')?.transform?.opacity === 0.5, 'expected overlapping source ellipses with official fill opacity.');
     assertGalleryCondition(label, findNode(documentData, 'ellipse_a_fill')?.style?.fill === '#58C4DD' && findNode(documentData, 'ellipse_b_fill')?.style?.fill === '#FC6255', 'expected BLUE/RED source ellipses.');
     assertGalleryCondition(label, intersection?.children?.length === 2 && union?.children?.length === 2 && exclusion?.children?.length === 2 && difference?.children?.length === 2, 'expected four boolean result groups with fill and stroke.');
     assertGalleryCondition(label, findNode(documentData, 'intersection_fill')?.style?.fill === '#83C167', 'expected GREEN intersection result.');
@@ -1181,20 +1184,27 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, labels.every((node) => node?.type === 'text' && node.transform?.opacity === 0), 'expected result labels to fade in from hidden state.');
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'effect' && op.effect === 'animate' && ['intersection', 'union', 'exclusion', 'difference'].includes(op.id)).length === 4, 'expected four staged boolean result animations.');
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'effect' && op.effect === 'fadeIn' && String(op.id).endsWith('_label')).length === 4, 'expected four staged label fade-ins.');
+    const introMid = visualSample(documentData, 0.5);
+    const intersectionMid = visualSample(documentData, 1.5);
+    const intersectionLabelMid = visualSample(documentData, 2.5);
     const afterIntersection = visualSample(documentData, 2);
     const afterUnion = visualSample(documentData, 4);
     const afterExclusion = visualSample(documentData, 6);
     const afterDifference = visualSample(documentData, 8);
     const intersectionNode = flattenNodes(afterIntersection.nodes).find((node) => node.id === 'intersection');
+    const intersectionMidNode = flattenNodes(intersectionMid.nodes).find((node) => node.id === 'intersection');
     const unionNode = flattenNodes(afterUnion.nodes).find((node) => node.id === 'union');
     const exclusionNode = flattenNodes(afterExclusion.nodes).find((node) => node.id === 'exclusion');
     const differenceNode = flattenNodes(afterDifference.nodes).find((node) => node.id === 'difference');
+    assertGalleryCondition(label, approximatelyEqual(findRenderedNode(introMid, 'ellipse_a')?.transform?.opacity ?? 0, 0.5) && approximatelyEqual(findRenderedNode(introMid, 'title')?.transform?.opacity ?? 0, 0.5) && approximatelyEqual(findRenderedNode(introMid, 'title_underline')?.transform?.opacity ?? 0, 0.5), 'expected intro FadeIn midpoint to reveal ellipses, title, and underline together.');
+    assertGalleryCondition(label, approximatelyEqual(intersectionMidNode?.transform?.x ?? 0, 52.5) && approximatelyEqual(intersectionMidNode?.transform?.y ?? 0, -84.375) && approximatelyEqual(intersectionMidNode?.transform?.scale ?? 0, 0.625) && approximatelyEqual(intersectionMidNode?.transform?.opacity ?? 0, 0.5), 'expected Intersection midpoint to move, scale, and fade from the source lens.');
     assertGalleryCondition(label, approximatelyEqual(intersectionNode?.transform?.x ?? 0, 337.5) && approximatelyEqual(intersectionNode?.transform?.y ?? 0, -168.75) && approximatelyEqual(intersectionNode?.transform?.scale ?? 0, 0.25), 'expected Intersection to move to RIGHT*5 + UP*2.5 at scale 0.25.');
     assertGalleryCondition(label, approximatelyEqual(findRenderedNode(afterIntersection, 'intersection_stroke')?.style?.strokeWidth ?? 0, 16), 'expected scaled Intersection stroke width to compensate for scale 0.25.');
     assertGalleryCondition(label, approximatelyEqual(unionNode?.transform?.x ?? 0, 337.5) && approximatelyEqual(unionNode?.transform?.y ?? 0, 11.25) && approximatelyEqual(unionNode?.transform?.scale ?? 0, 0.3), 'expected Union to stack below Intersection at scale 0.3.');
     assertGalleryCondition(label, approximatelyEqual(exclusionNode?.transform?.x ?? 0, 337.5) && approximatelyEqual(exclusionNode?.transform?.y ?? 0, 222.75) && approximatelyEqual(exclusionNode?.transform?.scale ?? 0, 0.3), 'expected Exclusion to stack below Union at scale 0.3.');
     assertGalleryCondition(label, approximatelyEqual(differenceNode?.transform?.x ?? 0, 148.5) && approximatelyEqual(differenceNode?.transform?.y ?? 0, 11.25) && approximatelyEqual(differenceNode?.transform?.scale ?? 0, 0.3), 'expected Difference to sit left of Union at scale 0.3.');
     assertGalleryCondition(label, (findRenderedNode(afterIntersection, 'intersection_label')?.transform?.opacity ?? 0) === 0 && (findRenderedNode(visualSample(documentData, 3), 'intersection_label')?.transform?.opacity ?? 0) === 1, 'expected Intersection label to fade in after the result moves.');
+    assertGalleryCondition(label, approximatelyEqual(findRenderedNode(intersectionLabelMid, 'intersection_label')?.transform?.opacity ?? 0, 0.5), 'expected Intersection label fade midpoint.');
     assertGalleryCondition(label, approximatelyEqual(findRenderedNode(afterUnion, 'union_stroke')?.style?.strokeWidth ?? 0, 13.333) && approximatelyEqual(findRenderedNode(afterExclusion, 'exclusion_stroke')?.style?.strokeWidth ?? 0, 13.333) && approximatelyEqual(findRenderedNode(afterDifference, 'difference_stroke')?.style?.strokeWidth ?? 0, 13.333), 'expected scale-0.3 boolean results to use compensated stroke widths.');
     const finalSvg = svgSampleAt(documentData, 9);
     assertGalleryCondition(label, countSvgOccurrences(finalSvg, /id="(?:intersection|union|exclusion|difference)"/gu) === 4, 'expected all four boolean result groups in final SVG.');
