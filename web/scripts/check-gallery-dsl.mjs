@@ -1259,6 +1259,9 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, horizontalGrid.every((node) => node?.type === 'path') && verticalGrid.every((node) => node?.type === 'path'), 'expected 9 horizontal and 15 vertical grid paths.');
     assertGalleryCondition(label, horizontalGrid[4]?.style?.stroke === '#FFFFFF' && approximatelyEqual(horizontalGrid[4]?.style?.strokeWidth ?? 0, 2), 'expected white NumberPlane x-axis grid line.');
     assertGalleryCondition(label, verticalGrid[7]?.style?.stroke === '#FFFFFF' && approximatelyEqual(verticalGrid[7]?.style?.strokeWidth ?? 0, 2), 'expected white NumberPlane y-axis grid line.');
+    assertGalleryCondition(label, [...horizontalGrid, ...verticalGrid].filter((node) => node?.style?.stroke === '#FFFFFF').length === 2, 'expected only the two NumberPlane axes to use white strokes.');
+    assertGalleryCondition(label, [...horizontalGrid, ...verticalGrid].filter((node) => node?.style?.stroke === '#29ABCA').length === 22, 'expected all non-axis NumberPlane grid lines to use BLUE_D strokes.');
+    assertGalleryCondition(label, [...horizontalGrid, ...verticalGrid].every((node) => node?.transform?.opacity === 0), 'expected grid paths to start hidden before Create(grid).');
     assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'grid') < documentData.nodes.findIndex((node) => node.id === 'gridTitle'), 'expected grid title to render above the grid like self.add(grid, grid_title).');
     assertGalleryCondition(label, nonOfficialOverlayIds.every((id) => !findNode(documentData, id)), 'expected OpeningManim to omit non-official explanatory overlays.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'effect' && op.id === 'title' && op.effect === 'write' && approximatelyEqual(op.duration, 1.294642857142857)), 'expected opening Write(title) segment from AnimationGroup timing.');
