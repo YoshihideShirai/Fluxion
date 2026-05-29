@@ -41,9 +41,10 @@ Operations are applied in timestamp order. Operations with the same `t` are stab
 5. `animateValue`
 6. `animate`
 7. `setExpr`
-8. `delete`
+8. `bindExpr` / `bindPath` / `followCamera`
+9. `delete`
 
-Operations with the same timestamp and operation type keep source array order.
+Operations with the same timestamp and operation type keep source array order. `setExpr` runs after tracker and node animations, and `bindExpr` / `bindPath` / `followCamera` run after that as updater-like operations.
 
 ## Animation values
 
@@ -65,4 +66,4 @@ npm test
 
 Value trackers live outside the scene graph as scalar tracks declared by Text DSL `value` statements or JSON `values` entries. Runtime initializes these tracks on every seek, applies `setValue` and `animateValue`, then evaluates `setExpr` operations against the current tracker map.
 
-`setExpr` uses Fluxion's small arithmetic evaluator rather than JavaScript execution. It supports numeric literals, tracker identifiers, parentheses, arithmetic operators, constants (`pi`, `e`), and allowlisted math functions such as `sin`, `cos`, `tan`, `sqrt`, `abs`, `min`, `max`, and `pow`. This is a static dependency-expression feature, not full compatibility with Manim updaters.
+`setExpr` uses Fluxion's small arithmetic evaluator rather than JavaScript execution. It supports numeric literals, tracker identifiers, parentheses, arithmetic operators, constants (`pi`, `e`), and allowlisted math functions such as `sin`, `cos`, `tan`, `sqrt`, `abs`, `min`, `max`, `pow`, `clip01`, and `clipPi`. This is a static dependency-expression feature, not full compatibility with Manim updaters.

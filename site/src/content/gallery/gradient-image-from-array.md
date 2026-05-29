@@ -3,68 +3,24 @@ title: GradientImageFromArray
 description: "Manim Example: `GradientImageFromArray` (`#gradientimagefromarray`) の Fluxion 移植版（近似）。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#gradientimagefromarray
 source_example_path: examples/gallery/gradient-image-from-array.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "配列から直接画像を生成する image mobject が未対応のため、セル分割グリッドで擬似グラデーションを構成している。"
+  - symptom: "Manim の 256x256 `np.uint8` 横グラデーション配列は、Fluxion の `image data=... dataRows=256` で公式と同じ 0..255 の 1 行を 256 行に展開し、SVG では水平 gradient に畳んで滑らかに描画する。"
     layer: compiler
-    impact: high
-    workaround: "複数 rect の色差でヒートマップ/グラデーションを近似する。"
-    closure_condition: "image(width,height,data=...) 形式のプリミティブとピクセル配列入力を実装する。"
-    fidelity_upgrade_condition: "NumPy配列由来の画像を1ノードとして生成し、補間・拡大縮小を本家同等で再現できる時。"
+    impact: low
+    workaround: "画像寸法は Manim の `ImageMobject(...).scale(2)` 相当の 256px 四方に合わせ、256 回繰り返される grayscale 行列は単一の水平 gradient として描画する。`SurroundingRectangle(image, color=GREEN)` は `SMALL_BUFF` を加えた外枠として近似する。"
+    closure_condition: "任意の大きな pixel array でも JSON サイズと描画性能が許容範囲に収まる。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Manim Stable Examples
-status: partial
+status: ported
 order: 63
 gap_id: GAP-017
 ---
 scene width=960 height=540 fps=60
 
-rect bg w=960 h=540 at 0,0 fill="#020617"
-text title "Gradient image from array (approx)" at 0,220 size=34 fill="#e2e8f0"
-text subtitle "cell-based pseudo gradient" at 0,190 size=20 fill="#94a3b8"
+rect bg w=960 h=540 at 0,0 fill="#000000"
+image image w=256 h=256 at 0,0 dataRows=256 data="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255"
+rect frame w=269.5 h=269.5 at 0,0 fill="none" stroke="#83C167" strokeWidth=4
 
-rect c00 w=88 h=88 at -220,80 fill="#1d4ed8"
-rect c01 w=88 h=88 at -128,80 fill="#2563eb"
-rect c02 w=88 h=88 at -36,80 fill="#3b82f6"
-rect c03 w=88 h=88 at 56,80 fill="#60a5fa"
-rect c04 w=88 h=88 at 148,80 fill="#93c5fd"
-
-rect c10 w=88 h=88 at -220,-12 fill="#0369a1"
-rect c11 w=88 h=88 at -128,-12 fill="#0ea5e9"
-rect c12 w=88 h=88 at -36,-12 fill="#22d3ee"
-rect c13 w=88 h=88 at 56,-12 fill="#67e8f9"
-rect c14 w=88 h=88 at 148,-12 fill="#a5f3fc"
-
-rect c20 w=88 h=88 at -220,-104 fill="#15803d"
-rect c21 w=88 h=88 at -128,-104 fill="#22c55e"
-rect c22 w=88 h=88 at -36,-104 fill="#4ade80"
-rect c23 w=88 h=88 at 56,-104 fill="#86efac"
-rect c24 w=88 h=88 at 148,-104 fill="#bbf7d0"
-
-surroundingRect frame target=c12 buff=8 stroke="#f8fafc" strokeWidth=3
-text pix "sample pixel" at -36,-176 size=20 fill="#e2e8f0" opacity=0
-
-at 0s:
-  show bg
-  play FadeIn(title) duration=0.5s
-  play FadeIn(subtitle) duration=0.4s
-
-play FadeIn(c00) duration=0.15s
-play FadeIn(c01) duration=0.15s
-play FadeIn(c02) duration=0.15s
-play FadeIn(c03) duration=0.15s
-play FadeIn(c04) duration=0.15s
-play FadeIn(c10) duration=0.15s
-play FadeIn(c11) duration=0.15s
-play FadeIn(c12) duration=0.15s
-play FadeIn(c13) duration=0.15s
-play FadeIn(c14) duration=0.15s
-play FadeIn(c20) duration=0.15s
-play FadeIn(c21) duration=0.15s
-play FadeIn(c22) duration=0.15s
-play FadeIn(c23) duration=0.15s
-play FadeIn(c24) duration=0.15s
-
-play Create(frame) duration=0.5s
-play FadeIn(pix) duration=0.3s
-wait 0.6s
+wait 1s

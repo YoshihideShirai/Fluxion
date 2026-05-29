@@ -11,9 +11,55 @@ interface Props {
 const { title, intro, locale, demos } = Astro.props;
 const baseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
 const playgroundUrl = `${baseUrl}playground/`;
-const docsPath = locale === 'ja' ? 'docs/guides/examples/' : 'docs/en/guides/examples/';
+const docsPath = locale === 'ja' ? 'guides/examples/' : 'en/guides/examples/';
 const backHomePath = locale === 'ja' ? baseUrl : `${baseUrl}en/`;
 const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent(source)}`;
+const labels = locale === 'ja'
+  ? {
+      coverage: '移植率マトリクス',
+      home: 'ホーム',
+      playground: 'Playground',
+      study: '学習モード',
+      autoNext: '自動で次へ',
+      endBehavior: '最後のカード',
+      stop: '停止',
+      wrap: '先頭へ戻る',
+      play: '再生',
+      pause: '一時停止',
+      reset: 'リセット',
+      loop: 'ループ',
+      open: 'Playgroundで開く',
+      seek: 'シーク',
+      gaps: 'Manimとの差分',
+      source: 'Manim source',
+      code: 'DSLソース',
+      all: 'すべて',
+      featured: '注目',
+    }
+  : {
+      coverage: 'Manim coverage matrix',
+      home: 'Home',
+      playground: 'Playground',
+      study: 'Study',
+      autoNext: 'Auto-next',
+      endBehavior: 'Last card',
+      stop: 'Stop',
+      wrap: 'Return to first',
+      play: 'Play',
+      pause: 'Pause',
+      reset: 'Reset',
+      loop: 'Loop',
+      open: 'Open in Playground',
+      seek: 'Seek',
+      gaps: 'Differences from Manim',
+      source: 'Manim source',
+      code: 'Source DSL',
+      all: 'All',
+      featured: 'Featured',
+    };
+const categories = [...new Set(demos.map((demo) => demo.category))];
+const featuredSlugs = new Set(['ManimCELogo', 'OpeningManim']);
+const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'string' ? gap : gap.symptom);
 ---
 <!doctype html>
 <html lang={locale}>
@@ -22,91 +68,131 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" />
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
-    <script>
-      (window as any).MathJax = { tex: { inlineMath: [["\(", "\)"]] }, startup: { typeset: false } };
+    <script is:inline defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
+    <script is:inline>
+      window.MathJax = { tex: { inlineMath: [["\\(", "\\)"]] }, startup: { typeset: false } };
     </script>
-    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <script is:inline defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   </head>
   <body>
-    <main style="max-width:1200px;margin:0 auto;padding:32px 20px;font-family:system-ui">
-      <h1>{title}</h1>
-      <p>{intro}</p>
-      <p><a href={`${baseUrl}${docsPath}`}>Manim coverage matrix（移植率）</a></p>
-      <p><a href={backHomePath}>← Back to home</a> / <a href={playgroundUrl}>Open Playground</a></p>
-      <section style="margin-top:16px;padding:12px;border:1px solid #cbd5e1;border-radius:10px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;background:#f8fafc;">
-        <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;">
-          <input type="checkbox" id="study-mode-enabled" />
-          Study mode
-        </label>
-        <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;">
-          <input type="checkbox" id="study-mode-auto-next" disabled />
-          Auto-next
-        </label>
-        <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;">
-          Last card behavior
-          <select id="study-mode-end-action" disabled>
-            <option value="stop">Stop</option>
-            <option value="wrap">Return to first card</option>
-          </select>
-        </label>
+    <main class="gallery-shell">
+      <header class="gallery-hero">
+        <nav class="top-links" aria-label="Gallery navigation">
+          <a href={backHomePath}>{labels.home}</a>
+          <a href={playgroundUrl}>{labels.playground}</a>
+          <a href={`${baseUrl}${docsPath}`}>{labels.coverage}</a>
+        </nav>
+        <div class="hero-copy">
+          <p class="eyebrow">Fluxion x Manim</p>
+          <h1>{title}</h1>
+          <p>{intro}</p>
+        </div>
+        <div class="hero-stats" aria-label="Gallery stats">
+          <span><strong>{demos.length}</strong> demos</span>
+          <span><strong>{demos.filter((demo) => demo.status === 'ported').length}</strong> ported</span>
+          <span><strong>{categories.length}</strong> categories</span>
+        </div>
+      </header>
+
+      <section class="control-bar" aria-label="Gallery controls">
+        <div class="filter-group" aria-label="Category filter">
+          <button class="filter-chip active" type="button" data-filter="all">{labels.all}</button>
+          <button class="filter-chip" type="button" data-filter="featured">{labels.featured}</button>
+          {categories.map((category) => (
+            <button class="filter-chip" type="button" data-filter={category}>{category}</button>
+          ))}
+        </div>
+        <div class="study-controls">
+          <label>
+            <input type="checkbox" id="study-mode-enabled" />
+            {labels.study}
+          </label>
+          <label>
+            <input type="checkbox" id="study-mode-auto-next" disabled />
+            {labels.autoNext}
+          </label>
+          <label>
+            {labels.endBehavior}
+            <select id="study-mode-end-action" disabled>
+              <option value="stop">{labels.stop}</option>
+              <option value="wrap">{labels.wrap}</option>
+            </select>
+          </label>
+        </div>
       </section>
-      <section style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));margin-top:20px;">
-        {demos.map((demo, index) => (
-          <article style="border:1px solid #cbd5e1;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px;">
-            <h2 style="font-size:1.1rem;margin:0;">{demo.title}</h2>
-            <p style="margin:0;">{demo.description}</p>
-            <p style="margin:0;font-size:12px;">Category: {demo.category} / Status: <strong>{demo.status}</strong></p>
-            <section style="margin:0;padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc;">
-              <p style="margin:0 0 6px 0;font-size:12px;font-weight:600;">Manimとの差分</p>
-              <p style="margin:0 0 6px 0;font-size:12px;">
-                <span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#e2e8f0;color:#0f172a;font-weight:600;">
-                  Fidelity: {demo.fidelity}
-                </span>
-              </p>
-              <ul style="margin:0;padding-left:18px;font-size:12px;color:#334155;">
-                {demo.known_gaps.map((gap) => <li>{gap}</li>)}
-              </ul>
-            </section>
-            <p style="margin:0;font-size:12px;"><a href={demo.source_manim_url} target="_blank" rel="noreferrer">Manim source</a></p>
-            {(demo.missing_instructions || demo.blocker_reason) && <p style="margin:0;font-size:12px;color:#b45309;">{demo.missing_instructions ?? demo.blocker_reason}</p>}
-            <div class="gallery-stage" id={`gallery-stage-${index}`} style="width:100%;aspect-ratio:16 / 9;min-height:180px;overflow:hidden;border-radius:8px;border:1px solid #334155;background:#020617;"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button type="button" class="play-inline" data-source={demo.source} data-stage={`gallery-stage-${index}`}>Play</button>
-              <button type="button" class="pause-inline" data-stage={`gallery-stage-${index}`}>Pause</button>
-              <button type="button" class="reset-inline" data-stage={`gallery-stage-${index}`}>Reset</button>
-              <label style="font-size:12px;display:inline-flex;align-items:center;gap:4px;">
-                <input type="checkbox" class="loop-inline" data-stage={`gallery-stage-${index}`} />
-                Loop
-              </label>
-              <a href={encodeDsl(demo.source)}>Open in Playground</a>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-              <label style="font-size:12px;" for={`gallery-seek-${index}`} data-i18n-seek-label>{locale === 'ja' ? 'シーク' : 'Seek'}</label>
-              <input
-                id={`gallery-seek-${index}`}
-                type="range"
-                min="0"
-                max="0"
-                step="0.01"
-                value="0"
-                class="seek-inline"
-                data-stage={`gallery-stage-${index}`}
-                style="flex:1;min-width:180px;"
-                aria-label={locale === 'ja' ? '再生位置' : 'Playback position'}
-              />
-              <span style="font-size:12px;font-variant-numeric:tabular-nums;" class="seek-time" data-stage={`gallery-stage-${index}`}>0:00 / 0:00</span>
-            </div>
-            <pre style="max-height:260px;overflow:auto;background:#0f172a;color:#e2e8f0;padding:10px;border-radius:8px;font-size:12px;"><code>{demo.source}</code></pre>
-          </article>
-        ))}
+
+      <section class="gallery-grid">
+        {demos.map((demo, index) => {
+          const isFeatured = featuredSlugs.has(demo.title);
+          return (
+            <article class:list={['demo-card', { featured: isFeatured }]} data-category={demo.category} data-featured={String(isFeatured)}>
+              <div class="card-heading">
+                <div>
+                  <p class="card-kicker">{demo.category}</p>
+                  <h2>{demo.title}</h2>
+                </div>
+                <span class:list={['status-pill', demo.status]}>{demo.status}</span>
+              </div>
+              <div class="gallery-stage-wrap">
+                <div class="stage-chrome">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <div class="gallery-stage" id={`gallery-stage-${index}`}></div>
+              </div>
+              <div class="transport-row">
+                <button type="button" class="play-inline primary-action" data-source={demo.source} data-stage={`gallery-stage-${index}`}>{labels.play}</button>
+                <button type="button" class="pause-inline icon-action" data-stage={`gallery-stage-${index}`} aria-label={labels.pause} title={labels.pause}><span aria-hidden="true">II</span><span class="sr-only">{labels.pause}</span></button>
+                <button type="button" class="reset-inline icon-action" data-stage={`gallery-stage-${index}`} aria-label={labels.reset} title={labels.reset}><span aria-hidden="true">↺</span><span class="sr-only">{labels.reset}</span></button>
+                <label class="loop-toggle">
+                  <input type="checkbox" class="loop-inline" data-stage={`gallery-stage-${index}`} />
+                  {labels.loop}
+                </label>
+              </div>
+              <div class="timeline-row">
+                <label for={`gallery-seek-${index}`} data-i18n-seek-label>{labels.seek}</label>
+                <input
+                  id={`gallery-seek-${index}`}
+                  type="range"
+                  min="0"
+                  max="0"
+                  step="0.01"
+                  value="0"
+                  class="seek-inline"
+                  data-stage={`gallery-stage-${index}`}
+                  aria-label={locale === 'ja' ? '再生位置' : 'Playback position'}
+                />
+                <span class="seek-time" data-stage={`gallery-stage-${index}`}>0:00 / 0:00</span>
+              </div>
+              <div class="card-body">
+                <p>{demo.description}</p>
+                <div class="meta-line">
+                  <span>{demo.fidelity}</span>
+                  <a href={demo.source_manim_url} target="_blank" rel="noreferrer">{labels.source}</a>
+                  <a href={encodeDsl(demo.source)}>{labels.open}</a>
+                </div>
+                <section class="gap-panel">
+                  <h3>{labels.gaps}</h3>
+                  <ul>
+                    {demo.known_gaps.map((gap) => <li>{gapText(gap)}</li>)}
+                  </ul>
+                  {(demo.missing_instructions || demo.blocker_reason) && <p>{demo.missing_instructions ?? demo.blocker_reason}</p>}
+                </section>
+                <details class="source-panel">
+                  <summary>{labels.code}</summary>
+                  <pre><code>{demo.source}</code></pre>
+                </details>
+              </div>
+            </article>
+          );
+        })}
       </section>
     </main>
     <script is:inline define:vars={{ baseUrl }}>
       const syncHandles = new Map();
       const status = document.createElement('p');
-      status.style.color = '#dc2626';
-      status.style.marginTop = '12px';
+      status.className = 'runtime-error';
 
       const runtimeCandidates = [`${baseUrl}playground/dist/index.js`, `${baseUrl}playground/dist/index.mjs`];
       const compilerCandidates = [`${baseUrl}playground/dist/dsl/compiler.js`, `${baseUrl}playground/dist/dsl/compiler.mjs`];
@@ -139,7 +225,6 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
           const stageOrder = playButtons.map((button) => button.dataset.stage ?? '').filter(Boolean);
           const stageIndexMap = new Map(stageOrder.map((stageId, index) => [stageId, index]));
           const playerStates = new Map();
-          let currentPlayingIndex = -1;
           let studyModeEnabled = false;
           let studyModeAutoNext = false;
           let studyModeEndAction = 'stop';
@@ -147,13 +232,21 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
           const studyModeAutoNextToggle = document.getElementById('study-mode-auto-next');
           const studyModeEndActionSelect = document.getElementById('study-mode-end-action');
 
-          const playStageById = (stageId) => {
-            const player = ensurePlayer(stageId);
-            if (!player) return;
-            const index = stageIndexMap.get(stageId);
-            if (typeof index === 'number') currentPlayingIndex = index;
-            player.play();
-          };
+	          const playStageById = (stageId) => {
+	            const player = ensurePlayer(stageId);
+	            if (!player) return;
+	            const state = playerStates.get(stageId);
+	            if (state) {
+	              if (!state.hasInteracted) {
+	                player.seek(0);
+	                updateTimelineUi(stageId, 0, player.durationSeconds);
+	              }
+	              state.hasInteracted = true;
+	              state.isPlaying = true;
+	              state.completionHandled = false;
+	            }
+	            player.play();
+	          };
 
           const playNextStage = (stageId) => {
             const currentIndex = stageIndexMap.get(stageId);
@@ -232,18 +325,26 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
             const dsl = stageSources.get(stageId) ?? '';
             if (!stage || !dsl) return null;
             try {
-              const doc = compiler.compileTextDsl(dsl);
-              const player = runtime.mountFluxionDocument(stage, doc);
-              playerStates.set(stageId, { player, loopEnabled: false, isPlaying: false, completionHandled: false });
-              updateTimelineUi(stageId, 0, player.durationSeconds);
-              startSync(stageId);
-              return player;
-            } catch (error) {
+	              const doc = compiler.compileTextDsl(dsl);
+	              const player = runtime.mountFluxionDocument(stage, doc);
+	              const previewSeconds = Math.min(
+	                Math.max(player.durationSeconds * 0.62, 0),
+	                Math.max(player.durationSeconds - 0.1, 0),
+	              );
+	              player.seek(previewSeconds);
+	              playerStates.set(stageId, {
+	                player,
+	                loopEnabled: false,
+	                isPlaying: false,
+	                completionHandled: false,
+	                hasInteracted: false,
+	              });
+	              updateTimelineUi(stageId, previewSeconds, player.durationSeconds);
+	              startSync(stageId);
+	              return player;
+	            } catch (error) {
               stage.textContent = 'Failed to compile this demo.';
-              stage.style.display = 'grid';
-              stage.style.placeItems = 'center';
-              stage.style.color = '#fca5a5';
-              stage.style.fontSize = '12px';
+              stage.classList.add('stage-error');
               console.error(`Failed to initialize stage: ${stageId}`, error);
               return null;
             }
@@ -251,25 +352,23 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
 
           playButtons.forEach((button) => {
             button.addEventListener('click', () => {
-              const stageId = button.dataset.stage ?? '';
-              playStageById(stageId);
-              const state = playerStates.get(stageId);
-              if (!state) return;
-              state.isPlaying = true;
-              state.completionHandled = false;
+              playStageById(button.dataset.stage ?? '');
             });
           });
 
           pauseButtons.forEach((button) => {
             button.addEventListener('click', () => {
-              const stageId = button.dataset.stage ?? '';
-              const player = ensurePlayer(stageId);
-              if (!player) return;
-              player.pause();
-              const state = playerStates.get(stageId);
-              if (state) state.isPlaying = false;
-            });
-          });
+	              const stageId = button.dataset.stage ?? '';
+	              const player = ensurePlayer(stageId);
+	              if (!player) return;
+	              player.stop();
+	              const state = playerStates.get(stageId);
+	              if (state) {
+	                state.hasInteracted = true;
+	                state.isPlaying = false;
+	              }
+	            });
+	          });
 
           resetButtons.forEach((button) => {
             button.addEventListener('click', () => {
@@ -299,15 +398,18 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
           seekInputs.forEach((input) => {
             input.addEventListener('input', () => {
               const stageId = input.dataset.stage ?? '';
-              const player = ensurePlayer(stageId);
-              if (!player) return;
-              const next = Number(input.value);
-              player.seek(next);
-              updateTimelineUi(stageId, next, player.durationSeconds);
-              const state = playerStates.get(stageId);
-              if (state && next < player.durationSeconds - 0.01) state.completionHandled = false;
-            });
-          });
+	              const player = ensurePlayer(stageId);
+	              if (!player) return;
+	              const next = Number(input.value);
+	              player.seek(next);
+	              updateTimelineUi(stageId, next, player.durationSeconds);
+	              const state = playerStates.get(stageId);
+	              if (state) {
+	                state.hasInteracted = true;
+	                if (next < player.durationSeconds - 0.01) state.completionHandled = false;
+	              }
+	            });
+	          });
 
           if (studyModeToggle instanceof HTMLInputElement) {
             studyModeToggle.addEventListener('change', () => {
@@ -331,6 +433,19 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
             });
           }
 
+          document.querySelectorAll('.filter-chip').forEach((button) => {
+            button.addEventListener('click', () => {
+              const filter = button.dataset.filter ?? 'all';
+              document.querySelectorAll('.filter-chip').forEach((item) => item.classList.toggle('active', item === button));
+              document.querySelectorAll('.demo-card').forEach((card) => {
+                const matches = filter === 'all'
+                  || (filter === 'featured' && card.dataset.featured === 'true')
+                  || card.dataset.category === filter;
+                card.hidden = !matches;
+              });
+            });
+          });
+
           stageSources.forEach((_source, stageId) => ensurePlayer(stageId));
         } catch (error) {
           status.textContent = 'Failed to load gallery runtime. Open Playground and rebuild web/dist if needed.';
@@ -346,10 +461,526 @@ const encodeDsl = (source: string) => `${playgroundUrl}?dsl=${encodeURIComponent
       void bootGallery();
     </script>
     <style>
+      :root {
+        color-scheme: dark;
+        --ink: #f6f7fb;
+        --muted: #aab0bf;
+        --paper: #090a0f;
+        --panel: #11131b;
+        --panel-strong: #171a24;
+        --line: #2d3342;
+        --stage: #050505;
+        --green: #87c2a5;
+        --blue: #58c4dd;
+        --red: #ff5f87;
+        --gold: #ffea94;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        background:
+          linear-gradient(180deg, #090a0f 0%, #11131b 46%, #090a0f 100%),
+          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 96px);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      a {
+        color: inherit;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 4px;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .gallery-shell {
+        width: min(1480px, 100%);
+        margin: 0 auto;
+        padding: 28px clamp(14px, 3vw, 34px) 54px;
+      }
+
+      .gallery-hero {
+        min-height: min(48vh, 560px);
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: clamp(24px, 3vw, 34px);
+        padding: clamp(22px, 4vw, 52px);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, rgba(23, 26, 36, 0.96), rgba(9, 10, 15, 0.98)),
+          repeating-linear-gradient(0deg, rgba(88, 196, 221, 0.08) 0 1px, transparent 1px 72px),
+          repeating-linear-gradient(90deg, rgba(135, 194, 165, 0.07) 0 1px, transparent 1px 72px);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+      }
+
+      .top-links,
+      .hero-stats,
+      .filter-group,
+      .study-controls,
+      .transport-row,
+      .timeline-row,
+      .meta-line {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .top-links {
+        justify-content: flex-end;
+      }
+
+      .top-links a,
+      .meta-line a,
+      .filter-chip {
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(246, 247, 251, 0.16);
+        background: rgba(17, 19, 27, 0.76);
+        padding: 0 12px;
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .hero-copy {
+        align-self: end;
+        max-width: 940px;
+      }
+
+      .eyebrow,
+      .card-kicker {
+        margin: 0 0 10px;
+        color: var(--red);
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 980px;
+        font-size: clamp(48px, 8vw, 116px);
+        line-height: 0.92;
+        letter-spacing: 0;
+      }
+
+      .hero-copy p:not(.eyebrow) {
+        max-width: 820px;
+        margin: 24px 0 0;
+        color: var(--muted);
+        font-size: clamp(16px, 2vw, 21px);
+        line-height: 1.7;
+      }
+
+      .hero-stats {
+        gap: 12px;
+      }
+
+      .hero-stats span {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 8px;
+        border-left: 4px solid var(--blue);
+        background: rgba(17, 19, 27, 0.78);
+        padding: 12px 16px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .hero-stats strong {
+        color: var(--ink);
+        font-size: 24px;
+      }
+
+      .control-bar {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 16px;
+        margin: 18px 0;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(9, 10, 15, 0.86);
+        backdrop-filter: blur(12px);
+      }
+
+      .filter-group {
+        min-width: 0;
+      }
+
+      .filter-chip {
+        cursor: pointer;
+      }
+
+      .filter-chip.active {
+        border-color: var(--blue);
+        background: var(--blue);
+        color: #061014;
+      }
+
+      .study-controls {
+        justify-content: flex-end;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .study-controls label,
+      .loop-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        white-space: nowrap;
+      }
+
+      .study-controls select {
+        min-height: 34px;
+        border: 1px solid var(--line);
+        background: var(--panel-strong);
+        color: var(--ink);
+      }
+
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .demo-card {
+        grid-column: span 6;
+        display: grid;
+        grid-template-rows: auto auto auto auto 1fr;
+        gap: 12px;
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: linear-gradient(180deg, rgba(23, 26, 36, 0.98), rgba(17, 19, 27, 0.98));
+        padding: 14px;
+        box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
+      }
+
+      .demo-card.featured {
+        grid-column: span 12;
+        grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.65fr);
+        grid-template-rows: auto auto auto 1fr;
+        gap: 14px 18px;
+        padding: 18px;
+      }
+
+      .demo-card[hidden] {
+        display: none;
+      }
+
+      .card-heading {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .demo-card.featured .card-heading,
+      .demo-card.featured .gallery-stage-wrap,
+      .demo-card.featured .transport-row,
+      .demo-card.featured .timeline-row {
+        grid-column: 1;
+      }
+
+      .demo-card.featured .card-body {
+        grid-column: 2;
+        grid-row: 1 / -1;
+        align-self: stretch;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: clamp(24px, 3vw, 42px);
+        line-height: 1.02;
+        letter-spacing: 0;
+      }
+
+      .card-kicker {
+        margin-bottom: 6px;
+        color: var(--blue);
+      }
+
+      .status-pill,
+      .meta-line span {
+        align-self: flex-start;
+        border: 1px solid rgba(246, 247, 251, 0.15);
+        background: #202432;
+        padding: 6px 10px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .status-pill.ported {
+        color: var(--green);
+      }
+
+      .status-pill.partial {
+        color: var(--gold);
+      }
+
+      .status-pill.blocker {
+        color: var(--red);
+      }
+
+      .gallery-stage-wrap {
+        overflow: hidden;
+        border: 1px solid #303544;
+        border-radius: 8px;
+        background: var(--stage);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 18px 46px rgba(0, 0, 0, 0.38);
+      }
+
+      .stage-chrome {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        height: 24px;
+        padding: 0 10px;
+        border-bottom: 1px solid #202432;
+        background: #0a0b10;
+      }
+
+      .stage-chrome span {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--green);
+      }
+
+      .stage-chrome span:nth-child(2) {
+        background: var(--gold);
+      }
+
+      .stage-chrome span:nth-child(3) {
+        background: var(--red);
+      }
+
+      .gallery-stage {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        min-height: 190px;
+        overflow: hidden;
+        background: #050505;
+      }
+
       .gallery-stage > svg {
         width: 100%;
         height: 100%;
         display: block;
+      }
+
+      .stage-error {
+        display: grid;
+        place-items: center;
+        color: #ffb4a8;
+        font-size: 12px;
+      }
+
+      .transport-row {
+        gap: 8px;
+      }
+
+      .primary-action,
+      .icon-action {
+        min-height: 38px;
+        border: 1px solid var(--blue);
+        background: var(--blue);
+        color: #061014;
+        padding: 0 16px;
+        cursor: pointer;
+        font-weight: 800;
+      }
+
+      .icon-action {
+        background: transparent;
+        color: var(--blue);
+        width: 42px;
+        padding: 0;
+        font-size: 15px;
+        letter-spacing: 0;
+      }
+
+      .loop-toggle {
+        min-height: 38px;
+        border: 1px solid var(--line);
+        padding: 0 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .timeline-row {
+        display: grid;
+        grid-template-columns: auto minmax(120px, 1fr) auto;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .timeline-row input[type="range"] {
+        width: 100%;
+        accent-color: var(--blue);
+      }
+
+      .seek-time {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .card-body > p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .gap-panel {
+        border-left: 4px solid var(--red);
+        background: #1d202b;
+        padding: 12px 14px;
+      }
+
+      .gap-panel h3 {
+        margin: 0 0 8px;
+        font-size: 13px;
+      }
+
+      .gap-panel ul {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .gap-panel p {
+        margin: 8px 0 0;
+        color: var(--gold);
+        font-size: 13px;
+      }
+
+      .source-panel {
+        border: 1px solid var(--line);
+        background: #07080c;
+        color: #f6f7fb;
+      }
+
+      .source-panel summary {
+        min-height: 38px;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .source-panel pre {
+        max-height: 280px;
+        margin: 0;
+        overflow: auto;
+        border-top: 1px solid #282828;
+        padding: 12px;
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .runtime-error {
+        color: #a13d30;
+        font-weight: 700;
+      }
+
+      @media (max-width: 1040px) {
+        .control-bar,
+        .demo-card.featured {
+          grid-template-columns: 1fr;
+        }
+
+        .demo-card,
+        .demo-card.featured {
+          grid-column: 1 / -1;
+        }
+
+        .demo-card.featured .card-heading,
+        .demo-card.featured .gallery-stage-wrap,
+        .demo-card.featured .transport-row,
+        .demo-card.featured .timeline-row,
+        .demo-card.featured .card-body {
+          grid-column: auto;
+          grid-row: auto;
+        }
+
+        .study-controls {
+          justify-content: flex-start;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .gallery-shell {
+          padding-inline: 10px;
+        }
+
+        .gallery-hero {
+          min-height: 620px;
+          padding: 18px;
+        }
+
+        .top-links,
+        .hero-stats,
+        .filter-group,
+        .study-controls,
+        .transport-row,
+        .meta-line {
+          align-items: stretch;
+        }
+
+        .top-links a,
+        .filter-chip,
+        .meta-line a,
+        .primary-action,
+        .icon-action {
+          width: 100%;
+        }
+
+        .timeline-row {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </body>

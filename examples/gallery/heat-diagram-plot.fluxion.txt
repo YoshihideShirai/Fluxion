@@ -1,38 +1,10 @@
 scene width=960 height=540 fps=60
 
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "HeatDiagramPlot" at 0,220 size=40 fill="#e2e8f0"
-rect frame w=620 h=320 at -40,-20 fill="#0f172a" stroke="#334155" strokeWidth=2
+rect bg w=960 h=540 at 0,0 fill="#000000"
+axes ax at 0,-20 width=607.5 height=405 xRange=0,40 yRange=-8,32 stroke="#FFFFFF" strokeWidth=2 xNumbers=0,5,10,15,20,25,30,35 yNumbers=-5,0,5,10,15,20,25,30 tickLength=14 tickStrokeWidth=2 numberSize=18 numberColor="#FFFFFF" xNumberOffset=36 yNumberOffset=-38
 
-rect c1 w=90 h=90 at -250,70 fill="#1d4ed8"
-rect c2 w=90 h=90 at -145,70 fill="#2563eb"
-rect c3 w=90 h=90 at -40,70 fill="#3b82f6"
-rect c4 w=90 h=90 at 65,70 fill="#60a5fa"
-rect c5 w=90 h=90 at 170,70 fill="#93c5fd"
+axisLabels axis_labels axes=ax x="\\Delta Q" y="T[^\\circ C]" renderer=katex fill="#FFFFFF" xSize=32 ySize=30 xBuff=52.25 xYOffset=-23.5 yBuff=65.75 yYOffset=-22.5
 
-rect c6 w=90 h=90 at -250,-35 fill="#1e3a8a"
-rect c7 w=90 h=90 at -145,-35 fill="#0ea5e9"
-rect c8 w=90 h=90 at -40,-35 fill="#22d3ee"
-rect c9 w=90 h=90 at 65,-35 fill="#67e8f9"
-rect c10 w=90 h=90 at 170,-35 fill="#bae6fd"
+dataLineGraph graph axes=ax points=0,20;8,0;38,0;39,-5 lineColor="#FFFF00" strokeWidth=4
 
-text cold "low" at -320,-200 size=22 fill="#93c5fd"
-text hot "high" at 250,-200 size=22 fill="#fca5a5"
-line legend x1=-230 y1=0 x2=230 y2=0 at -30,-200 stroke="#64748b" strokeWidth=4
-
-at 0s:
-  play FadeIn(title) duration=0.5s
-  play FadeIn(frame) duration=0.5s
-  play FadeIn(c1) duration=0.25s
-  play FadeIn(c2) duration=0.25s
-  play FadeIn(c3) duration=0.25s
-  play FadeIn(c4) duration=0.25s
-  play FadeIn(c5) duration=0.25s
-  play FadeIn(c6) duration=0.25s
-  play FadeIn(c7) duration=0.25s
-  play FadeIn(c8) duration=0.25s
-  play FadeIn(c9) duration=0.25s
-  play FadeIn(c10) duration=0.25s
-  play FadeIn(legend) duration=0.5s
-  play FadeIn(cold) duration=0.4s
-  play FadeIn(hot) duration=0.4s
+wait 1s

@@ -13,10 +13,13 @@ The Timeline is the operation list that describes how Scene Graph nodes and valu
 | `delete` | Remove a node from the graph |
 | `set` | Immediately set a node / camera property |
 | `setExpr` | Set a property from an expression that references value trackers |
+| `bindExpr` | Update a property from a value-tracker expression on seek |
+| `bindPath` | Resample a value-tracker parametric path on seek |
 | `setValue` | Immediately set a scalar value tracker |
 | `animate` | Interpolate a node / camera property |
 | `animateValue` | Interpolate a scalar value tracker |
 | `effect` | Represent Runtime effects such as `fadeIn`, `fadeOut`, `create`, or `write` |
+| `followCamera` | Write an animated node center to the camera target after animations |
 
 ## Animate example
 
@@ -44,7 +47,8 @@ Operations with the same `t` are stabilized by the Runtime in this order:
 5. `animateValue`
 6. `animate`
 7. `setExpr`
-8. `delete`
+8. `bindExpr` / `bindPath` / `followCamera`
+9. `delete`
 
 Operations with the same timestamp and operation type keep source array order.
 

@@ -72,11 +72,11 @@ Runtime は `.fluxion.json` の `nodes` と `timeline` から Scene Graph を再
 
 - `create` operation を含む document は空の graph から再生を開始する
 - `create` operation を含まない document は `nodes` を初期 graph として表示する
-- 同時刻 operation は `create` → `set` → `setExpr` → `animate` → `setValue` → `animateValue` → `delete` の優先順で適用する
+- 同時刻 operation は `create` → `setValue` → `set` → `effect` → `animateValue` → `animate` → `setExpr` → updater 系 → `delete` の優先順で適用する
 - 同じ時刻・同じ operation type の中では source array order を保持する
 - `duration <= 0` の animation は即時に final value を適用する
 - 非数値 animation は完了時に `to` value へ切り替える
-- Value tracker を初期化し、`setValue` / `animateValue` を適用した上で `setExpr` を評価する
+- Value tracker を初期化し、`setValue` / `animateValue` を適用した上で `setExpr` と updater 系 operation を評価する
 
 詳細は [Web Runtime](../../reference/runtime/) にまとめます。
 

@@ -32,9 +32,26 @@ The generated `examples/simple_circle.fluxion.json` is Fluxion IR that can be lo
 
 - `Scene`: root object that stores nodes and timeline operations, then writes `.fluxion.json` with `export_json()`.
 - `Mobject`: Scene Graph node with transform, style, geometry, and children.
-- `Circle`, `Rectangle`, `Line`, `Path`, `Text`, `Math`, `Group`: node types renderable by the Runtime.
+- `Circle`, `Rectangle`, `Line`, `Path`, `Text`, `Math`, `ImageMobject`, `ThreeDAxes`, `ProjectedCircle`, `GaussianSurface`, `SphereSurface`, `Group`: node types renderable by the Runtime.
 - `self.add()`: adds nodes to the scene and contributes to the initial graph / create operations.
 - `self.play()`: turns `.animate` builders and animation helpers into Timeline operations.
+
+`ImageMobject` mirrors Manim's `ImageMobject(np.uint8(...))` use case by exporting a 2D grayscale matrix as an `image` node with `geometry.data`. Repeated one-row arrays can be compressed with `data_rows`.
+
+```python
+from fluxion import ImageMobject
+
+image = ImageMobject(id="gradient", data=[[0, 128, 255], [0, 128, 255]], w=240, h=120)
+```
+
+`ThreeDAxes`, `ProjectedCircle`, `GaussianSurface`, and `SphereSurface` export the projected geometry used by the Manim gallery 3D ports. They are not native 3D runtime objects; they generate the same IR shape as the Text DSL `threeDAxes` / `projectedCircle` / `gaussianSurface` / `sphereSurface` helpers from Python. `ThreeDAxes` defaults to Manim's axis lengths: `x_length=10.5`, `y_length=10.5`, and `z_length=6.5`. With `phi=75, theta=30, ...`, they can export projected geometry sampled with Manim `ThreeDCamera`'s rotation-matrix order and perspective factor.
+
+```python
+from fluxion import GaussianSurface, ThreeDAxes
+
+axes = ThreeDAxes(id="axes")
+surface = GaussianSurface(id="gauss", resolution=24, sigma=0.4, mu=(0, 0), shade=True)
+```
 
 ## Related pages
 

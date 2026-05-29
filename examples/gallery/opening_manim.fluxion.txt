@@ -1,0 +1,71 @@
+scene width=960 height=540 fps=60
+rect bg w=960 h=540 at 0,0 fill="#000000"
+math title "\\text{This is some }\\LaTeX" at 0,58 size=54 fill="#ffffff" renderer=katex opacity=0
+math basel "\\sum_{n=1}^{\\infty}\\frac{1}{n^2}=\\frac{\\pi^2}{6}" at 0,-102 size=48 fill="#ffffff" renderer=katex opacity=0
+math transformTitle "\\text{That was a transform}" at -270,206 size=42 fill="#ffffff" renderer=katex opacity=0
+
+path grid_h0 d="M -480 -270 L 480 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h1 d="M -480 -202.5 L 480 -202.5" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h2 d="M -480 -135 L 480 -135" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h3 d="M -480 -67.5 L 480 -67.5" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h4 d="M -480 0 L 480 0" at 0,0 fill="none" stroke="#FFFFFF" strokeWidth=2 opacity=0
+path grid_h5 d="M -480 67.5 L 480 67.5" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h6 d="M -480 135 L 480 135" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h7 d="M -480 202.5 L 480 202.5" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_h8 d="M -480 270 L 480 270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+
+path grid_v0 d="M -472.5 270 L -472.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v1 d="M -405 270 L -405 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v2 d="M -337.5 270 L -337.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v3 d="M -270 270 L -270 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v4 d="M -202.5 270 L -202.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v5 d="M -135 270 L -135 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v6 d="M -67.5 270 L -67.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v7 d="M 0 270 L 0 -270" at 0,0 fill="none" stroke="#FFFFFF" strokeWidth=2 opacity=0
+path grid_v8 d="M 67.5 270 L 67.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v9 d="M 135 270 L 135 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v10 d="M 202.5 270 L 202.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v11 d="M 270 270 L 270 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v12 d="M 337.5 270 L 337.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v13 d="M 405 270 L 405 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+path grid_v14 d="M 472.5 270 L 472.5 -270" at 0,0 fill="none" stroke="#29ABCA" strokeWidth=2 opacity=0
+group grid grid_h0 grid_h1 grid_h2 grid_h3 grid_h4 grid_h5 grid_h6 grid_h7 grid_h8 grid_v0 grid_v1 grid_v2 grid_v3 grid_v4 grid_v5 grid_v6 grid_v7 grid_v8 grid_v9 grid_v10 grid_v11 grid_v12 grid_v13 grid_v14
+math gridTitle "\\text{This is a grid}" at -270,206 size=62 fill="#ffffff" renderer=katex opacity=0
+math warpedTitle "\\begin{gathered}\\text{That was a non-linear function}\\\\\\text{applied to the grid}\\end{gathered}" at -184,184 size=38 fill="#ffffff" renderer=katex opacity=0
+at 0s:
+  play AnimationGroup(Write(title), FadeIn(basel), lagRatio=0.12) duration=1.45s easing=smooth
+  animate basel.y from -102 to -62 start=0s duration=1.45s easing=smooth
+  wait 0.8s
+  play AnimationGroup(Transform(title, transformTitle), FadeOut(basel), lagRatio=0.12) duration=1s easing=easeInOut
+  animate basel.y from -62 to -102 start=2.25s duration=1s easing=easeInOut
+  wait 1s
+  play AnimationGroup(FadeOut(title), FadeIn(gridTitle), Create(grid), lagRatio=0.05) duration=3s easing=smooth
+  animate gridTitle.y from 246 to 206 duration=3s easing=smooth
+  wait 1s
+  animate grid_h0.d from "M -480 -270 L 480 -270" to "M -523.584 -225.653 L -464.522 -280.633 L -405.459 -327.978 L -346.397 -333.694 L -287.334 -293.678 L -228.272 -236.66 L -169.209 -203.581 L -110.147 -218.191 L -51.084 -270 L 7.978 -321.809 L 67.041 -336.419 L 126.103 -303.34 L 185.166 -246.322 L 244.228 -206.306 L 303.291 -212.022 L 362.353 -259.367 L 421.416 -314.347" duration=3s easing=easeInOut
+  animate grid_h1.d from "M -480 -202.5 L 480 -202.5" to "M -462.974 -158.153 L -403.912 -213.133 L -344.849 -260.478 L -285.787 -266.194 L -226.724 -226.178 L -167.662 -169.16 L -108.599 -136.081 L -49.537 -150.691 L 9.526 -202.5 L 68.588 -254.309 L 127.651 -268.919 L 186.713 -235.84 L 245.776 -178.822 L 304.838 -138.806 L 363.901 -144.522 L 422.963 -191.867 L 482.026 -246.847" duration=3s easing=easeInOut
+  animate grid_h2.d from "M -480 -135 L 480 -135" to "M -411.122 -90.653 L -352.06 -145.633 L -292.997 -192.978 L -233.935 -198.694 L -174.872 -158.678 L -115.81 -101.66 L -56.747 -68.581 L 2.315 -83.191 L 61.378 -135 L 120.44 -186.809 L 179.503 -201.419 L 238.565 -168.34 L 297.628 -111.322 L 356.69 -71.306 L 415.753 -77.022 L 474.815 -124.367 L 533.878 -179.347" duration=3s easing=easeInOut
+  animate grid_h3.d from "M -480 -67.5 L 480 -67.5" to "M -415.701 -23.153 L -356.638 -78.133 L -297.576 -125.478 L -238.513 -131.194 L -179.451 -91.178 L -120.388 -34.16 L -61.326 -1.081 L -2.263 -15.691 L 56.799 -67.5 L 115.862 -119.309 L 174.924 -133.919 L 233.987 -100.84 L 293.049 -43.822 L 352.112 -3.806 L 411.174 -9.522 L 470.237 -56.867 L 529.299 -111.847" duration=3s easing=easeInOut
+  animate grid_h4.d from "M -480 0 L 480 0" to "M -472.5 44.347 L -413.438 -10.633 L -354.375 -57.978 L -295.313 -63.694 L -236.25 -23.678 L -177.188 33.34 L -118.125 66.419 L -59.063 51.809 L 0 0 L 59.063 -51.809 L 118.125 -66.419 L 177.188 -33.34 L 236.25 23.678 L 295.313 63.694 L 354.375 57.978 L 413.438 10.633 L 472.5 -44.347" duration=3s easing=easeInOut
+  animate grid_h5.d from "M -480 67.5 L 480 67.5" to "M -529.299 111.847 L -470.237 56.867 L -411.174 9.522 L -352.112 3.806 L -293.049 43.822 L -233.987 100.84 L -174.924 133.919 L -115.862 119.309 L -56.799 67.5 L 2.263 15.691 L 61.326 1.081 L 120.388 34.16 L 179.451 91.178 L 238.513 131.194 L 297.576 125.478 L 356.638 78.133 L 415.701 23.153" duration=3s easing=easeInOut
+  animate grid_h6.d from "M -480 135 L 480 135" to "M -533.878 179.347 L -474.815 124.367 L -415.753 77.022 L -356.69 71.306 L -297.628 111.322 L -238.565 168.34 L -179.503 201.419 L -120.44 186.809 L -61.378 135 L -2.315 83.191 L 56.747 68.581 L 115.81 101.66 L 174.872 158.678 L 233.935 198.694 L 292.997 192.978 L 352.06 145.633 L 411.122 90.653" duration=3s easing=easeInOut
+  animate grid_h7.d from "M -480 202.5 L 480 202.5" to "M -482.026 246.847 L -422.963 191.867 L -363.901 144.522 L -304.838 138.806 L -245.776 178.822 L -186.713 235.84 L -127.651 268.919 L -68.588 254.309 L -9.526 202.5 L 49.537 150.691 L 108.599 136.081 L 167.662 169.16 L 226.724 226.178 L 285.787 266.194 L 344.849 260.478 L 403.912 213.133 L 462.974 158.153" duration=3s easing=easeInOut
+  animate grid_h8.d from "M -480 270 L 480 270" to "M -421.416 314.347 L -362.353 259.367 L -303.291 212.022 L -244.228 206.306 L -185.166 246.322 L -126.103 303.34 L -67.041 336.419 L -7.978 321.809 L 51.084 270 L 110.147 218.191 L 169.209 203.581 L 228.272 236.66 L 287.334 293.678 L 346.397 333.694 L 405.459 327.978 L 464.522 280.633 L 523.584 225.653" duration=3s easing=easeInOut
+  animate grid_v0.d from "M -472.5 270 L -472.5 -270" to "M -523.584 -225.653 L -496.178 -191.903 L -462.974 -158.153 L -432.103 -124.403 L -411.122 -90.653 L -405.169 -56.903 L -415.701 -23.153 L -440.139 10.597 L -472.5 44.347 L -504.861 78.097 L -529.299 111.847 L -539.831 145.597 L -533.878 179.347 L -512.897 213.097 L -482.026 246.847 L -448.822 280.597 L -421.416 314.347" duration=3s easing=easeInOut
+  animate grid_v1.d from "M -405 270 L -405 -270" to "M -456.084 -288.861 L -428.678 -255.111 L -395.474 -221.361 L -364.603 -187.611 L -343.622 -153.861 L -337.669 -120.111 L -348.201 -86.361 L -372.639 -52.611 L -405 -18.861 L -437.361 14.889 L -461.799 48.639 L -472.331 82.389 L -466.378 116.139 L -445.397 149.889 L -414.526 183.639 L -381.322 217.389 L -353.916 251.139" duration=3s easing=easeInOut
+  animate grid_v2.d from "M -337.5 270 L -337.5 -270" to "M -388.584 -334.727 L -361.178 -300.977 L -327.974 -267.227 L -297.103 -233.477 L -276.122 -199.727 L -270.169 -165.977 L -280.701 -132.227 L -305.139 -98.477 L -337.5 -64.727 L -369.861 -30.977 L -394.299 2.773 L -404.831 36.523 L -398.878 70.273 L -377.897 104.023 L -347.026 137.773 L -313.822 171.523 L -286.416 205.273" duration=3s easing=easeInOut
+  animate grid_v3.d from "M -270 270 L -270 -270" to "M -321.084 -321.084 L -293.678 -287.334 L -260.474 -253.584 L -229.603 -219.834 L -208.622 -186.084 L -202.669 -152.334 L -213.201 -118.584 L -237.639 -84.834 L -270 -51.084 L -302.361 -17.334 L -326.799 16.416 L -337.331 50.166 L -331.378 83.916 L -310.397 117.666 L -279.526 151.416 L -246.322 185.166 L -218.916 218.916" duration=3s easing=easeInOut
+  animate grid_v4.d from "M -202.5 270 L -202.5 -270" to "M -253.584 -260.474 L -226.178 -226.724 L -192.974 -192.974 L -162.103 -159.224 L -141.122 -125.474 L -135.169 -91.724 L -145.701 -57.974 L -170.139 -24.224 L -202.5 9.526 L -234.861 43.276 L -259.299 77.026 L -269.831 110.776 L -263.878 144.526 L -242.897 178.276 L -212.026 212.026 L -178.822 245.776 L -151.416 279.526" duration=3s easing=easeInOut
+  animate grid_v5.d from "M -135 270 L -135 -270" to "M -186.084 -208.622 L -158.678 -174.872 L -125.474 -141.122 L -94.603 -107.372 L -73.622 -73.622 L -67.669 -39.872 L -78.201 -6.122 L -102.639 27.628 L -135 61.378 L -167.361 95.128 L -191.799 128.878 L -202.331 162.628 L -196.378 196.378 L -175.397 230.128 L -144.526 263.878 L -111.322 297.628 L -83.916 331.378" duration=3s easing=easeInOut
+  animate grid_v6.d from "M -67.5 270 L -67.5 -270" to "M -118.584 -213.201 L -91.178 -179.451 L -57.974 -145.701 L -27.103 -111.951 L -6.122 -78.201 L -0.169 -44.451 L -10.701 -10.701 L -35.139 23.049 L -67.5 56.799 L -99.861 90.549 L -124.299 124.299 L -134.831 158.049 L -128.878 191.799 L -107.897 225.549 L -77.026 259.299 L -43.822 293.049 L -16.416 326.799" duration=3s easing=easeInOut
+  animate grid_v7.d from "M 0 270 L 0 -270" to "M -51.084 -270 L -23.678 -236.25 L 9.526 -202.5 L 40.397 -168.75 L 61.378 -135 L 67.331 -101.25 L 56.799 -67.5 L 32.361 -33.75 L 0 0 L -32.361 33.75 L -56.799 67.5 L -67.331 101.25 L -61.378 135 L -40.397 168.75 L -9.526 202.5 L 23.678 236.25 L 51.084 270" duration=3s easing=easeInOut
+  animate grid_v8.d from "M 67.5 270 L 67.5 -270" to "M 16.416 -326.799 L 43.822 -293.049 L 77.026 -259.299 L 107.897 -225.549 L 128.878 -191.799 L 134.831 -158.049 L 124.299 -124.299 L 99.861 -90.549 L 67.5 -56.799 L 35.139 -23.049 L 10.701 10.701 L 0.169 44.451 L 6.122 78.201 L 27.103 111.951 L 57.974 145.701 L 91.178 179.451 L 118.584 213.201" duration=3s easing=easeInOut
+  animate grid_v9.d from "M 135 270 L 135 -270" to "M 83.916 -331.378 L 111.322 -297.628 L 144.526 -263.878 L 175.397 -230.128 L 196.378 -196.378 L 202.331 -162.628 L 191.799 -128.878 L 167.361 -95.128 L 135 -61.378 L 102.639 -27.628 L 78.201 6.122 L 67.669 39.872 L 73.622 73.622 L 94.603 107.372 L 125.474 141.122 L 158.678 174.872 L 186.084 208.622" duration=3s easing=easeInOut
+  animate grid_v10.d from "M 202.5 270 L 202.5 -270" to "M 151.416 -279.526 L 178.822 -245.776 L 212.026 -212.026 L 242.897 -178.276 L 263.878 -144.526 L 269.831 -110.776 L 259.299 -77.026 L 234.861 -43.276 L 202.5 -9.526 L 170.139 24.224 L 145.701 57.974 L 135.169 91.724 L 141.122 125.474 L 162.103 159.224 L 192.974 192.974 L 226.178 226.724 L 253.584 260.474" duration=3s easing=easeInOut
+  animate grid_v11.d from "M 270 270 L 270 -270" to "M 218.916 -218.916 L 246.322 -185.166 L 279.526 -151.416 L 310.397 -117.666 L 331.378 -83.916 L 337.331 -50.166 L 326.799 -16.416 L 302.361 17.334 L 270 51.084 L 237.639 84.834 L 213.201 118.584 L 202.669 152.334 L 208.622 186.084 L 229.603 219.834 L 260.474 253.584 L 293.678 287.334 L 321.084 321.084" duration=3s easing=easeInOut
+  animate grid_v12.d from "M 337.5 270 L 337.5 -270" to "M 286.416 -205.273 L 313.822 -171.523 L 347.026 -137.773 L 377.897 -104.023 L 398.878 -70.273 L 404.831 -36.523 L 394.299 -2.773 L 369.861 30.977 L 337.5 64.727 L 305.139 98.477 L 280.701 132.227 L 270.169 165.977 L 276.122 199.727 L 297.103 233.477 L 327.974 267.227 L 361.178 300.977 L 388.584 334.727" duration=3s easing=easeInOut
+  animate grid_v13.d from "M 405 270 L 405 -270" to "M 353.916 -251.139 L 381.322 -217.389 L 414.526 -183.639 L 445.397 -149.889 L 466.378 -116.139 L 472.331 -82.389 L 461.799 -48.639 L 437.361 -14.889 L 405 18.861 L 372.639 52.611 L 348.201 86.361 L 337.669 120.111 L 343.622 153.861 L 364.603 187.611 L 395.474 221.361 L 428.678 255.111 L 456.084 288.861" duration=3s easing=easeInOut
+  animate grid_v14.d from "M 472.5 270 L 472.5 -270" to "M 421.416 -314.347 L 448.822 -280.597 L 482.026 -246.847 L 512.897 -213.097 L 533.878 -179.347 L 539.831 -145.597 L 529.299 -111.847 L 504.861 -78.097 L 472.5 -44.347 L 440.139 -10.597 L 415.701 23.153 L 405.169 56.903 L 411.122 90.653 L 432.103 124.403 L 462.974 158.153 L 496.178 191.903 L 523.584 225.653" duration=3s easing=easeInOut
+  wait 1s
+  play Transform(gridTitle, warpedTitle) duration=1s easing=easeInOut
+  wait 1s

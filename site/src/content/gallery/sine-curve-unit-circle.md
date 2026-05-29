@@ -3,54 +3,47 @@ title: SineCurveUnitCircle
 description: "Manim Example: `SineCurveUnitCircle` (`#sinecurveunitcircle`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#sinecurveunitcircle
 source_example_path: examples/gallery/sine-curve-unit-circle.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "Text DSL の `tracedPath` helper で sine trace は表現できるが、Manim `TracedPath` の厳密な履歴サンプリング/追記挙動とは差分がある。"
+  - symptom: "Manim の VGroup 履歴追記式 sine curve updater は、既知の dot 軌道を `tracedPath` と `value` binding に展開して再現している。"
     layer: dsl
     impact: low
-    workaround: "`tracedPath ... from=0 to=theta` と同期 updater を組み合わせて演出を代替する。"
-    closure_condition: "履歴ベースの TracedPath 追記/サンプリング API を追加する。"
-    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
+    workaround: "公式の `t_offset` 進行を `theta` value に変換し、円上の dot、半径線、curve 接続線、sine trace を同じ value から再計算する。sine trace はサンプル点を滑らかな cubic path に変換し、`MathTex` label は既定 font size 48、dot/line/trace は Manim の `YELLOW` / `YELLOW_A` / `YELLOW_D` 色定数に合わせる。公式の `self.add(dot)` 後に `self.add(orbit, origin_to_circle_line, dot_to_curve_line, sine_curve_line)` する描画順を保持し、dot は円・線・軌跡の下に置く。"
+    closure_condition: "VGroup への逐次 Line 追加や `always_redraw` callback を DSL/runtime に追加する。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Advanced Projects
-status: partial
+status: ported
 order: 52
+gap_id: GAP-011
 ---
 scene width=960 height=540 fps=60
 value theta = 0
 
-# Unit circle on left
-circle origin r=3 at -240,0 fill="#e2e8f0" stroke="none"
-circle unit r=96 at -240,0 fill="none" stroke="#334155" strokeWidth=2
-line radius x1=0 y1=0 x2=96 y2=0 at -240,0 stroke="#38bdf8" strokeWidth=2
-circle dot r=8 at -144,0 fill="#38bdf8" stroke="none"
-line projection x1=0 y1=0 x2=280 y2=0 at -80,0 stroke="#334155" strokeWidth=2
+rect bg w=960 h=540 at 0,0 fill="#000000"
 
-# Sine wave area on right
-path axis d="M 0 0 L 320 0" at 0,0 stroke="#334155" strokeWidth=2 fill="none"
-tracedPath wave x=(t/(2*pi))*320 y=96*sin(t) from=0 to=theta samples=180 at 0,0 stroke="#22d3ee" strokeWidth=4
-line link x1=0 y1=0 x2=0 y2=0 at 0,0 stroke="#a78bfa" strokeWidth=2
+line x_axis x1=-405 y1=0 x2=405 y2=0 stroke="#FFFFFF" strokeWidth=4
+line y_axis x1=0 y1=-135 x2=0 y2=135 at -270,0 stroke="#FFFFFF" strokeWidth=4
+math pi_label "\\pi" at -67.5,42 size=48 fill="#FFFFFF"
+math two_pi_label "2\\pi" at 67.5,42 size=48 fill="#FFFFFF"
+math three_pi_label "3\\pi" at 202.5,42 size=48 fill="#FFFFFF"
+math four_pi_label "4\\pi" at 337.5,42 size=48 fill="#FFFFFF"
 
-always dot.x = expr=-240 + 96*cos(theta)
-always dot.y = expr=96*sin(theta)
-always radius.x2 = expr=96*cos(theta)
-always radius.y2 = expr=96*sin(theta)
-always projection.y1 = expr=96*sin(theta)
-always projection.y2 = expr=96*sin(theta)
-always projection.x1 = expr=-240 + 96*cos(theta)
-always projection.x2 = expr=0 + (theta/(2*3.141592653589793))*320
-always link.x1 = expr=-240 + 96*cos(theta)
-always link.y1 = expr=96*sin(theta)
-always link.x2 = expr=(theta/(2*3.141592653589793))*320
-always link.y2 = expr=96*sin(theta)
+circle dot r=5.4 at -202.5,0 fill="#F7D96F" stroke="#F7D96F" strokeWidth=0
+circle unit r=67.5 at -270,0 fill="none" stroke="#FFFFFF" strokeWidth=4
+line origin_to_circle x1=0 y1=0 x2=67.5 y2=0 at -270,0 stroke="#58C4DD" strokeWidth=4
+line dot_to_curve x1=-202.5 y1=0 x2=-202.5 y2=0 stroke="#FFF1B6" strokeWidth=2
+tracedPath sine_curve x=-202.5+(t/(2*pi))*270 y=-67.5*sin(t) from=0 to=theta samples=320 stroke="#F4D345" strokeWidth=4
 
-at 0s:
-  play Create(unit) duration=0.5s
-  play FadeIn(dot) duration=0.4s
-  play Create(radius) duration=0.5s
-  play Create(axis) duration=0.4s
-  play Create(link) duration=0.3s
-  play Create(projection) duration=0.3s
+always dot.x = expr=-270+67.5*cos(theta)
+always dot.y = expr=-67.5*sin(theta)
+always origin_to_circle.x2 = expr=67.5*cos(theta)
+always origin_to_circle.y2 = expr=-67.5*sin(theta)
+always dot_to_curve.x1 = expr=-270+67.5*cos(theta)
+always dot_to_curve.y1 = expr=-67.5*sin(theta)
+always dot_to_curve.x2 = expr=-202.5+(theta/(2*pi))*270
+always dot_to_curve.y2 = expr=-67.5*sin(theta)
 
-animate theta from 0 to 12.566370614359172 duration=8s easing=linear
-wait 0.3s
+animate theta from 0 to 13.351768778 duration=8.5s easing=linear
+at 8.5s:
+  wait 1s

@@ -2,8 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { SceneGraph } from "./sceneGraph.js";
 import { applyTimelineAt } from "./timeline.js";
-import { Player } from "./player.js";
+import { applyTargetTraces, Player } from "./player.js";
 import { buildCameraTransform } from "../renderers/svgRenderer.js";
+import { ease } from "../easing.js";
 import type { SceneNode, TimelineOperation, FluxionDocument } from "../types.js";
 
 const node: SceneNode = {
@@ -39,6 +40,16 @@ test("applies numeric animation interpolation", () => {
   assert.equal(graph.get("c1")?.transform.x, 50);
 });
 
+test("matches Manim smooth rate function samples", () => {
+  assert.equal(ease("smooth", -0.5), 0);
+  assert.equal(ease("smooth", 0), 0);
+  assert.equal(ease("smooth", 0.5), 0.5);
+  assert.equal(ease("smooth", 1), 1);
+  assert.equal(ease("smooth", 1.5), 1);
+  assert.equal(Math.abs(ease("smooth", 0.25) - 0.07010371654510815) < 1e-12, true);
+  assert.equal(Math.abs(ease("smooth", 0.75) - 0.9298962834548918) < 1e-12, true);
+  assert.equal(ease("easeInOut", 0.25), ease("smooth", 0.25));
+});
 
 test("applies camera animation interpolation", () => {
   const graph = new SceneGraph([node]);
@@ -55,6 +66,29 @@ test("applies camera animation interpolation", () => {
   );
   assert.equal(camera.x, 50);
   assert.equal(camera.scale, 1.5);
+});
+
+test("updates camera target from followed node after animations", () => {
+  const frame = structuredClone(node);
+  frame.id = "frame";
+  frame.transform.x = 0;
+  frame.transform.y = 0;
+  const graph = new SceneGraph([node, frame]);
+  const camera = { x: 0, y: 0, scale: 1, rotation: 0, target: { x: 0, y: 0 }, mode: "target" as const };
+  applyTimelineAt(
+    graph,
+    [
+      { t: 0, op: "animate", id: "c1", path: "transform.x", from: 0, to: 100, duration: 2, easing: "linear" },
+      { t: 0, op: "animate", id: "c1", path: "transform.y", from: 0, to: -40, duration: 2, easing: "linear" },
+      { t: 0, op: "followCamera", id: "c1", frameId: "frame", duration: 2 },
+    ],
+    1,
+    [],
+    camera,
+  );
+  assert.equal(JSON.stringify(camera.target), JSON.stringify({ x: 50, y: -20 }));
+  assert.equal(graph.get("frame")?.transform.x, 50);
+  assert.equal(graph.get("frame")?.transform.y, -20);
 });
 
 test("builds camera transforms around the scene center", () => {
@@ -162,6 +196,19 @@ test("resamples SVG paths with different command topology before morphing", () =
   assert.equal(/^M 5 10 L /u.test(d as string), true);
 });
 
+test("keeps original SVG path topology at animation endpoints", () => {
+  const from = "M 0 0 L 10 10";
+  const to = "M 10 20 C 30 40 50 60 70 80";
+
+  const atStart = new SceneGraph([{ ...node, type: "path", geometry: { d: from } }]);
+  applyTimelineAt(atStart, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from, to, duration: 1, easing: "linear" }], 0);
+  assert.equal(atStart.get("c1")?.geometry.d, from);
+
+  const atEnd = new SceneGraph([{ ...node, type: "path", geometry: { d: from } }]);
+  applyTimelineAt(atEnd, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from, to, duration: 1, easing: "linear" }], 1);
+  assert.equal(atEnd.get("c1")?.geometry.d, to);
+});
+
 test("falls back to step switching for unsupported SVG path morph fallback commands", () => {
   const beforeEnd = new SceneGraph([{ ...node, type: "path", geometry: { d: "M 0 0 A 10 10 0 0 1 20 20" } }]);
   applyTimelineAt(beforeEnd, [{ t: 0, op: "animate", id: "c1", path: "geometry.d", from: "M 0 0 A 10 10 0 0 1 20 20", to: "M 10 20 L 30 40 L 50 60", duration: 1, easing: "linear" }], 0.5);
@@ -212,6 +259,109 @@ test("player preserves extended camera settings while seeking", () => {
   player.seek(0);
   assert.equal(JSON.stringify(renderedCamera), JSON.stringify(documentData.camera));
   assert.equal(renderedCamera === documentData.camera, false);
+});
+
+test("rebuilds target traced paths from sampled timeline history", () => {
+  const traceNode: SceneNode = {
+    id: "trace",
+    type: "path",
+    transform: { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+    style: { fill: "none", stroke: "#fff", strokeWidth: 2 },
+    geometry: { d: "", tracedPath: true, tracedTarget: "c1", traceStart: 0, traceSamples: 3, traceSampling: "fixed" },
+    children: [],
+  };
+  const documentData: FluxionDocument = {
+    version: "0.1",
+    width: 1280,
+    height: 720,
+    fps: 60,
+    duration: 2,
+    camera: { x: 0, y: 0, scale: 1, rotation: 0 },
+    nodes: [node, traceNode],
+    timeline: [
+      { t: 0, op: "animate", id: "c1", path: "transform.x", from: 0, to: 100, duration: 2, easing: "linear" },
+      { t: 0, op: "animate", id: "c1", path: "transform.y", from: 0, to: -50, duration: 2, easing: "linear" },
+    ],
+  };
+  const graph = new SceneGraph(documentData.nodes);
+  applyTimelineAt(graph, documentData.timeline, 2, documentData.values);
+  applyTargetTraces(graph, documentData, 2);
+  assert.equal(
+    graph.get("trace")?.geometry.d,
+    "M 0 0 C 8.333333333333334 -4.166666666666667 33.33333333333333 -16.666666666666664 50 -25 C 66.66666666666667 -33.333333333333336 91.66666666666667 -45.833333333333336 100 -50",
+  );
+});
+
+test("rebuilds target traced paths from frame-timed history", () => {
+  const traceNode: SceneNode = {
+    id: "trace",
+    type: "path",
+    transform: { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+    style: { fill: "none", stroke: "#fff", strokeWidth: 2 },
+    geometry: { d: "", tracedPath: true, tracedTarget: "c1", traceStart: 0, traceSamples: 120, traceSampling: "frame" },
+    children: [],
+  };
+  const documentData: FluxionDocument = {
+    version: "0.1",
+    width: 1280,
+    height: 720,
+    fps: 10,
+    duration: 2,
+    camera: { x: 0, y: 0, scale: 1, rotation: 0 },
+    nodes: [node, traceNode],
+    timeline: [
+      { t: 0, op: "animate", id: "c1", path: "transform.x", from: 0, to: 100, duration: 2, easing: "linear" },
+    ],
+  };
+  const graph = new SceneGraph(documentData.nodes);
+  applyTimelineAt(graph, documentData.timeline, 0.5, documentData.values);
+  applyTargetTraces(graph, documentData, 0.5);
+  assert.equal(
+    graph.get("trace")?.geometry.d,
+    "M 0 0 C 0.8333333333333334 0 3.333333333333333 0 5 0 C 6.666666666666667 0 8.333333333333334 0 10 0 C 11.666666666666666 0 13.333333333333334 0 15 0 C 16.666666666666668 0 18.333333333333332 0 20 0 C 21.666666666666668 0 24.166666666666668 0 25 0",
+  );
+});
+
+test("builds bound angle arcs as circular cubic paths", () => {
+  const arcNode: SceneNode = {
+    id: "arc",
+    type: "path",
+    transform: { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+    style: { fill: "none", stroke: "#fff", strokeWidth: 4 },
+    geometry: { d: "" },
+    children: [],
+  };
+  const documentData: FluxionDocument = {
+    version: "0.1",
+    width: 1280,
+    height: 720,
+    fps: 60,
+    duration: 1,
+    camera: { x: 0, y: 0, scale: 1, rotation: 0 },
+    nodes: [arcNode],
+    timeline: [
+      {
+        t: 0,
+        op: "bindPath",
+        id: "arc",
+        path: "geometry.d",
+        pathType: "arc",
+        radius: 60,
+        samples: 72,
+        tMinExpr: "0",
+        tMaxExpr: "theta",
+        xExpr: "60*cos(t)",
+        yExpr: "60*sin(t)",
+      },
+    ],
+    values: [{ id: "theta", initial: Math.PI / 2 }],
+  };
+  const graph = new SceneGraph(documentData.nodes);
+  applyTimelineAt(graph, documentData.timeline, 0, documentData.values);
+  assert.equal(
+    graph.get("arc")?.geometry.d,
+    "M 60 0 C 60 33.1370849898476 33.13708498984761 60 3.67394039744206e-15 60",
+  );
 });
 
 test("ignores semantic effect operations while applying fallback animations", () => {

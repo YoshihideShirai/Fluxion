@@ -3,44 +3,32 @@ title: ArgMinExample
 description: "Manim Example: `ArgMinExample` (`#argminexample`) の Fluxion 移植版。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#argminexample
 source_example_path: examples/gallery/arg-min-example.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "座標軸/グラフの正確なプロットは line/path で近似しており、Manim 本家の Axes API 完全互換ではない。"
-    layer: runtime
-    impact: medium
-    workaround: "線分とテキストで概念説明は可能。"
-    closure_condition: "Axes/NumberPlane 系プリミティブを導入し、ラベルと目盛りを自動生成できる。"
-    fidelity_upgrade_condition: "曲線サンプリングと軸ラベル配置が本家と同等になった時。"
+  - symptom: "Manim の `Axes.coords_to_point` / dot updater は、`axes` と `dataDot` がデータ座標から `bindExpr` へ展開している。"
+    layer: dsl
+    impact: low
+    workaround: "`get_axis_labels(x_label=\"x\", y_label=\"f(x)\")` は `axisLabels` helper で軸端の `UR` 配置へ近似し、`t` value を animate し、公式 `Dot()` 既定半径の `dataDot point=t,2*(t-5)*(t-5)` で dot の scene 座標を再計算する。最後の既定 `self.wait()` は明示時刻の hold として保持する。"
+    closure_condition: "updater callback を DSL/runtime で直接扱えるようにする。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Manim Stable Examples
-status: partial
+status: ported
 order: 60
 gap_id: GAP-013
 ---
 scene width=960 height=540 fps=60
 
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "Arg min / Arg max" at 0,220 size=42 fill="#e2e8f0"
-line x_axis x1=-300 y1=0 x2=300 y2=0 at 0,-40 stroke="#94a3b8" strokeWidth=3
-line y_axis x1=0 y1=-160 x2=0 y2=150 at -280,-40 stroke="#94a3b8" strokeWidth=3
-path parabola d="M -250 90 Q -120 -120 0 -20 Q 120 110 250 -60" at -30,-20 fill="none" stroke="#38bdf8" strokeWidth=5
-circle min_dot r=10 at -110,-140 fill="#22c55e" stroke="#052e16" strokeWidth=2 opacity=0
-circle max_dot r=10 at 220,85 fill="#f97316" stroke="#7c2d12" strokeWidth=2 opacity=0
-text min_label "arg min" at -75,-178 size=24 fill="#86efac" opacity=0
-text max_label "arg max" at 250,118 size=24 fill="#fdba74" opacity=0
+value t = 0
 
-at 0s:
-  show bg
-  play FadeIn(title) duration=0.7s
-  play Create(x_axis) duration=0.5s
-  play Create(y_axis) duration=0.5s
-  play Create(parabola) duration=1.2s
+rect bg w=960 h=540 at 0,0 fill="#000000"
 
-wait 0.2s
-play FadeIn(min_dot) duration=0.35s
-play FadeIn(min_label) duration=0.35s
-wait 0.2s
-play FadeIn(max_dot) duration=0.35s
-play FadeIn(max_label) duration=0.35s
-wait 0.6s
-play FadeOut(title) duration=0.6s
+axes ax at 0,0 width=810 height=405 xRange=0,10 yRange=0,100 stroke="#FFFFFF" strokeWidth=2 xTicks=0,1,2,3,4,5,6,7,8,9,10 yTicks=10,20,30,40,50,60,70,80,90,100 tickLength=12 tickStrokeWidth=2
+axisLabels axis_labels axes=ax x="x" y="f(x)" size=28 fill="#FFFFFF" buff=20
+
+plot graph fn=2*(t-5)*(t-5) range=0,10 samples=220 scaleX=81 scaleY=4.05 at -405,202.5 stroke="#C55F73" strokeWidth=4 fill="none"
+dataDot dot axes=ax point=t,2*(t-5)*(t-5) fill="#FFFFFF"
+
+animate t from 0 to 4.974874372 start=0s duration=1s
+at 1s:
+  wait 1s

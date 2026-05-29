@@ -1,4 +1,6 @@
 import type { Camera, FluxionDocument } from "../types.js";
+import type { SceneNode } from "../types.js";
+import { pointsToSvgPath } from "../pathUtils.js";
 import type { SvgRenderer } from "../renderers/svgRenderer.js";
 import { SceneGraph } from "./sceneGraph.js";
 import { applyTimelineAt } from "./timeline.js";
@@ -37,6 +39,7 @@ export class Player {
     const graph = new SceneGraph(hasCreateOperations(this.document) ? [] : this.document.nodes);
     const camera = cloneCamera(this.document.camera);
     applyTimelineAt(graph, this.document.timeline, this.currentTime, this.document.values, camera);
+    applyTargetTraces(graph, this.document, this.currentTime);
     this.renderer.render(graph.all(), camera);
   }
 
@@ -76,6 +79,48 @@ function hasCreateOperations(documentData: FluxionDocument): boolean {
   return documentData.timeline.some((op) => op.op === "create");
 }
 
+export function applyTargetTraces(graph: SceneGraph, documentData: FluxionDocument, seconds: number): void {
+  for (const node of flattenNodes(graph.all())) {
+    const targetId = typeof node.geometry.tracedTarget === "string" ? node.geometry.tracedTarget : undefined;
+    if (!targetId) continue;
+    const start = Number(node.geometry.traceStart ?? 0);
+    const samples = Math.max(2, Math.round(Number(node.geometry.traceSamples ?? 96)));
+    const sampling = typeof node.geometry.traceSampling === "string" ? node.geometry.traceSampling : "fixed";
+    const d = buildTargetTracePath(documentData, targetId, start, seconds, samples, sampling);
+    if (d) graph.setPathData(node.id, d);
+  }
+}
+
+function buildTargetTracePath(
+  documentData: FluxionDocument,
+  targetId: string,
+  start: number,
+  end: number,
+  samples: number,
+  sampling: string,
+): string {
+  const to = Math.max(start, end);
+  const frameSamples = Math.floor(Math.max(0, to - start) * Number(documentData.fps ?? 60)) + 1;
+  const requestedSamples = sampling === "frame" ? Math.min(samples, Math.max(2, frameSamples)) : samples;
+  const effectiveSamples = Math.min(requestedSamples, 512);
+  const points: Array<{ x: number; y: number }> = [];
+  for (let index = 0; index < effectiveSamples; index += 1) {
+    const alpha = effectiveSamples === 1 ? 0 : index / (effectiveSamples - 1);
+    const time = start + (to - start) * alpha;
+    const sampleGraph = new SceneGraph(hasCreateOperations(documentData) ? [] : documentData.nodes);
+    const camera = cloneCamera(documentData.camera);
+    applyTimelineAt(sampleGraph, documentData.timeline, time, documentData.values, camera);
+    const target = sampleGraph.get(targetId);
+    if (!target) continue;
+    points.push({ x: target.transform.x, y: target.transform.y });
+  }
+  if (points.length === 0) return "";
+  return pointsToSvgPath(points, { smooth: true });
+}
+
+function flattenNodes(nodes: SceneNode[]): SceneNode[] {
+  return nodes.flatMap((node) => [node, ...flattenNodes(node.children ?? [])]);
+}
 
 function cloneCamera(camera: Camera | undefined): Camera {
   const cloned: Camera = {

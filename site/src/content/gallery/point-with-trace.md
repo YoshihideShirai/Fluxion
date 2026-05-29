@@ -3,40 +3,34 @@ title: PointWithTrace
 description: "Manim Example: `PointWithTrace` (`#pointwithtrace`) の Fluxion 移植版。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#pointwithtrace
 source_example_path: examples/gallery/point-with-trace.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "Text DSL の `tracedPath` helper で軌跡は表現できるが、Manim のような対象 mobject の実履歴追跡・減衰オプションは未対応。"
+  - symptom: "Dot motion uses DSL-native `Rotating(... about=RIGHT)` and `Animate(... shift=...)`; trace uses `tracedPath target=dot sampling=frame`, which rebuilds the target motion history at document fps on seek."
     layer: dsl
     impact: low
-    workaround: "value tracker と `tracedPath ... from=<expr> to=<expr>` を組み合わせて軌跡を更新する。"
-    closure_condition: "TracedPath primitive に追跡対象/履歴長/減衰オプションを追加する。"
-    fidelity_upgrade_condition: "Manim と同様に対象 mobject の履歴を直接トレースできる時。"
+    workaround: "半回転は `Rotating(dot, PI, about=RIGHT)`、上/左移動は `Animate(dot, shift=...)` で表し、trace は `tracedPath target=dot sampling=frame` で seek 時点までの target transform を 60fps 相当でサンプリングし、滑らかな cubic path として再構築する。`group traced_scene trace dot` で公式 `self.add(path, dot)` と同じく軌跡をドットの下に描く。`Rotating` は公式ソースの既定 `linear`、後続 `.animate.shift` は既定 `smooth` として扱う。"
+    closure_condition: "Manim の `TracedPath` と同じ updater lifecycle / point array 更新まで一致する。"
+    fidelity_upgrade_condition: "Manim の `path.add_updater(update_path)` と同等の履歴追記で再現できる時。"
 category: Manim Stable Examples
-status: partial
+status: ported
 order: 71
 gap_id: GAP-024
 ---
 scene width=960 height=540 fps=60
 
-value theta = 0
-
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "PointWithTrace" at 0,220 size=40 fill="#e2e8f0"
-circle guide r=150 at 0,-20 fill="none" stroke="#334155" strokeWidth=2
-tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120 at 0,-20 stroke="#22d3ee" strokeWidth=4
-circle dot r=12 at 150,-20 fill="#38bdf8" stroke="#0f172a" strokeWidth=3
-
-always dot.x = expr=150*cos(theta)
-always dot.y = expr=-20 + 150*sin(theta)
+rect bg w=960 h=540 at 0,0 fill="#000000"
+circle dot r=5.4 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=0
+tracedPath trace target=dot start=0s samples=361 sampling=frame stroke="#FFFFFF" strokeWidth=4
+group traced_scene trace dot
 
 at 0s:
-  play FadeIn(title) duration=0.5s
-  play Create(guide) duration=0.6s
-  play FadeIn(dot) duration=0.5s
-
-wait 0.2s
-animate theta from 0 to 6.283 duration=3.2s easing=linear
-wait 0.2s
-play FadeOut(dot) duration=0.35s
-play FadeIn(dot) duration=0.35s
+  play Rotating(dot, 3.141592654, about=RIGHT) duration=2s easing=linear
+at 2s:
+  wait 1s
+at 3s:
+  play Animate(dot, shift=UP) duration=1s easing=smooth
+at 4s:
+  play Animate(dot, shift=LEFT) duration=1s easing=smooth
+at 5s:
+  wait 1s

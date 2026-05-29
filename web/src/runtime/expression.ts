@@ -7,6 +7,8 @@ const FUNCTIONS: Record<string, (...args: number[]) => number> = {
   atan: Math.atan,
   atan2: Math.atan2,
   ceil: Math.ceil,
+  clip01: (value) => Math.min(Math.max(value, 0), 1),
+  clipPi: (value) => Math.min(value, Math.PI),
   cos: Math.cos,
   exp: Math.exp,
   floor: Math.floor,

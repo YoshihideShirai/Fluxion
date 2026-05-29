@@ -2,27 +2,43 @@
 title: FollowingGraphCamera
 description: "Manim Example: `FollowingGraphCamera` (`#followinggraphcamera`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#followinggraphcamera
-source_example_path: examples/special_camera_settings.py
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+source_example_path: examples/gallery/special-camera.fluxion.txt
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "Camera DSL now supports target follow / frame-fit channels, but auto-bounds fitting from arbitrary node sets is still simplified."
+  - symptom: "Axes and plot are helper-generated, and the moving dot uses DSL-native plot `MoveAlongPath`; camera frame following uses `followCamera` to track the actual moving dot while keeping an invisible `camera_frame` mobject in sync."
     layer: dsl
-    impact: medium
-    workaround: "近似実装（既存 DSL/always 更新）で演出を代替する。"
-    closure_condition: "不足 DSL 機能が追加され、近似なしで同等記述が可能になる。"
-    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
+    impact: low
+    workaround: "公式の `Axes(x_range=[-1, 10], y_range=[-1, 10])` は Manim `Axes` 既定 `x_length=round(frame_width)-2=12` / `y_length=round(frame_height)-2=6` を 67.5px/unit で 810x405px に展開し、`plot(..., x_range=[0, 3*PI])` と default `Dot()` 半径 0.08 も同じ frame scale に合わせる。`MoveAlongPath(..., rate_func=linear)` は DSL-native `MoveAlongPath(moving_dot, graph)` が描画上の smoothed cubic plot curve の曲線長に沿って進むよう展開し、Manim の `path.point_from_proportion()` に寄せる。`cameraFrame camera_frame` は不可視の frame mobject を作り、1秒の zoom-in、1秒の path follow、1秒の `Restore` に合わせて camera target/scale と `camera_frame` transform を同期する。`followCamera moving_dot frame=camera_frame` が animation 適用後の moving dot center を camera target と frame mobject に反映して Manim の `camera.frame.add_updater(lambda mob: mob.move_to(moving_dot.get_center()))` と同じ可視挙動を再現する。"
+    closure_condition: "MovingCamera frame の内部状態と camera matrix の同期がより広い camera.frame API まで対応した場合、内部表現の差分も解消できる。"
+    fidelity_upgrade_condition: "既に faithful。残る差分は browser renderer と camera.frame API の網羅範囲。"
 category: Special Camera Settings
 status: ported
+gap_id: GAP-012
 order: 40
 ---
 scene width=960 height=540 fps=60
-cameraFrame at 0,0 scale=1
-circle center r=70 at 0,0 fill="#38bdf8"
-circle left r=42 at -200,0 fill="#22c55e"
-circle right r=42 at 200,0 fill="#f97316"
-text label "Camera move demo" at 0,-150 size=34 fill="#e2e8f0"
-at 0s:
-  play AnimationGroup(FadeIn(center), FadeIn(left), FadeIn(right), Write(label), lagRatio=0.15) duration=1.2s easing=easeOut
-animateFrame to -120,0 scale=1.35 duration=1.2s easing=easeInOut
-animateFrame to 120,0 scale=1.0 start=2.0s duration=1.2s easing=easeInOut
+camera mode=target target=0,0 scale=1
+cameraFrame camera_frame at 0,0 scale=1 opacity=0
+
+rect bg w=960 h=540 at 0,0 fill="#000000"
+axes ax at 0,0 width=810 height=405 xRange=-1,10 yRange=-1,10 stroke="#8a8a8a" strokeWidth=2 xTicks=-1,0,1,2,3,4,5,6,7,8,9,10 yTicks=-1,0,1,2,3,4,5,6,7,8,9,10 tickLength=12 tickStrokeWidth=2
+plot graph fn="sin(t)" range=0,9.42477796076938 samples=220 at=-331.364,165.682 scaleX=73.636 scaleY=36.818 stroke="#58C4DD" strokeWidth=5
+circle dot_start r=5.4 at -331.364,165.682 fill="#ffffff" stroke="none"
+circle dot_end r=5.4 at 362.643,165.682 fill="#ffffff" stroke="none"
+circle moving_dot r=5.4 at -331.364,165.682 fill="#ff862f" stroke="none"
+animate camera.target.x from 0 to -331.364 start=0s duration=1s easing=easeInOut
+animate camera.target.y from 0 to 165.682 start=0s duration=1s easing=easeInOut
+animate camera.scale from 1 to 2 start=0s duration=1s easing=easeInOut
+animate camera_frame.x from 0 to -331.364 start=0s duration=1s easing=easeInOut
+animate camera_frame.y from 0 to 165.682 start=0s duration=1s easing=easeInOut
+animate camera_frame.scale from 1 to 0.5 start=0s duration=1s easing=easeInOut
+at 1s:
+  play MoveAlongPath(moving_dot, graph) duration=1s easing=linear
+followCamera moving_dot frame=camera_frame start=1s duration=1s
+animate camera.target.x from 362.643 to 0 start=2s duration=1s easing=easeInOut
+animate camera.target.y from 165.682 to 0 start=2s duration=1s easing=easeInOut
+animate camera.scale from 2 to 1 start=2s duration=1s easing=easeInOut
+animate camera_frame.x from 362.643 to 0 start=2s duration=1s easing=easeInOut
+animate camera_frame.y from 165.682 to 0 start=2s duration=1s easing=easeInOut
+animate camera_frame.scale from 0.5 to 1 start=2s duration=1s easing=easeInOut

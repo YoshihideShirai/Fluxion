@@ -1,27 +1,28 @@
 ---
 title: SquareToCircle
-description: "Manim Example: `SquareToCircle` (`#squaretocircle`) をそのまま移植したデモ。"
-source_manim_url: https://docs.manim.community/en/stable/examples.html#squaretocircle
-source_example_path: examples/basic_concepts_square_to_circle.py
+description: "Manim Quickstart Example: `SquareToCircle` に対応するデモ。"
+source_manim_url: https://docs.manim.community/en/stable/tutorials/quickstart.html#transforming-a-square-into-a-circle
+source_example_path: examples/gallery/square-to-circle.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "Transform path and easing defaults may not exactly match Manim internals."
+  - symptom: "Transform の頂点対応は近似だが、公式 quickstart の `Square().rotate(PI / 4)`、`Circle().set_fill(PINK, opacity=0.5)`、`Create` → `Transform` → `FadeOut` の構成・色・タイミングに合わせ、最後はSVG上からも消える。"
     layer: runtime
-    impact: medium
-    workaround: "easing・duration・中間キーを調整して差を吸収する。"
+    impact: low
+    workaround: "default `Square(side_length=2)` の 45度回転 diamond と default `Circle(radius=1)` を Manim 16:9 frame scale の 67.5px/unit に展開し、同じ cubic command topology の path で morph する。"
     closure_condition: "補間・レート関数の挙動がManim準拠になる。"
-    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Basic Concepts
 status: ported
+gap_id: GAP-005
 order: 11
 ---
-scene width=1280 height=720 fps=60
-rect square w=120 h=120 at 640,360 fill="#ffffff" stroke="#111827" strokeWidth=2 rotation=45
-circle circle r=56 at 640,360 fill="#facc15" stroke="#facc15" opacity=0.8
-at 0s:
-  play Create(square) duration=1.0s easing=easeOut
-wait 0.2s
-play Transform(square, circle) duration=1.2s easing=linear
-wait 0.2s
-play FadeOut(square) duration=0.8s easing=easeInOut
+scene width=960 height=540 fps=60
+
+rect bg w=960 h=540 at 0,0 fill="#000000"
+path square d="M 0 -95.459 C 0 -95.459 95.459 0 95.459 0 C 95.459 0 0 95.459 0 95.459 C 0 95.459 -95.459 0 -95.459 0 C -95.459 0 0 -95.459 0 -95.459 Z" at 0,0 fill="#ffffff" fillOpacity=0 stroke="#ffffff" strokeWidth=4
+path circle d="M 0 -67.5 C 37.279 -67.5 67.5 -37.279 67.5 0 C 67.5 37.279 37.279 67.5 0 67.5 C -37.279 67.5 -67.5 37.279 -67.5 0 C -67.5 -37.279 -37.279 -67.5 0 -67.5 Z" at 0,0 fill="#D147BD" fillOpacity=0.5 stroke="#ffffff" strokeWidth=4
+
+play Create(square) duration=1s easing=easeInOut
+play Transform(square, circle) duration=1s easing=easeInOut
+play FadeOut(square) duration=1s easing=easeInOut

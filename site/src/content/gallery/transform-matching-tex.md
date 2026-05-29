@@ -1,26 +1,37 @@
 ---
-title: TexTransformExample
-description: "Manim Example: `TexTransformExample` (`#textransformexample`) に対応するデモ。"
-source_manim_url: https://docs.manim.community/en/stable/examples.html#textransformexample
+title: MatchingEquationParts
+description: "Manim Reference Example: `MatchingEquationParts` (`#matchingequationparts`) に対応するデモ。"
+source_manim_url: https://docs.manim.community/en/stable/reference/manim.animation.transform_matching_parts.TransformMatchingTex.html#matchingequationparts
 source_example_path: examples/gallery/transform_matching_tex.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "Token geometry interpolation is approximate because browser text shaping differs from Manim's TeX rasterization."
+  - symptom: "Token geometry interpolation follows the official matching choreography. Renderer-side baseline measurement reduces vertical drift, but browser/KaTeX glyph metrics can still differ from Manim's TeX rasterization."
     layer: runtime
-    impact: medium
-    workaround: "easing・duration・中間キーを調整して差を吸収する。"
-    closure_condition: "補間・レート関数の挙動がManim準拠になる。"
-    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
+    impact: low
+    workaround: "target root を非表示のまま使わず、変形後の token を次の変形 source として materialize し、公式の `TransformMatchingTex(Group(eq1, variables), eq2)` と同じ source group から token を再帰的に対応付ける。math renderer は KaTeX/MathJax fragment の baseline を実測して cached offset を適用する。"
+    closure_condition: "TeX rasterization と token bounds が Manim 出力と同等になる。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Advanced Projects
 status: ported
+gap_id: GAP-006
 order: 50
 ---
 scene width=960 height=540 fps=60
-rect bg w=960 h=540 at 0,0 fill="#111827"
-math eq1 "x^2+y^2=(r)^2" at 0,-50 size=58 fill="#bae6fd" renderer=katex expandTokens=true
-math eq2 "x^2+y^2=(R)^2" at 0,-50 size=58 fill="#fde68a" renderer=katex expandTokens=true
+rect bg w=960 h=540 at 0,0 fill="#000000"
+math varA "a" at -42,0 size=48 fill="#ffffff" renderer=katex opacity=1
+math varB "b" at 0,0 size=48 fill="#ffffff" renderer=katex opacity=1
+math varC "c" at 42,0 size=48 fill="#ffffff" renderer=katex opacity=1
+group variables varA varB varC at 0,-67.5 opacity=1
+math eq1 "{{x}}^2+{{y}}^2={{z}}^2" at 0,0 size=48 fill="#ffffff" renderer=katex expandTokens=true
+math eq2 "{{a}}^2+{{b}}^2={{c}}^2" at 0,0 size=48 fill="#ffffff" renderer=katex expandTokens=true opacity=0
+math eq3 "{{a}}^2={{c}}^2-{{b}}^2" at 0,0 size=48 fill="#ffffff" renderer=katex expandTokens=true opacity=0
+group eq1WithVariables eq1 variables
 at 0s:
-  play Write(eq1) duration=1.2s easing=easeOut
-wait 0.4s
-play TransformMatchingTex(eq1, eq2) duration=1.3s easing=easeInOut
+  show eq1
+  wait 0.5s
+  show variables
+  play TransformMatchingTex(eq1WithVariables, eq2) duration=1s easing=easeInOut
+  wait 0.5s
+  play TransformMatchingTex(eq2, eq3) duration=1s easing=easeInOut
+  wait 0.5s

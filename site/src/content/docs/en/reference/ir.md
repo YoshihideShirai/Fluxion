@@ -35,14 +35,14 @@ Fluxion JSON is the editable animation IR shared by the Python DSL and Text DSL.
 {
   "id": "c1",
   "type": "circle",
-  "transform": { "x": 220, "y": 360, "scale": 1, "rotation": 0, "opacity": 1 },
-  "style": { "fill": "#38bdf8", "stroke": "#0f172a", "strokeWidth": 4 },
+  "transform": { "x": 220, "y": 360, "scale": 1, "scaleX": 1, "scaleY": 1, "rotation": 0, "opacity": 1 },
+  "style": { "fill": "#38bdf8", "fillOpacity": 0.8, "stroke": "#0f172a", "strokeOpacity": 1, "strokeWidth": 4 },
   "geometry": { "r": 48 },
   "children": []
 }
 ```
 
-Nodes are addressed by `id` and carry `transform`, `style`, `geometry`, and `children`. `group` nodes contain child nodes, and the camera transform composes outside every node transform.
+Nodes are addressed by `id` and carry `transform`, `style`, `geometry`, and `children`. `scaleX` / `scaleY` are optional nonuniform scale multipliers and default to `1` when omitted. `group` nodes contain child nodes, and the camera transform composes outside every node transform.
 
 ## Supported node types
 

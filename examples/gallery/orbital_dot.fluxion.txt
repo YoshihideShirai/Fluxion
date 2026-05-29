@@ -1,0 +1,17 @@
+scene width=960 height=540 fps=60
+
+rect bg w=960 h=540 at 0,0 fill="#000000"
+circle dot r=5.4 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=0
+line guide x1=202.5 y1=0 x2=337.5 y2=0 stroke="#FFFFFF" strokeWidth=4
+circle orbit r=67.5 at 0,0 fill="none" stroke="#58C4DD" strokeWidth=4 scale=0
+
+at 0s:
+  animate orbit.scale from 0 to 1 duration=1s easing=smooth
+at 1s:
+  animate dot.x from 0 to 67.5 duration=1s easing=smooth
+at 2s:
+  play MoveAlongPath(dot, orbit) duration=2s easing=linear
+at 4s:
+  play Rotating(dot, 6.283185307, about=(135,0)) duration=1.5s easing=linear
+at 5.5s:
+  wait 1s

@@ -3,43 +3,33 @@ title: MovingDots
 description: "Manim Example: `MovingDots` (`#movingdots`) の Fluxion 移植版。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#movingdots
 source_example_path: examples/gallery/moving-dots.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "本家の updater 駆動挙動は簡略化しており、位相差付き正弦運動で視覚近似している。"
+  - symptom: "Manim の updater API はDSL構文としては未対応だが、`VGroup(...).arrange(RIGHT, buff=1)` と同じ dot 間隔、ValueTracker、Line追従挙動を `always` binding と `dynamicLine` で再現している。"
     layer: dsl
-    impact: medium
-    workaround: "`value` と `always expr` で複数 dot の同期運動を表現する。"
+    impact: low
+    workaround: "`value` と `always expr` で dot 座標を同期し、`Line(...).become(...)` updater は `dynamicLine` の endpoint binding に展開する。Manim の `become(Line(...))` は新しい default Line の色もコピーするため、初期 `set_color(RED)` 後の connector は白線として描き、公式 `self.add(d1,d2,l1)` と同じくドットより上の z-order に置く。最後の既定 `self.wait()` は明示時刻の hold として保持する。"
     closure_condition: "updater 構文/API の互換レイヤーを拡張する。"
     fidelity_upgrade_condition: "Manim の updater 記述をほぼ同形で移植できる時。"
 category: Manim Stable Examples
-status: partial
+status: ported
 order: 68
 gap_id: GAP-021
 ---
 scene width=960 height=540 fps=60
 
-value t = 0
-
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "MovingDots" at 0,220 size=40 fill="#e2e8f0"
-line track x1=-320 y1=0 x2=320 y2=0 at 0,-40 stroke="#334155" strokeWidth=3
-circle dot_a r=12 at -240,-40 fill="#38bdf8" stroke="#0f172a" strokeWidth=2
-circle dot_b r=12 at -120,-40 fill="#f97316" stroke="#7c2d12" strokeWidth=2
-circle dot_c r=12 at 0,-40 fill="#22c55e" stroke="#14532d" strokeWidth=2
-text note "phase-shifted harmonic motion (approx.)" at 0,-210 size=20 fill="#94a3b8"
-
-always dot_a.x = expr=-240 + 200*sin(t)
-always dot_b.x = expr=-120 + 200*sin(t + pi/2)
-always dot_c.x = expr=0 + 200*sin(t + pi)
-
+value x = 0
+value y = 0
+rect bg w=960 h=540 at 0,0 fill="#000000"
+circle d1 r=5.4 at 0,0 fill="#58C4DD" stroke="#58C4DD" strokeWidth=0
+circle d2 r=5.4 at 39.15,0 fill="#83C167" stroke="#83C167" strokeWidth=0
+dynamicLine connector x1=67.5*x y1=0 x2=39.15 y2=-67.5*y stroke="#FFFFFF" strokeWidth=4
+always d1.x = expr=67.5*x
+always d2.y = expr=-67.5*y
 at 0s:
-  play FadeIn(title) duration=0.5s
-  play Create(track) duration=0.6s
-  play FadeIn(dot_a) duration=0.4s
-  play FadeIn(dot_b) duration=0.4s
-  play FadeIn(dot_c) duration=0.4s
-  play FadeIn(note) duration=0.4s
-
-wait 0.2s
-animate t from 0 to 12.56 duration=5s easing=linear
+  animate x from 0 to 5 duration=1s easing=smooth
+at 1s:
+  animate y from 0 to 4 duration=1s easing=smooth
+at 2s:
+  wait 1s

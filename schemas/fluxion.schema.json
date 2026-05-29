@@ -78,6 +78,12 @@
         "scale": {
           "type": "number"
         },
+        "scaleX": {
+          "type": "number"
+        },
+        "scaleY": {
+          "type": "number"
+        },
         "rotation": {
           "type": "number"
         },
@@ -145,12 +151,30 @@
         "fill": {
           "$ref": "#/$defs/styleColor"
         },
+        "fillOpacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
         "stroke": {
           "$ref": "#/$defs/styleColor"
+        },
+        "strokeOpacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
         },
         "strokeWidth": {
           "type": "number",
           "minimum": 0
+        },
+        "strokeLinecap": {
+          "type": "string",
+          "enum": ["butt", "round", "square"]
+        },
+        "strokeLinejoin": {
+          "type": "string",
+          "enum": ["miter", "round", "bevel"]
         }
       }
     },
@@ -204,7 +228,8 @@
             "path",
             "text",
             "math",
-            "brace"
+            "brace",
+            "image"
           ]
         },
         "transform": {
@@ -358,15 +383,35 @@
             "up",
             "down",
             "left",
-            "right"
+            "right",
+            "perpendicular",
+            "normal",
+            "line"
           ]
         },
         "buff": {
           "type": "number",
           "minimum": 0
         },
+        "sharpness": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "curvature": {
+          "type": "number"
+        },
+        "tip": {
+          "type": "number"
+        },
         "label": {
           "type": "string"
+        },
+        "labelRenderer": {
+          "enum": [
+            "text",
+            "katex",
+            "mathjax"
+          ]
         },
         "labelSize": {
           "type": "number",
@@ -374,6 +419,24 @@
         },
         "labelColor": {
           "$ref": "#/$defs/styleColor"
+        },
+        "labelOffset": {
+          "type": "number"
+        },
+        "labelAlignment": {
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ]
+        },
+        "labelW": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "labelH": {
+          "type": "number",
+          "exclusiveMinimum": 0
         }
       }
     },
@@ -639,6 +702,13 @@
               "type": "string",
               "description": "Typically geometry.d for SVG path nodes."
             },
+            "pathType": {
+              "type": "string",
+              "enum": ["parametric", "arc"]
+            },
+            "radius": {
+              "type": "number"
+            },
             "samples": {
               "type": "integer",
               "minimum": 2
@@ -661,6 +731,10 @@
             },
             "close": {
               "type": "boolean"
+            },
+            "smoothing": {
+              "type": "string",
+              "enum": ["linear", "smooth"]
             },
             "deps": {
               "type": "array",
@@ -786,7 +860,8 @@
                 "fadeOut",
                 "create",
                 "write",
-                "transform"
+                "transform",
+                "replacementTransform"
               ]
             },
             "duration": {

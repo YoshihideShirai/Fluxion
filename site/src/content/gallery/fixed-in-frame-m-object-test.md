@@ -3,45 +3,25 @@ title: FixedInFrameMObjectTest
 description: "Manim Example: `FixedInFrameMObjectTest` (`#fixedinframemobjecttest`) の Fluxion 移植版（近似）。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#fixedinframemobjecttest
 source_example_path: examples/gallery/fixed-in-frame-m-object-test.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "3Dカメラ移動中に fixed-in-frame オブジェクトを完全固定する専用命令がなく、2D HUD 風の近似で表現している。"
-    layer: compiler
-    impact: high
-    workaround: "HUD要素を別レイヤーとして配置し、背景側のみを動かす演出で代替する。"
-    closure_condition: "fixedInFrame=true などのノード属性とカメラ分離レンダリングを追加する。"
-    fidelity_upgrade_condition: "カメラ回転/ズーム時に対象テキストが画面座標で不変となる実装が入った時。"
+  - symptom: "Fluxion にはネイティブな ThreeDScene はないが、公式出力の Manim camera 投影と fixed-in-frame text は `threeDAxes` と `fixedInFrame=true` で再現し、固定テキストはcamera transform外の前面レイヤーに描画している。"
+    layer: runtime
+    impact: low
+    workaround: "`ThreeDAxes()` は未移動の Manim scene origin に置き、`threeDAxes` helper で公式既定の `x_range=(-6,6,1)`, `y_range=(-5,5,1)`, `z_range=(-4,4,1)`, `x_length=10.5`, `y_length=10.5`, `z_length=6.5` と `set_camera_orientation(phi=75°, theta=-45°)` を Manim `ThreeDCamera` 投影済み line/tick/tip 群に展開する。`add_fixed_in_frame_mobjects(text3d)` と default `Text(..., font_size=48).to_corner(UL)` は `fixedInFrame=true` で camera transform の外側に描画する。"
+    closure_condition: "ネイティブ 3D camera / mobject layer を runtime に追加する。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Manim Stable Examples
-status: partial
+status: ported
 order: 62
 gap_id: GAP-015
 ---
 scene width=960 height=540 fps=60
 
-rect bg w=960 h=540 at 0,0 fill="#020617"
-text title "Fixed in frame (approx)" at 0,224 size=34 fill="#e2e8f0"
-text hud "I stay in frame" at -300,190 size=26 fill="#fef08a" opacity=0
-rect hud_box w=260 h=48 at -300,190 fill="#334155" opacity=0 stroke="#94a3b8" strokeWidth=2
+rect bg w=960 h=540 at 0,0 fill="#000000"
+text text3d "This is a 3D text" at -270,-212 size=48 fill="#FFFFFF" fixedInFrame=true
 
-circle planet r=44 at -220,-10 fill="#38bdf8" stroke="#075985" strokeWidth=3
-circle moon r=14 at -130,20 fill="#e2e8f0" stroke="#64748b" strokeWidth=2
-path orbit d="M -220 -10 A 90 60 0 1 1 -219 -10" at 0,0 fill="none" stroke="#1e293b" strokeWidth=2
+threeDAxes axes at 0,0 xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 xLength=10.5 yLength=10.5 zLength=6.5 phi=75 theta=-45 unitScale=67.5 stroke="#FFFFFF" strokeWidth=2 tickSize=10 tickStrokeWidth=2 includeTips=true
 
-at 0s:
-  show bg
-  play FadeIn(title) duration=0.5s
-  play FadeIn(hud_box) duration=0.35s
-  play FadeIn(hud) duration=0.35s
-  play Create(orbit) duration=0.6s
-  play FadeIn(planet) duration=0.35s
-  play FadeIn(moon) duration=0.35s
-
-animate planet.x from -220 to 140 duration=1.4s easing=easeInOut
-animate moon.x from -130 to 230 duration=1.4s easing=easeInOut
-animate moon.y from 20 to 80 duration=1.4s easing=easeInOut
-wait 0.2s
-animate planet.x from 140 to -60 duration=1.2s easing=easeInOut
-animate moon.x from 230 to 30 duration=1.2s easing=easeInOut
-animate moon.y from 80 to -30 duration=1.2s easing=easeInOut
-wait 0.5s
+wait 1s

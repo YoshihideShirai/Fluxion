@@ -1,69 +1,68 @@
 ---
 title: BooleanOperations
-description: "Manim Example: `BooleanOperations` (`#booleanoperations`) の Fluxion 移植版（近似）。"
+description: "Manim Example: `BooleanOperations` (`#booleanoperations`) の Fluxion 移植版。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#booleanoperations
 source_example_path: examples/gallery/boolean-operations.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "Union/Intersection/Difference/Exclusion の厳密なブーリアン形状演算は未対応で、重なりレイヤー表現で近似している。"
+  - symptom: "Union/Intersection/Difference/Exclusion の汎用ブーリアン形状演算は未対応だが、この公式例は同径楕円2つの解析的な交点から SVG arc path として展開している。"
     layer: runtime
-    impact: high
-    workaround: "色分けとラベルで演算結果の概念を説明する。"
+    impact: low
+    workaround: "公式 `Ellipse(width=4.0, height=5.0)` を Manim 16:9 frame scale で 270x337.5px に展開し、同じ楕円配置・演算ラベル・演算結果色で、楕円交点 `y=146.142` を使った arc path に展開する。fill_opacity と stroke を分離し、演算結果の move/scale/fade-in は `Animate(...)` target-state primitive、明示 `run_time` のない各 `self.play(...)` / `FadeIn(label)` は Manim 既定の1秒 cadence へ展開する。"
     closure_condition: "パス同士のブーリアン演算プリミティブを追加し、生成形状を直接レンダリングできる。"
-    fidelity_upgrade_condition: "各演算結果（和/積/差/排他的論理和）が本家と同等の輪郭で再現された時。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Manim Stable Examples
-status: partial
+status: ported
 order: 61
 gap_id: GAP-014
 ---
 scene width=960 height=540 fps=60
 
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "Boolean Operations (approx)" at 0,222 size=40 fill="#e2e8f0"
-text subtitle "Union / Intersection / Difference / Exclusion" at 0,184 size=20 fill="#94a3b8"
-
-circle left r=56 at -360,70 fill="#38bdf8" opacity=0.62 stroke="#0369a1" strokeWidth=3
-circle right r=56 at -320,70 fill="#f97316" opacity=0.62 stroke="#9a3412" strokeWidth=3
-text union_label "union" at -340,-14 size=18 fill="#e2e8f0" opacity=0
-
-circle i_left r=56 at -120,70 fill="#38bdf8" opacity=0.42 stroke="#0369a1" strokeWidth=3
-circle i_right r=56 at -80,70 fill="#f97316" opacity=0.42 stroke="#9a3412" strokeWidth=3
-rect inter_hint w=34 h=100 at -100,70 fill="#fde68a" opacity=0 stroke="#ca8a04" strokeWidth=2
-text inter_label "intersection" at -100,-14 size=18 fill="#e2e8f0" opacity=0
-
-circle d_left r=56 at 120,70 fill="#38bdf8" opacity=0.64 stroke="#0369a1" strokeWidth=3
-circle d_right r=56 at 160,70 fill="#f97316" opacity=0.22 stroke="#9a3412" strokeWidth=3
-text diff_label "difference" at 140,-14 size=18 fill="#e2e8f0" opacity=0
-
-circle x_left r=56 at 360,70 fill="#38bdf8" opacity=0.68 stroke="#0369a1" strokeWidth=3
-circle x_right r=56 at 400,70 fill="#f97316" opacity=0.68 stroke="#9a3412" strokeWidth=3
-rect excl_hint w=28 h=96 at 380,70 fill="#0b1020" opacity=0 stroke="#64748b" strokeWidth=2
-text excl_label "exclusion" at 380,-14 size=18 fill="#e2e8f0" opacity=0
-
+rect bg w=960 h=540 at 0,0 fill="#000000"
+text title "Boolean Operation" at -248,-174 size=48 fill="#ffffff"
+line title_underline x1=-128 y1=0 x2=128 y2=0 at -248,-151 stroke="#ffffff" strokeWidth=2
+path ellipse_a_fill d="M 0 -168.75 C 74.558 -168.75 135 -93.198 135 0 C 135 93.198 74.558 168.75 0 168.75 C -74.558 168.75 -135 93.198 -135 0 C -135 -93.198 -74.558 -168.75 0 -168.75 Z" fill="#58C4DD" stroke="none" opacity=0.5
+path ellipse_a_stroke d="M 0 -168.75 C 74.558 -168.75 135 -93.198 135 0 C 135 93.198 74.558 168.75 0 168.75 C -74.558 168.75 -135 93.198 -135 0 C -135 -93.198 -74.558 -168.75 0 -168.75 Z" fill="none" stroke="#58C4DD" strokeWidth=10
+group ellipse_a ellipse_a_fill ellipse_a_stroke at -300,0
+path ellipse_b_fill d="M 0 -168.75 C 74.558 -168.75 135 -93.198 135 0 C 135 93.198 74.558 168.75 0 168.75 C -74.558 168.75 -135 93.198 -135 0 C -135 -93.198 -74.558 -168.75 0 -168.75 Z" fill="#FC6255" stroke="none" opacity=0.5
+path ellipse_b_stroke d="M 0 -168.75 C 74.558 -168.75 135 -93.198 135 0 C 135 93.198 74.558 168.75 0 168.75 C -74.558 168.75 -135 93.198 -135 0 C -135 -93.198 -74.558 -168.75 0 -168.75 Z" fill="none" stroke="#FC6255" strokeWidth=10
+group ellipse_b ellipse_b_fill ellipse_b_stroke at -165,0
+path intersection_fill d="M 0 -146.142 A 135 168.75 0 0 1 0 146.142 A 135 168.75 0 0 1 0 -146.142 Z" fill="#83C167" stroke="none" opacity=0.5
+path intersection_stroke d="M 0 -146.142 A 135 168.75 0 0 1 0 146.142 A 135 168.75 0 0 1 0 -146.142 Z" fill="none" stroke="#83C167" strokeWidth=4
+group intersection intersection_fill intersection_stroke at -232.5,0 opacity=0 scale=1
+text intersection_label "Intersection" at 337.5,-229.5 size=23 fill="#ffffff" opacity=0
+path union_fill d="M 0 -146.142 A 135 168.75 0 1 0 0 146.142 A 135 168.75 0 1 0 0 -146.142 Z" fill="#FF862F" stroke="none" opacity=0.5
+path union_stroke d="M 0 -146.142 A 135 168.75 0 1 0 0 146.142 A 135 168.75 0 1 0 0 -146.142 Z" fill="none" stroke="#FF862F" strokeWidth=4
+group union union_fill union_stroke at -232.5,0 opacity=0 scale=1
+text union_label "Union" at 337.5,-65.25 size=23 fill="#ffffff" opacity=0
+path exclusion_fill d="M 0 -146.142 A 135 168.75 0 1 0 0 146.142 A 135 168.75 0 1 0 0 -146.142 Z M 0 -146.142 A 135 168.75 0 0 1 0 146.142 A 135 168.75 0 0 1 0 -146.142 Z" fill="#FFFF00" stroke="none" fillRule=evenodd opacity=0.5
+path exclusion_stroke d="M 0 -146.142 A 135 168.75 0 1 0 0 146.142 A 135 168.75 0 1 0 0 -146.142 Z M 0 -146.142 A 135 168.75 0 0 1 0 146.142 A 135 168.75 0 0 1 0 -146.142 Z" fill="none" stroke="#FFFF00" strokeWidth=4 fillRule=evenodd
+group exclusion exclusion_fill exclusion_stroke at -232.5,0 opacity=0 scale=1
+text exclusion_label "Exclusion" at 337.5,147.375 size=23 fill="#ffffff" opacity=0
+path difference_fill d="M 0 -146.142 A 135 168.75 0 1 0 0 146.142 A 135 168.75 0 0 1 0 -146.142 Z" fill="#D147BD" stroke="none" opacity=0.5
+path difference_stroke d="M 0 -146.142 A 135 168.75 0 1 0 0 146.142 A 135 168.75 0 0 1 0 -146.142 Z" fill="none" stroke="#D147BD" strokeWidth=4
+group difference difference_fill difference_stroke at -232.5,0 opacity=0 scale=1
+text difference_label "Difference" at 148.5,-65.25 size=23 fill="#ffffff" opacity=0
 at 0s:
-  show bg
-  play FadeIn(title) duration=0.6s
-  play FadeIn(subtitle) duration=0.5s
+  play AnimationGroup(FadeIn(ellipse_a), FadeIn(ellipse_b), FadeIn(title), FadeIn(title_underline), lagRatio=0) duration=1s easing=smooth
 
-play FadeIn(left) duration=0.35s
-play FadeIn(right) duration=0.35s
-play FadeIn(union_label) duration=0.25s
-wait 0.1s
+at 1s:
+  play AnimationGroup(Animate(intersection, opacity=1, shift=(570,-168.75), scale=0.25), Animate(intersection_stroke, strokeWidth=16), lagRatio=0) duration=1s easing=easeInOut
+at 2s:
+  play FadeIn(intersection_label) duration=1s easing=smooth
 
-play FadeIn(i_left) duration=0.35s
-play FadeIn(i_right) duration=0.35s
-play FadeIn(inter_hint) duration=0.25s
-play FadeIn(inter_label) duration=0.25s
-wait 0.1s
+at 3s:
+  play AnimationGroup(Animate(union, opacity=1, shift=(570,11.25), scale=0.3), Animate(union_stroke, strokeWidth=13.333), lagRatio=0) duration=1s easing=easeInOut
+at 4s:
+  play FadeIn(union_label) duration=1s easing=smooth
 
-play FadeIn(d_left) duration=0.35s
-play FadeIn(d_right) duration=0.35s
-play FadeIn(diff_label) duration=0.25s
-wait 0.1s
+at 5s:
+  play AnimationGroup(Animate(exclusion, opacity=1, shift=(570,222.75), scale=0.3), Animate(exclusion_stroke, strokeWidth=13.333), lagRatio=0) duration=1s easing=easeInOut
+at 6s:
+  play FadeIn(exclusion_label) duration=1s easing=smooth
 
-play FadeIn(x_left) duration=0.35s
-play FadeIn(x_right) duration=0.35s
-play FadeIn(excl_hint) duration=0.25s
-play FadeIn(excl_label) duration=0.25s
-wait 0.6s
+at 7s:
+  play AnimationGroup(Animate(difference, opacity=1, shift=(381,11.25), scale=0.3), Animate(difference_stroke, strokeWidth=13.333), lagRatio=0) duration=1s easing=easeInOut
+at 8s:
+  play FadeIn(difference_label) duration=1s easing=smooth

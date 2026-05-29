@@ -6,36 +6,23 @@ source_example_path: examples/gallery/three-d-light-source-position.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "この Example はまだ Fluxion へ移植されていません（プレースホルダー表示のみ）。"
-    layer: compiler
-    impact: high
-    workaround: "同テーマの移植済み Example を参照する。"
-    closure_condition: "当該 Example の DSL 実装とアニメーションシーケンスが追加される。"
-    fidelity_upgrade_condition: "プレースホルダーではなく元Example相当のシーンが再現され、主要差分が解消された時。"
+  - symptom: "3D renderer と実際の light_source shading は未実装だが、公式の ThreeDAxes と球面 Surface checkerboard は `threeDAxes` / `sphereSurface` helper から投影済み face 群へ展開している。"
+    layer: runtime
+    impact: medium
+    workaround: "`ThreeDAxes()` を `threeDAxes` の Manim `ThreeDCamera` 透視投影 line/tick/tip 群で描き、公式既定の `x_range=(-6,6,1)`, `y_range=(-5,5,1)`, `z_range=(-4,4,1)`, `x_length=10.5`, `y_length=10.5`, `z_length=6.5` を保持する。`Surface(..., v_range=[0, TAU], u_range=[-PI/2, PI/2], checkerboard_colors=[RED_D, RED_E], resolution=(15,32))` を `sphereSurface` の shaded checkerboard path 群に展開し、公式 `self.add(axes, sphere)` と同じく axes の上に描画する。公式 `Surface` 既定の `stroke_color=LIGHT_GREY` / `stroke_width=0.5` も薄い面境界として保持する。公式 sphere 半径 1.5 は `worldRadius=1.5` と `phi=75`, `theta=30` の camera projection で描き、`light_source.move_to(3*IN)` を `light=0,0,-3` の位置光源として扱い、Manim `get_shaded_rgb` 相当の面 shading のみを適用する。"
+    closure_condition: "Surface/Sphere、3D camera projection、light_source shading を runtime で扱えるようにする。"
+    fidelity_upgrade_condition: "Manim の `Surface(... checkerboard_colors=...)` と `light_source.move_to` が同等に反映される時。"
 category: Manim Stable Examples
-status: partial
+status: ported
 gap_id: GAP-029
 order: 76
 ---
 scene width=960 height=540 fps=60
-value t = 0
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "ThreeDLightSourcePosition" at 0,220 size=38 fill="#e2e8f0"
-rect plane w=620 h=300 at 0,-20 fill="none" stroke="#334155" strokeWidth=2
-path orbit d="M -220 -20 C -60 -150 60 110 220 -20" fill="none" stroke="#475569" strokeWidth=2
-circle obj r=16 at -220,-20 fill="#38bdf8"
-circle light r=12 at 220,-20 fill="#fbbf24"
-line beam x1=220 y1=0 x2=-220 y2=0 at 0,-20 stroke="#f59e0b" strokeWidth=3
-always obj.x = expr=-220 + 440*(t/6.283)
-always obj.y = expr=-20 + 130*sin(t)
-always light.x = expr=220*cos(t*0.7)
-always light.y = expr=-20 + 90*sin(t*0.7)
-always beam.rotation = expr=12*sin(t*0.7)
-at 0s:
-  play FadeIn(title) duration=0.5s
-  play Create(plane) duration=0.6s
-  play Create(orbit) duration=0.5s
-  play FadeIn(obj) duration=0.4s
-  play FadeIn(light) duration=0.4s
-  play Create(beam) duration=0.5s
-animate t from 0 to 6.283 duration=4s easing=linear
+
+rect bg w=960 h=540 at 0,0 fill="#000000"
+
+threeDAxes axes at 0,0 xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 xLength=10.5 yLength=10.5 zLength=6.5 phi=75 theta=30 unitScale=67.5 stroke="#FFFFFF" strokeWidth=2 tickSize=10 tickStrokeWidth=2 includeTicks=true includeTips=true
+
+sphereSurface sphere at 0,0 radius=104 worldRadius=1.5 phi=75 theta=30 unitScale=67.5 resolution=15,32 fillA="#E65A4C" fillB="#CF5044" stroke="#BBBBBB" strokeWidth=0.5 light=0,0,-3
+
+wait 1s

@@ -3,41 +3,35 @@ title: PolygonOnAxes
 description: "Manim Example: `PolygonOnAxes` (`#polygononaxes`) の Fluxion 移植版。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#polygononaxes
 source_example_path: examples/gallery/polygon-on-axes.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "Text DSL の `dataPolygon` helper で axes 上のデータ座標から polygon を配置できるが、Manim の `coords_to_point` 汎用 API は未実装。"
+  - symptom: "Manim の `always_redraw(Polygon(... ax.c2p ...))` は、`dataRect` と `dataDot` が `axes` のデータ座標を `bindExpr` へ展開して再現している。公式の `dot.set_z_index(10)` は dot を作成済みpolygonより前面に置く描画順で表している。"
     layer: dsl
     impact: low
-    workaround: "`dataPolygon ... axes=<id> points=x,y;...` で polygon 頂点をデータ座標指定する。"
-    closure_condition: "line/path/point annotation でも使える汎用 axes coordinate helper を追加する。"
-    fidelity_upgrade_condition: "Manim と同じデータ座標指定だけで polygon 配置を再現できる時。"
+    workaround: "公式 `Axes(..., x_length=6, y_length=6, include_tip=False)` を 405x405px の正方形軸へ展開し、`axes` helper の座標変換を使って `dataRect from=0,0 to=t,25/t` と `dataDot point=t,25/t` で updater 結果を生成する。`Create(polygon)` を1秒で描き、同じ0秒で `show dot` を後置して `dot.set_z_index(10)` 相当の前面描画を保ち、その後の3つの `t.animate.set_value(...)` を公式 cadence で連続させる。"
+    closure_condition: "`always_redraw` 相当の動的 mobject 再生成を DSL/runtime で直接扱えるようにする。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Manim Stable Examples
-status: partial
+status: ported
 order: 72
 gap_id: GAP-025
 ---
 scene width=960 height=540 fps=60
 
-value alpha = 0
+value t = 5
 
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "PolygonOnAxes" at 0,220 size=40 fill="#e2e8f0"
-axes ax at 0,-30 width=760 height=340 xRange=-4,4 yRange=-2,2 stroke="#64748b" strokeWidth=2
-dataPolygon poly axes=ax points=-1.9,-0.7;-0.4,1.1;1.8,0.45 fill="#22d3ee" opacity=0.2 stroke="#22d3ee" strokeWidth=3
-text label "polygon on axes" at 0,-190 size=22 fill="#bae6fd"
+rect bg w=960 h=540 at 0,0 fill="#000000"
 
-always poly.rotation = expr=12*sin(alpha)
-always poly.scale = expr=1 + 0.08*cos(alpha)
+axes ax at 0,0 width=405 height=405 xRange=0,10 yRange=0,10 stroke="#FFFFFF" strokeWidth=2 xTicks=0,1,2,3,4,5,6,7,8,9,10 yTicks=0,1,2,3,4,5,6,7,8,9,10 tickLength=12 tickStrokeWidth=2
+plot graph fn=25/t range=2.5,10 samples=220 scaleX=40.5 scaleY=40.5 at -202.5,202.5 stroke="#F4D345" strokeWidth=4 fill="none"
+dataRect area axes=ax from=0,0 to=t,25/t fill="#58C4DD" fillOpacity=0.5 stroke="#FFEA94" strokeWidth=1
+dataDot dot axes=ax point=t,25/t fill="#FFFFFF"
 
 at 0s:
-  play FadeIn(title) duration=0.5s
-  play Create(ax) duration=0.8s
-  play FadeIn(poly) duration=0.6s
-  play FadeIn(label) duration=0.4s
+  play Create(area) duration=1s
+  show dot
 
-wait 0.2s
-animate alpha from 0 to 6.283 duration=2.8s easing=easeInOut
-wait 0.2s
-play FadeOut(poly) duration=0.4s
-play FadeIn(poly) duration=0.4s
+animate t from 5 to 10 start=1s duration=1s easing=smooth
+animate t from 10 to 2.5 start=2s duration=1s easing=smooth
+animate t from 2.5 to 5 start=3s duration=1s easing=smooth

@@ -3,43 +3,35 @@ title: MovingAngle
 description: "Manim Example: `MovingAngle` (`#movingangle`) の Fluxion 移植版。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#movingangle
 source_example_path: examples/gallery/moving-angle.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "Text DSL の `angle` helper で弧は表現できるが、Manim の Angle mobject が持つ象限・直角マーク等の全オプションは未対応。"
+  - symptom: "Manim の updater callback は未実装だが、`Line(...).rotate(... about_point=LEFT)` は `rotatingLine` helper、`Angle(...)` と `point_from_proportion(0.5)` は value binding へ展開している。"
     layer: dsl
     impact: low
-    workaround: "`angle ... from=<expr> to=<expr>` と value tracker を組み合わせて角度変化を可視化する。"
-    closure_condition: "Angle primitive に象限・直角マーク・ラベル配置 API を追加する。"
-    fidelity_upgrade_condition: "本家の Angle API と同等の記述で装飾付き角度を再現できる時。"
+    workaround: "`theta` を value tracker として管理し、`Line(LEFT, RIGHT)` を Manim 16:9 frame scale の 67.5px/unit へ展開し、基準線の about-point 回転、滑らかな cubic の `Angle(..., radius=0.5)` path、`Angle(..., radius=0.5 + 3 * SMALL_BUFF).point_from_proportion(0.5)` の `\\theta` ラベル位置を再計算する。"
+    closure_condition: "Angle/MathTex の updater callback を DSL/runtime で直接扱えるようにする。"
+    fidelity_upgrade_condition: "Manim の updater 関数をそのまま記述して同挙動を再現できる時。"
 category: Manim Stable Examples
-status: partial
+status: ported
 order: 66
 gap_id: GAP-019
 ---
 scene width=960 height=540 fps=60
 
-value theta = 0
+value theta = 1.919862177
 
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "MovingAngle" at 0,220 size=40 fill="#e2e8f0"
-circle guide r=120 at 0,-20 fill="none" stroke="#334155" strokeWidth=2
-line ray x1=0 y1=0 x2=120 y2=0 at 0,-20 stroke="#38bdf8" strokeWidth=4
-angle arc at 0,-20 radius=60 from=0 to=theta samples=72 stroke="#f59e0b" strokeWidth=5
-text theta_label "θ" at 65,22 size=34 fill="#fbbf24"
+rect bg w=960 h=540 at 0,0 fill="#000000"
+line line1 x1=-67.5 y1=0 x2=67.5 y2=0 stroke="#FFFFFF" strokeWidth=4
+rotatingLine line_moving x1=-67.5 y1=0 x2=67.5 y2=0 about=-67.5,0 angle=-theta stroke="#FFFFFF" strokeWidth=4
+angle a at -67.5,0 radius=33.75 from=0 to=-theta samples=120 stroke="#FFFFFF" strokeWidth=4
+math tex "\\theta" at -36.526,-44.238 size=48 fill="#FFFFFF"
 
-always ray.x2 = expr=120*cos(theta)
-always ray.y2 = expr=120*sin(theta)
-always theta_label.x = expr=70*cos(theta/2)
-always theta_label.y = expr=-20 + 70*sin(theta/2)
+always tex.x = expr=-67.5 + 54*cos(theta/2)
+always tex.y = expr=-54*sin(theta/2)
 
-at 0s:
-  play FadeIn(title) duration=0.5s
-  play Create(guide) duration=0.6s
-  play Create(ray) duration=0.6s
-  play FadeIn(theta_label) duration=0.4s
-
-wait 0.2s
-animate theta from 0 to 2.4 duration=1.5s easing=easeInOut
-wait 0.2s
-animate theta from 2.4 to 5.5 duration=1.7s easing=easeInOut
+wait 1s
+animate theta from 1.919862177 to 0.698131701 start=1s duration=1s
+animate theta from 0.698131701 to 3.141592654 start=2s duration=1s
+animate tex.fill from "#FFFFFF" to "#FF0000" start=3s duration=0.5s
+animate theta from 3.141592654 to 6.108652382 start=3.5s duration=1s

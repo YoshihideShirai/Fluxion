@@ -72,11 +72,11 @@ The runtime reconstructs a Scene Graph from `.fluxion.json` `nodes` and `timelin
 
 - Documents containing `create` operations start from an empty graph.
 - Documents without `create` operations use `nodes` as the initial graph.
-- Same-time operations are applied in `create` → `set` → `setExpr` → `animate` → `setValue` → `animateValue` → `delete` priority order.
+- Same-time operations are applied in `create` → `setValue` → `set` → `effect` → `animateValue` → `animate` → `setExpr` → updater-like operations → `delete` priority order.
 - Same-time operations with the same operation type keep source array order.
 - Animations with `duration <= 0` immediately apply their final value.
 - Non-numeric animations switch to their `to` value at completion.
-- Value trackers are initialized, `setValue` / `animateValue` operations are applied, and then `setExpr` operations are evaluated.
+- Value trackers are initialized, `setValue` / `animateValue` operations are applied, and then `setExpr` and updater-like operations are evaluated.
 
 See the [Web Runtime reference](../../reference/runtime/) for details.
 

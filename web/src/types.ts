@@ -1,9 +1,11 @@
-export type NodeType = "group" | "circle" | "rect" | "triangle" | "line" | "path" | "text" | "math" | "brace";
+export type NodeType = "group" | "circle" | "rect" | "triangle" | "line" | "path" | "text" | "math" | "brace" | "image";
 
 export interface Transform {
   x: number;
   y: number;
   scale: number;
+  scaleX?: number;
+  scaleY?: number;
   rotation: number;
   opacity: number;
 }
@@ -22,13 +24,25 @@ export type InterpolatableGeometryValue = number | string | number[] | boolean;
 
 export interface Style {
   fill?: string;
+  fillOpacity?: number;
   stroke?: string;
+  strokeOpacity?: number;
   strokeWidth?: number;
+  strokeLinecap?: "butt" | "round" | "square";
+  strokeLinejoin?: "miter" | "round" | "bevel";
 }
 
 export interface PlotMetadata {
   range?: [number, number];
   samples?: number;
+}
+
+export interface SurfaceFaceMetadata {
+  row: number;
+  col: number;
+  depth: number;
+  height?: number;
+  shade?: number;
 }
 
 export interface SceneNode {
@@ -43,6 +57,7 @@ export interface SceneNode {
   renderer?: string;
   metadata?: {
     plot?: PlotMetadata;
+    surfaceFace?: SurfaceFaceMetadata;
   };
 }
 
@@ -82,6 +97,7 @@ export interface BindExpressionOperation extends BaseOperation {
   id: string;
   path: string;
   expr: string;
+  duration?: number;
   deps?: string[];
 }
 
@@ -89,12 +105,15 @@ export interface BindPathOperation extends BaseOperation {
   op: "bindPath";
   id: string;
   path: string;
+  pathType?: "parametric" | "arc";
+  radius?: number;
   samples: number;
   tMinExpr: string;
   tMaxExpr: string;
   xExpr: string;
   yExpr: string;
   close?: boolean;
+  smoothing?: "linear" | "smooth";
   deps?: string[];
 }
 
@@ -131,6 +150,13 @@ export interface EffectOperation extends BaseOperation {
   easing: EasingName;
 }
 
+export interface FollowCameraOperation extends BaseOperation {
+  op: "followCamera";
+  id: string;
+  frameId?: string;
+  duration?: number;
+}
+
 export type TimelineOperation =
   | CreateOperation
   | DeleteOperation
@@ -141,7 +167,8 @@ export type TimelineOperation =
   | SetValueOperation
   | AnimateOperation
   | AnimateValueOperation
-  | EffectOperation;
+  | EffectOperation
+  | FollowCameraOperation;
 
 export interface ValueTracker {
   id: string;

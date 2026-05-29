@@ -6,36 +6,23 @@ source_example_path: examples/gallery/three-d-surface-plot.fluxion.txt
 porting_strategy: visual_approximation
 fidelity: visual_approximation
 known_gaps:
-  - symptom: "この Example はまだ Fluxion へ移植されていません（プレースホルダー表示のみ）。"
-    layer: compiler
-    impact: high
-    workaround: "同テーマの移植済み Example を参照する。"
-    closure_condition: "当該 Example の DSL 実装とアニメーションシーケンスが追加される。"
-    fidelity_upgrade_condition: "プレースホルダーではなく元Example相当のシーンが再現され、主要差分が解消された時。"
+  - symptom: "3D Surface / camera projection は runtime ネイティブ未実装のため、公式 ThreeDAxes と Gaussian surface を `threeDAxes` / `gaussianSurface` helper で投影済みに展開している。"
+    layer: runtime
+    impact: medium
+    workaround: "`ThreeDAxes()` は tick/tip 付き `threeDAxes` helper、公式既定の `x_range=(-6,6,1)`, `y_range=(-5,5,1)`, `z_range=(-4,4,1)`, `x_length=10.5`, `y_length=10.5`, `z_length=6.5`、公式の `param_gauss`（`sigma=0.4`, `mu=[0,0]`）、`resolution=(24,24)`、`scale(2)`、`Surface` 既定の `stroke_width=0.5`、`set_style(..., stroke_color=GREEN)`、`set_fill_by_checkerboard(ORANGE, BLUE, opacity=0.5)` は `gaussianSurface` helper で 24x24 の path face 群として生成し、公式 `self.add(axes, gauss_plane)` と同じく axes の上に描画する。`phi=75`, `theta=-30` の Manim `ThreeDCamera` 由来の透視投影、面法線、default light source `[-7,-9,10]` から Manim `get_shaded_rgb` 風の明暗を付ける。"
+    closure_condition: "Surface primitive と 3D camera projection を runtime でネイティブ実装する。"
+    fidelity_upgrade_condition: "Manim の `Surface(param_gauss)` と checkerboard fill を同等パラメータで再現できる時。"
 category: Manim Stable Examples
-status: partial
+status: ported
 gap_id: GAP-030
 order: 77
 ---
 scene width=960 height=540 fps=60
-value t = 0
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "ThreeDSurfacePlot" at 0,220 size=38 fill="#e2e8f0"
-rect plane w=620 h=300 at 0,-20 fill="none" stroke="#334155" strokeWidth=2
-path orbit d="M -220 -20 C -60 -150 60 110 220 -20" fill="none" stroke="#475569" strokeWidth=2
-circle obj r=16 at -220,-20 fill="#38bdf8"
-circle light r=12 at 220,-20 fill="#fbbf24"
-line beam x1=220 y1=0 x2=-220 y2=0 at 0,-20 stroke="#f59e0b" strokeWidth=3
-always obj.x = expr=-220 + 440*(t/6.283)
-always obj.y = expr=-20 + 130*sin(t)
-always light.x = expr=220*cos(t*0.7)
-always light.y = expr=-20 + 90*sin(t*0.7)
-always beam.rotation = expr=12*sin(t*0.7)
-at 0s:
-  play FadeIn(title) duration=0.5s
-  play Create(plane) duration=0.6s
-  play Create(orbit) duration=0.5s
-  play FadeIn(obj) duration=0.4s
-  play FadeIn(light) duration=0.4s
-  play Create(beam) duration=0.5s
-animate t from 0 to 6.283 duration=4s easing=linear
+
+rect bg w=960 h=540 at 0,0 fill="#000000"
+
+threeDAxes axes at 0,0 xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 xLength=10.5 yLength=10.5 zLength=6.5 phi=75 theta=-30 unitScale=67.5 stroke="#FFFFFF" strokeWidth=2 tickSize=10 tickStrokeWidth=2 includeTicks=true includeTips=true
+
+gaussianSurface gauss at 0,0 range=-2,2 resolution=24 scale=2 sigma=0.4 mu=0,0 phi=75 theta=-30 unitScale=67.5 fillA="#FF862F" fillB="#58C4DD" stroke="#83C167" strokeWidth=0.5 fillOpacity=0.5 shade=true light=-7,-9,10
+
+wait 1s

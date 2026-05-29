@@ -47,7 +47,7 @@ export function applyNodeOption(
     return;
   }
 
-  if (["x", "y", "scale", "rotation", "opacity"].includes(key)) {
+  if (["x", "y", "scale", "scaleX", "scaleY", "rotation", "opacity"].includes(key)) {
     node.transform[key as keyof Transform] = parseNumber(value, lineNumber);
     return;
   }
@@ -57,8 +57,22 @@ export function applyNodeOption(
     return;
   }
 
-  if (key === "strokeWidth") {
-    node.style.strokeWidth = parseNumber(value, lineNumber);
+  if (key === "strokeWidth" || key === "fillOpacity" || key === "strokeOpacity") {
+    node.style[key] = parseNumber(value, lineNumber);
+    return;
+  }
+
+  if (key === "strokeLinecap") {
+    if (!["butt", "round", "square"].includes(value))
+      throw new DslCompileError("Expected strokeLinecap to be 'butt', 'round', or 'square'.", lineNumber);
+    node.style.strokeLinecap = value === "butt" || value === "square" ? value : "round";
+    return;
+  }
+
+  if (key === "strokeLinejoin") {
+    if (!["miter", "round", "bevel"].includes(value))
+      throw new DslCompileError("Expected strokeLinejoin to be 'miter', 'round', or 'bevel'.", lineNumber);
+    node.style.strokeLinejoin = value === "miter" || value === "bevel" ? value : "round";
     return;
   }
 
@@ -66,6 +80,11 @@ export function applyNodeOption(
     node.geometry.expandTokens = parseBoolean(value, lineNumber);
     if (node.geometry.expandTokens) expandMathTokens(node, lineNumber);
     else node.children = [];
+    return;
+  }
+
+  if (key === "fixedInFrame") {
+    node.geometry.fixedInFrame = parseBoolean(value, lineNumber);
     return;
   }
 
@@ -88,13 +107,25 @@ export function applyNodeOption(
     return;
   }
   if (key === "direction") {
-    if (!["up", "down", "left", "right"].includes(value))
-      throw new DslCompileError("Brace direction must be one of up/down/left/right.", lineNumber);
+    if (!["up", "down", "left", "right", "perpendicular", "normal", "line"].includes(value))
+      throw new DslCompileError("Brace direction must be one of up/down/left/right/perpendicular/normal/line.", lineNumber);
     node.geometry.direction = value;
     return;
   }
-  if (key === "buff") {
-    node.geometry.buff = parseNumber(value, lineNumber);
+  if (["buff", "sharpness", "curvature", "tip", "labelOffset", "labelW", "labelH"].includes(key)) {
+    node.geometry[key] = parseNumber(value, lineNumber);
+    return;
+  }
+  if (key === "labelRenderer") {
+    if (!["text", "katex", "mathjax"].includes(value))
+      throw new DslCompileError("Brace labelRenderer must be one of text/katex/mathjax.", lineNumber);
+    node.geometry.labelRenderer = value;
+    return;
+  }
+  if (key === "labelAlignment") {
+    if (!["start", "center", "end"].includes(value))
+      throw new DslCompileError("Brace labelAlignment must be one of start/center/end.", lineNumber);
+    node.geometry.labelAlignment = value;
     return;
   }
   if (key === "label") {
@@ -109,14 +140,37 @@ export function applyNodeOption(
     node.geometry.labelColor = value;
     return;
   }
+  if (key === "fillRule") {
+    if (value !== "nonzero" && value !== "evenodd")
+      throw new DslCompileError("Expected fillRule to be 'nonzero' or 'evenodd'.", lineNumber);
+    node.geometry.fillRule = value;
+    return;
+  }
 
-  if (["r", "w", "h", "x1", "y1", "x2", "y2"].includes(key)) {
+  if (["r", "w", "h", "x1", "y1", "x2", "y2", "clipX", "clipY", "clipW", "clipH", "dataRows"].includes(key)) {
     node.geometry[key] = parseNumber(value, lineNumber);
+    return;
+  }
+
+  if (key === "clip") {
+    if (value !== "rect")
+      throw new DslCompileError("Expected clip to be 'rect'.", lineNumber);
+    node.geometry.clip = value;
+    return;
+  }
+
+  if (key === "clipTarget") {
+    node.geometry.clipTarget = value;
     return;
   }
 
   if (key === "d") {
     node.geometry.d = value;
+    return;
+  }
+
+  if (key === "data" || key === "sampling") {
+    node.geometry[key] = value;
     return;
   }
 
@@ -133,12 +187,12 @@ export function isCameraProperty(property: string | undefined): boolean {
 }
 
 export function propertyPath(property: string): string {
-  if (["x", "y", "scale", "rotation", "opacity"].includes(property))
+  if (["x", "y", "scale", "scaleX", "scaleY", "rotation", "opacity"].includes(property))
     return `transform.${property}`;
-  if (["fill", "stroke", "strokeWidth"].includes(property))
+  if (["fill", "fillOpacity", "stroke", "strokeOpacity", "strokeWidth", "strokeLinecap", "strokeLinejoin"].includes(property))
     return `style.${property}`;
   if (
-    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "target", "direction", "buff", "label", "labelSize", "labelColor"].includes(property)
+    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "data", "dataRows", "sampling", "target", "direction", "buff", "sharpness", "curvature", "tip", "label", "labelSize", "labelColor", "labelOffset", "labelAlignment", "labelRenderer", "labelW", "labelH", "fillRule", "clip", "clipTarget", "clipX", "clipY", "clipW", "clipH", "fixedInFrame"].includes(property)
   )
     return `geometry.${property}`;
   if (property === "renderer") return "renderer";
@@ -159,6 +213,7 @@ function defaultGeometry(type: NodeType): Record<string, number | string> {
   if (type === "text") return { fontSize: 32 };
   if (type === "math") return { fontSize: 36 };
   if (type === "brace")
-    return { target: "", direction: "down", buff: 8, label: "", labelSize: 24, labelColor: "#ffffff" };
+    return { target: "", direction: "down", buff: 8, sharpness: 2, label: "", labelSize: 24, labelColor: "#ffffff", labelRenderer: "text" };
+  if (type === "image") return { w: 100, h: 100, data: "", dataRows: 0, sampling: "nearest" };
   return {};
 }

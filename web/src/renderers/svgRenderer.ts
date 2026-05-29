@@ -5,6 +5,8 @@ const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
 type MathRendererName = "katex" | "mathjax";
 const MAX_BASELINE_OFFSET_EM = 0.45;
+const MANIM_TEXT_FONT_FAMILY = "Inter, DejaVu Sans, Arial, sans-serif";
+const MANIM_BACKGROUND_COLOR = "#000000";
 
 const DEFAULT_CAMERA: Camera = { x: 0, y: 0, scale: 1, rotation: 0, target: { x: 0, y: 0 }, padding: 0, mode: "center" };
 
@@ -40,12 +42,19 @@ export function buildCameraTransform(
   ].join(" ");
 }
 
+export function buildFixedFrameTransform(width = 1280, height = 720): string {
+  return `translate(${width / 2} ${height / 2})`;
+}
+
 export class SvgRenderer {
   private readonly svg: SVGSVGElement;
   private readonly width: number;
   private readonly height: number;
   private readonly nodeById = new Map<string, SceneNode>();
   private readonly baselineCache = new Map<string, number>();
+  private currentDefs: SVGDefsElement | null = null;
+  private gradientIndex = 0;
+  private clipIndex = 0;
 
   constructor(container: Element, width = 1280, height = 720) {
     this.width = width;
@@ -56,17 +65,29 @@ export class SvgRenderer {
     this.svg.setAttribute("width", "100%");
     this.svg.setAttribute("height", "100%");
     this.svg.style.display = "block";
-    this.svg.style.background = "#0f172a";
+    this.svg.style.background = MANIM_BACKGROUND_COLOR;
     container.replaceChildren(this.svg);
   }
 
   render(nodes: SceneNode[], camera: Camera = DEFAULT_CAMERA): void {
     this.nodeById.clear();
+    this.gradientIndex = 0;
+    this.clipIndex = 0;
+    this.currentDefs = document.createElementNS(SVG_NS, "defs");
     for (const node of nodes) this.indexNode(node);
     const root = document.createElementNS(SVG_NS, "g");
+    const fixedRoot = document.createElementNS(SVG_NS, "g");
+    const sceneNodes = nodes.filter((node) => !this.isFixedInFrame(node));
+    const fixedNodes = nodes.filter((node) => this.isFixedInFrame(node));
     this.applyCameraTransform(root, camera);
-    root.replaceChildren(...nodes.map((node) => this.renderNode(node)));
-    this.svg.replaceChildren(root);
+    fixedRoot.setAttribute("transform", buildFixedFrameTransform(this.width, this.height));
+    root.replaceChildren(...sceneNodes.map((node) => this.renderNode(node)));
+    fixedRoot.replaceChildren(...fixedNodes.map((node) => this.renderNode(node)));
+    const children: SVGElement[] = [root];
+    if (fixedNodes.length > 0) children.push(fixedRoot);
+    if (this.currentDefs.childNodes.length > 0) this.svg.replaceChildren(this.currentDefs, ...children);
+    else this.svg.replaceChildren(...children);
+    this.currentDefs = null;
   }
 
   private renderNode(node: SceneNode): SVGElement {
@@ -75,8 +96,65 @@ export class SvgRenderer {
     this.applyTransform(element, node.transform);
     this.applyStyle(element, node.style);
     this.applyDrawProgress(element, node);
+    this.applyClipPath(element, node);
     for (const child of node.children ?? []) element.append(this.renderNode(child));
     return element;
+  }
+
+  private applyClipPath(element: SVGElement, node: SceneNode): void {
+    if (!this.currentDefs) return;
+    const clipRect = this.resolveClipRect(node);
+    if (!clipRect) return;
+
+    const clipPath = document.createElementNS(SVG_NS, "clipPath");
+    const id = `fluxion-clip-${this.clipIndex++}`;
+    clipPath.setAttribute("id", id);
+
+    const rect = document.createElementNS(SVG_NS, "rect");
+    rect.setAttribute("x", String(clipRect.x - clipRect.w / 2));
+    rect.setAttribute("y", String(clipRect.y - clipRect.h / 2));
+    rect.setAttribute("width", String(clipRect.w));
+    rect.setAttribute("height", String(clipRect.h));
+    clipPath.append(rect);
+
+    this.currentDefs.append(clipPath);
+    element.setAttribute("clip-path", `url(#${id})`);
+  }
+
+  private resolveClipRect(node: SceneNode): { x: number; y: number; w: number; h: number } | null {
+    const targetId = typeof node.geometry.clipTarget === "string" ? node.geometry.clipTarget : "";
+    if (targetId) {
+      const target = this.nodeById.get(targetId);
+      if (!target) return null;
+      return this.nodeClipBounds(target);
+    }
+
+    if (node.geometry.clip !== "rect") return null;
+    const w = Number(node.geometry.clipW);
+    const h = Number(node.geometry.clipH);
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null;
+    return {
+      x: Number(node.geometry.clipX ?? 0),
+      y: Number(node.geometry.clipY ?? 0),
+      w,
+      h,
+    };
+  }
+
+  private nodeClipBounds(node: SceneNode): { x: number; y: number; w: number; h: number } | null {
+    if (node.type !== "rect" && node.type !== "image") return null;
+    const scale = Number(node.transform.scale ?? 1);
+    const scaleX = scale * Number(node.transform.scaleX ?? 1);
+    const scaleY = scale * Number(node.transform.scaleY ?? 1);
+    const w = Math.abs(Number(node.geometry.w ?? 0) * scaleX);
+    const h = Math.abs(Number(node.geometry.h ?? 0) * scaleY);
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null;
+    return {
+      x: Number(node.transform.x ?? 0),
+      y: Number(node.transform.y ?? 0),
+      w,
+      h,
+    };
   }
 
   private createElement(node: SceneNode): SVGElement {
@@ -89,16 +167,39 @@ export class SvgRenderer {
 
       const label = String(node.geometry.label ?? "").trim();
       if (label) {
-        const text = document.createElementNS(SVG_NS, "text");
-        text.textContent = label;
-        text.setAttribute("x", String(d.anchor.x));
-        text.setAttribute("y", String(d.anchor.y));
-        text.setAttribute("font-size", String(Number(node.geometry.labelSize ?? 24)));
-        text.setAttribute("text-anchor", "middle");
-        text.setAttribute("dominant-baseline", "middle");
-        text.setAttribute("fill", String(node.geometry.labelColor ?? "#ffffff"));
-        text.setAttribute("stroke", "none");
-        group.append(text);
+        const renderer = String(node.geometry.labelRenderer ?? "text");
+        if (renderer === "katex" || renderer === "mathjax") {
+          const fontSize = Number(node.geometry.labelSize ?? 24);
+          const mathNode: SceneNode = {
+            id: `${node.id}:label`,
+            type: "math",
+            transform: { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+            style: { fill: String(node.geometry.labelColor ?? "#ffffff") },
+            geometry: {
+              fontSize,
+              w: Number(node.geometry.labelW ?? Math.max(fontSize * 4, label.length * fontSize * 0.75)),
+              h: Number(node.geometry.labelH ?? fontSize * 2.5),
+            },
+            children: [],
+            latex: label,
+            renderer,
+          };
+          const math = this.createMathElement(mathNode);
+          math.setAttribute("transform", `translate(${d.anchor.x} ${d.anchor.y})`);
+          group.append(math);
+        } else {
+          const text = document.createElementNS(SVG_NS, "text");
+          text.textContent = label;
+          text.setAttribute("x", String(d.anchor.x));
+          text.setAttribute("y", String(d.anchor.y));
+          text.setAttribute("font-size", String(Number(node.geometry.labelSize ?? 24)));
+          text.setAttribute("font-family", MANIM_TEXT_FONT_FAMILY);
+          text.setAttribute("text-anchor", "middle");
+          text.setAttribute("dominant-baseline", "middle");
+          text.setAttribute("fill", String(node.geometry.labelColor ?? "#ffffff"));
+          text.setAttribute("stroke", "none");
+          group.append(text);
+        }
       }
       return group;
     }
@@ -117,6 +218,9 @@ export class SvgRenderer {
       el.setAttribute("height", String(height));
       return el;
     }
+    if (node.type === "image") {
+      return this.createImageElement(node);
+    }
     if (node.type === "triangle") {
       const el = document.createElementNS(SVG_NS, "path");
       const w = Number(node.geometry.w ?? 100);
@@ -134,12 +238,14 @@ export class SvgRenderer {
     if (node.type === "path") {
       const el = document.createElementNS(SVG_NS, "path");
       el.setAttribute("d", String(node.geometry.d ?? ""));
+      if (node.geometry.fillRule) el.setAttribute("fill-rule", String(node.geometry.fillRule));
       return el;
     }
     if (node.type === "text") {
       const el = document.createElementNS(SVG_NS, "text");
       el.textContent = this.writeProgressText(node);
       el.setAttribute("font-size", String(node.geometry.fontSize ?? 32));
+      el.setAttribute("font-family", MANIM_TEXT_FONT_FAMILY);
       el.setAttribute("text-anchor", "middle");
       el.setAttribute("dominant-baseline", "middle");
       return el;
@@ -150,6 +256,89 @@ export class SvgRenderer {
       return this.createMathElement(node);
     }
     return document.createElementNS(SVG_NS, "g");
+  }
+
+  private isFixedInFrame(node: SceneNode): boolean {
+    return node.geometry.fixedInFrame === true;
+  }
+
+  private createImageElement(node: SceneNode): SVGElement {
+    const group = document.createElementNS(SVG_NS, "g");
+    const width = Number(node.geometry.w ?? 100);
+    const height = Number(node.geometry.h ?? 100);
+    const pixels = this.parseImagePixels(String(node.geometry.data ?? ""), Number(node.geometry.dataRows ?? 0));
+    if (pixels.length === 0 || pixels[0]?.length === 0) {
+      const fallback = document.createElementNS(SVG_NS, "rect");
+      fallback.setAttribute("x", String(-width / 2));
+      fallback.setAttribute("y", String(-height / 2));
+      fallback.setAttribute("width", String(width));
+      fallback.setAttribute("height", String(height));
+      fallback.setAttribute("fill", "none");
+      group.append(fallback);
+      return group;
+    }
+
+    const rows = pixels.length;
+    const cols = Math.max(...pixels.map((row) => row.length));
+    const horizontalGradient = this.detectHorizontalImageGradient(pixels, cols);
+    if (horizontalGradient) {
+      const rect = document.createElementNS(SVG_NS, "rect");
+      rect.setAttribute("x", String(-width / 2));
+      rect.setAttribute("y", String(-height / 2));
+      rect.setAttribute("width", String(width));
+      rect.setAttribute("height", String(height));
+      rect.setAttribute("fill", this.createLinearGradientFill(horizontalGradient, "horizontal"));
+      rect.setAttribute("stroke", "none");
+      group.append(rect);
+      return group;
+    }
+    const cellW = width / cols;
+    const cellH = height / rows;
+    pixels.forEach((row, rowIndex) => {
+      for (let colIndex = 0; colIndex < cols; colIndex += 1) {
+        const value = row[colIndex] ?? row[row.length - 1] ?? 0;
+        const rect = document.createElementNS(SVG_NS, "rect");
+        rect.setAttribute("x", String(-width / 2 + colIndex * cellW));
+        rect.setAttribute("y", String(-height / 2 + rowIndex * cellH));
+        rect.setAttribute("width", String(cellW + 0.02));
+        rect.setAttribute("height", String(cellH + 0.02));
+        rect.setAttribute("fill", this.pixelToColor(value));
+        rect.setAttribute("stroke", "none");
+        group.append(rect);
+      }
+    });
+    return group;
+  }
+
+  private detectHorizontalImageGradient(pixels: number[][], cols: number): string[] | undefined {
+    if (pixels.length < 2 || cols < 2) return undefined;
+    const first = Array.from({ length: cols }, (_, index) => pixels[0]?.[index] ?? pixels[0]?.at(-1) ?? 0);
+    const rowsMatch = pixels.every((row) =>
+      first.every((value, index) => Math.abs((row[index] ?? row.at(-1) ?? 0) - value) < 1e-9),
+    );
+    if (!rowsMatch) return undefined;
+    return first.map((value) => this.pixelToColor(value));
+  }
+
+  private parseImagePixels(data: string, dataRows = 0): number[][] {
+    const rows = data
+      .split(";")
+      .map((row) =>
+        row
+          .split(",")
+          .map((value) => Number(value.trim()))
+          .filter((value) => Number.isFinite(value)),
+      )
+      .filter((row) => row.length > 0);
+    const repeatRows = Math.max(0, Math.floor(dataRows));
+    if (rows.length === 1 && repeatRows > 1) return Array.from({ length: repeatRows }, () => [...rows[0]!]);
+    return rows;
+  }
+
+  private pixelToColor(value: number): string {
+    const gray = Math.max(0, Math.min(255, Math.round(value)));
+    const hex = gray.toString(16).padStart(2, "0");
+    return `#${hex}${hex}${hex}`;
   }
 
   private indexNode(node: SceneNode): void {
@@ -163,11 +352,43 @@ export class SvgRenderer {
     if (!target) return { path: "M 0 0", anchor: { x: 0, y: 0 } };
     const b = this.getApproxBounds(target);
     const buff = Math.max(0, Number(node.geometry.buff ?? 8));
-    const curvature = this.clamp(Number(node.geometry.curvature ?? 0.22), 0.08, 0.6);
-    const tip = this.clamp(Number(node.geometry.tip ?? 0.35), 0.12, 0.75);
+    const sharpness = this.clamp(Number(node.geometry.sharpness ?? 2), 0.1, 8);
+    const curvature = this.clamp(Number(node.geometry.curvature ?? (0.2 + 0.04 / sharpness)), 0.08, 0.6);
+    const tip = this.clamp(Number(node.geometry.tip ?? (0.48 / Math.sqrt(sharpness))), 0.12, 0.75);
     const dir = String(node.geometry.direction ?? "down");
-    if (dir === "up" || dir === "down") return this.buildHorizontalBrace(b, dir, buff, curvature, tip, node);
-    return this.buildVerticalBrace(b, dir === "left" ? "left" : "right", buff, curvature, tip, node);
+    if (target.type === "line" && (dir === "perpendicular" || dir === "normal" || dir === "line")) {
+      return this.buildLineBrace(target, buff, curvature, tip, sharpness, node);
+    }
+    if (dir === "up" || dir === "down") return this.buildHorizontalBrace(b, dir, buff, curvature, tip, sharpness, node);
+    return this.buildVerticalBrace(b, dir === "left" ? "left" : "right", buff, curvature, tip, sharpness, node);
+  }
+
+  private buildLineBrace(
+    target: SceneNode,
+    buff: number,
+    curvature: number,
+    tip: number,
+    sharpness: number,
+    node: SceneNode,
+  ): { path: string; anchor: { x: number; y: number } } {
+    const tx = Number(target.transform.x ?? 0);
+    const ty = Number(target.transform.y ?? 0);
+    const start = { x: tx + Number(target.geometry.x1 ?? 0), y: ty + Number(target.geometry.y1 ?? 0) };
+    const end = { x: tx + Number(target.geometry.x2 ?? 0), y: ty + Number(target.geometry.y2 ?? 0) };
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const length = Math.hypot(dx, dy);
+    if (length < 1) return { path: "M 0 0", anchor: start };
+
+    const ux = dx / length;
+    const uy = dy / length;
+    const nx = uy;
+    const ny = -ux;
+    const baseStart = { x: start.x + nx * buff, y: start.y + ny * buff };
+    const baseEnd = { x: end.x + nx * buff, y: end.y + ny * buff };
+    const { path, tipPoint, tipDepth } = this.buildBraceRibbon(baseStart, baseEnd, { x: nx, y: ny }, curvature, tip, sharpness);
+    const gap = this.braceLabelGap(tipDepth, length, node);
+    return { path, anchor: { x: tipPoint.x + nx * gap, y: tipPoint.y + ny * gap } };
   }
 
   private buildHorizontalBrace(
@@ -176,22 +397,23 @@ export class SvgRenderer {
     buff: number,
     curvature: number,
     tip: number,
+    sharpness: number,
     node: SceneNode,
   ): { path: string; anchor: { x: number; y: number } } {
     const length = Math.max(1, b.maxX - b.minX);
     const y = dir === "up" ? b.minY - buff : b.maxY + buff;
     const sign = dir === "up" ? -1 : 1;
     const center = (b.minX + b.maxX) / 2;
-    const control = this.clamp(length * curvature, 10, 64);
-    const tipDepth = this.clamp(length * tip * 0.32, 12, Math.max(18, length * 0.75));
-    const cpInset = this.clamp(control * 0.45, 6, control);
-    const path = [
-      `M ${b.minX} ${y}`,
-      `C ${b.minX + cpInset} ${y} ${center - control} ${y + sign * tipDepth} ${center} ${y + sign * tipDepth}`,
-      `C ${center + control} ${y + sign * tipDepth} ${b.maxX - cpInset} ${y} ${b.maxX} ${y}`,
-    ].join(" ");
+    const { path, tipPoint, tipDepth } = this.buildBraceRibbon(
+      { x: b.minX, y },
+      { x: b.maxX, y },
+      { x: 0, y: sign },
+      curvature,
+      tip,
+      sharpness,
+    );
     const anchor = this.computeBraceLabelAnchor(
-      { x: center, y: y + sign * tipDepth },
+      { x: center, y: tipPoint.y },
       sign,
       tipDepth,
       length,
@@ -207,22 +429,23 @@ export class SvgRenderer {
     buff: number,
     curvature: number,
     tip: number,
+    sharpness: number,
     node: SceneNode,
   ): { path: string; anchor: { x: number; y: number } } {
     const length = Math.max(1, b.maxY - b.minY);
     const x = dir === "left" ? b.minX - buff : b.maxX + buff;
     const sign = dir === "left" ? -1 : 1;
     const center = (b.minY + b.maxY) / 2;
-    const control = this.clamp(length * curvature, 10, 64);
-    const tipDepth = this.clamp(length * tip * 0.32, 12, Math.max(18, length * 0.75));
-    const cpInset = this.clamp(control * 0.45, 6, control);
-    const path = [
-      `M ${x} ${b.minY}`,
-      `C ${x} ${b.minY + cpInset} ${x + sign * tipDepth} ${center - control} ${x + sign * tipDepth} ${center}`,
-      `C ${x + sign * tipDepth} ${center + control} ${x} ${b.maxY - cpInset} ${x} ${b.maxY}`,
-    ].join(" ");
+    const { path, tipPoint, tipDepth } = this.buildBraceRibbon(
+      { x, y: b.minY },
+      { x, y: b.maxY },
+      { x: sign, y: 0 },
+      curvature,
+      tip,
+      sharpness,
+    );
     const anchor = this.computeBraceLabelAnchor(
-      { x: x + sign * tipDepth, y: center },
+      { x: tipPoint.x, y: center },
       sign,
       tipDepth,
       length,
@@ -230,6 +453,199 @@ export class SvgRenderer {
       false,
     );
     return { path, anchor };
+  }
+
+  private buildBraceRibbon(
+    start: { x: number; y: number },
+    end: { x: number; y: number },
+    normal: { x: number; y: number },
+    curvature: number,
+    tip: number,
+    sharpness: number,
+  ): { path: string; tipPoint: { x: number; y: number }; tipDepth: number } {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const length = Math.max(1, Math.hypot(dx, dy));
+    const ux = dx / length;
+    const uy = dy / length;
+    const center = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+    const tipDepth = this.clamp(length * tip * 0.34, 16, Math.max(22, length * 0.38));
+    const manimTemplate = this.buildManimBraceTemplate(length, sharpness);
+    const bounds = this.pathBounds(manimTemplate);
+    if (bounds) {
+      const yRange = Math.max(0.0001, bounds.maxY - bounds.minY);
+      const xRange = Math.max(0.0001, bounds.maxX - bounds.minX);
+      const p = (x: number, y: number): string => {
+        const along = ((x - bounds.minX) / xRange - 0.5) * length;
+        const outward = ((y - bounds.minY) / yRange) * tipDepth;
+        return `${center.x + ux * along + normal.x * outward} ${center.y + uy * along + normal.y * outward}`;
+      };
+      return {
+        path: manimTemplate
+          .map((command) => {
+            if (command.type === "M") return `M ${p(command.x, command.y)}`;
+            if (command.type === "L") return `L ${p(command.x, command.y)}`;
+            if (command.type === "C")
+              return `C ${p(command.x1, command.y1)} ${p(command.x2, command.y2)} ${p(command.x, command.y)}`;
+            return "Z";
+          })
+          .join(" "),
+        tipPoint: {
+          x: center.x + normal.x * tipDepth,
+          y: center.y + normal.y * tipDepth,
+        },
+        tipDepth,
+      };
+    }
+
+    const p = (along: number, outward: number): string =>
+      `${center.x + ux * along + normal.x * outward} ${center.y + uy * along + normal.y * outward}`;
+    const tipPoint = {
+      x: center.x + normal.x * tipDepth,
+      y: center.y + normal.y * tipDepth,
+    };
+    const thickness = this.clamp(length * (0.012 + curvature * 0.014), 4.5, 10);
+    const innerThickness = thickness * 0.72;
+    const tipThickness = thickness * 1.4;
+    const endCurl = this.clamp(length * 0.055 / Math.sqrt(sharpness), 7, 20);
+
+    return {
+      path: [
+        `M ${p(-length / 2, 0)}`,
+        `C ${p(-length / 2 + endCurl, 0)} ${p(-length * 0.38, thickness)} ${p(-length * 0.22, thickness)}`,
+        `C ${p(-length * 0.1, thickness)} ${p(-length * 0.08, tipDepth - tipThickness)} ${p(0, tipDepth)}`,
+        `C ${p(length * 0.08, tipDepth - tipThickness)} ${p(length * 0.1, thickness)} ${p(length * 0.22, thickness)}`,
+        `C ${p(length * 0.38, thickness)} ${p(length / 2 - endCurl, 0)} ${p(length / 2, 0)}`,
+        `C ${p(length / 2 - endCurl, -innerThickness)} ${p(length * 0.38, -innerThickness)} ${p(length * 0.22, -innerThickness)}`,
+        `C ${p(length * 0.1, -innerThickness)} ${p(length * 0.08, tipDepth - tipThickness * 2)} ${p(0, tipDepth - tipThickness)}`,
+        `C ${p(-length * 0.08, tipDepth - tipThickness * 2)} ${p(-length * 0.1, -innerThickness)} ${p(-length * 0.22, -innerThickness)}`,
+        `C ${p(-length * 0.38, -innerThickness)} ${p(-length / 2 + endCurl, -innerThickness)} ${p(-length / 2, 0)}`,
+        "Z",
+      ].join(" "),
+      tipPoint,
+      tipDepth,
+    };
+  }
+
+  private buildManimBraceTemplate(
+    targetLength: number,
+    sharpness: number,
+  ): Array<
+    | { type: "M" | "L"; x: number; y: number }
+    | { type: "C"; x1: number; y1: number; x2: number; y2: number; x: number; y: number }
+    | { type: "Z" }
+  > {
+    const unitWidth = Math.max(0.01, targetLength / 100);
+    const linear = Math.max(0, (unitWidth * sharpness - 0.90552) / 2);
+    const source = [
+      "m0.01216 0",
+      "c-0.01152 0 -0.01216 0.0006103 -0.01216 0.01311",
+      "v0.007762",
+      `c0.06776 0.122 0.1799 0.1455 0.2307 0.1455`,
+      `h${linear}`,
+      "c0.03046 0.0003899 0.07964 0.00449 0.1246 0.02636",
+      "c0.0537 0.02695 0.07418 0.05816 0.08648 0.07769",
+      "c0.001562 0.002538 0.004539 0.002563 0.01098 0.002563",
+      "c0.006444 0 0.009421 -0.0000247 0.01098 -0.002563",
+      "c0.0123 -0.01953 0.03278 -0.05074 0.08648 -0.07769",
+      "c0.04491 -0.02187 0.09409 -0.02597 0.1246 -0.02636",
+      `h${linear}`,
+      "c0.05077 0 0.1629 -0.02346 0.2307 -0.1455",
+      "v-0.007762",
+      "c-0.00000178 -0.0125 -0.0006365 -0.01311 -0.01216 -0.01311",
+      "c-0.006444 0 -0.009348 0.00002448 -0.01091 0.002563",
+      "c-0.0123 0.01953 -0.03278 0.05074 -0.08648 0.07769",
+      "c-0.04491 0.02187 -0.09416 0.02597 -0.1246 0.02636",
+      `h${-linear}`,
+      "c-0.04786 0 -0.1502 0.02094 -0.2185 0.1256",
+      "c-0.06833 -0.1046 -0.1706 -0.1256 -0.2185 -0.1256",
+      `h${-linear}`,
+      "c-0.03046 -0.0003899 -0.07972 -0.004491 -0.1246 -0.02636",
+      "c-0.0537 -0.02695 -0.07418 -0.05816 -0.08648 -0.07769",
+      "c-0.001562 -0.002538 -0.004467 -0.002563 -0.01091 -0.002563",
+      "z",
+    ].join(" ");
+    return this.parseRelativeBracePath(source);
+  }
+
+  private parseRelativeBracePath(
+    source: string,
+  ): Array<
+    | { type: "M" | "L"; x: number; y: number }
+    | { type: "C"; x1: number; y1: number; x2: number; y2: number; x: number; y: number }
+    | { type: "Z" }
+  > {
+    const tokens = source.match(/[a-zA-Z]|[-+]?(?:\d*\.\d+|\d+)(?:e[-+]?\d+)?/gu) ?? [];
+    const commands: Array<
+      | { type: "M" | "L"; x: number; y: number }
+      | { type: "C"; x1: number; y1: number; x2: number; y2: number; x: number; y: number }
+      | { type: "Z" }
+    > = [];
+    let index = 0;
+    let x = 0;
+    let y = 0;
+    while (index < tokens.length) {
+      const command = tokens[index++];
+      if (!command) break;
+      if (command === "m") {
+        x += Number(tokens[index++]);
+        y += Number(tokens[index++]);
+        commands.push({ type: "M", x, y });
+        continue;
+      }
+      if (command === "c") {
+        const x1 = x + Number(tokens[index++]);
+        const y1 = y + Number(tokens[index++]);
+        const x2 = x + Number(tokens[index++]);
+        const y2 = y + Number(tokens[index++]);
+        x += Number(tokens[index++]);
+        y += Number(tokens[index++]);
+        commands.push({ type: "C", x1, y1, x2, y2, x, y });
+        continue;
+      }
+      if (command === "h") {
+        x += Number(tokens[index++]);
+        commands.push({ type: "L", x, y });
+        continue;
+      }
+      if (command === "v") {
+        y += Number(tokens[index++]);
+        commands.push({ type: "L", x, y });
+        continue;
+      }
+      if (command === "z" || command === "Z") {
+        commands.push({ type: "Z" });
+        continue;
+      }
+      return [];
+    }
+    return commands;
+  }
+
+  private pathBounds(
+    commands: Array<
+      | { type: "M" | "L"; x: number; y: number }
+      | { type: "C"; x1: number; y1: number; x2: number; y2: number; x: number; y: number }
+      | { type: "Z" }
+    >,
+  ): { minX: number; maxX: number; minY: number; maxY: number } | undefined {
+    const points = commands.flatMap((command) => {
+      if (command.type === "M" || command.type === "L") return [{ x: command.x, y: command.y }];
+      if (command.type === "C")
+        return [
+          { x: command.x1, y: command.y1 },
+          { x: command.x2, y: command.y2 },
+          { x: command.x, y: command.y },
+        ];
+      return [];
+    });
+    if (points.length === 0) return undefined;
+    return {
+      minX: Math.min(...points.map((point) => point.x)),
+      maxX: Math.max(...points.map((point) => point.x)),
+      minY: Math.min(...points.map((point) => point.y)),
+      maxY: Math.max(...points.map((point) => point.y)),
+    };
   }
 
   private computeBraceLabelAnchor(
@@ -241,14 +657,18 @@ export class SvgRenderer {
     horizontal: boolean,
   ): { x: number; y: number } {
     const alignment = String(node.geometry.labelAlignment ?? "center").toLowerCase();
-    const rawOffset = Number(node.geometry.labelOffset ?? 0);
-    const stretch = this.clamp(targetLength / 220, 0.65, 2.4);
-    const baseGap = tipDepth * 0.65 + 8 + stretch * 4;
-    const gap = Math.max(0, baseGap + rawOffset * stretch);
+    const gap = this.braceLabelGap(tipDepth, targetLength, node);
     const axisShift = this.clamp(targetLength * 0.28, 18, 90);
     const shiftSign = alignment === "start" ? -1 : alignment === "end" ? 1 : 0;
     if (horizontal) return { x: tipPoint.x + shiftSign * axisShift, y: tipPoint.y + outwardSign * gap };
     return { x: tipPoint.x + outwardSign * gap, y: tipPoint.y + shiftSign * axisShift };
+  }
+
+  private braceLabelGap(tipDepth: number, targetLength: number, node: SceneNode): number {
+    const rawOffset = Number(node.geometry.labelOffset ?? 0);
+    const stretch = this.clamp(targetLength / 220, 0.65, 2.4);
+    const baseGap = tipDepth * 0.52 + 10 + stretch * 3.5;
+    return Math.max(0, baseGap + rawOffset * stretch);
   }
 
   private clamp(value: number, min: number, max: number): number {
@@ -263,7 +683,11 @@ export class SvgRenderer {
       return { minX: x - r, maxX: x + r, minY: y - r, maxY: y + r };
     }
     if (node.type === "line") {
-      return { minX: x + Number(node.geometry.x1 ?? 0), maxX: x + Number(node.geometry.x2 ?? 0), minY: y + Number(node.geometry.y1 ?? 0), maxY: y + Number(node.geometry.y2 ?? 0) };
+      const x1 = x + Number(node.geometry.x1 ?? 0);
+      const x2 = x + Number(node.geometry.x2 ?? 0);
+      const y1 = y + Number(node.geometry.y1 ?? 0);
+      const y2 = y + Number(node.geometry.y2 ?? 0);
+      return { minX: Math.min(x1, x2), maxX: Math.max(x1, x2), minY: Math.min(y1, y2), maxY: Math.max(y1, y2) };
     }
     const w = Number(node.geometry.w ?? (Number(node.geometry.fontSize ?? 32) * 4));
     const h = Number(node.geometry.h ?? (Number(node.geometry.fontSize ?? 32) * 1.5));
@@ -409,17 +833,54 @@ export class SvgRenderer {
   }
 
   private applyTransform(element: SVGElement, transform: Transform): void {
+    const scale = Number(transform.scale ?? 1);
+    const scaleX = scale * Number(transform.scaleX ?? 1);
+    const scaleY = scale * Number(transform.scaleY ?? 1);
     element.setAttribute(
       "transform",
-      `translate(${transform.x} ${transform.y}) rotate(${transform.rotation}) scale(${transform.scale})`,
+      `translate(${transform.x} ${transform.y}) rotate(${transform.rotation}) scale(${scaleX} ${scaleY})`,
     );
     element.setAttribute("opacity", String(transform.opacity));
   }
 
   private applyStyle(element: SVGElement, style: Style): void {
-    element.setAttribute("fill", style.fill ?? "none");
+    element.setAttribute("fill", this.resolveFill(style.fill ?? "none"));
     element.setAttribute("stroke", style.stroke ?? "none");
     element.setAttribute("stroke-width", String(style.strokeWidth ?? 0));
+    if (style.strokeLinecap) element.setAttribute("stroke-linecap", style.strokeLinecap);
+    if (style.strokeLinejoin) element.setAttribute("stroke-linejoin", style.strokeLinejoin);
+    if (style.fillOpacity !== undefined) element.setAttribute("fill-opacity", String(style.fillOpacity));
+    if (style.strokeOpacity !== undefined) element.setAttribute("stroke-opacity", String(style.strokeOpacity));
+  }
+
+  private resolveFill(fill: string): string {
+    const stops = /^linear-gradient\((.+)\)$/u.exec(fill.trim())?.[1];
+    if (!stops || !this.currentDefs) return fill;
+    const colors = stops
+      .split(",")
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0);
+    if (colors.length < 2) return fill;
+    return this.createLinearGradientFill(colors, "horizontal");
+  }
+
+  private createLinearGradientFill(colors: string[], direction: "horizontal" | "vertical"): string {
+    if (!this.currentDefs || colors.length < 2) return colors[0] ?? "none";
+    const id = `fluxion-gradient-${this.gradientIndex++}`;
+    const gradient = document.createElementNS(SVG_NS, "linearGradient");
+    gradient.setAttribute("id", id);
+    gradient.setAttribute("x1", "0%");
+    gradient.setAttribute("y1", "0%");
+    gradient.setAttribute("x2", direction === "horizontal" ? "100%" : "0%");
+    gradient.setAttribute("y2", direction === "vertical" ? "100%" : "0%");
+    colors.forEach((color, index) => {
+      const stop = document.createElementNS(SVG_NS, "stop");
+      stop.setAttribute("offset", `${(index / (colors.length - 1)) * 100}%`);
+      stop.setAttribute("stop-color", color);
+      gradient.append(stop);
+    });
+    this.currentDefs.append(gradient);
+    return `url(#${id})`;
   }
 
   private applyDrawProgress(element: SVGElement, node: SceneNode): void {
@@ -428,5 +889,10 @@ export class SvgRenderer {
     element.setAttribute("pathLength", "1");
     element.setAttribute("stroke-dasharray", "1");
     element.setAttribute("stroke-dashoffset", String(1 - progress));
+    if ((node.style.fill ?? "none") !== "none" && progress < 0.999) {
+      const baseFillOpacity = Number(node.style.fillOpacity ?? 1);
+      const revealOpacity = this.clamp((progress - 0.72) / 0.28, 0, 1);
+      element.setAttribute("fill-opacity", String(this.clamp(baseFillOpacity, 0, 1) * revealOpacity));
+    }
   }
 }

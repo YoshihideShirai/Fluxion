@@ -54,16 +54,16 @@ Use this table as the canonical mapping for migration tracking and regression ch
 
 | Python example / source | Gallery demo | Porting strategy | Fidelity | Notes |
 | --- | --- | --- | --- |
-| `examples/simple_circle.py` | `site/src/content/gallery/simple-circle.md` | `faithful` (忠実移植) | `faithful` | Core flow is matched; minor browser rendering differences may remain. |
-| `examples/basic_concepts_square_to_circle.py` | `site/src/content/gallery/square-to-circle.md` | `faithful` (忠実移植) | `faithful` | Create → Transform → FadeOut is preserved with interpolation caveats. |
-| `examples/animations_using_animate.py` | `site/src/content/gallery/animations-using-animate.md` | `faithful` (忠実移植) | `faithful` | `.animate` sequence is preserved; default easing may differ slightly. |
-| `examples/plotting_with_manim.py` | `site/src/content/gallery/plotting-sin-cos.md` | `visual_approximation` (視覚近似) | `visual_approximation` | Curves/axes are approximated for web runtime parity. |
-| `examples/special_camera_settings.py` | `site/src/content/gallery/special-camera.md` | `visual_approximation` (視覚近似) | `visual_approximation` | Camera behavior is approximated to current camera model. |
-| Manim `MovingFrameBox` | `site/src/content/gallery/moving-frame-box.md` | `visual_approximation` (視覚近似) | `visual_approximation` | `SurroundingRectangle` is represented by `surroundingRect`; MathTex parts use declared bounds. |
+| `examples/gallery/simple-circle.fluxion.txt` | `site/src/content/gallery/simple-circle.md` | `faithful` (忠実移植) | `faithful` | The quickstart `Circle().set_fill(PINK, opacity=0.5)` and `Create(circle)` are expanded at Manim frame scale; minor browser rendering differences may remain. |
+| `examples/gallery/square-to-circle.fluxion.txt` | `site/src/content/gallery/square-to-circle.md` | `faithful` (忠実移植) | `faithful` | The quickstart `Square().rotate(PI / 4)` and `Circle().set_fill(PINK, opacity=0.5)` are expanded at Manim frame scale, preserving Create → Transform → FadeOut with interpolation caveats. |
+| `examples/gallery/animations-using-animate.fluxion.txt` | `site/src/content/gallery/animations-using-animate.md` | `faithful` (忠実移植) | `faithful` | The official `MovingAround` `.animate.shift(LEFT)`, `.set_fill(ORANGE)`, `.scale(0.3)`, and `.rotate(0.4)` sequence is preserved at Manim frame scale. |
+| `examples/gallery/plotting-sin-cos.fluxion.txt` | `site/src/content/gallery/plotting-sin-cos.md` | `faithful` | `faithful` | `Axes(..., x_length=10)` and the default `y_length=6` are expanded to 675x405px; `axes.plot(...)`, the `x=2π` vertical marker, and graph labels are represented by Text DSL helpers. |
+| `examples/gallery/special-camera.fluxion.txt` | `site/src/content/gallery/special-camera.md` | `faithful` | `faithful` | Official Axes default lengths and Dot radius are expanded at Manim frame scale; MovingCameraScene's invisible frame updater is represented with `followCamera` plus restore camera operations for the same visible behavior. |
+| Manim `MovingFrameBox` | `site/src/content/gallery/moving-frame-box.md` | `faithful` | `faithful` | `SurroundingRectangle` is represented by `surroundingRect`, and `ReplacementTransform(framebox1, framebox2)` morphs the frame before replacing it with the target. |
 
 Interpretation rule: `fidelity=faithful` means behavior-oriented parity, while `fidelity=visual_approximation` means visual-first approximation with explicit known gaps.
 
-For gallery entries that are not yet backed by a runnable Python example, `source_example_path` points to the planned/placeholder path under `examples/gallery/` so impact can still be tracked systematically.
+Gallery `source_manim_url` values point to anchored pages in the stable Manim documentation. Gallery `source_example_path` values point to `examples/gallery/*.fluxion.txt`, and the gallery page body is kept in sync with that Text DSL source. Each gallery Text DSL source maps to exactly one gallery page. Python DSL / JSON export samples remain available as separate authoring examples.
 
 ## Browser example
 

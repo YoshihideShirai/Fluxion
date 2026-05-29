@@ -3,55 +3,24 @@ title: HeatDiagramPlot
 description: "Manim Example: `HeatDiagramPlot` (`#heatdiagramplot`) の Fluxion 移植版。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#heatdiagramplot
 source_example_path: examples/gallery/heat-diagram-plot.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "本家の連続カラーマップ/数値軸連携は未対応で、矩形グリッドと色分けで近似している。"
-    layer: runtime
-    impact: medium
-    workaround: "cell を個別 rect として並べ、段階色でヒートマップ風に表現する。"
-    closure_condition: "image/heatmap 専用 primitive とカラーマップ補間を実装する。"
-    fidelity_upgrade_condition: "連続値のサンプリングと凡例連携が Manim 相当で再現できる時。"
+  - symptom: "Axes の軸ラベルは `axisLabels` helper で軸端からの offset と x/y 個別サイズを指定している。非対称 range の原点、tick/number labels、`plot_line_graph` 相当の折れ線・vertex dots は helper から生成し、公式 `self.add(ax, labels, graph)` と vertex dots 前面のSVG順を保っている。"
+    layer: dsl
+    impact: low
+    workaround: "Manim の `Axes(...).get_axis_labels(...)` 相当として、`axisLabels` で軸ラベル math を軸端の `UR` 配置へ生成する。"
+    closure_condition: "Manim と同じ `Axes.plot_line_graph` API を DSL/runtime で直接扱えるようにする。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Manim Stable Examples
-status: partial
+status: ported
 order: 65
 gap_id: GAP-018
 ---
 scene width=960 height=540 fps=60
 
-rect bg w=960 h=540 at 0,0 fill="#0b1020"
-text title "HeatDiagramPlot" at 0,220 size=40 fill="#e2e8f0"
-rect frame w=620 h=320 at -40,-20 fill="#0f172a" stroke="#334155" strokeWidth=2
-
-rect c1 w=90 h=90 at -250,70 fill="#1d4ed8"
-rect c2 w=90 h=90 at -145,70 fill="#2563eb"
-rect c3 w=90 h=90 at -40,70 fill="#3b82f6"
-rect c4 w=90 h=90 at 65,70 fill="#60a5fa"
-rect c5 w=90 h=90 at 170,70 fill="#93c5fd"
-
-rect c6 w=90 h=90 at -250,-35 fill="#1e3a8a"
-rect c7 w=90 h=90 at -145,-35 fill="#0ea5e9"
-rect c8 w=90 h=90 at -40,-35 fill="#22d3ee"
-rect c9 w=90 h=90 at 65,-35 fill="#67e8f9"
-rect c10 w=90 h=90 at 170,-35 fill="#bae6fd"
-
-text cold "low" at -320,-200 size=22 fill="#93c5fd"
-text hot "high" at 250,-200 size=22 fill="#fca5a5"
-line legend x1=-230 y1=0 x2=230 y2=0 at -30,-200 stroke="#64748b" strokeWidth=4
-
-at 0s:
-  play FadeIn(title) duration=0.5s
-  play FadeIn(frame) duration=0.5s
-  play FadeIn(c1) duration=0.25s
-  play FadeIn(c2) duration=0.25s
-  play FadeIn(c3) duration=0.25s
-  play FadeIn(c4) duration=0.25s
-  play FadeIn(c5) duration=0.25s
-  play FadeIn(c6) duration=0.25s
-  play FadeIn(c7) duration=0.25s
-  play FadeIn(c8) duration=0.25s
-  play FadeIn(c9) duration=0.25s
-  play FadeIn(c10) duration=0.25s
-  play FadeIn(legend) duration=0.5s
-  play FadeIn(cold) duration=0.4s
-  play FadeIn(hot) duration=0.4s
+rect bg w=960 h=540 at 0,0 fill="#000000"
+axes ax at 0,-20 width=607.5 height=405 xRange=0,40 yRange=-8,32 stroke="#FFFFFF" strokeWidth=2 xNumbers=0,5,10,15,20,25,30,35 yNumbers=-5,0,5,10,15,20,25,30 tickLength=14 tickStrokeWidth=2 numberSize=18 numberColor="#FFFFFF" xNumberOffset=36 yNumberOffset=-38
+axisLabels axis_labels axes=ax x="\\Delta Q" y="T[^\\circ C]" renderer=katex fill="#FFFFFF" xSize=32 ySize=30 xBuff=52.25 xYOffset=-23.5 yBuff=65.75 yYOffset=-22.5
+dataLineGraph graph axes=ax points=0,20;8,0;38,0;39,-5 lineColor="#FFFF00" strokeWidth=4
+wait 1s

@@ -3,32 +3,34 @@ title: PointMovingOnShapes
 description: "Manim Example: `PointMovingOnShapes` (`#pointmovingonshapes`) に対応するデモ。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#pointmovingonshapes
 source_example_path: examples/gallery/orbital_dot.fluxion.txt
-porting_strategy: visual_approximation
-fidelity: visual_approximation
+porting_strategy: faithful
+fidelity: faithful
 known_gaps:
-  - symptom: "Updater-style continuous re-binding is approximated with expression updates."
+  - symptom: "MoveAlongPath and Rotating are represented by DSL-native play primitives for circular/OUT-axis motion. GrowFromCenter uses Manim's scale-only start state, and the dot, guide line, and circle z-order follows the source `self.add(dot)`, `self.add(line)`, then `self.play(GrowFromCenter(circle))` choreography."
     layer: dsl
-    impact: medium
-    workaround: "近似実装（既存 DSL/always 更新）で演出を代替する。"
-    closure_condition: "不足 DSL 機能が追加され、近似なしで同等記述が可能になる。"
-    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
+    impact: low
+    workaround: "Manim frame scale 67.5px/unit で `Circle(radius=1)`, default `Dot()`, `Line([3,0,0],[5,0,0])`, `about_point=[2,0,0]` を展開し、画面Y方向は Manim の上向き座標から反転している。"
+    closure_condition: "General path MoveAlongPath / non-OUT-axis Rotating support is implemented."
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Animations
 status: ported
+gap_id: GAP-007
 order: 21
 ---
 scene width=960 height=540 fps=60
-value theta = 0
-rect bg w=960 h=540 at 0,0 fill="#020617"
-path orbit d="M -140 0 C -140 -77 -77 -140 0 -140 C 77 -140 140 -77 140 0 C 140 77 77 140 0 140 C -77 140 -140 77 -140 0" at 0,10 fill="none" stroke="#1d4ed8" strokeWidth=4 opacity=0.55
-circle dot r=28 at -140,10 fill="#38bdf8" stroke="#0f172a" strokeWidth=4
-rect card w=180 h=92 at 260,10 fill="#f97316" stroke="#fed7aa" strokeWidth=4
+
+rect bg w=960 h=540 at 0,0 fill="#000000"
+circle dot r=5.4 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=0
+line guide x1=202.5 y1=0 x2=337.5 y2=0 stroke="#FFFFFF" strokeWidth=4
+circle orbit r=67.5 at 0,0 fill="none" stroke="#58C4DD" strokeWidth=4 scale=0
+
 at 0s:
-  hide card
-  play AnimationGroup(FadeIn(orbit), FadeIn(dot), lagRatio=0.15) duration=1.1s easing=easeOut
-animate theta from 0 to 6.283 duration=2.2s easing=linear
-set dot.x to expr="0 + 140 * cos(theta)"
-set dot.y to expr="10 + 140 * sin(theta)"
-at 2.2s:
-  play FadeIn(card) duration=0.5s easing=easeOut
-at 2.5s:
-  play Transform(dot, card) duration=1.0s easing=easeInOut
+  animate orbit.scale from 0 to 1 duration=1s easing=smooth
+at 1s:
+  animate dot.x from 0 to 67.5 duration=1s easing=smooth
+at 2s:
+  play MoveAlongPath(dot, orbit) duration=2s easing=linear
+at 4s:
+  play Rotating(dot, 6.283185307, about=(135,0)) duration=1.5s easing=linear
+at 5.5s:
+  wait 1s

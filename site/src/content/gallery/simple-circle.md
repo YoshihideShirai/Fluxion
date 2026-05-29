@@ -1,24 +1,26 @@
 ---
 title: SimpleCircle
-description: "Manim Example: `SimpleCircle` (`#simplecircle`) をそのまま移植したデモ。"
-source_manim_url: https://docs.manim.community/en/stable/examples.html#simplecircle
-source_example_path: examples/simple_circle.py
+description: "Manim Quickstart Example: `CreateCircle` に対応するデモ。"
+source_manim_url: https://docs.manim.community/en/stable/tutorials/quickstart.html#animating-a-circle
+source_example_path: examples/gallery/simple-circle.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "Stroke join/cap rendering can differ slightly across browsers."
+  - symptom: "公式 quickstart の `Circle().set_fill(PINK, opacity=0.5)` と `Create(circle)` を再現し、最後の wait で完成した PINK 半透明円を保持しているが、Cairo の描画順・アンチエイリアスとは完全一致しない。"
     layer: renderer
     impact: low
-    workaround: "必要に応じてスタイル値を手動調整する。"
-    closure_condition: "該当レンダリング差分が解消され、Manim 出力との視覚差が許容範囲に収まる。"
-    fidelity_upgrade_condition: "既知差分が解消され、視覚・時間挙動がManimと同等と判断できる時。"
+    workaround: "default `Circle(radius=1)` を Manim frame scale の 67.5px 半径に展開し、fill は Manim `PINK`、stroke は default white のまま保持する。"
+    closure_condition: "レンダラー差分が許容範囲内であることをスクリーンショット比較で確認する。"
+    fidelity_upgrade_condition: "追加対応不要。"
 category: Basic Concepts
 status: ported
+gap_id: GAP-003
 order: 10
 ---
 scene width=960 height=540 fps=60
-circle circle r=80 at 0,0 fill="#38bdf8" stroke="#0f172a" strokeWidth=6
-at 0s:
-  play Create(circle) duration=1.0s easing=easeOut
-wait 0.6s
-play FadeOut(circle) duration=0.8s easing=easeInOut
+
+rect bg w=960 h=540 at 0,0 fill="#000000"
+circle circle r=67.5 at 0,0 fill="#D147BD" fillOpacity=0.5 stroke="#ffffff" strokeWidth=4
+
+play Create(circle) duration=1s easing=easeInOut
+wait 1s
