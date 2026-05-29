@@ -1337,6 +1337,9 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, approximatelyEqual(axes?.geometry?.width ?? 0, 675) && approximatelyEqual(axes?.geometry?.height ?? 0, 405), 'expected official sine/cosine axes dimensions.');
     assertGalleryCondition(label, approximatelyEqual(axes?.geometry?.originX ?? 0, -4.987685) && axes?.geometry?.originY === 0, 'expected asymmetric axes origin from x_range [-10, 10.3].');
     assertGalleryCondition(label, axes?.children?.length === 34, `expected numbered/ticked axes with 34 children, got ${axes?.children?.length ?? 0}.`);
+    assertGalleryCondition(label, axes.children.filter((child) => /^ax:x_tick:/u.test(child.id)).length === 20, 'expected x-axis ticks at every integer except zero.');
+    assertGalleryCondition(label, axes.children.filter((child) => /^ax:x_number:/u.test(child.id)).length === 10, 'expected x-axis numbers only at the official even coordinates.');
+    assertGalleryCondition(label, axes.children.filter((child) => /^ax:y_tick:/u.test(child.id)).length === 2 && axes.children.every((child) => !/^ax:y_number:/u.test(child.id)), 'expected y-axis ticks without numeric labels.');
     assertGalleryCondition(label, labels?.children?.length === 2 && labels.children.every((child) => child.type === 'math'), 'expected x/y MathTex axis labels.');
     assertGalleryCondition(label, renderedAxisX?.style?.stroke === '#83C167' && renderedAxisY?.style?.stroke === '#83C167' && approximatelyEqual(renderedAxisY?.geometry?.x1 ?? 0, -4.987685), 'expected GREEN axes crossing at Manim c2p origin.');
     assertGalleryCondition(label, sinCurve?.geometry?.fn === 'sin(t)' && sinCurve?.geometry?.range?.join(',') === '-10,10.3', 'expected sine plot with official range.');
@@ -1355,6 +1358,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, approximatelyEqual(renderedSinLabel?.transform?.x ?? 0, -356.000005) && approximatelyEqual(renderedSinLabel?.transform?.y ?? 0, -112.00285), 'expected sine graph label at the left sine endpoint.');
     assertGalleryCondition(label, approximatelyEqual(renderedCosLabel?.transform?.x ?? 0, 388.000005) && approximatelyEqual(renderedCosLabel?.transform?.y ?? 0, 86.011566), 'expected cosine graph label shifted to the right of the curve.');
     assertGalleryCondition(label, approximatelyEqual(renderedTauLabel?.transform?.x ?? 0, 245.999888) && approximatelyEqual(renderedTauLabel?.transform?.y ?? 0, -169.999629), 'expected x=2pi label above-right of the tau marker.');
+    assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'create').length === 9 && !documentData.timeline.some((op) => op.op === 'animate' || op.op === 'effect'), 'expected static plotting scene with only add-style creation and bindings.');
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'bindExpr' && op.id === 'tauLine').length === 4, 'expected tauLine endpoint bindings to axes coordinates.');
     const svg = svgSampleAt(documentData, 1);
     assertGalleryCondition(label, svgElementTag(svg, 'ax_y').includes('x1="-4.987685"') && svgElementTag(svg, 'ax_y').includes('stroke="#83C167"'), 'expected SVG y-axis at shifted x-origin in GREEN.');
