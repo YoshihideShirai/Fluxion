@@ -1901,6 +1901,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, orbit?.style?.stroke === '#58C4DD' && (orbit.transform?.opacity ?? 1) === 1 && orbit.transform?.scale === 0, 'expected GrowFromCenter orbit to start at full opacity and zero scale.');
     assertGalleryCondition(label, dot?.type === 'circle' && approximatelyEqual(dot.geometry?.r ?? 0, 5.4), 'expected default moving dot.');
     assertGalleryCondition(label, guide?.type === 'line' && guide.geometry?.x1 === 202.5 && guide.geometry?.x2 === 337.5, 'expected offset guide line for Rotating phase.');
+    assertGalleryCondition(label, ['dot', 'guide', 'orbit'].every((id, index, ids) => index === 0 || documentData.nodes.findIndex((node) => node.id === ids[index - 1]) < documentData.nodes.findIndex((node) => node.id === id)), 'expected source z-order: self.add(dot), self.add(line), then GrowFromCenter(circle).');
     assertGalleryCondition(label, !documentData.timeline.some((op) => op.op === 'animate' && op.id === 'orbit' && op.path === 'transform.opacity'), 'expected GrowFromCenter to avoid fade-in opacity animation.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'orbit', path: 'transform.scale', from: 0, to: 1, t: 0, duration: 1, easing: 'smooth' }), 'expected orbit GrowFromCenter scale animation.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'dot', path: 'transform.x', from: 0, to: 67.5, t: 1, duration: 1, easing: 'smooth' }), 'expected dot move to circle start.');
@@ -1921,6 +1922,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const orbitMidSvg = svgSampleAt(documentData, 3);
     const rotatingMidSvg = svgSampleAt(documentData, 4.75);
     const finalSvg = svgSampleAt(documentData, 6.5);
+    assertGalleryCondition(label, growMidSvg.indexOf('id="dot"') < growMidSvg.indexOf('id="guide"') && growMidSvg.indexOf('id="guide"') < growMidSvg.indexOf('id="orbit"'), 'expected SVG grow frame to render the GrowFromCenter circle above the pre-added dot and line.');
     assertGalleryCondition(label, svgElementTag(growMidSvg, 'orbit').includes('scale(0.5 0.5)') && svgElementTag(growMidSvg, 'orbit').includes('opacity="1"'), 'expected SVG orbit midpoint to grow at full opacity.');
     assertGalleryCondition(label, svgElementTag(shiftMidSvg, 'dot').includes('transform="translate(33.75 0)'), 'expected SVG dot halfway to orbit start.');
     assertGalleryCondition(label, svgElementTag(orbitMidSvg, 'dot').includes('transform="translate(-67.5'), 'expected SVG dot opposite the orbit start halfway through MoveAlongPath.');

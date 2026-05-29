@@ -1,9 +1,9 @@
 scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
-circle orbit r=67.5 at 0,0 fill="none" stroke="#58C4DD" strokeWidth=4 scale=0
 circle dot r=5.4 at 0,0 fill="#FFFFFF" stroke="#FFFFFF" strokeWidth=0
 line guide x1=202.5 y1=0 x2=337.5 y2=0 stroke="#FFFFFF" strokeWidth=4
+circle orbit r=67.5 at 0,0 fill="none" stroke="#58C4DD" strokeWidth=4 scale=0
 
 at 0s:
   animate orbit.scale from 0 to 1 duration=1s easing=smooth
