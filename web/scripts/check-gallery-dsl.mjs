@@ -1450,6 +1450,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, line2?.geometry?.dataLine === true && line2.geometry?.from === '3,0' && line2.geometry?.to === '3,4*3-3*3', 'expected right vertical bound line at x=3.');
     assertGalleryCondition(label, approximatelyEqual(line1?.geometry?.x1 ?? 0, -81) && approximatelyEqual(line1?.geometry?.y2 ?? 0, -67.5) && approximatelyEqual(line2?.geometry?.x1 ?? 0, 81) && approximatelyEqual(line2?.geometry?.y2 ?? 0, 0), 'expected rendered vertical bound lines to land on curve_1 at x=2 and x=3.');
     assertGalleryCondition(label, line1?.style?.stroke === '#FFFF00' && line2?.style?.stroke === '#FFFF00', 'expected YELLOW vertical bound lines.');
+    assertGalleryCondition(label, ['ax', 'axis_labels', 'curve_1', 'curve_2', 'line_1', 'line_2', 'riemann', 'bounded_area'].every((id, index, ids) => index === 0 || documentData.nodes.findIndex((node) => node.id === ids[index - 1]) < documentData.nodes.findIndex((node) => node.id === id)), 'expected graph area z-order to follow official self.add(ax, labels, curve_1, curve_2, line_1, line_2, riemann_area, area).');
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'bindExpr' && (op.id === 'line_1' || op.id === 'line_2')).length === 8, 'expected bound line endpoints to bind through axes coordinates.');
     const svg = svgSampleAt(documentData, 1);
     const firstRectTag = svgElementTag(svg, 'riemann:rect:0');
@@ -1461,6 +1462,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const boundedFirst = boundedPoints[0];
     const boundedLast = boundedPoints.at(-1);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="riemann:rect:/gu) === 10, 'expected all ten Riemann rectangles in SVG.');
+    assertGalleryCondition(label, svg.indexOf('id="curve_1"') < svg.indexOf('id="line_1"') && svg.indexOf('id="line_2"') < svg.indexOf('id="riemann"') && svg.indexOf('id="riemann"') < svg.indexOf('id="bounded_area"'), 'expected SVG graph area surfaces to render above curves and vertical markers like official self.add order.');
     assertGalleryCondition(label, svgElementTag(svg, 'axis_labels:x').includes('transform="translate(425 182.5)"') && svgElementTag(svg, 'axis_labels:y').includes('transform="translate(-385 -222.5)"'), 'expected SVG graph area axis labels at axes UR endpoints.');
     assertGalleryCondition(label, firstRectTag.includes('width="4.86"') && firstRectTag.includes('height="74.925"') && firstRectTag.includes('transform="translate(-353.97 165.0375)"') && firstRectTag.includes('fill="#0000FF"') && firstRectTag.includes('fill-opacity="0.5"'), 'expected first Riemann rectangle left-sampled under curve_1.');
     assertGalleryCondition(label, lastRectTag.includes('width="4.86"') && lastRectTag.includes('height="131.96925"') && lastRectTag.includes('transform="translate(-310.23 136.515375)"'), 'expected final Riemann rectangle left-sampled under curve_1.');
