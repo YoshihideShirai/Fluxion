@@ -1043,12 +1043,15 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, image?.geometry?.sampling === 'nearest', 'expected nearest sampling for array image pixels.');
     assertGalleryCondition(label, image?.geometry?.w === 256 && image?.geometry?.h === 256, 'expected 256x256 grayscale image display.');
     assertGalleryCondition(label, image?.geometry?.dataRows === 256 && rows.length === 1 && firstRow.length === 256, 'expected official 256x256 grayscale array data via repeated source row.');
-    assertGalleryCondition(label, firstRow[0] === 0 && firstRow.at(-1) === 255, 'expected horizontal grayscale gradient from black to white.');
+    assertGalleryCondition(label, firstRow[0] === 0 && firstRow[128] === 128 && firstRow.at(-1) === 255, 'expected horizontal grayscale gradient from black through midpoint gray to white.');
     assertGalleryCondition(label, frame?.type === 'rect' && approximatelyEqual(frame.geometry?.w ?? 0, 269.5) && approximatelyEqual(frame.geometry?.h ?? 0, 269.5), 'expected Manim GREEN frame around image with MED_SMALL_BUFF.');
     assertGalleryCondition(label, frame?.style?.stroke === '#83C167' && approximatelyEqual(frame.style?.strokeWidth ?? 0, 4), 'expected GREEN image border.');
+    assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'image') < documentData.nodes.findIndex((node) => node.id === 'frame'), 'expected SurroundingRectangle frame to render above the ImageMobject.');
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /<rect\b/gu) === 3, 'expected SVG to collapse repeated image rows into one smooth gradient rect plus background and frame.');
     assertGalleryCondition(label, svg.includes('linear-gradient(#000000') && svg.includes('#ffffff)') && svg.includes('stroke="#83C167"'), 'expected SVG gradient endpoints and green frame.');
+    assertGalleryCondition(label, /<g id="image"[^>]*><rect x="-128" y="-128" width="256" height="256" fill="linear-gradient\(#000000,#010101,#020202/u.test(svg), 'expected SVG image to serialize a 256px horizontal grayscale gradient.');
+    assertGalleryCondition(label, svg.indexOf('id="image"') < svg.indexOf('id="frame"') && /id="frame"[^>]*width="269\.5"[^>]*height="269\.5"[^>]*stroke="#83C167"/u.test(svg), 'expected SVG green frame to render above the image at Manim buff size.');
   }
 
   if (label.includes('vector-arrow')) {
