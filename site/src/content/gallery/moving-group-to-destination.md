@@ -6,7 +6,7 @@ source_example_path: examples/gallery/moving-group-to-destination.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "Dot spacing, scaled source dot radius, destination dot radius, Manim color constants, and shift target are expanded from Manim units into gallery pixel coordinates; the group movement uses DSL-native `Animate(..., shift=...)`."
+  - symptom: "Dot spacing, source child order, scaled source dot radius, destination dot radius, Manim color constants, official `self.add(group, dest)` z-order, and shift target are expanded from Manim units into gallery pixel coordinates; the group movement uses DSL-native `Animate(..., shift=...)`."
     layer: dsl
     impact: low
     workaround: "`VGroup(...).scale(1.4)` の scale-about-center 後座標、source Dot 半径 `0.08*1.4`、destination Dot 半径 `0.08`、`dest.get_center() - group[2].get_center()` を `Animate(dots, shift=(189,-202.5))` で表し、最後の `wait(0.5)` は明示時刻の hold として保持する。"

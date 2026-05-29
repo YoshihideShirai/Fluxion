@@ -1832,10 +1832,12 @@ function checkGallerySpecificStructure(label, documentData) {
     const dest = findNode(documentData, 'dest');
     const sourceDots = ['c1', 'c2', 'c3', 'c4'].map((id) => findNode(documentData, id));
     assertGalleryCondition(label, dots?.children?.length === 4, 'expected source VGroup with four dots.');
+    assertGalleryCondition(label, dots.children.map((child) => child.id).join(',') === 'c1,c2,c3,c4', 'expected VGroup child order to match the official Dot(LEFT), Dot(ORIGIN), Dot(RIGHT), Dot(2*RIGHT) source order.');
     assertGalleryCondition(label, sourceDots.every((node) => approximatelyEqual(node?.geometry?.r ?? 0, 7.56)), 'expected source group dots scaled by 1.4 from Manim default Dot radius.');
     assertGalleryCondition(label, sourceDots.map((node) => node?.transform?.x).join(',') === '-108,-13.5,81,175.5', 'expected VGroup scale-about-center x positions.');
     assertGalleryCondition(label, findNode(documentData, 'c3')?.style?.fill === '#FC6255', 'expected third moving dot to be RED.');
     assertGalleryCondition(label, approximatelyEqual(dest?.geometry?.r ?? 0, 5.4) && dest.style?.fill === '#F7D96F', 'expected unscaled yellow destination dot.');
+    assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'dots') < documentData.nodes.findIndex((node) => node.id === 'dest'), 'expected official self.add(group, dest) z-order with destination above the moving group.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'dots', path: 'transform.x', from: 0, to: 189, t: 0, duration: 1, easing: 'smooth' }), 'expected group shift x toward destination.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'dots', path: 'transform.y', from: 0, to: -202.5, t: 0, duration: 1, easing: 'smooth' }), 'expected group shift y toward destination.');
     const midDots = renderedNodeAt(documentData, 0.5, 'dots');
@@ -1849,6 +1851,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const finalSvg = svgSampleAt(documentData, 1);
     const holdSvg = svgSampleAt(documentData, 1.5);
     assertGalleryCondition(label, countSvgOccurrences(initialSvg, /<circle\b/gu) === 5, 'expected four source dots and one destination dot in SVG.');
+    assertGalleryCondition(label, initialSvg.indexOf('id="dots"') < initialSvg.indexOf('id="dest"'), 'expected SVG destination dot to render above the moving group.');
     assertGalleryCondition(label, /id="c3"[^>]*r="7\.56"[^>]*transform="translate\(81 0\)"[^>]*fill="#FC6255"/u.test(initialSvg), 'expected initial SVG red source dot radius and position.');
     assertGalleryCondition(label, /id="dest"[^>]*r="5\.4"[^>]*transform="translate\(270 -202\.5\)"[^>]*fill="#F7D96F"/u.test(initialSvg), 'expected initial SVG destination dot radius and position.');
     assertGalleryCondition(label, /id="dots"[^>]*transform="translate\(94\.5 -101\.25\)"/u.test(midSvg) && /id="c3"[^>]*transform="translate\(81 0\)"/u.test(midSvg), 'expected SVG midpoint group shift to carry the red dot halfway toward destination.');
