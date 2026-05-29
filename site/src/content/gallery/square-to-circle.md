@@ -6,7 +6,7 @@ source_example_path: examples/gallery/square-to-circle.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "Transform の頂点対応は近似だが、公式 quickstart の `Square().rotate(PI / 4)`、`Circle().set_fill(PINK, opacity=0.5)`、`Create` → `Transform` → `FadeOut` の構成・色・タイミングに合わせている。"
+  - symptom: "Transform の頂点対応は近似だが、公式 quickstart の `Square().rotate(PI / 4)`、`Circle().set_fill(PINK, opacity=0.5)`、`Create` → `Transform` → `FadeOut` の構成・色・タイミングに合わせ、最後はSVG上からも消える。"
     layer: runtime
     impact: low
     workaround: "default `Square(side_length=2)` の 45度回転 diamond と default `Circle(radius=1)` を Manim 16:9 frame scale の 67.5px/unit に展開し、同じ cubic command topology の path で morph する。"

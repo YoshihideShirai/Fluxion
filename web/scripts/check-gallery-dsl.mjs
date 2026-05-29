@@ -999,9 +999,11 @@ function checkGallerySpecificStructure(label, documentData) {
     const createSvg = svgSampleAt(documentData, 0);
     const transformSvg = svgSampleAt(documentData, 1.5);
     const fadeSvg = svgSampleAt(documentData, 2.5);
+    const finalSvg = svgSampleAt(documentData, 3);
     assertGalleryCondition(label, svgGroupPathData(createSvg, 'square').includes('M 0 -95.459') && createSvg.includes('stroke-dashoffset="1"'), 'expected SVG square start to be an undrawn rotated diamond.');
     assertGalleryCondition(label, svgGroupPathData(transformSvg, 'square').includes('M 0 -81.4795') && transformSvg.includes('fill="rgb(232, 163, 222)"') && transformSvg.includes('fill-opacity="0.25"'), 'expected SVG Transform midpoint to serialize blended geometry and color.');
     assertGalleryCondition(label, svgElementTag(fadeSvg, 'square').includes('opacity="0.5"') && svgGroupPathData(fadeSvg, 'square').startsWith('M 0 -67.5'), 'expected SVG FadeOut midpoint to keep the final circle path while fading.');
+    assertGalleryCondition(label, !finalSvg.includes('id="square"'), 'expected final SVG frame to remove the faded-out transformed circle.');
   }
 
   if (label.includes('animations-using-animate') || label.includes('moving-around')) {
