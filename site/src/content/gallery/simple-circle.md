@@ -6,7 +6,7 @@ source_example_path: examples/gallery/simple-circle.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "公式 quickstart の `Circle().set_fill(PINK, opacity=0.5)` と `Create(circle)` を再現しているが、Cairo の描画順・アンチエイリアスとは完全一致しない。"
+  - symptom: "公式 quickstart の `Circle().set_fill(PINK, opacity=0.5)` と `Create(circle)` を再現し、最後の wait で完成した PINK 半透明円を保持しているが、Cairo の描画順・アンチエイリアスとは完全一致しない。"
     layer: renderer
     impact: low
     workaround: "default `Circle(radius=1)` を Manim frame scale の 67.5px 半径に展開し、fill は Manim `PINK`、stroke は default white のまま保持する。"
