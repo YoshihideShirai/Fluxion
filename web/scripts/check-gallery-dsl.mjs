@@ -1559,6 +1559,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, axes?.geometry?.cameraProjection === 'manim' && axes.geometry?.phi === 75 && axes.geometry?.theta === 30, 'expected ThreeDAxes to use Manim ThreeDCamera projection.');
     assertGalleryCondition(label, sphere?.geometry?.sphereSurface === true, 'expected sphereSurface mesh.');
     assertGalleryCondition(label, sphere?.transform?.x === 0 && sphere?.transform?.y === 0, 'expected sphereSurface to share the unshifted axes placement.');
+    assertGalleryCondition(label, approximatelyEqual(sphere?.geometry?.uMin ?? 0, -Math.PI / 2) && approximatelyEqual(sphere?.geometry?.uMax ?? 0, Math.PI / 2) && sphere?.geometry?.vMin === 0 && approximatelyEqual(sphere?.geometry?.vMax ?? 0, Math.PI * 2), 'expected full Manim sphere surface parameter range.');
     assertGalleryCondition(label, sphere?.geometry?.uResolution === 15 && sphere?.geometry?.vResolution === 32, 'expected official sphere surface resolution 15x32.');
     assertGalleryCondition(label, approximatelyEqual(sphere?.geometry?.radius ?? 0, 104), 'expected sphere mesh radius near official 1.5 Manim units.');
     assertGalleryCondition(label, approximatelyEqual(sphere?.geometry?.worldRadius ?? 0, 1.5), 'expected official sphere world radius 1.5.');
@@ -1569,8 +1570,10 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, sphereFaces.every((face, index, faces) => index === 0 || Number(faces[index - 1]?.metadata?.surfaceFace?.depth) <= Number(face.metadata?.surfaceFace?.depth)), 'expected sphere faces to be serialized in increasing camera-depth order.');
     assertGalleryCondition(label, Math.max(...sphereFaces.map((face) => Number(face.metadata?.surfaceFace?.shade ?? 0))) > 0.4 && Math.min(...sphereFaces.map((face) => Number(face.metadata?.surfaceFace?.shade ?? 0))) < -0.2, 'expected sphere metadata to preserve Manim get_shaded_rgb light and shadow deltas.');
     assertGalleryCondition(label, sphereFaces.every((child) => child.style?.stroke === '#BBBBBB' && approximatelyEqual(child.style?.strokeWidth ?? 0, 0.5)), 'expected LIGHT_GREY 0.5px sphere face strokes.');
+    assertGalleryCondition(label, sphereFaces.every((child) => approximatelyEqual(child.style?.fillOpacity ?? 0, 1)), 'expected opaque sphere surface faces.');
     assertGalleryCondition(label, sphereFills.has('#e65a4c') && sphereFills.has('#cf5044'), 'expected official RED_D/RED_E checkerboard base colors to survive among shaded sphere faces.');
     assertGalleryCondition(label, sphereFills.size >= 24, `expected light-shaded checkerboard sphere faces, got ${sphereFills.size}.`);
+    assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'create').length === 3 && !documentData.timeline.some((op) => op.op === 'animate' || op.op === 'effect'), 'expected static self.add(axes, sphere) scene with no play animations.');
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="sphere:face:/gu) === 15 * 32, 'expected all sphere mesh faces to serialize into SVG.');
     assertGalleryCondition(label, svg.indexOf('id="axes:x:axis"') < svg.indexOf('id="sphere"'), 'expected SVG sphere to render over the axes like self.add(axes, sphere).');
