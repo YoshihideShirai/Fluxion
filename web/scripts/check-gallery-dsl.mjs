@@ -1536,6 +1536,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="gauss:face:/gu) === 24 * 24, 'expected all gaussian mesh faces to serialize into SVG.');
     assertGalleryCondition(label, svg.includes('stroke="#83C167"') && svg.includes('fill-opacity="0.5"'), 'expected SVG gaussian surface strokes and opacity.');
     assertGalleryCondition(label, svg.indexOf('id="axes:x:axis"') < svg.indexOf('id="gauss:face:'), 'expected SVG gaussian surface to render over the axes like self.add(axes, gauss_plane).');
+    assertGalleryCondition(label, !/id="(?:highlight|highlight_core|terminator_left|terminator_bottom|gauss_shadow|gauss_rim)"/u.test(svg), 'expected no non-Manim screen-space gaussian highlight or shadow overlays.');
   }
 
   if (label.includes('three-d-light-source-position')) {
