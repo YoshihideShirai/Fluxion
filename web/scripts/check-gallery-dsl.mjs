@@ -1947,6 +1947,13 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'create' && op.node.id === 'frameB' && op.t === 5 && op.node.transform.opacity === 1), 'expected final frameB materialized at the end of ReplacementTransform.');
 
     const writingSample = visualSample(documentData, 1);
+    const earlyWritingSample = visualSample(documentData, 0.5);
+    const lateWritingSample = visualSample(documentData, 1.5);
+    const completeWritingSample = visualSample(documentData, 2);
+    const earlyLhs = findRenderedNode(earlyWritingSample, 'lhs');
+    const earlyTermA = findRenderedNode(earlyWritingSample, 'termA');
+    const lateTermB = findRenderedNode(lateWritingSample, 'termB');
+    const completeTerms = ['lhs', 'termA', 'plus', 'termB'].map((id) => findRenderedNode(completeWritingSample, id));
     const writingTermA = findRenderedNode(writingSample, 'termA');
     const writingPlus = findRenderedNode(writingSample, 'plus');
     const createStartFrame = renderedNodeAt(documentData, 2, 'frameA');
@@ -1955,7 +1962,10 @@ function checkGallerySpecificStructure(label, documentData) {
     const replacementStartFrame = renderedNodeAt(documentData, 4, 'frameA');
     const replacementMidFrame = renderedNodeAt(documentData, 4.5, 'frameA');
     const replacementEndFrame = renderedNodeAt(documentData, 5, 'frameB');
+    assertGalleryCondition(label, approximatelyEqual(earlyLhs?.geometry?.writeProgress ?? 0, 0.61441) && earlyTermA?.geometry?.writeProgress === 0, 'expected early Write(productRule) to still be revealing the left-hand side.');
     assertGalleryCondition(label, approximatelyEqual(writingTermA?.geometry?.writeProgress ?? 0, 0.508263) && writingPlus?.geometry?.writeProgress === 0, 'expected Write(productRule) to reveal terms in width-paced order.');
+    assertGalleryCondition(label, writingPlus?.transform?.x === 124 && approximatelyEqual(lateTermB?.geometry?.writeProgress ?? 0, 0.331386), 'expected late Write(productRule) to reach the final product term after the plus sign.');
+    assertGalleryCondition(label, completeTerms.every((node) => node?.geometry?.writeProgress === 1) && completeTerms.map((node) => node?.transform?.x).join(',') === '-185,15,124,236', 'expected product rule terms fully written at official positions before frame creation.');
     assertGalleryCondition(label, createStartFrame?.transform?.opacity === 1 && createStartFrame?.geometry?.drawProgress === 0, 'expected frameA visible but undrawn at Create start.');
     assertGalleryCondition(label, createMidFrame?.transform?.opacity === 1 && createMidFrame?.geometry?.drawProgress === 0.5, 'expected frameA half drawn at Create midpoint.');
     assertGalleryCondition(label, createEndFrame?.transform?.opacity === 1 && createEndFrame?.geometry?.drawProgress === 1, 'expected frameA fully drawn after Create.');
