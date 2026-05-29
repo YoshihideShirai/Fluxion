@@ -2108,9 +2108,18 @@ function checkGallerySpecificStructure(label, documentData) {
   }
 
   if (label.includes('transform_matching_tex') || label.includes('transform-matching-tex')) {
+    const sourceGroup = findNode(documentData, 'eq1WithVariables');
+    const variables = findNode(documentData, 'variables');
+    const varA = findNode(documentData, 'varA');
+    const varB = findNode(documentData, 'varB');
+    const varC = findNode(documentData, 'varC');
     const eq1 = findNode(documentData, 'eq1');
     const eq2 = findNode(documentData, 'eq2');
     const eq3 = findNode(documentData, 'eq3');
+    assertGalleryCondition(label, sourceGroup?.children?.map((child) => child.id).join(',') === 'eq1,variables', 'expected TransformMatchingTex source group to contain eq1 and the variables row.');
+    assertGalleryCondition(label, variables?.children?.map((child) => child.id).join(',') === 'varA,varB,varC' && approximatelyEqual(variables.transform?.y ?? 0, -67.5), 'expected arranged variable row shifted one Manim unit below the equation.');
+    assertGalleryCondition(label, approximatelyEqual(varA?.transform?.x ?? 0, -42) && approximatelyEqual(varB?.transform?.x ?? 1, 0) && approximatelyEqual(varC?.transform?.x ?? 0, 42), 'expected a/b/c variable row spacing before matching.');
+    assertGalleryCondition(label, [varA, varB, varC].every((node) => node?.geometry?.fontSize === 48 && node.style?.fill === '#ffffff'), 'expected variable MathTex nodes to use default white 48px styling.');
     assertGalleryCondition(label, eq1?.children?.length > 0 && eq2?.children?.length > 0 && eq3?.children?.length > 0, 'expected expanded MathTex token children.');
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'effect' && op.effect === 'transform').length >= 4, 'expected token transform effects from TransformMatchingTex expansion.');
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'effect' && (op.effect === 'fadeIn' || op.effect === 'fadeOut')).length >= 5, 'expected token fade effects for unmatched TransformMatchingTex parts.');
