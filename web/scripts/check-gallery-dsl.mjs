@@ -1588,12 +1588,16 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, findNode(documentData, 'axes:x:tick:m1')?.style?.strokeWidth === 2 && approximatelyEqual(findNode(documentData, 'axes:x:tick:m1')?.geometry?.x1 ?? 0, 32.579284), 'expected Manim default ThreeDAxes tick size and stroke.');
     assertGalleryCondition(label, circle?.geometry?.projectedCircle === true, 'expected projected default Circle(radius=1).');
     assertGalleryCondition(label, circle?.geometry?.cameraProjection === 'manim' && circle.geometry?.phi === 75 && circle.geometry?.theta === 30, 'expected Circle(radius=1) to use Manim ThreeDCamera projection.');
+    assertGalleryCondition(label, circle?.style?.fill === 'none' && circle.style?.stroke === '#FFFFFF' && circle.style?.strokeWidth === 4, 'expected default Circle() white 4px stroke with no fill.');
     assertGalleryCondition(label, findNode(documentData, 'axes:x:tip')?.type === 'path', 'expected projected x-axis arrow tip.');
     assertGalleryCondition(label, findNode(documentData, 'axes:y:tip')?.type === 'path', 'expected projected y-axis arrow tip.');
     assertGalleryCondition(label, findNode(documentData, 'axes:z:tip')?.type === 'path', 'expected projected z-axis arrow tip.');
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'axes:x:tick:') === 12, 'expected projected x-axis ticks.');
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'axes:y:tick:') === 10, 'expected projected y-axis ticks.');
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'axes:z:tick:') === 8, 'expected projected z-axis ticks.');
+    assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'create').length === 3, 'expected static background, circle, and axes creation only.');
+    assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'animate' && op.t === 0 && op.duration === 1 && op.easing === 'linear').length === 99, 'expected every projected axes, tick, tip, and circle element to move during the ambient camera sweep.');
+    assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'animate' && op.t === 1 && op.duration === 1 && op.easing === 'easeInOut').length === 99, 'expected every projected axes, tick, tip, and circle element to restore during move_camera.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:x:axis', path: 'geometry.x2', from: -227.042817, to: -260.575741, t: 0, duration: 1, easing: 'linear' }), 'expected one-second ambient theta sweep.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'circle_xy', path: 'geometry.d', t: 0, duration: 1, easing: 'linear' }), 'expected projected circle to move during ambient sweep.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'axes:x:axis', path: 'geometry.x2', from: -260.575741, to: -227.042817, t: 1, duration: 1, easing: 'easeInOut' }), 'expected one-second move_camera restore of theta.');
