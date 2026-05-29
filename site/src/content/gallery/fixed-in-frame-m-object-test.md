@@ -6,7 +6,7 @@ source_example_path: examples/gallery/fixed-in-frame-m-object-test.fluxion.txt
 porting_strategy: faithful
 fidelity: faithful
 known_gaps:
-  - symptom: "Fluxion にはネイティブな ThreeDScene はないが、公式出力の Manim camera 投影と fixed-in-frame text は `threeDAxes` と `fixedInFrame=true` で再現している。"
+  - symptom: "Fluxion にはネイティブな ThreeDScene はないが、公式出力の Manim camera 投影と fixed-in-frame text は `threeDAxes` と `fixedInFrame=true` で再現し、固定テキストはcamera transform外の前面レイヤーに描画している。"
     layer: runtime
     impact: low
     workaround: "`ThreeDAxes()` は未移動の Manim scene origin に置き、`threeDAxes` helper で公式既定の `x_range=(-6,6,1)`, `y_range=(-5,5,1)`, `z_range=(-4,4,1)`, `x_length=10.5`, `y_length=10.5`, `z_length=6.5` と `set_camera_orientation(phi=75°, theta=-45°)` を Manim `ThreeDCamera` 投影済み line/tick/tip 群に展開する。`add_fixed_in_frame_mobjects(text3d)` と default `Text(..., font_size=48).to_corner(UL)` は `fixedInFrame=true` で camera transform の外側に描画する。"

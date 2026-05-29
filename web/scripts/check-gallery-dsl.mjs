@@ -1105,6 +1105,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="axes:[xyz]:tick:/gu) === 30, 'expected all fixed-frame projected axis ticks to serialize into SVG.');
     assertGalleryCondition(label, svg.includes('<g transform="translate(480 270)"><text id="text3d"') && /id="axes:x:axis"[^>]*x2="305\.322489"/u.test(svg), 'expected SVG fixed-frame text layer and projected x-axis endpoint.');
+    assertGalleryCondition(label, svg.indexOf('id="axes:x:axis"') < svg.indexOf('id="text3d"'), 'expected fixed-in-frame text layer to render above the projected 3D axes.');
   }
 
   if (label.includes('manim-ce-logo') || label.includes('manim_ce_logo')) {
