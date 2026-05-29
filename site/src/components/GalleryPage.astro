@@ -961,17 +961,39 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
           padding: 18px;
         }
 
+        .control-bar {
+          position: static;
+          gap: 12px;
+          padding: 10px;
+        }
+
+        .filter-group {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          padding-bottom: 2px;
+          scroll-snap-type: x proximity;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .filter-chip {
+          flex: 0 0 auto;
+          min-width: max-content;
+          scroll-snap-align: start;
+        }
+
         .top-links,
         .hero-stats,
-        .filter-group,
         .study-controls,
         .transport-row,
         .meta-line {
           align-items: stretch;
         }
 
+        .study-controls {
+          justify-content: flex-start;
+        }
+
         .top-links a,
-        .filter-chip,
         .meta-line a,
         .primary-action,
         .icon-action {
