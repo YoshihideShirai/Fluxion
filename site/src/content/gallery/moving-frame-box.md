@@ -9,7 +9,7 @@ known_gaps:
   - symptom: "MathTex part layout is approximated with separate math nodes, and the frame bounds use declared width/height metrics rather than Manim glyph boxes."
     layer: renderer
     impact: low
-    workaround: "公式 `Write(text)` は Manim の `Write` 既定（多数サブモブのため 2s、linear）に合わせ、`SurroundingRectangle(text[1], buff=.1)` / `text[3]` は宣言済み MathTex part bounds に 6.75px buff を加えた `surroundingRect` として再現する。"
+    workaround: "公式 `Write(text)` は Manim の `Write` 既定（2s、linear、サブモブを重ねて書く lag cadence）に合わせ、`SurroundingRectangle(text[1], buff=.1)` / `text[3]` は宣言済み MathTex part bounds に 6.75px buff を加えた `surroundingRect` として再現する。"
     closure_condition: "該当レンダリング差分が解消され、Manim 出力との視覚差が許容範囲に収まる。"
     fidelity_upgrade_condition: "追加対応不要。"
 category: Animations

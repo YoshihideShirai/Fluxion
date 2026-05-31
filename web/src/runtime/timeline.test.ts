@@ -51,6 +51,15 @@ test("matches Manim smooth rate function samples", () => {
   assert.equal(ease("easeInOut", 0.25), ease("smooth", 0.25));
 });
 
+test("matches Manim double_smooth rate function samples", () => {
+  assert.equal(ease("doubleSmooth", 0), 0);
+  assert.equal(ease("doubleSmooth", 0.25), 0.25);
+  assert.equal(ease("doubleSmooth", 0.5), 0.5);
+  assert.equal(ease("doubleSmooth", 0.75), 0.75);
+  assert.equal(ease("doubleSmooth", 1), 1);
+  assert.equal(ease("double_smooth", 0.25), ease("doubleSmooth", 0.25));
+});
+
 test("applies camera animation interpolation", () => {
   const graph = new SceneGraph([node]);
   const camera = { x: 0, y: 0, scale: 1, rotation: 0 };

@@ -21,6 +21,7 @@ export function ease(name: EasingName, t: number): number {
   const x = clamp01(t);
   if (name === "linear") return x;
   if (name === "smooth" || name === "easeInOut") return smooth(x);
+  if (name === "doubleSmooth" || name === "double_smooth") return doubleSmooth(x);
   if (name === "easeIn") return x * x;
   if (name === "easeOut") return 1 - (1 - x) * (1 - x);
   return x;
@@ -33,6 +34,11 @@ function sigmoid(value: number): number {
 function smooth(t: number, inflection = 10): number {
   const error = sigmoid(-inflection / 2);
   return clamp01((sigmoid(inflection * (t - 0.5)) - error) / (1 - 2 * error));
+}
+
+function doubleSmooth(t: number): number {
+  if (t < 0.5) return 0.5 * smooth(2 * t);
+  return 0.5 * (1 + smooth(2 * t - 1));
 }
 
 export function interpolate(from: unknown, to: unknown, t: number): unknown {

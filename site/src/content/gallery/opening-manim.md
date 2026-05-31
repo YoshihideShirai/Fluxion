@@ -58,7 +58,7 @@ at 0s:
   play AnimationGroup(Transform(title, transformTitle), FadeOut(basel), lagRatio=0.12) duration=1s easing=easeInOut
   animate basel.y from -62 to -102 start=2.25s duration=1s easing=easeInOut
   wait 1s
-  play AnimationGroup(FadeOut(title), FadeIn(gridTitle), Create(grid), lagRatio=0.05) duration=3s easing=smooth
+  play AnimationGroup(FadeOut(title), FadeIn(gridTitle), Create(grid, lagRatio=0.1), lagRatio=0.05) duration=3s easing=smooth
   animate gridTitle.y from 246 to 206 duration=3s easing=smooth
   wait 1s
   animate grid_h0.d from "M -480 -270 L 480 -270" to "M -523.584 -225.653 L -464.522 -280.633 L -405.459 -327.978 L -346.397 -333.694 L -287.334 -293.678 L -228.272 -236.66 L -169.209 -203.581 L -110.147 -218.191 L -51.084 -270 L 7.978 -321.809 L 67.041 -336.419 L 126.103 -303.34 L 185.166 -246.322 L 244.228 -206.306 L 303.291 -212.022 L 362.353 -259.367 L 421.416 -314.347" duration=3s easing=easeInOut
