@@ -35,6 +35,7 @@ const labels = locale === 'ja'
       code: 'DSLソース',
       all: 'すべて',
       featured: '注目',
+      rendered: 'レンダー出力',
     }
   : {
       coverage: 'Manim coverage matrix',
@@ -56,6 +57,7 @@ const labels = locale === 'ja'
       code: 'Source DSL',
       all: 'All',
       featured: 'Featured',
+      rendered: 'Rendered output',
     };
 const categories = [...new Set(demos.map((demo) => demo.category))];
 const featuredSlugs = new Set(['ManimCELogo', 'OpeningManim']);
@@ -133,11 +135,10 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
                 </div>
                 <span class:list={['status-pill', demo.status]}>{demo.status}</span>
               </div>
-              <div class="gallery-stage-wrap">
-                <div class="stage-chrome">
-                  <span></span>
-                  <span></span>
-                  <span></span>
+              <div class="gallery-stage-wrap" data-stage-wrap={`gallery-stage-${index}`}>
+                <div class="stage-meta" aria-label={labels.rendered}>
+                  <span>{demo.title}</span>
+                  <span>960x540 / 60 fps</span>
                 </div>
                 <div class="gallery-stage" id={`gallery-stage-${index}`}></div>
               </div>
@@ -232,21 +233,33 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
           const studyModeAutoNextToggle = document.getElementById('study-mode-auto-next');
           const studyModeEndActionSelect = document.getElementById('study-mode-end-action');
 
-	          const playStageById = (stageId) => {
-	            const player = ensurePlayer(stageId);
-	            if (!player) return;
-	            const state = playerStates.get(stageId);
-	            if (state) {
-	              if (!state.hasInteracted) {
-	                player.seek(0);
-	                updateTimelineUi(stageId, 0, player.durationSeconds);
-	              }
-	              state.hasInteracted = true;
-	              state.isPlaying = true;
-	              state.completionHandled = false;
-	            }
-	            player.play();
-	          };
+          const setStagePlaying = (stageId, isPlaying) => {
+            document.querySelector(`[data-stage-wrap="${stageId}"]`)?.classList.toggle('playing', isPlaying);
+          };
+
+          const playStageById = (stageId) => {
+            const player = ensurePlayer(stageId);
+            if (!player) return;
+            const state = playerStates.get(stageId);
+            if (state) {
+              const shouldRestart = !state.hasInteracted || player.currentSeconds >= player.durationSeconds - 0.01;
+              if (shouldRestart) {
+                player.seek(0);
+                updateTimelineUi(stageId, 0, player.durationSeconds);
+              }
+              state.hasInteracted = true;
+              state.isPlaying = true;
+              state.completionHandled = false;
+            }
+            setStagePlaying(stageId, true);
+            player.play({
+              onStop: () => {
+                const nextState = playerStates.get(stageId);
+                if (nextState) nextState.isPlaying = false;
+                setStagePlaying(stageId, false);
+              },
+            });
+          };
 
           const playNextStage = (stageId) => {
             const currentIndex = stageIndexMap.get(stageId);
@@ -298,21 +311,25 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
               const { player } = state;
               const duration = Number.isFinite(player.durationSeconds) ? player.durationSeconds : 0;
               const current = Number.isFinite(player.currentSeconds) ? player.currentSeconds : 0;
-              if (state.isPlaying && duration > 0 && current >= duration - 0.01 && !state.completionHandled) {
+              let uiCurrent = current;
+              if (state.loopEnabled && duration > 0 && current >= duration - 0.01) {
+                state.completionHandled = false;
+                state.isPlaying = true;
+                player.seek(0);
+                player.play();
+                setStagePlaying(stageId, true);
+                uiCurrent = 0;
+              } else if (state.isPlaying && duration > 0 && current >= duration - 0.01 && !state.completionHandled) {
                 state.completionHandled = true;
                 state.isPlaying = false;
+                setStagePlaying(stageId, false);
                 if (studyModeEnabled && studyModeAutoNext) {
                   playNextStage(stageId);
                 }
               } else if (duration > 0 && current < duration - 0.01) {
                 state.completionHandled = false;
               }
-              updateTimelineUi(stageId, current, duration);
-              if (state.loopEnabled && duration > 0 && current >= duration - 0.01) {
-                player.seek(0);
-                player.play();
-                updateTimelineUi(stageId, 0, duration);
-              }
+              updateTimelineUi(stageId, uiCurrent, duration);
               syncHandles.set(stageId, requestAnimationFrame(tick));
             };
             syncHandles.set(stageId, requestAnimationFrame(tick));
@@ -325,24 +342,21 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
             const dsl = stageSources.get(stageId) ?? '';
             if (!stage || !dsl) return null;
             try {
-	              const doc = compiler.compileTextDsl(dsl);
-	              const player = runtime.mountFluxionDocument(stage, doc);
-	              const previewSeconds = Math.min(
-	                Math.max(player.durationSeconds * 0.62, 0),
-	                Math.max(player.durationSeconds - 0.1, 0),
-	              );
-	              player.seek(previewSeconds);
-	              playerStates.set(stageId, {
-	                player,
-	                loopEnabled: false,
-	                isPlaying: false,
-	                completionHandled: false,
-	                hasInteracted: false,
-	              });
-	              updateTimelineUi(stageId, previewSeconds, player.durationSeconds);
-	              startSync(stageId);
-	              return player;
-	            } catch (error) {
+              const doc = compiler.compileTextDsl(dsl);
+              const player = runtime.mountFluxionDocument(stage, doc);
+              const previewSeconds = player.durationSeconds;
+              player.seek(previewSeconds);
+              playerStates.set(stageId, {
+                player,
+                loopEnabled: false,
+                isPlaying: false,
+                completionHandled: false,
+                hasInteracted: false,
+              });
+              updateTimelineUi(stageId, previewSeconds, player.durationSeconds);
+              startSync(stageId);
+              return player;
+            } catch (error) {
               stage.textContent = 'Failed to compile this demo.';
               stage.classList.add('stage-error');
               console.error(`Failed to initialize stage: ${stageId}`, error);
@@ -358,17 +372,18 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
 
           pauseButtons.forEach((button) => {
             button.addEventListener('click', () => {
-	              const stageId = button.dataset.stage ?? '';
-	              const player = ensurePlayer(stageId);
-	              if (!player) return;
-	              player.stop();
-	              const state = playerStates.get(stageId);
-	              if (state) {
-	                state.hasInteracted = true;
-	                state.isPlaying = false;
-	              }
-	            });
-	          });
+              const stageId = button.dataset.stage ?? '';
+              const player = ensurePlayer(stageId);
+              if (!player) return;
+              player.stop();
+              const state = playerStates.get(stageId);
+              if (state) {
+                state.hasInteracted = true;
+                state.isPlaying = false;
+              }
+              setStagePlaying(stageId, false);
+            });
+          });
 
           resetButtons.forEach((button) => {
             button.addEventListener('click', () => {
@@ -382,7 +397,9 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
               if (state) {
                 state.isPlaying = false;
                 state.completionHandled = false;
+                state.hasInteracted = true;
               }
+              setStagePlaying(stageId, false);
             });
           });
 
@@ -398,18 +415,18 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
           seekInputs.forEach((input) => {
             input.addEventListener('input', () => {
               const stageId = input.dataset.stage ?? '';
-	              const player = ensurePlayer(stageId);
-	              if (!player) return;
-	              const next = Number(input.value);
-	              player.seek(next);
-	              updateTimelineUi(stageId, next, player.durationSeconds);
-	              const state = playerStates.get(stageId);
-	              if (state) {
-	                state.hasInteracted = true;
-	                if (next < player.durationSeconds - 0.01) state.completionHandled = false;
-	              }
-	            });
-	          });
+              const player = ensurePlayer(stageId);
+              if (!player) return;
+              const next = Number(input.value);
+              player.seek(next);
+              updateTimelineUi(stageId, next, player.durationSeconds);
+              const state = playerStates.get(stageId);
+              if (state) {
+                state.hasInteracted = true;
+                if (next < player.durationSeconds - 0.01) state.completionHandled = false;
+              }
+            });
+          });
 
           if (studyModeToggle instanceof HTMLInputElement) {
             studyModeToggle.addEventListener('change', () => {
@@ -484,7 +501,7 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
         margin: 0;
         min-width: 320px;
         background:
-          linear-gradient(180deg, #090a0f 0%, #11131b 46%, #090a0f 100%),
+          linear-gradient(180deg, #090a0f 0%, #11131b 48%, #07080c 100%),
           repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 96px);
         color: var(--ink);
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -521,7 +538,7 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
       }
 
       .gallery-hero {
-        min-height: min(48vh, 560px);
+        min-height: min(42vh, 500px);
         display: grid;
         grid-template-rows: auto 1fr auto;
         gap: clamp(24px, 3vw, 34px);
@@ -529,9 +546,9 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
         border: 1px solid var(--line);
         border-radius: 8px;
         background:
-          linear-gradient(135deg, rgba(23, 26, 36, 0.96), rgba(9, 10, 15, 0.98)),
-          repeating-linear-gradient(0deg, rgba(88, 196, 221, 0.08) 0 1px, transparent 1px 72px),
-          repeating-linear-gradient(90deg, rgba(135, 194, 165, 0.07) 0 1px, transparent 1px 72px);
+          linear-gradient(135deg, rgba(17, 19, 27, 0.95), rgba(7, 8, 12, 0.98)),
+          repeating-linear-gradient(0deg, rgba(88, 196, 221, 0.07) 0 1px, transparent 1px 67.5px),
+          repeating-linear-gradient(90deg, rgba(135, 194, 165, 0.06) 0 1px, transparent 1px 67.5px);
         box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
       }
 
@@ -756,36 +773,61 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
       }
 
       .gallery-stage-wrap {
+        position: relative;
         overflow: hidden;
-        border: 1px solid #303544;
+        border: 1px solid #262a36;
         border-radius: 8px;
         background: var(--stage);
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 18px 46px rgba(0, 0, 0, 0.38);
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+          0 18px 46px rgba(0, 0, 0, 0.38);
       }
 
-      .stage-chrome {
+      .gallery-stage-wrap::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 18%, transparent 78%, rgba(0, 0, 0, 0.28)),
+          repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
+        mix-blend-mode: screen;
+        opacity: 0.16;
+      }
+
+      .gallery-stage-wrap.playing {
+        border-color: rgba(88, 196, 221, 0.74);
+        box-shadow:
+          inset 0 0 0 1px rgba(88, 196, 221, 0.18),
+          0 0 0 1px rgba(88, 196, 221, 0.12),
+          0 22px 54px rgba(0, 0, 0, 0.48);
+      }
+
+      .stage-meta {
+        position: absolute;
+        z-index: 2;
+        top: 0;
+        left: 0;
+        right: 0;
         display: flex;
-        gap: 6px;
         align-items: center;
-        height: 24px;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 28px;
         padding: 0 10px;
-        border-bottom: 1px solid #202432;
-        background: #0a0b10;
+        color: rgba(246, 247, 251, 0.82);
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0));
+        text-shadow: 0 1px 2px #000;
       }
 
-      .stage-chrome span {
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: var(--green);
-      }
-
-      .stage-chrome span:nth-child(2) {
-        background: var(--gold);
-      }
-
-      .stage-chrome span:nth-child(3) {
-        background: var(--red);
+      .stage-meta span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .gallery-stage {
@@ -793,7 +835,7 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
         aspect-ratio: 16 / 9;
         min-height: 190px;
         overflow: hidden;
-        background: #050505;
+        background: #000;
       }
 
       .gallery-stage > svg {
@@ -822,6 +864,7 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
         padding: 0 16px;
         cursor: pointer;
         font-weight: 800;
+        border-radius: 4px;
       }
 
       .icon-action {
@@ -836,9 +879,11 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
       .loop-toggle {
         min-height: 38px;
         border: 1px solid var(--line);
+        border-radius: 4px;
         padding: 0 10px;
         color: var(--muted);
         font-size: 13px;
+        background: rgba(7, 8, 12, 0.54);
       }
 
       .timeline-row {
@@ -851,6 +896,16 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
       .timeline-row input[type="range"] {
         width: 100%;
         accent-color: var(--blue);
+      }
+
+      .timeline-row input[type="range"]::-webkit-slider-runnable-track {
+        height: 4px;
+        border-radius: 999px;
+        background: #2d3342;
+      }
+
+      .timeline-row input[type="range"]::-webkit-slider-thumb {
+        margin-top: -5px;
       }
 
       .seek-time {
