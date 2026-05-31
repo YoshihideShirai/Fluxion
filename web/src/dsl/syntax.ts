@@ -77,6 +77,8 @@ export function parseEasing(raw: string, lineNumber: number): string {
   if (
     raw === "linear" ||
     raw === "smooth" ||
+    raw === "doubleSmooth" ||
+    raw === "double_smooth" ||
     raw === "easeInOut" ||
     raw === "easeIn" ||
     raw === "easeOut"

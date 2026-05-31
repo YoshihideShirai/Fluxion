@@ -3617,7 +3617,7 @@ function parsePlay(
   }
 
   snapshotPendingAutoCreates(state);
-  emitPlayCall(state, call, statementTime(state), duration, easing, lineNumber, color);
+  emitPlayCall(state, call, statementTime(state), duration, easing, lineNumber, color, hasEasing);
   advanceStatementTime(state, duration);
 }
 
@@ -3638,6 +3638,7 @@ function emitPlayCall(
   easing: string,
   lineNumber: number,
   playColor?: string,
+  easingExplicit = true,
 ): void {
   if (call.name === "FadeIn") {
     const id = expectPlayArg(call, 1, lineNumber);
@@ -3695,29 +3696,30 @@ function emitPlayCall(
       op: "create",
       node: visibleZeroOpacityClone(toNode),
     });
+    adoptTransformTargetState(toNode, toNode);
     state.shown.delete(fromId);
     state.shown.add(toId);
     return;
   }
 
   if (call.name === "Create") {
-    ensureNoPlayOptions(call, lineNumber);
     const id = expectPlayArg(call, 1, lineNumber);
-    pushCreate(state, start, id, duration, easing, lineNumber);
+    const lagRatio = readLagRatioWithDefault(call, lineNumber, 1);
+    pushCreate(state, start, id, duration, easing, lineNumber, lagRatio);
     return;
   }
 
   if (call.name === "Uncreate") {
-    ensureNoPlayOptions(call, lineNumber);
     const id = expectPlayArg(call, 1, lineNumber);
-    pushUncreate(state, start, id, duration, easing, lineNumber);
+    const lagRatio = readLagRatioWithDefault(call, lineNumber, 1);
+    pushUncreate(state, start, id, duration, easing, lineNumber, lagRatio);
     return;
   }
 
   if (call.name === "Write") {
-    ensureNoPlayOptions(call, lineNumber);
     const id = expectPlayArg(call, 1, lineNumber);
-    pushWrite(state, start, id, duration, easing, lineNumber);
+    const lagRatio = readOptionalLagRatio(call, lineNumber);
+    pushWrite(state, start, id, duration, easingExplicit ? easing : "linear", lineNumber, lagRatio);
     return;
   }
 
@@ -3740,6 +3742,8 @@ function emitPlayCall(
       easing,
     });
     pushTransformAnimations(state, start, transformSourceNode, toNode, duration, easing);
+    adoptTransformTargetState(fromNode, toNode);
+    state.shown.add(fromId);
     state.shown.add(toId);
     return;
   }
@@ -3791,6 +3795,7 @@ function emitPlayCall(
         easing,
         lineNumber,
         playColor,
+        easingExplicit,
       );
     });
     return;
@@ -3809,6 +3814,7 @@ function emitPlayCall(
         easing,
         lineNumber,
         playColor,
+        easingExplicit,
       );
     });
     return;
@@ -3835,6 +3841,29 @@ function readCircumscribeColor(
       );
   }
   return color;
+}
+
+function readOptionalLagRatio(call: PlayCall, lineNumber: number): number | undefined {
+  if (call.options.size === 0) return undefined;
+  return readLagRatioWithDefault(call, lineNumber, 0);
+}
+
+function readLagRatioWithDefault(call: PlayCall, lineNumber: number, defaultLagRatio: number): number {
+  let lagRatio = defaultLagRatio;
+  for (const [key, value] of call.options) {
+    if (key === "lagRatio") lagRatio = parseNumber(value, lineNumber);
+    else
+      throw new DslCompileError(
+        `Unknown ${call.name} option '${key}'.`,
+        lineNumber,
+      );
+  }
+  if (lagRatio < 0)
+    throw new DslCompileError(
+      "Expected lagRatio to be non-negative.",
+      lineNumber,
+    );
+  return lagRatio;
 }
 
 function readFadeShift(
@@ -4961,10 +4990,11 @@ function pushWrite(
   duration: number,
   easing: string,
   lineNumber: number,
+  lagRatio?: number,
 ): void {
   const node = requireNode(state, id, lineNumber);
   const leaves = writableNodes(node);
-  const segments = writeSegments(leaves, duration);
+  const segments = laggedSegments(leaves, duration, lagRatio ?? defaultWriteLagRatio(leaves.length));
   state.timeline.push({
     t: start,
     op: "create",
@@ -4997,41 +5027,12 @@ function pushWrite(
   state.shown.add(id);
 }
 
-function writeSegments(
-  leaves: SceneNode[],
-  duration: number,
-): Array<{ node: SceneNode; offset: number; segmentDuration: number }> {
-  if (leaves.length === 0) return [];
-  const entries = leaves
-    .map((node) => {
-      const bounds = approximateNodeBounds(node);
-      return {
-        node,
-        bounds,
-        width: Math.max(1, bounds.maxX - bounds.minX),
-      };
-    })
-    .sort((left, right) => left.bounds.minX - right.bounds.minX);
-  const totalWidth = entries.reduce((sum, entry) => sum + entry.width, 0);
-  const overlap = duration * 0.08;
-  const offsetSpan = Math.max(0, duration - overlap);
-  let cursor = 0;
-
-  return entries.map((entry) => {
-    const offset = totalWidth <= 0 ? 0 : (cursor / totalWidth) * offsetSpan;
-    const proportionalDuration =
-      totalWidth <= 0 ? duration : (entry.width / totalWidth) * duration;
-    const segmentDuration = Math.max(
-      0,
-      Math.min(duration - offset, proportionalDuration + overlap),
-    );
-    cursor += entry.width;
-    return { node: entry.node, offset, segmentDuration };
-  });
-}
-
 function supportsWriteProgress(node: SceneNode): boolean {
   return node.type === "math" || node.type === "text";
+}
+
+function defaultWriteLagRatio(length: number): number {
+  return Math.min(4 / Math.max(1, length), 0.2);
 }
 
 function pushCreate(
@@ -5041,6 +5042,7 @@ function pushCreate(
   duration: number,
   easing: string,
   lineNumber: number,
+  lagRatio = 1,
 ): void {
   const node = requireNode(state, id, lineNumber);
   const createNode = hiddenDrawableClone(node);
@@ -5060,7 +5062,7 @@ function pushCreate(
     easing,
   });
   if (createLeaves.length > 0) {
-    const segments = createSegments(createLeaves, duration);
+    const segments = laggedIndexedSegments(createLeaves, duration, lagRatio);
     segments.forEach(({ node: leaf, index, offset, segmentDuration }) => {
       const sourceLeaf = sourceLeaves[index] ?? leaf;
       const isDrawable = supportsDrawProgress(leaf);
@@ -5097,6 +5099,7 @@ function pushUncreate(
   duration: number,
   easing: string,
   lineNumber: number,
+  lagRatio = 1,
 ): void {
   const node = requireNode(state, id, lineNumber);
   const leaves = leafNodes(visibleZeroOpacityClone(node));
@@ -5109,7 +5112,7 @@ function pushUncreate(
     easing,
   });
   if (leaves.length > 0) {
-    const segments = createSegments(leaves, duration);
+    const segments = laggedIndexedSegments(leaves, duration, lagRatio);
     segments.forEach(({ node: leaf, offset, segmentDuration }) => {
       const isDrawable = supportsDrawProgress(leaf);
       state.timeline.push({
@@ -5150,35 +5153,27 @@ function supportsDrawProgress(node: SceneNode): boolean {
   );
 }
 
-function createSegments(
+function laggedIndexedSegments(
   leaves: SceneNode[],
   duration: number,
+  lagRatio: number,
 ): Array<{ node: SceneNode; index: number; offset: number; segmentDuration: number }> {
-  if (leaves.length === 0) return [];
-  const entries = leaves.map((node, index) => {
-    const bounds = approximateNodeBounds(node);
-    return {
-      node,
-      index,
-      width: Math.max(1, bounds.maxX - bounds.minX),
-    };
-  });
-  const totalWidth = entries.reduce((sum, entry) => sum + entry.width, 0);
-  const overlap = duration * 0.08;
-  const offsetSpan = Math.max(0, duration - overlap);
-  let cursor = 0;
+  return laggedSegments(leaves, duration, lagRatio).map((entry, index) => ({ ...entry, index }));
+}
 
-  return entries.map((entry) => {
-    const offset = totalWidth <= 0 ? 0 : (cursor / totalWidth) * offsetSpan;
-    const proportionalDuration =
-      totalWidth <= 0 ? duration : (entry.width / totalWidth) * duration;
-    const segmentDuration = Math.max(
-      0,
-      Math.min(duration - offset, proportionalDuration + overlap),
-    );
-    cursor += entry.width;
-    return { ...entry, offset, segmentDuration };
-  });
+function laggedSegments(
+  leaves: SceneNode[],
+  duration: number,
+  lagRatio: number,
+): Array<{ node: SceneNode; offset: number; segmentDuration: number }> {
+  if (leaves.length === 0) return [];
+  const fullLength = 1 + Math.max(0, leaves.length - 1) * Math.max(0, lagRatio);
+  const segmentDuration = duration / fullLength;
+  return leaves.map((node, index) => ({
+    node,
+    offset: segmentDuration * index * Math.max(0, lagRatio),
+    segmentDuration,
+  }));
 }
 
 function pushTransformAnimations(
@@ -5191,15 +5186,17 @@ function pushTransformAnimations(
 ): void {
   const visibleToNode = visibleZeroOpacityClone(toNode);
   const finish = start + duration;
-  for (const key of ["x", "y", "scale", "rotation", "opacity"] as const) {
-    if (fromNode.transform[key] !== visibleToNode.transform[key]) {
+  for (const key of ["x", "y", "scale", "scaleX", "scaleY", "rotation", "opacity"] as const) {
+    const from = fromNode.transform[key] ?? 1;
+    const to = visibleToNode.transform[key] ?? 1;
+    if (from !== to) {
       state.timeline.push({
         t: start,
         op: "animate",
         id: fromNode.id,
         path: `transform.${key}`,
-        from: fromNode.transform[key],
-        to: visibleToNode.transform[key],
+        from,
+        to,
         duration,
         easing,
       });
@@ -5255,6 +5252,32 @@ function pushTransformAnimations(
       });
     }
   }
+}
+
+function adoptTransformTargetState(source: SceneNode, target: SceneNode): void {
+  const visibleTarget = visibleZeroOpacityClone(target);
+  source.transform = structuredClone(visibleTarget.transform);
+  source.style = structuredClone(visibleTarget.style);
+  source.geometry = structuredClone(visibleTarget.geometry);
+  setOptionalNodeText(source, "text", visibleTarget.text);
+  setOptionalNodeText(source, "latex", visibleTarget.latex);
+  setOptionalNodeText(source, "renderer", visibleTarget.renderer);
+
+  const childCount = Math.min(source.children.length, visibleTarget.children.length);
+  for (let index = 0; index < childCount; index += 1) {
+    const sourceChild = source.children[index];
+    const targetChild = visibleTarget.children[index];
+    if (sourceChild && targetChild) adoptTransformTargetState(sourceChild, targetChild);
+  }
+}
+
+function setOptionalNodeText(
+  node: SceneNode,
+  key: "text" | "latex" | "renderer",
+  value: string | undefined,
+): void {
+  if (value === undefined) delete node[key];
+  else node[key] = value;
 }
 
 function readExpressionAssignment(

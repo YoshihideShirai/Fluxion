@@ -1986,7 +1986,7 @@ play TransformMatchingTex(source, eq2) duration=1s`);
   );
 });
 
-test("expands Write on groups into width-paced child write-progress reveals", () => {
+test("expands Write on groups into Manim lag-ratio child write-progress reveals", () => {
   const documentData = compileTextDsl(`math a "a" at 0,0 opacity=0.8
 math b "b" at 40,0
 group text a b
@@ -2010,8 +2010,39 @@ play Write(text) duration=1s easing=linear`);
       .filter((op): op is AnimateOperation => op.op === "animate")
       .map((op) => [op.id, op.path, op.from, op.to, op.t, op.duration]),
     [
-      ["a", "geometry.writeProgress", 0, 1, 0, 0.58],
-      ["b", "geometry.writeProgress", 0, 1, 0.46, 0.54],
+      ["a", "geometry.writeProgress", 0, 1, 0, 0.8333333333333334],
+      ["b", "geometry.writeProgress", 0, 1, 0.16666666666666669, 0.8333333333333334],
+    ],
+  );
+});
+
+test("uses Manim Write default linear rate when play easing is omitted", () => {
+  const documentData = compileTextDsl(`math title "x" opacity=0
+play Write(title) duration=1s`);
+
+  const write = documentData.timeline.find(
+    (op) => op.op === "animate" && op.id === "title" && op.path === "geometry.writeProgress",
+  );
+  assert.equal(write?.op, "animate");
+  if (write?.op !== "animate") throw new Error("Expected Write animation.");
+  assert.equal(write.easing, "linear");
+});
+
+test("expands Create on groups with Manim lagRatio timing", () => {
+  const documentData = compileTextDsl(`line a x1=0 y1=0 x2=100 y2=0
+line b x1=0 y1=20 x2=100 y2=20
+line c x1=0 y1=40 x2=100 y2=40
+group grid a b c
+play Create(grid, lagRatio=0.5) duration=3s easing=linear`);
+
+  equalJson(
+    documentData.timeline
+      .filter((op): op is AnimateOperation => op.op === "animate")
+      .map((op) => [op.id, op.path, op.t, op.duration]),
+    [
+      ["a", "geometry.drawProgress", 0, 1.5],
+      ["b", "geometry.drawProgress", 0.75, 1.5],
+      ["c", "geometry.drawProgress", 1.5, 1.5],
     ],
   );
 });
@@ -2087,6 +2118,25 @@ play ReplacementTransform(from, to) duration=1s easing=linear`);
     ),
     true,
   );
+});
+
+test("keeps ReplacementTransform targets visible for following fades", () => {
+  const documentData = compileTextDsl(`rect from w=40 h=40 opacity=0
+rect to w=40 h=40 at 100,0 opacity=0
+
+play Create(from) duration=1s easing=linear
+play ReplacementTransform(from, to) duration=1s easing=linear
+play FadeOut(to) duration=1s easing=linear`);
+
+  const fadeOutOpacity = documentData.timeline.find(
+    (op): op is AnimateOperation =>
+      op.op === "animate" &&
+      op.id === "to" &&
+      op.path === "transform.opacity" &&
+      op.t === 2,
+  );
+  assert.equal(fadeOutOpacity?.from, 1);
+  assert.equal(fadeOutOpacity?.to, 0);
 });
 
 test("fades hidden nodes in to visible opacity", () => {
@@ -2210,6 +2260,45 @@ play Transform(source, target) duration=1.5s`);
       [1.5, "renderer", "mathjax"],
     ],
   );
+});
+
+test("uses transformed source state for chained Transform animations", () => {
+  const documentData = compileTextDsl(`rect source w=40 h=40 at 0,0 fill="#ffffff"
+rect middle w=80 h=50 at 100,0 fill="#58C4DD" opacity=0
+rect target w=120 h=60 at 160,0 fill="#FF862F" opacity=0
+
+play Transform(source, middle) duration=1s easing=linear
+play Transform(source, target) duration=1s easing=linear`);
+
+  equalJson(
+    documentData.timeline
+      .filter((op): op is AnimateOperation => op.op === "animate" && op.id === "source" && op.t === 1)
+      .map((op) => [op.path, op.from, op.to]),
+    [
+      ["transform.x", 100, 160],
+      ["style.fill", "#58C4DD", "#FF862F"],
+      ["geometry.w", 80, 120],
+      ["geometry.h", 50, 60],
+    ],
+  );
+});
+
+test("uses transformed source state for following Animate calls", () => {
+  const documentData = compileTextDsl(`rect source w=40 h=40 at 0,0
+rect target w=80 h=40 at 100,0 opacity=0
+
+play Transform(source, target) duration=1s easing=linear
+play Animate(source, shift=RIGHT) duration=1s easing=linear`);
+
+  const moveAfterTransform = documentData.timeline.find(
+    (op): op is AnimateOperation =>
+      op.op === "animate" &&
+      op.id === "source" &&
+      op.path === "transform.x" &&
+      op.t === 1,
+  );
+  assert.equal(moveAfterTransform?.from, 100);
+  assert.equal(moveAfterTransform?.to, 167.5);
 });
 
 test("compiles Circumscribe with top-level color option", () => {

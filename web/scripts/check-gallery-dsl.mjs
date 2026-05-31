@@ -984,7 +984,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const fadeMidSquare = renderedNodeAt(documentData, 2.5, 'square');
     const fadeEndSquare = renderedNodeAt(documentData, 3, 'square');
     assertGalleryCondition(label, square?.type === 'path' && targetCircle?.type === 'path', 'expected same-topology path square and circle for Transform.');
-    assertGalleryCondition(label, square?.style?.stroke === '#ffffff' && approximatelyEqual(square?.style?.fillOpacity ?? -1, 0), 'expected rotated white square outline start.');
+    assertGalleryCondition(label, createStartSquare?.style?.stroke === '#ffffff' && approximatelyEqual(createStartSquare?.style?.fillOpacity ?? -1, 0), 'expected rotated white square outline start.');
     assertGalleryCondition(label, targetCircle?.style?.fill === '#D147BD' && approximatelyEqual(targetCircle?.style?.fillOpacity ?? 0, 0.5), 'expected target PINK circle fill opacity 0.5.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'square', path: 'geometry.drawProgress', from: 0, to: 1, t: 0, duration: 1, easing: 'easeInOut' }), 'expected Create(square) draw progress.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'effect' && op.id === 'square' && op.effect === 'transform' && op.t === 1 && op.duration === 1), 'expected one-second Transform(square, circle).');
@@ -1228,6 +1228,8 @@ function checkGallerySpecificStructure(label, documentData) {
     const transformTitle = findNode(documentData, 'transformTitle');
     const gridTitle = findNode(documentData, 'gridTitle');
     const warpedTitle = findNode(documentData, 'warpedTitle');
+    const initialTitle = renderedNodeAt(documentData, 0, 'title');
+    const createdGridTitle = renderedNodeAt(documentData, 7.25, 'gridTitle');
     const grid = findNode(documentData, 'grid');
     const horizontalGrid = Array.from({ length: 9 }, (_, index) => findNode(documentData, `grid_h${index}`));
     const verticalGrid = Array.from({ length: 15 }, (_, index) => findNode(documentData, `grid_v${index}`));
@@ -1255,10 +1257,10 @@ function checkGallerySpecificStructure(label, documentData) {
       'warpEq',
       'createLag',
     ];
-    assertGalleryCondition(label, title?.type === 'math' && title.latex === '\\\\text{This is some }\\\\LaTeX' && title.geometry?.fontSize === 54, 'expected opening Tex title.');
+    assertGalleryCondition(label, initialTitle?.type === 'math' && initialTitle.latex === '\\\\text{This is some }\\\\LaTeX' && initialTitle.geometry?.fontSize === 54, 'expected opening Tex title.');
     assertGalleryCondition(label, basel?.type === 'math' && String(basel.latex).includes('\\\\frac{\\\\pi^2}{6}') && basel.geometry?.fontSize === 48, 'expected Basel MathTex equation.');
     assertGalleryCondition(label, transformTitle?.latex === '\\\\text{That was a transform}', 'expected transform target title.');
-    assertGalleryCondition(label, gridTitle?.latex === '\\\\text{This is a grid}' && gridTitle.geometry?.fontSize === 62, 'expected grid title.');
+    assertGalleryCondition(label, createdGridTitle?.latex === '\\\\text{This is a grid}' && createdGridTitle.geometry?.fontSize === 62, 'expected grid title.');
     assertGalleryCondition(label, String(warpedTitle?.latex).includes('non-linear function') && String(warpedTitle?.latex).includes('applied to the grid'), 'expected nonlinear transform title.');
     assertGalleryCondition(label, grid?.children?.length === 24, 'expected full-frame NumberPlane-like grid with 24 paths.');
     assertGalleryCondition(label, horizontalGrid.every((node) => node?.type === 'path') && verticalGrid.every((node) => node?.type === 'path'), 'expected 9 horizontal and 15 vertical grid paths.');
@@ -1294,7 +1296,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, transformEndTitle?.latex === '\\\\text{That was a transform}' && transformEndTitle?.transform?.x === -270 && transformEndTitle?.transform?.y === 206 && transformEndTitle?.geometry?.fontSize === 42, 'expected title content replaced after transform.');
 
     const gridCreateMid = visualSample(documentData, 5.5);
-    assertGalleryCondition(label, (findRenderedNode(gridCreateMid, 'grid_h4')?.geometry?.drawProgress ?? 0) === 1 && (findRenderedNode(gridCreateMid, 'grid_v7')?.geometry?.drawProgress ?? 1) === 0, 'expected lagged grid creation to have horizontal center drawn before vertical center.');
+    assertGalleryCondition(label, approximatelyEqual(findRenderedNode(gridCreateMid, 'grid_h4')?.geometry?.drawProgress ?? 0, 0.950036) && (findRenderedNode(gridCreateMid, 'grid_v7')?.geometry?.drawProgress ?? 1) === 0, 'expected lagged grid creation to have horizontal center nearly drawn before vertical center.');
     assertGalleryCondition(label, approximatelyEqual(findRenderedNode(gridCreateMid, 'gridTitle')?.transform?.opacity ?? 0, 0.282729), 'expected grid title fading in during lagged Create phase.');
 
     const gridReady = visualSample(documentData, 7.25);
@@ -1317,7 +1319,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const gridStartSvg = svgSampleAt(documentData, 5.5);
     const warpMidSvg = svgSampleAt(documentData, 9.75);
     const finalSvg = svgSampleAt(documentData, 11.25);
-    assertGalleryCondition(label, /<g id="grid_h4"[^>]*><path [^>]*stroke="#FFFFFF"[^>]*stroke-dashoffset="0"/u.test(gridStartSvg) && /<g id="grid_v7"[^>]*><path [^>]*stroke="#FFFFFF"[^>]*stroke-dashoffset="1"/u.test(gridStartSvg), 'expected SVG lagged grid draw state at create midpoint.');
+    assertGalleryCondition(label, /<g id="grid_h4"[^>]*><path [^>]*stroke="#FFFFFF"[^>]*stroke-dashoffset="0\.0499/u.test(gridStartSvg) && /<g id="grid_v7"[^>]*><path [^>]*stroke="#FFFFFF"[^>]*stroke-dashoffset="1"/u.test(gridStartSvg), 'expected SVG lagged grid draw state at create midpoint.');
     assertGalleryCondition(label, svgGroupPathData(warpMidSvg, 'grid_h4').includes('L -447.1598 9.5075') && svgGroupPathData(warpMidSvg, 'grid_v7').includes('L 32.8999 -0.2683'), 'expected SVG nonlinear grid halfway paths.');
     assertGalleryCondition(label, finalSvg.includes('That was a non-linear function') && svgGroupPathData(finalSvg, 'grid_h0').startsWith('M -523.584 -225.653'), 'expected final SVG warped grid and nonlinear title.');
   }
@@ -2019,9 +2021,9 @@ function checkGallerySpecificStructure(label, documentData) {
     const replacementStartFrame = renderedNodeAt(documentData, 4, 'frameA');
     const replacementMidFrame = renderedNodeAt(documentData, 4.5, 'frameA');
     const replacementEndFrame = renderedNodeAt(documentData, 5, 'frameB');
-    assertGalleryCondition(label, approximatelyEqual(earlyLhs?.geometry?.writeProgress ?? 0, 0.61441) && earlyTermA?.geometry?.writeProgress === 0, 'expected early Write(productRule) to still be revealing the left-hand side.');
-    assertGalleryCondition(label, approximatelyEqual(writingTermA?.geometry?.writeProgress ?? 0, 0.508263) && writingPlus?.geometry?.writeProgress === 0, 'expected Write(productRule) to reveal terms in width-paced order.');
-    assertGalleryCondition(label, writingPlus?.transform?.x === 124 && approximatelyEqual(lateTermB?.geometry?.writeProgress ?? 0, 0.331386), 'expected late Write(productRule) to reach the final product term after the plus sign.');
+    assertGalleryCondition(label, approximatelyEqual(earlyLhs?.geometry?.writeProgress ?? 0, 0.4) && approximatelyEqual(earlyTermA?.geometry?.writeProgress ?? 0, 0.2), 'expected early Write(productRule) to use Manim-style overlapped submobject lag.');
+    assertGalleryCondition(label, approximatelyEqual(writingTermA?.geometry?.writeProgress ?? 0, 0.6) && approximatelyEqual(writingPlus?.geometry?.writeProgress ?? 0, 0.4), 'expected Write(productRule) to reveal terms with Manim default lag cadence.');
+    assertGalleryCondition(label, writingPlus?.transform?.x === 124 && approximatelyEqual(lateTermB?.geometry?.writeProgress ?? 0, 0.6), 'expected late Write(productRule) to reach the final product term after the plus sign.');
     assertGalleryCondition(label, completeTerms.every((node) => node?.geometry?.writeProgress === 1) && completeTerms.map((node) => node?.transform?.x).join(',') === '-185,15,124,236', 'expected product rule terms fully written at official positions before frame creation.');
     assertGalleryCondition(label, createStartFrame?.transform?.opacity === 1 && createStartFrame?.geometry?.drawProgress === 0, 'expected frameA visible but undrawn at Create start.');
     assertGalleryCondition(label, createMidFrame?.transform?.opacity === 1 && createMidFrame?.geometry?.drawProgress === 0.5, 'expected frameA half drawn at Create midpoint.');

@@ -357,8 +357,8 @@ Supported primitives:
 - `FadeIn(id, shift=UP)`: hidden opacity の `create`、semantic `effect=fadeIn`、`transform.opacity` animation を生成します。`shift` を指定すると、Manim と同じく `target - shift` から target へ移動します。
 - `FadeOut(id, shift=DOWN)`: semantic `effect=fadeOut`、`transform.opacity` animation、duration 終了時の `delete` を生成します。`shift` を指定すると、target から `target + shift` へ移動します。
 - `Animate(id, shift=LEFT|(x,y), opacity=<number>, fill=<css-color>, fillOpacity=<number>, stroke=<css-color>, strokeOpacity=<number>, strokeWidth=<number>, scale=<factor>, rotate=<radians>, rotation=<degrees>)`: target-state clone を作り、指定した Manim 風 mobject method/option を適用して、差分を transform/style animation に展開します。
-- `Create(id)`: `create` と semantic `effect=create` を生成します。`surroundingRect` frame では `geometry.drawProgress` も animation し、外枠を描き出します。
-- `Write(id)`: writable leaf を `geometry.writeProgress=0` で `create` し、semantic `effect=write` と、幅に応じた left-to-right reveal を生成して Manim の書き出し表示を近似します。
+- `Create(id, lagRatio=1)`: `create` と semantic `effect=create` を生成します。drawable leaf は Manim の submobject lag 配分で `geometry.drawProgress` を animation し、外枠を描き出します。
+- `Write(id)`: writable leaf を `geometry.writeProgress=0` で `create` し、semantic `effect=write` と、Manim の既定 `lag_ratio=min(4 / n, 0.2)` / 未指定時 `linear` rate に近い reveal を生成します。
 - `MoveAlongPath(id, path)`: `circle` path node では、Manim の circular path proportion に合わせ、右端から反時計回りに 1 周する `transform.x/y` binding と value animation に展開します。`plot` path では `easing=linear` の場合、描画に使う smoothed cubic plot curve の曲線長に沿った位置 animation に展開し、Manim の `path.point_from_proportion(...)` 挙動へ寄せます。
 - `Rotating(id[, angle], about=(x,y), axis=OUT)`: node 自身の中心または明示した点を中心に回転します。Manim の `Rotating` に合わせ、`angle=TAU`、OUT axis を既定とし、`easing=linear` では等速の tracker motion になります。
 - `Transform(a, b)`: `a` を target として、`b` と異なる transform/style/geometry property ごとに `animate` operation を生成します。
