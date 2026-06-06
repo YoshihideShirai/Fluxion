@@ -1529,7 +1529,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const surfaceFaces = surface?.children ?? [];
     const surfaceFills = new Set(surfaceFaces.map((child) => child.style?.fill?.toLowerCase()).filter(Boolean));
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected projected ThreeDAxes helper.');
-    assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'axes') < documentData.nodes.findIndex((node) => node.id === 'gauss'), 'expected official self.add(axes, gauss_plane) z-order.');
+    assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'gauss') < documentData.nodes.findIndex((node) => node.id === 'axes'), 'expected Manim ThreeDCamera surface-depth sorting to render gaussian faces below regular axes.');
     assertGalleryCondition(label, axes?.transform?.x === 0 && axes?.transform?.y === 0, 'expected ThreeDAxes to stay at the unshifted Manim scene origin.');
     assertGalleryCondition(label, axes?.children?.length === 36, `expected projected default ThreeDAxes with ticks and tips, got ${axes?.children?.length ?? 0} children.`);
     assertGalleryCondition(label, axes?.geometry?.xRange?.join(',') === '-6,6,1', 'expected official default ThreeDAxes xRange.');
@@ -1558,7 +1558,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="gauss:face:/gu) === 24 * 24, 'expected all gaussian mesh faces to serialize into SVG.');
     assertGalleryCondition(label, svg.includes('stroke="#83C167"') && svg.includes('fill-opacity="0.5"'), 'expected SVG gaussian surface strokes and opacity.');
-    assertGalleryCondition(label, svg.indexOf('id="axes:x:axis"') < svg.indexOf('id="gauss:face:'), 'expected SVG gaussian surface to render over the axes like self.add(axes, gauss_plane).');
+    assertGalleryCondition(label, svg.indexOf('id="gauss:face:') < svg.indexOf('id="axes:x:axis"'), 'expected SVG gaussian surface to render below axes like Manim ThreeDCamera depth sorting.');
     assertGalleryCondition(label, !/id="(?:highlight|highlight_core|terminator_left|terminator_bottom|gauss_shadow|gauss_rim)"/u.test(svg), 'expected no non-Manim screen-space gaussian highlight or shadow overlays.');
   }
 
@@ -1570,7 +1570,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const sphereFaces = sphere?.children ?? [];
     const sphereFills = new Set(sphereFaces.map((child) => child.style?.fill?.toLowerCase()).filter(Boolean));
     assertGalleryCondition(label, axes?.geometry?.threeDAxes === true, 'expected projected ThreeDAxes helper.');
-    assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'axes') < documentData.nodes.findIndex((node) => node.id === 'sphere'), 'expected official self.add(axes, sphere) z-order.');
+    assertGalleryCondition(label, documentData.nodes.findIndex((node) => node.id === 'sphere') < documentData.nodes.findIndex((node) => node.id === 'axes'), 'expected Manim ThreeDCamera surface-depth sorting to render sphere faces below regular axes.');
     assertGalleryCondition(label, axes?.transform?.x === 0 && axes?.transform?.y === 0, 'expected ThreeDAxes to stay at the unshifted Manim scene origin.');
     assertGalleryCondition(label, axes?.children?.length === 36, `expected projected default ThreeDAxes with ticks and tips, got ${axes?.children?.length ?? 0} children.`);
     assertGalleryCondition(label, axes?.geometry?.xRange?.join(',') === '-6,6,1', 'expected official default ThreeDAxes xRange.');
@@ -1599,7 +1599,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'create').length === 3 && !documentData.timeline.some((op) => op.op === 'animate' || op.op === 'effect'), 'expected static self.add(axes, sphere) scene with no play animations.');
     const svg = svgSampleAt(documentData, 0);
     assertGalleryCondition(label, countSvgOccurrences(svg, /id="sphere:face:/gu) === 15 * 32, 'expected all sphere mesh faces to serialize into SVG.');
-    assertGalleryCondition(label, svg.indexOf('id="axes:x:axis"') < svg.indexOf('id="sphere"'), 'expected SVG sphere to render over the axes like self.add(axes, sphere).');
+    assertGalleryCondition(label, svg.indexOf('id="sphere"') < svg.indexOf('id="axes:x:axis"'), 'expected SVG sphere to render below axes like Manim ThreeDCamera depth sorting.');
     assertGalleryCondition(label, !/id="(?:highlight|highlight_core|terminator_left|terminator_bottom|sphere_shadow|sphere_rim)"/u.test(svg), 'expected no non-Manim screen-space sphere highlight or shadow overlays.');
   }
 
