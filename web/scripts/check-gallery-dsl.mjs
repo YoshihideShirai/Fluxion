@@ -112,7 +112,7 @@ const expectedDurations = new Map([
   ['opening_manim', 11.25],
   ['plotting-sin-cos', 1],
   ['sine-curve-unit-circle', 9.5],
-  ['simple-circle', 2],
+  ['simple-circle', 1],
   ['square-to-circle', 3],
   ['three-d-light-source-position', 1],
   ['three-d-surface-plot', 1],
@@ -955,7 +955,7 @@ function checkGallerySpecificStructure(label, documentData) {
     const createStartCircle = renderedNodeAt(documentData, 0, 'circle');
     const createMidCircle = renderedNodeAt(documentData, 0.5, 'circle');
     const createEndCircle = renderedNodeAt(documentData, 1, 'circle');
-    const holdCircle = renderedNodeAt(documentData, 2, 'circle');
+    const holdCircle = renderedNodeAt(documentData, 1, 'circle');
     assertGalleryCondition(label, circle?.type === 'circle', 'expected Circle mobject.');
     assertGalleryCondition(label, approximatelyEqual(circle?.geometry?.r ?? 0, 67.5), 'expected Manim default Circle radius at frame scale.');
     assertGalleryCondition(label, circle?.style?.fill === '#D147BD' && approximatelyEqual(circle?.style?.fillOpacity ?? 0, 0.5), 'expected PINK fill with opacity 0.5.');
@@ -965,11 +965,11 @@ function checkGallerySpecificStructure(label, documentData) {
     const startSvg = svgSampleAt(documentData, 0);
     const midSvg = svgSampleAt(documentData, 0.5);
     const endSvg = svgSampleAt(documentData, 1);
-    const holdSvg = svgSampleAt(documentData, 2);
+    const holdSvg = svgSampleAt(documentData, 1);
     assertGalleryCondition(label, svgElementTag(startSvg, 'circle').includes('r="67.5"') && svgElementTag(startSvg, 'circle').includes('fill="#D147BD"') && svgElementTag(startSvg, 'circle').includes('stroke-dashoffset="1"'), 'expected SVG Circle start to be an undrawn Manim PINK circle.');
     assertGalleryCondition(label, svgElementTag(midSvg, 'circle').includes('stroke-dashoffset="0.5"') && svgElementTag(midSvg, 'circle').includes('fill-opacity="0"'), 'expected SVG Circle midpoint to show half stroke before fill reveal.');
     assertGalleryCondition(label, svgElementTag(endSvg, 'circle').includes('stroke-dashoffset="0"') && svgElementTag(endSvg, 'circle').includes('fill-opacity="0.5"'), 'expected SVG Circle end to show full PINK fill opacity.');
-    assertGalleryCondition(label, svgElementTag(holdSvg, 'circle').includes('stroke-dashoffset="0"') && svgElementTag(holdSvg, 'circle').includes('fill-opacity="0.5"'), 'expected final wait to hold the completed PINK circle in SVG.');
+    assertGalleryCondition(label, svgElementTag(holdSvg, 'circle').includes('stroke-dashoffset="0"') && svgElementTag(holdSvg, 'circle').includes('fill-opacity="0.5"'), 'expected the final Create frame to complete the PINK circle in SVG.');
   }
 
   if (label.includes('square-to-circle')) {
