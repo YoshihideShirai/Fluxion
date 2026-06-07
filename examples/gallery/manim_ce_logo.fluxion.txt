@@ -5,4 +5,3 @@ rect s w=135 h=135 at 67.5,-11.25 fill="#525893" stroke="#525893" strokeWidth=0
 circle c r=67.5 at 0,56.25 fill="#87c2a5" stroke="#87c2a5" strokeWidth=0
 math m "\\mathbb{M}" at -84.375,-45 size=174 fill="#343434" renderer=katex
 group logo t s c m
-wait 1s

@@ -86,8 +86,5 @@ at 3s:
   animate zoom_dot.x from 244 to -135 duration=1s easing=easeInOut
   animate zoom_dot.y from -135 to 33.75 duration=1s easing=easeInOut
   wait 1s
-  animate zoom_bg.opacity from 1 to 0 duration=1s easing=easeInOut
-  animate zoom_display.opacity from 1 to 0 duration=1s easing=easeInOut
-  animate zoom_sample.opacity from 1 to 0 duration=1s easing=easeInOut
   play AnimationGroup(Uncreate(zoom_display_frame), FadeOut(frame), lagRatio=0) duration=1s easing=easeInOut
   wait 1s

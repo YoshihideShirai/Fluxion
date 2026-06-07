@@ -2,8 +2,6 @@ scene width=960 height=540 fps=60
 
 rect bg w=960 h=540 at 0,0 fill="#000000"
 
-threeDAxes axes at 0,0 xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 xLength=10.5 yLength=10.5 zLength=6.5 phi=75 theta=-30 unitScale=67.5 stroke="#FFFFFF" strokeWidth=2 tickSize=10 tickStrokeWidth=2 includeTicks=true includeTips=true
-
 gaussianSurface gauss at 0,0 range=-2,2 resolution=24 scale=2 sigma=0.4 mu=0,0 phi=75 theta=-30 unitScale=67.5 fillA="#FF862F" fillB="#58C4DD" stroke="#83C167" strokeWidth=0.5 fillOpacity=0.5 shade=true light=-7,-9,10
 
-wait 1s
+threeDAxes axes at 0,0 xRange=-6,6,1 yRange=-5,5,1 zRange=-4,4,1 xLength=10.5 yLength=10.5 zLength=6.5 phi=75 theta=-30 unitScale=67.5 stroke="#FFFFFF" strokeWidth=2 tickSize=10 tickStrokeWidth=2 includeTicks=true includeTips=true

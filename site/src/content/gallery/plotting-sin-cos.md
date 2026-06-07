@@ -28,5 +28,3 @@ dataLine tauLine axes=ax from=6.283185,0 to=6.283185,1 stroke="#FFFF00" strokeWi
 graphLabel sinLabel plot=sinCurve label="\sin(x)" xVal=-10 direction=up size=28 fill="#58C4DD" w=63 h=43.37 xOffset=-18.5
 graphLabel cosLabel plot=cosCurve label="\cos(x)" direction=right size=28 fill="#FC6255" w=67.25 h=43.4 yOffset=-0.5
 graphLabel tauLabel plot=cosCurve label="x=2\pi" xVal=6.283185 direction=ur size=26 fill="#ffffff" w=75 h=40.3 xOffset=3.615 yOffset=-8.819
-
-wait 1s

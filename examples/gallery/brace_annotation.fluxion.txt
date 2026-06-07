@@ -6,5 +6,3 @@ circle dotA r=5.4 at -135,67.5 fill="#ffffff" stroke="none"
 circle dotB r=5.4 at 135,-67.5 fill="#ffffff" stroke="none"
 brace horizontal target=segment direction=down buff=13.5 sharpness=2 label="\\text{Horizontal distance}" labelRenderer=katex labelSize=42 labelW=300 labelH=90 labelColor="#ffffff" fill="#ffffff" stroke="none"
 brace perpendicular target=segment direction=perpendicular buff=13.5 sharpness=2 label="x-x_1" labelRenderer=katex labelSize=42 labelW=120 labelH=88 labelColor="#ffffff" fill="#ffffff" stroke="none"
-
-wait 1s
