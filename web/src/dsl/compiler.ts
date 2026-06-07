@@ -3179,6 +3179,9 @@ function parseTracedPath(tokens: string[], state: CompileState, lineNumber: numb
   const from = options.get("from") ?? "0";
   const to = options.get("to") ?? "2*pi";
   const samples = options.get("samples") ?? "96";
+  const sampling = options.get("sampling") ?? "fixed";
+  const sampleStep = options.get("sampleStep");
+  const smoothing = options.get("smoothing") ?? "smooth";
   const close = options.get("close") ?? "false";
   const pathGenerator = readPathGeneratorAssignment(
     `path(x=${xExpr},y=${yExpr},from=${from},to=${to},samples=${samples},close=${close})`,
@@ -3186,7 +3189,13 @@ function parseTracedPath(tokens: string[], state: CompileState, lineNumber: numb
     lineNumber,
   );
   if (!pathGenerator) throw new DslCompileError("Failed to build tracedPath path.", lineNumber);
-  pathGenerator.smoothing = "smooth";
+  if (sampling !== "fixed" && sampling !== "frame")
+    throw new DslCompileError("tracedPath sampling must be 'fixed' or 'frame'.", lineNumber);
+  if (smoothing !== "linear" && smoothing !== "smooth")
+    throw new DslCompileError("tracedPath smoothing must be 'linear' or 'smooth'.", lineNumber);
+  pathGenerator.smoothing = smoothing;
+  pathGenerator.sampling = sampling;
+  if (sampleStep !== undefined) pathGenerator.sampleStep = parseNumber(sampleStep, lineNumber);
 
   const node = createBaseNode(id, "path");
   node.style.fill = "none";
@@ -3195,9 +3204,11 @@ function parseTracedPath(tokens: string[], state: CompileState, lineNumber: numb
   node.style.strokeLinecap = "round";
   node.style.strokeLinejoin = "round";
   node.geometry.tracedPath = true;
+  node.geometry.traceSampling = sampling;
+  if (sampleStep !== undefined) node.geometry.traceSampleStep = parseNumber(sampleStep, lineNumber);
   node.geometry.d = buildPathDataPreview(pathGenerator, state);
   for (const [key, value] of options) {
-    if (["x", "y", "from", "to", "samples", "close"].includes(key)) continue;
+    if (["x", "y", "from", "to", "samples", "sampling", "sampleStep", "smoothing", "close"].includes(key)) continue;
     applyNodeOption(node, key, value, lineNumber);
   }
 
@@ -3206,7 +3217,7 @@ function parseTracedPath(tokens: string[], state: CompileState, lineNumber: numb
   pushBindPath(state, id, "geometry.d", pathGenerator, statementTime(state));
 }
 
-function buildPathDataPreview(op: { samples:number; tMinExpr:string; tMaxExpr:string; xExpr:string; yExpr:string; close?:boolean; smoothing?: "linear" | "smooth"; pathType?: "parametric" | "arc"; radius?: number }, state: CompileState): string {
+function buildPathDataPreview(op: { samples:number; tMinExpr:string; tMaxExpr:string; xExpr:string; yExpr:string; close?:boolean; smoothing?: "linear" | "smooth"; sampling?: "fixed" | "frame"; sampleStep?: number; pathType?: "parametric" | "arc"; radius?: number }, state: CompileState): string {
   const vars = Object.fromEntries([...state.values].map(([k,v])=>[k,v]));
   const tMin = evaluateExpression(op.tMinExpr, vars);
   const tMax = evaluateExpression(op.tMaxExpr, vars);
@@ -3243,6 +3254,8 @@ function pushBindPath(
     yExpr: string;
     close?: boolean;
     smoothing?: "linear" | "smooth";
+    sampling?: "fixed" | "frame";
+    sampleStep?: number;
     pathType?: "parametric" | "arc";
     radius?: number;
   },
@@ -3512,6 +3525,8 @@ function readPathGeneratorAssignment(
       yExpr: string;
       close?: boolean;
       smoothing?: "linear" | "smooth";
+      sampling?: "fixed" | "frame";
+      sampleStep?: number;
       pathType?: "parametric" | "arc";
       radius?: number;
     }

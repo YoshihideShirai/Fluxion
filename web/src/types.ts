@@ -114,6 +114,8 @@ export interface BindPathOperation extends BaseOperation {
   yExpr: string;
   close?: boolean;
   smoothing?: "linear" | "smooth";
+  sampling?: "fixed" | "frame";
+  sampleStep?: number;
   deps?: string[];
 }
 

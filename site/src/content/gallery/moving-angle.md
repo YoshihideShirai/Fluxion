@@ -25,7 +25,7 @@ rect bg w=960 h=540 at 0,0 fill="#000000"
 line line1 x1=-67.5 y1=0 x2=67.5 y2=0 stroke="#FFFFFF" strokeWidth=4
 rotatingLine line_moving x1=-67.5 y1=0 x2=67.5 y2=0 about=-67.5,0 angle=-theta stroke="#FFFFFF" strokeWidth=4
 angle a at -67.5,0 radius=33.75 from=0 to=-theta samples=120 stroke="#FFFFFF" strokeWidth=4
-math tex "\\theta" at -36.526,-44.238 size=48 fill="#FFFFFF"
+math tex "\theta" at -36.526,-44.238 size=48 fill="#FFFFFF"
 
 always tex.x = expr=-67.5 + 54*cos(theta/2)
 always tex.y = expr=-54*sin(theta/2)
