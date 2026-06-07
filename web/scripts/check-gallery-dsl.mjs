@@ -114,8 +114,8 @@ const expectedDurations = new Map([
   ['sine-curve-unit-circle', 9.5],
   ['simple-circle', 1],
   ['square-to-circle', 3],
-  ['three-d-light-source-position', 1],
-  ['three-d-surface-plot', 1],
+  ['three-d-light-source-position', 0],
+  ['three-d-surface-plot', 0],
   ['three-d-camera-rotation', 3],
   ['three-d-camera-illusion-rotation', Math.PI / 2],
   ['special-camera', 3],
@@ -283,10 +283,10 @@ function visualSample(documentData, seconds) {
 
 function checkRenderableTimeline(label, documentData) {
   const duration = documentData.duration ?? Math.max(0, ...documentData.timeline.map((op) => op.t + ('duration' in op ? op.duration : 0)));
-  if (!Number.isFinite(duration) || duration <= 0) {
-    throw new Error(`${label}: expected a positive animation duration.`);
-  }
   const expectedDuration = expectedDurationForLabel(label);
+  if (!Number.isFinite(duration) || duration < 0 || (expectedDuration !== 0 && duration <= 0)) {
+    throw new Error(`${label}: expected a ${expectedDuration === 0 ? 'non-negative static' : 'positive animation'} duration.`);
+  }
   if (expectedDuration !== undefined && Math.abs(duration - expectedDuration) > 0.005) {
     throw new Error(`${label}: expected duration ${expectedDuration}s, got ${duration}s.`);
   }
