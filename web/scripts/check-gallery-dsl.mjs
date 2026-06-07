@@ -1957,7 +1957,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, movingLine?.geometry?.rotationAngle === '-theta', 'expected rotatingLine helper for line_moving updater.');
     assertGalleryCondition(label, angle?.geometry?.angle === true, 'expected Angle helper geometry.');
     assertGalleryCondition(label, approximatelyEqual(angle?.geometry?.radius ?? 0, 33.75) && angle?.transform?.x === -67.5, 'expected Angle radius=0.5 around LEFT rotation center.');
-    assertGalleryCondition(label, thetaLabel?.type === 'math' && thetaLabel.latex === '\\\\theta' && thetaLabel.geometry?.fontSize === 48, 'expected theta MathTex label.');
+    assertGalleryCondition(label, thetaLabel?.type === 'math' && thetaLabel.latex === '\\theta' && thetaLabel.geometry?.fontSize === 48, 'expected theta MathTex label.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindExpr' && op.id === 'tex' && op.path === 'transform.x'), 'expected theta label x binding.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindExpr' && op.id === 'tex' && op.path === 'transform.y'), 'expected theta label y binding.');
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'animateValue' && op.id === 'theta').map((op) => `${op.t}:${op.to.toFixed(6)}`).join(',') === '1:0.698132,2:3.141593,3.5:6.108652', 'expected official theta keyframes 110deg -> 40deg -> 180deg -> 350deg.');
@@ -2103,7 +2103,16 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, dot?.geometry?.r === 5.4 && dot.style?.fill === '#F7D96F' && approximatelyEqual(dot.style?.strokeWidth ?? -1, 0), 'expected yellow moving Dot with Manim default stroke width.');
     assertGalleryCondition(label, ['dot', 'unit', 'origin_to_circle', 'dot_to_curve', 'sine_curve'].every((id, index, ids) => index === 0 || documentData.nodes.findIndex((node) => node.id === ids[index - 1]) < documentData.nodes.findIndex((node) => node.id === id)), 'expected official self.add(dot) then self.add(orbit, radius line, projection line, curve) z-order.');
     assertGalleryCondition(label, originToCircle?.style?.stroke === '#58C4DD' && dotToCurve?.style?.stroke === '#FFF1B6', 'expected blue radius line and pale vertical projection line.');
-    assertGalleryCondition(label, ['pi_label', 'two_pi_label', 'three_pi_label', 'four_pi_label'].every((id) => findNode(documentData, id)?.type === 'math'), 'expected pi labels along sine axis.');
+    const piLabels = [
+      ['pi_label', '\\pi'],
+      ['two_pi_label', '2\\pi'],
+      ['three_pi_label', '3\\pi'],
+      ['four_pi_label', '4\\pi'],
+    ];
+    assertGalleryCondition(label, piLabels.every(([id, latex]) => {
+      const node = findNode(documentData, id);
+      return node?.type === 'math' && node.latex === latex;
+    }), 'expected Greek pi MathTex labels along sine axis.');
     assertGalleryCondition(
       label,
       documentData.timeline.some((op) =>

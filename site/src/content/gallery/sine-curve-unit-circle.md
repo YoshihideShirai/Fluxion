@@ -24,10 +24,10 @@ rect bg w=960 h=540 at 0,0 fill="#000000"
 
 line x_axis x1=-405 y1=0 x2=405 y2=0 stroke="#FFFFFF" strokeWidth=4
 line y_axis x1=0 y1=-135 x2=0 y2=135 at -270,0 stroke="#FFFFFF" strokeWidth=4
-math pi_label "\\pi" at -67.5,42 size=48 fill="#FFFFFF"
-math two_pi_label "2\\pi" at 67.5,42 size=48 fill="#FFFFFF"
-math three_pi_label "3\\pi" at 202.5,42 size=48 fill="#FFFFFF"
-math four_pi_label "4\\pi" at 337.5,42 size=48 fill="#FFFFFF"
+math pi_label "\pi" at -67.5,42 size=48 fill="#FFFFFF"
+math two_pi_label "2\pi" at 67.5,42 size=48 fill="#FFFFFF"
+math three_pi_label "3\pi" at 202.5,42 size=48 fill="#FFFFFF"
+math four_pi_label "4\pi" at 337.5,42 size=48 fill="#FFFFFF"
 
 circle dot r=5.4 at -202.5,0 fill="#F7D96F" stroke="#F7D96F" strokeWidth=0
 circle unit r=67.5 at -270,0 fill="none" stroke="#FFFFFF" strokeWidth=4
