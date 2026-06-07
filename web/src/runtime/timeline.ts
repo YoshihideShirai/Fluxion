@@ -144,11 +144,12 @@ function buildPathData(op: BindPathOperation, trackerValues: Record<string, numb
     });
   }
 
-  const effectiveSamples = Math.min(op.samples, MAX_PLOT_SAMPLES);
-  const stride = op.samples > MAX_PLOT_SAMPLES ? Math.ceil(op.samples / MAX_PLOT_SAMPLES) : 1;
+  const requestedSamples = pathSampleCount(op, tMin, tMax);
+  const effectiveSamples = Math.min(requestedSamples, MAX_PLOT_SAMPLES);
+  const stride = requestedSamples > MAX_PLOT_SAMPLES ? Math.ceil(requestedSamples / MAX_PLOT_SAMPLES) : 1;
   const points: Array<{ x: number; y: number }> = [];
-  for (let i = 0; i < op.samples; i += stride) {
-    const unit = effectiveSamples === 1 ? 0 : i / (op.samples - 1);
+  for (let i = 0; i < requestedSamples; i += stride) {
+    const unit = requestedSamples === 1 ? 0 : i / (requestedSamples - 1);
     const t = tMin + (tMax - tMin) * unit;
     const scope = { ...trackerValues, t };
     points.push({
@@ -157,11 +158,21 @@ function buildPathData(op: BindPathOperation, trackerValues: Record<string, numb
     });
   }
   if (points.length === 0) return "";
-  const simplified = simplifyPolyline(points, SIMPLIFY_EPSILON);
+  const simplified = op.sampling === "frame" && op.smoothing === "linear"
+    ? points
+    : simplifyPolyline(points, SIMPLIFY_EPSILON);
   return pointsToSvgPath(simplified, {
     ...(op.close === undefined ? {} : { close: op.close }),
     smooth: op.smoothing === "smooth",
   });
+}
+
+function pathSampleCount(op: BindPathOperation, tMin: number, tMax: number): number {
+  if (op.sampling !== "frame") return Math.max(2, Math.round(op.samples));
+  const sampleStep = Number(op.sampleStep);
+  if (!Number.isFinite(sampleStep) || sampleStep <= 0) return Math.max(2, Math.round(op.samples));
+  const frameSamples = Math.floor(Math.abs(tMax - tMin) / sampleStep) + 1;
+  return Math.max(2, Math.min(Math.round(op.samples), frameSamples));
 }
 
 function orderedTimeline(timeline: TimelineOperation[]): TimelineOperation[] {

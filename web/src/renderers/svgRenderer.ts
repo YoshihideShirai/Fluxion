@@ -1,4 +1,4 @@
-import type { Camera, SceneNode, Style, Transform } from "../types.js";
+import type { Camera, SceneNode, Transform } from "../types.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
@@ -94,7 +94,7 @@ export class SvgRenderer {
     const element = this.createElement(node);
     element.dataset.nodeId = node.id;
     this.applyTransform(element, node.transform);
-    this.applyStyle(element, node.style);
+    this.applyStyle(element, node);
     this.applyDrawProgress(element, node);
     this.applyClipPath(element, node);
     for (const child of node.children ?? []) element.append(this.renderNode(child));
@@ -843,12 +843,14 @@ export class SvgRenderer {
     element.setAttribute("opacity", String(transform.opacity));
   }
 
-  private applyStyle(element: SVGElement, style: Style): void {
+  private applyStyle(element: SVGElement, node: SceneNode): void {
+    const style = node.style;
     element.setAttribute("fill", this.resolveFill(style.fill ?? "none"));
     element.setAttribute("stroke", style.stroke ?? "none");
     element.setAttribute("stroke-width", String(style.strokeWidth ?? 0));
-    if (style.strokeLinecap) element.setAttribute("stroke-linecap", style.strokeLinecap);
-    if (style.strokeLinejoin) element.setAttribute("stroke-linejoin", style.strokeLinejoin);
+    const shouldRoundStroke = node.type === "line" || node.type === "path" || node.type === "brace";
+    if (style.strokeLinecap || shouldRoundStroke) element.setAttribute("stroke-linecap", style.strokeLinecap ?? "round");
+    if (style.strokeLinejoin || shouldRoundStroke) element.setAttribute("stroke-linejoin", style.strokeLinejoin ?? "round");
     if (style.fillOpacity !== undefined) element.setAttribute("fill-opacity", String(style.fillOpacity));
     if (style.strokeOpacity !== undefined) element.setAttribute("stroke-opacity", String(style.strokeOpacity));
   }

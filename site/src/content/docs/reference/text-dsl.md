@@ -224,7 +224,7 @@ Geometry options:
 - `rotatingLine`: `x1`, `y1`, `x2`, `y2`, `about=<x,y>`, `angle=<expr>`; 基準線分を指定点まわりに回転した `line` を生成し、`angle` が value tracker を参照する場合は endpoint を `bindExpr` で更新します。Manim の `Line(...).rotate(angle, about_point=...)` を DSL で展開する helper です。
 - `rotateUpdater`: `rate=<radians-per-second>`, `duration`, `easing`, `from`; Manim の `mobject.add_updater(lambda m, dt: m.rotate_about_origin(rate * dt))` 型 callback updater を、累積した `rotation` animation として展開します。
 - `angle`: `radius` / `r`, `from`, `to`, `samples`, `close=true|false`; 円弧の `path` と `bindPath` updater を生成します。式は value tracker を参照できるため、`to=theta` のように animated tracker に追従できます。
-- `tracedPath`: `x`, `y`, `from`, `to`, `samples`, `close=true|false` を指定すると parametric `path` と `bindPath` updater を生成します。`target=<node-id>`, `start=<time>`, `samples`, `sampling=fixed|frame` を指定すると、seek 時に target node の中心履歴を timeline から再構築し、Manim `TracedPath(mobject.get_center)` に近い trace を生成します。`sampling=frame` は document fps に基づき、`samples` を上限として経過 frame 数に応じて trace 点を増やします。
+- `tracedPath`: `x`, `y`, `from`, `to`, `samples`, `close=true|false`, `sampling=fixed|frame`, `sampleStep`, `smoothing=linear|smooth` を指定すると parametric `path` と `bindPath` updater を生成します。`sampling=frame` と `sampleStep` を使うと、animated tracker の範囲に応じて点数を増やす Manim updater 風の trace を表現できます。`target=<node-id>`, `start=<time>`, `samples`, `sampling=fixed|frame` を指定すると、seek 時に target node の中心履歴を timeline から再構築し、Manim `TracedPath(mobject.get_center)` に近い trace を生成します。target 型の `sampling=frame` は document fps に基づき、`samples` を上限として経過 frame 数に応じて trace 点を増やします。
 
 Default values:
 

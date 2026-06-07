@@ -2104,7 +2104,19 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, ['dot', 'unit', 'origin_to_circle', 'dot_to_curve', 'sine_curve'].every((id, index, ids) => index === 0 || documentData.nodes.findIndex((node) => node.id === ids[index - 1]) < documentData.nodes.findIndex((node) => node.id === id)), 'expected official self.add(dot) then self.add(orbit, radius line, projection line, curve) z-order.');
     assertGalleryCondition(label, originToCircle?.style?.stroke === '#58C4DD' && dotToCurve?.style?.stroke === '#FFF1B6', 'expected blue radius line and pale vertical projection line.');
     assertGalleryCondition(label, ['pi_label', 'two_pi_label', 'three_pi_label', 'four_pi_label'].every((id) => findNode(documentData, id)?.type === 'math'), 'expected pi labels along sine axis.');
-    assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'bindPath' && op.id === 'sine_curve' && op.samples === 320 && op.tMaxExpr === 'theta'), 'expected sine curve path bound to theta.');
+    assertGalleryCondition(
+      label,
+      documentData.timeline.some((op) =>
+        op.op === 'bindPath'
+        && op.id === 'sine_curve'
+        && op.samples === 511
+        && op.tMaxExpr === 'theta'
+        && op.sampling === 'frame'
+        && approximatelyEqual(op.sampleStep, 0.02617993878)
+        && op.smoothing === 'linear',
+      ),
+      'expected sine curve path bound to theta with Manim-frame linear trace sampling.',
+    );
     assertGalleryCondition(label, documentData.timeline.filter((op) => op.op === 'bindExpr' && ['dot', 'origin_to_circle', 'dot_to_curve'].includes(op.id)).length === 8, 'expected moving dot and projection bindings.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'animateValue' && op.id === 'theta' && approximatelyEqual(op.to, 13.351768778) && op.duration === 8.5 && op.easing === 'linear'), 'expected theta sweep over 4.25pi.');
     assertGalleryCondition(label, findNode(documentData, 'x_axis')?.geometry?.x1 === -405 && findNode(documentData, 'x_axis')?.geometry?.x2 === 405, 'expected x axis from -6 to 6 Manim units.');
@@ -2132,7 +2144,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, approximatelyEqual(finalDot?.transform?.x ?? 0, -222.270292) && approximatelyEqual(finalDot?.transform?.y ?? 0, -47.729708), 'expected final dot at 4.25pi around the unit circle.');
     assertGalleryCondition(label, approximatelyEqual(finalRadius?.geometry?.x2 ?? 0, 47.729708) && approximatelyEqual(finalRadius?.geometry?.y2 ?? 0, -47.729708), 'expected final radius line at 45 degrees.');
     assertGalleryCondition(label, approximatelyEqual(finalProjection?.geometry?.x2 ?? 0, 371.25) && approximatelyEqual(finalProjection?.geometry?.y2 ?? 0, -47.729708), 'expected final projection line to end at curve_start + t_offset*4.');
-    assertGalleryCondition(label, finalTraceEnd?.count === 22 && approximatelyEqual(finalTraceEnd.x, 371.25) && approximatelyEqual(finalTraceEnd.y, -47.729708), 'expected final sine trace to end at the same 4.25pi projection point.');
+    assertGalleryCondition(label, finalTraceEnd?.count === 511 && approximatelyEqual(finalTraceEnd.x, 371.25) && approximatelyEqual(finalTraceEnd.y, -47.729708), 'expected final sine trace to end at the same 4.25pi projection point with one point per updater frame.');
 
     const halfTurnSvg = svgSampleAt(documentData, 2);
     const finalSvg = svgSampleAt(documentData, 8.5);
@@ -2140,7 +2152,7 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, /id="dot"[^>]*r="5\.4"[^>]*transform="translate\(-337\.5 0\)"[^>]*fill="#F7D96F"/u.test(halfTurnSvg), 'expected half-turn SVG dot at the left edge of the circle.');
     assertGalleryCondition(label, /id="origin_to_circle"[^>]*x2="-67\.5"[^>]*y2="0"[^>]*stroke="#58C4DD"/u.test(halfTurnSvg), 'expected half-turn SVG blue radius line.');
     assertGalleryCondition(label, /id="dot_to_curve"[^>]*x1="-222\.270292"[^>]*y1="-47\.729708"[^>]*x2="371\.25"[^>]*y2="-47\.729708"[^>]*stroke="#FFF1B6"/u.test(finalSvg), 'expected final SVG projection line to the sine trace.');
-    assertGalleryCondition(label, finalSvgTracePath.startsWith('M -202.5 0 C ') && finalSvgTracePath.endsWith(' 371.2500000104585 -47.72970774170837'), 'expected final smooth SVG sine trace path from curve_start to the 4.25pi endpoint.');
+    assertGalleryCondition(label, finalSvgTracePath.startsWith('M -202.5 0 L ') && finalSvgTracePath.endsWith(' 371.2500000104585 -47.72970774170837'), 'expected final linear SVG sine trace path from curve_start to the 4.25pi endpoint.');
     assertGalleryCondition(label, finalSvg.indexOf('id="dot"') < finalSvg.indexOf('id="unit"') && finalSvg.indexOf('id="dot"') < finalSvg.indexOf('id="sine_curve"'), 'expected SVG dot to render below orbit and sine curve like the official add order.');
     assertGalleryCondition(label, /id="sine_curve"[^>]*><path [^>]*stroke-linecap="round"[^>]*stroke-linejoin="round"/u.test(finalSvg), 'expected final sine trace to use round VMobject stroke caps and joins.');
   }

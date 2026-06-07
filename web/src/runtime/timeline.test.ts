@@ -331,6 +331,49 @@ test("rebuilds target traced paths from frame-timed history", () => {
   );
 });
 
+test("builds expression traced paths with frame-sized linear samples", () => {
+  const traceNode: SceneNode = {
+    id: "trace",
+    type: "path",
+    transform: { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+    style: { fill: "none", stroke: "#fff", strokeWidth: 2 },
+    geometry: { d: "", tracedPath: true },
+    children: [],
+  };
+  const documentData: FluxionDocument = {
+    version: "0.1",
+    width: 1280,
+    height: 720,
+    fps: 60,
+    duration: 1,
+    camera: { x: 0, y: 0, scale: 1, rotation: 0 },
+    values: [{ id: "theta", initial: 1 }],
+    nodes: [traceNode],
+    timeline: [
+      {
+        t: 0,
+        op: "bindPath",
+        id: "trace",
+        path: "geometry.d",
+        xExpr: "100*t",
+        yExpr: "100*t*t",
+        tMinExpr: "0",
+        tMaxExpr: "theta",
+        samples: 99,
+        sampling: "frame",
+        sampleStep: 0.25,
+        smoothing: "linear",
+      },
+    ],
+  };
+  const graph = new SceneGraph(documentData.nodes);
+  applyTimelineAt(graph, documentData.timeline, 1, documentData.values);
+  assert.equal(
+    graph.get("trace")?.geometry.d,
+    "M 0 0 L 25 6.25 L 50 25 L 75 56.25 L 100 100",
+  );
+});
+
 test("builds bound angle arcs as circular cubic paths", () => {
   const arcNode: SceneNode = {
     id: "arc",

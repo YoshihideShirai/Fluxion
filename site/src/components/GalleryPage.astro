@@ -237,6 +237,18 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
             document.querySelector(`[data-stage-wrap="${stageId}"]`)?.classList.toggle('playing', isPlaying);
           };
 
+          const startPlayer = (stageId, player) => {
+            const state = playerStates.get(stageId);
+            player.play({
+              loop: Boolean(state?.loopEnabled),
+              onStop: () => {
+                const nextState = playerStates.get(stageId);
+                if (nextState) nextState.isPlaying = false;
+                setStagePlaying(stageId, false);
+              },
+            });
+          };
+
           const playStageById = (stageId) => {
             const player = ensurePlayer(stageId);
             if (!player) return;
@@ -252,13 +264,7 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
               state.completionHandled = false;
             }
             setStagePlaying(stageId, true);
-            player.play({
-              onStop: () => {
-                const nextState = playerStates.get(stageId);
-                if (nextState) nextState.isPlaying = false;
-                setStagePlaying(stageId, false);
-              },
-            });
+            startPlayer(stageId, player);
           };
 
           const playNextStage = (stageId) => {
@@ -312,14 +318,7 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
               const duration = Number.isFinite(player.durationSeconds) ? player.durationSeconds : 0;
               const current = Number.isFinite(player.currentSeconds) ? player.currentSeconds : 0;
               let uiCurrent = current;
-              if (state.loopEnabled && duration > 0 && current >= duration - 0.01) {
-                state.completionHandled = false;
-                state.isPlaying = true;
-                player.seek(0);
-                player.play();
-                setStagePlaying(stageId, true);
-                uiCurrent = 0;
-              } else if (state.isPlaying && duration > 0 && current >= duration - 0.01 && !state.completionHandled) {
+              if (state.isPlaying && duration > 0 && current >= duration - 0.01 && !state.loopEnabled && !state.completionHandled) {
                 state.completionHandled = true;
                 state.isPlaying = false;
                 setStagePlaying(stageId, false);
@@ -409,6 +408,7 @@ const gapText = (gap: GalleryDemo['known_gaps'][number]) => (typeof gap === 'str
               const state = playerStates.get(stageId);
               if (!state) return;
               state.loopEnabled = input.checked;
+              if (state.isPlaying) startPlayer(stageId, state.player);
             });
           });
 

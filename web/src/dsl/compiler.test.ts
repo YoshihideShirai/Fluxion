@@ -1090,7 +1090,7 @@ rotateUpdater arm rate=-1 duration=2s`);
 
 test("compiles tracedPath helper into an updating path", () => {
   const documentData = compileTextDsl(`value theta = 0
-tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120 at 0,-20 stroke="#22d3ee"`);
+tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120 sampling=frame sampleStep=0.1 smoothing=linear at 0,-20 stroke="#22d3ee"`);
 
   const trace = documentData.nodes[0];
   assert.equal(trace?.type, "path");
@@ -1106,6 +1106,9 @@ tracedPath trace x=150*cos(t) y=150*sin(t) from=0 to=theta samples=120 at 0,-20 
   assert.equal(bind.xExpr, "150*cos(t)");
   assert.equal(bind.yExpr, "150*sin(t)");
   assert.equal(bind.samples, 120);
+  assert.equal(bind.sampling, "frame");
+  assert.equal(bind.sampleStep, 0.1);
+  assert.equal(bind.smoothing, "linear");
 });
 
 test("compiles tracedPath helper from a target node", () => {
