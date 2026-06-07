@@ -27,4 +27,3 @@ text origin_label "(0, 0)" at 0,0 size=48 fill="#FFFFFF" w=128.25 h=63.45
 text tip_label "(2, 2)" at 0,0 size=48 fill="#FFFFFF" w=128.25 h=63.45
 nextTo origin_label origin direction=down buff=16.875
 nextTo tip_label tip_anchor direction=right buff=16.875
-wait 1s
