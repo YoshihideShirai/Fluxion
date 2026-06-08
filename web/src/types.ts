@@ -1,4 +1,4 @@
-export type NodeType = "group" | "circle" | "rect" | "triangle" | "line" | "path" | "text" | "math" | "brace" | "image";
+export type NodeType = "group" | "circle" | "rect" | "triangle" | "line" | "path" | "text" | "math" | "brace" | "image" | "cameraView";
 
 export interface Transform {
   x: number;

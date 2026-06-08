@@ -224,6 +224,22 @@ followCamera dot frame=frame start=1s duration=2s`);
   assert.equal(frame?.transform.opacity, 0);
 });
 
+test("compiles cameraView nodes for zoomed scene displays", () => {
+  const documentData = compileTextDsl(`rect source_frame w=120 h=60 at -10,20 fill="none"
+circle dot r=5 at -10,20
+cameraView zoom sourceFrame=source_frame w=360 h=180 at 200,-100 exclude=source_frame opacity=0.5`);
+
+  const zoom = documentData.nodes.find((node) => node.id === "zoom");
+  assert.equal(zoom?.type, "cameraView");
+  assert.equal(zoom?.geometry.sourceFrame, "source_frame");
+  assert.equal(zoom?.geometry.exclude, "source_frame");
+  assert.equal(zoom?.geometry.w, 360);
+  assert.equal(zoom?.geometry.h, 180);
+  assert.equal(zoom?.transform.x, 200);
+  assert.equal(zoom?.transform.y, -100);
+  assert.equal(zoom?.transform.opacity, 0.5);
+});
+
 test("compiles cameraFrame and animateFrame sugar", () => {
   const documentData = compileTextDsl(`cameraFrame at 10,20 scale=1.5 rotation=5
 animateFrame to 110,45 scale=2 rotation=15 duration=2s easing=linear

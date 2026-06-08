@@ -157,7 +157,8 @@ export function isNodeType(value: string | undefined): value is NodeType {
     value === "text" ||
     value === "math" ||
     value === "brace" ||
-    value === "image"
+    value === "image" ||
+    value === "cameraView"
   );
 }
 

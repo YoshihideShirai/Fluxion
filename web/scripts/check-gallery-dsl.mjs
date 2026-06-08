@@ -575,8 +575,8 @@ function serializeSvgSample(documentData, nodes, camera) {
   const nodeById = new Map(flattenNodes(nodes).map((node) => [node.id, node]));
   const sceneNodes = nodes.filter((node) => !isFixedInFrameNode(node));
   const fixedNodes = nodes.filter((node) => isFixedInFrameNode(node));
-  const scene = sceneNodes.map((node) => serializeSvgNode(node, { parentOpacity: 1, nodeById })).join('');
-  const fixed = fixedNodes.map((node) => serializeSvgNode(node, { parentOpacity: 1, nodeById })).join('');
+  const scene = sceneNodes.map((node) => serializeSvgNode(node, { parentOpacity: 1, nodeById, sceneNodes })).join('');
+  const fixed = fixedNodes.map((node) => serializeSvgNode(node, { parentOpacity: 1, nodeById, sceneNodes })).join('');
   const cameraTransform = buildCameraTransform(camera ?? {}, width, height);
   const fixedLayer = fixed ? `<g transform="${buildFixedFrameTransform(width, height)}">${fixed}</g>` : '';
   const source = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${formatSvgNumber(width)} ${formatSvgNumber(height)}"><g transform="${cameraTransform}">${scene}</g>${fixedLayer}</svg>`;
@@ -606,7 +606,10 @@ function serializeSvgNode(node, context) {
   const transform = serializeNodeTransform(node.transform);
   if (node.type === 'group') {
     const clipPath = serializeClipPathAttribute(node, context.nodeById);
-    return `<g id="${escapeXml(node.id)}"${transform ? ` transform="${transform}"` : ''} opacity="${formatSvgNumber(opacity)}"${clipPath}>${(node.children ?? []).map((child) => serializeSvgNode(child, { parentOpacity: opacity, nodeById: context.nodeById })).join('')}</g>`;
+    return `<g id="${escapeXml(node.id)}"${transform ? ` transform="${transform}"` : ''} opacity="${formatSvgNumber(opacity)}"${clipPath}>${(node.children ?? []).map((child) => serializeSvgNode(child, { parentOpacity: opacity, nodeById: context.nodeById, sceneNodes: context.sceneNodes })).join('')}</g>`;
+  }
+  if (node.type === 'cameraView') {
+    return serializeCameraViewNode(node, opacity, transform, context);
   }
   if (node.type === 'image') {
     return serializeImageNode(node, opacity, transform);
@@ -645,13 +648,37 @@ function serializeSvgNode(node, context) {
     return `<g id="${escapeXml(node.id)}"${transform ? ` transform="${transform}"` : ''} opacity="${formatSvgNumber(opacity)}"><path d="${escapeXml(d)}"${fillRule}${serializeStyle(node.style, 1, node.geometry)}${drawProgress}/>${label}</g>`;
   }
   if (node.type === 'math' && (node.children ?? []).length > 0) {
-    return `<g id="${escapeXml(node.id)}"${transform ? ` transform="${transform}"` : ''} opacity="${formatSvgNumber(opacity)}">${(node.children ?? []).map((child) => serializeSvgNode(child, { parentOpacity: opacity, nodeById: context.nodeById })).join('')}</g>`;
+    return `<g id="${escapeXml(node.id)}"${transform ? ` transform="${transform}"` : ''} opacity="${formatSvgNumber(opacity)}">${(node.children ?? []).map((child) => serializeSvgNode(child, { parentOpacity: opacity, nodeById: context.nodeById, sceneNodes: context.sceneNodes })).join('')}</g>`;
   }
   if (node.type === 'text' || node.type === 'math') {
     const text = node.type === 'math' ? String(node.latex ?? '') : String(node.text ?? '');
     return `<text id="${escapeXml(node.id)}" x="0" y="0"${transform ? ` transform="${transform}"` : ''} font-size="${formatSvgNumber(node.geometry?.fontSize ?? 32)}"${style}>${escapeXml(text)}</text>`;
   }
   return '';
+}
+
+function serializeCameraViewNode(node, opacity, transform, context) {
+  const displayW = Math.max(0.0001, Number(node.geometry?.w ?? 100));
+  const displayH = Math.max(0.0001, Number(node.geometry?.h ?? 80));
+  const sourceFrame = context.nodeById.get(String(node.geometry?.sourceFrame ?? ''));
+  const sourceBounds = sourceFrame ? serializedNodeClipBounds(sourceFrame) : null;
+  if (!sourceBounds) return `<g id="${escapeXml(node.id)}"${transform ? ` transform="${transform}"` : ''} opacity="${formatSvgNumber(opacity)}"/>`;
+  const excludeIds = new Set(
+    String(node.geometry?.exclude ?? '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0),
+  );
+  excludeIds.add(node.id);
+  const sx = displayW / sourceBounds.w;
+  const sy = displayH / sourceBounds.h;
+  const inner = (context.sceneNodes ?? [])
+    .filter((candidate) => !isFixedInFrameNode(candidate))
+    .filter((candidate) => candidate.type !== 'cameraView')
+    .filter((candidate) => !excludeIds.has(candidate.id))
+    .map((candidate) => serializeSvgNode(candidate, { parentOpacity: 1, nodeById: context.nodeById, sceneNodes: context.sceneNodes }))
+    .join('');
+  return `<g id="${escapeXml(node.id)}"${transform ? ` transform="${transform}"` : ''} opacity="${formatSvgNumber(opacity)}" clip-path="cameraView(${formatSvgNumber(displayW)},${formatSvgNumber(displayH)})"><g transform="scale(${formatSvgNumber(sx)} ${formatSvgNumber(sy)}) translate(${formatSvgNumber(-sourceBounds.x)} ${formatSvgNumber(-sourceBounds.y)})">${inner}</g></g>`;
 }
 
 function serializeClipPathAttribute(node, nodeById) {
@@ -1680,10 +1707,8 @@ function checkGallerySpecificStructure(label, documentData) {
     const frame = findNode(documentData, 'frame');
     const zoomBg = findNode(documentData, 'zoom_bg');
     const zoomDisplay = findNode(documentData, 'zoom_display');
-    const zoomDisplayContent = findNode(documentData, 'zoom_display_content');
+    const zoomCapture = findNode(documentData, 'zoom_capture');
     const zoomDisplayFrame = findNode(documentData, 'zoom_display_frame');
-    const zoomSample = findNode(documentData, 'zoom_sample');
-    const zoomDot = findNode(documentData, 'zoom_dot');
     const sourcePixels = [
       ['px_00', '#000000', -354.375, -118.125],
       ['px_01', '#646464', -118.125, -118.125],
@@ -1697,8 +1722,8 @@ function checkGallerySpecificStructure(label, documentData) {
     assertGalleryCondition(label, approximatelyEqual(frame?.geometry?.w ?? 0, 121.5) && approximatelyEqual(frame?.geometry?.h ?? 0, 20.25), 'expected zoomed camera frame to match zoom_factor=0.3 and 6x1 display ratio.');
     assertGalleryCondition(label, frame?.style?.stroke === '#9A72AC' && approximatelyEqual(frame?.style?.strokeWidth ?? 0, 3), 'expected purple zoomed camera frame with official stroke width 3.');
     assertGalleryCondition(label, approximatelyEqual(zoomDisplay?.geometry?.w ?? 0, 121.5) && approximatelyEqual(zoomDisplay?.geometry?.h ?? 0, 20.25), 'expected zoom display to pop out from the camera frame geometry.');
-    assertGalleryCondition(label, zoomDisplayContent?.type === 'group' && zoomDisplayContent.geometry?.clipTarget === 'zoom_display', 'expected zoomed display content to clip against the zoom display frame.');
-    assertGalleryCondition(label, (zoomDisplayContent?.children ?? []).length === 3, 'expected clipped zoomed display content to contain display background, sampled camera crop, and the magnified dot.');
+    assertGalleryCondition(label, zoomCapture?.type === 'cameraView' && zoomCapture.geometry?.sourceFrame === 'frame', 'expected zoomed display content to be rendered by a sub-camera bound to the source frame.');
+    assertGalleryCondition(label, String(zoomCapture?.geometry?.exclude ?? '').includes('zoom_display_frame'), 'expected zoomed camera view to exclude display chrome from the camera feed.');
     assertGalleryCondition(label, approximatelyEqual(zoomBg?.geometry?.w ?? 0, 155.25) && approximatelyEqual(zoomBg?.geometry?.h ?? 0, 54), 'expected BackgroundRectangle buff around the collapsed zoom display.');
     assertGalleryCondition(label, zoomDisplayFrame?.style?.stroke === '#FC6255' && approximatelyEqual(zoomDisplayFrame?.style?.strokeWidth ?? 0, 20), 'expected red zoomed display frame with official image_frame_stroke_width=20.');
     assertGalleryCondition(label, countNodesWithPrefix(documentData, 'px_') === 8, 'expected original 2x4 image pixel grid.');
@@ -1706,41 +1731,44 @@ function checkGallerySpecificStructure(label, documentData) {
       const pixel = findNode(documentData, id);
       return pixel?.type === 'rect' && pixel.style?.fill === fill && pixel.geometry?.w === 236.25 && pixel.geometry?.h === 236.25 && pixel.transform?.x === x && pixel.transform?.y === y;
     }), 'expected source ImageMobject uint8 pixels [[0,100,30,200],[255,0,5,33]] at image.height=7 placement.');
-    assertGalleryCondition(label, zoomSample?.type === 'rect' && zoomSample.style?.fill === '#646464', 'expected zoomed camera crop to sample the single source pixel under Dot().shift(UL*2).');
-    assertGalleryCondition(label, zoomDot?.type === 'circle' && approximatelyEqual(zoomDot.geometry?.r ?? 0, 5.4), 'expected zoomed camera crop to include the dot before pop-out.');
+    assertGalleryCondition(label, approximatelyEqual(zoomCapture?.geometry?.w ?? 0, 121.5) && approximatelyEqual(zoomCapture?.geometry?.h ?? 0, 20.25), 'expected collapsed camera view to match the source frame geometry.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'geometry.w', from: 121.5, to: 405, t: 1, duration: 1 }), 'expected pop-out to official 6-unit zoom display width.');
-    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_sample', path: 'geometry.w', from: 121.5, to: 405, t: 1, duration: 1 }), 'expected sampled zoom crop to scale with the pop-out display.');
-    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_dot', path: 'geometry.r', from: 5.4, to: 18, t: 1, duration: 1 }), 'expected dot radius to magnify by the inverse zoom factor.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_capture', path: 'geometry.w', from: 121.5, to: 405, t: 1, duration: 1 }), 'expected sub-camera crop to scale with the pop-out display.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_bg', path: 'geometry.w', from: 155.25, to: 438.75, t: 1, duration: 1 }), 'expected pop-out BackgroundRectangle to include MED_SMALL_BUFF.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'frame_text', path: 'transform.y', from: -16.5, to: -84, t: 0, duration: 1, easing: 'smooth' }), 'expected Frame label to fade in from UP-shifted position during the first play.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_text', path: 'transform.y', from: 17.5, to: -50, t: 2, duration: 1, easing: 'smooth' }), 'expected Zoomed camera label to fade in immediately after the pop-out play.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_text', path: 'transform.opacity', from: 1, to: 0, t: 3, duration: 1 }), 'expected Zoomed camera label to fade out during the anisotropic scale play.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'frame', path: 'transform.scaleX', from: 1, to: 0.5, t: 3, duration: 1 }), 'expected anisotropic frame scale x=0.5.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'frame', path: 'transform.scaleY', from: 1, to: 1.5, t: 3, duration: 1 }), 'expected anisotropic frame scale y=1.5.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_capture', path: 'transform.scaleX', from: 1, to: 0.5, t: 3, duration: 1 }), 'expected sub-camera display to follow the anisotropic display scale.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_capture', path: 'transform.scaleY', from: 1, to: 1.5, t: 3, duration: 1 }), 'expected sub-camera display to follow the anisotropic display scale.');
     assertGalleryCondition(label, !hasAnimation(documentData, { id: 'zoom_bg', path: 'transform.scaleX', from: 1, to: 0.5, t: 3, duration: 1 }), 'expected transparent BackgroundRectangle not to follow the intermediate anisotropic display scale outside UpdateFromFunc.');
     assertGalleryCondition(label, !hasAnimation(documentData, { id: 'zoom_bg', path: 'transform.scale', from: 1, to: 2, t: 5, duration: 1 }), 'expected transparent BackgroundRectangle not to follow ScaleInPlace outside UpdateFromFunc.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'transform.scale', from: 1, to: 2, t: 5, duration: 1 }), 'expected ScaleInPlace(zoomed_display, 2).');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_capture', path: 'transform.scale', from: 1, to: 2, t: 5, duration: 1 }), 'expected ScaleInPlace to include the sub-camera display.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'frame', path: 'transform.y', from: -135, to: 33.75, t: 7, duration: 1 }), 'expected frame shift by 2.5*DOWN.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'transform.x', from: 244, to: -135, t: 9, duration: 1 }), 'expected reverse pop-out collapse to shifted frame x.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'transform.y', from: -135, to: 33.75, t: 9, duration: 1 }), 'expected reverse pop-out collapse to shifted frame y.');
     assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_display', path: 'transform.scale', from: 2, to: 0.3, t: 9, duration: 1 }), 'expected reverse pop-out to collapse the zoom display back to the frame size.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_capture', path: 'transform.x', from: 244, to: -135, t: 9, duration: 1 }), 'expected reverse pop-out to collapse the sub-camera display to shifted frame x.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_capture', path: 'transform.y', from: -135, to: 33.75, t: 9, duration: 1 }), 'expected reverse pop-out to collapse the sub-camera display to shifted frame y.');
+    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_capture', path: 'transform.scale', from: 2, to: 0.3, t: 9, duration: 1 }), 'expected reverse pop-out to collapse the sub-camera display back to the frame size.');
     assertGalleryCondition(label, !hasAnimation(documentData, { id: 'zoom_display', path: 'transform.opacity', from: 1, to: 0, t: 10, duration: 1 }), 'expected official ending not to fade out the zoom display mobject itself.');
-    assertGalleryCondition(label, !hasAnimation(documentData, { id: 'zoom_sample', path: 'transform.opacity', from: 1, to: 0, t: 10, duration: 1 }), 'expected official ending to leave the retargeted zoom camera crop in the display.');
-    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_sample', path: 'style.fill', from: '#646464', to: '#000000', t: 7, duration: 1 }), 'expected zoom display content to retarget to the bottom-row pixel after frame shift.');
-    assertGalleryCondition(label, hasAnimation(documentData, { id: 'zoom_dot', path: 'transform.opacity', from: 1, to: 0, t: 7, duration: 1 }), 'expected magnified dot to leave the zoomed camera crop after frame shift.');
+    assertGalleryCondition(label, !hasAnimation(documentData, { id: 'zoom_capture', path: 'transform.opacity', from: 1, to: 0, t: 10, duration: 1 }), 'expected official ending to leave the retargeted zoom camera feed in the display.');
+    assertGalleryCondition(label, !hasAnimation(documentData, { id: 'zoom_capture', path: 'style.fill', t: 7, duration: 1 }), 'expected frame shift to retarget the sub-camera feed instead of hand-authored crop fill.');
     assertGalleryCondition(label, documentData.timeline.some((op) => op.op === 'effect' && op.id === 'zoom_display_frame' && op.effect === 'uncreate'), 'expected final Uncreate on zoomed display frame.');
     const initialSvg = svgSampleAt(documentData, 0);
     const poppedSvg = svgSampleAt(documentData, 2);
     const shiftedSvg = svgSampleAt(documentData, 8);
     const collapsedDisplay = renderedNodeAt(documentData, 10, 'zoom_display');
-    const finalSample = renderedNodeAt(documentData, 11.5, 'zoom_sample');
+    const finalCapture = renderedNodeAt(documentData, 11.5, 'zoom_capture');
     assertGalleryCondition(label, countSvgOccurrences(initialSvg, /id="px_/gu) === 8, 'expected original image pixels to serialize into initial SVG.');
-    assertGalleryCondition(label, poppedSvg.includes('id="zoom_sample"') && poppedSvg.includes('id="zoom_dot"'), 'expected zoomed camera crop and magnified dot to serialize into SVG after pop out.');
-    assertGalleryCondition(label, /id="zoom_display_content"[^>]*clip-path=/u.test(poppedSvg), 'expected popped-out zoom display content to serialize with a clip path.');
+    assertGalleryCondition(label, poppedSvg.includes('id="zoom_capture"') && poppedSvg.includes('id="dot"'), 'expected sub-camera crop and source dot to serialize into SVG after pop out.');
+    assertGalleryCondition(label, /id="zoom_capture"[^>]*clip-path=/u.test(poppedSvg), 'expected popped-out zoom camera view to serialize with a clip path.');
     assertGalleryCondition(label, /id="zoom_display"[^>]*width="405"/u.test(poppedSvg), 'expected popped-out zoom display SVG width 405.');
-    assertGalleryCondition(label, /id="zoom_sample"[^>]*fill="(?:#000000|rgb\(0, 0, 0\))"/u.test(shiftedSvg) && !shiftedSvg.includes('id="zoom_dot"'), 'expected retargeted zoom display crop without the dot in SVG after frame shift.');
+    assertGalleryCondition(label, shiftedSvg.includes('id="zoom_capture"') && shiftedSvg.includes('translate(135 -33.75)'), 'expected shifted zoom camera view to retarget from the moved frame.');
     assertGalleryCondition(label, approximatelyEqual(collapsedDisplay?.transform?.scale ?? 0, 0.3) && approximatelyEqual((collapsedDisplay?.geometry?.w ?? 0) * (collapsedDisplay?.transform?.scaleX ?? 1) * (collapsedDisplay?.transform?.scale ?? 1), 60.75), 'expected reverse pop-out endpoint to match the anisotropically scaled zoom frame width.');
-    assertGalleryCondition(label, approximatelyEqual(finalSample?.transform?.opacity ?? 0, 1) && finalSample?.style?.fill === '#000000', 'expected final zoom display crop to remain as the black camera feed after frame/display-frame removal.');
+    assertGalleryCondition(label, approximatelyEqual(finalCapture?.transform?.opacity ?? 0, 1) && finalCapture?.type === 'cameraView', 'expected final zoom display crop to remain as a live camera feed after frame/display-frame removal.');
   }
 
   if (label.includes('special-camera')) {
