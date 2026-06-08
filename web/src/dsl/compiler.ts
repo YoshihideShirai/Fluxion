@@ -196,6 +196,7 @@ export function compileTextDsl(source: string): FluxionDocument {
       keyword === "math" ||
       keyword === "brace" ||
       keyword === "image" ||
+      keyword === "cameraView" ||
       keyword === "group"
     ) {
       parseNode(tokens, state, lineNumber);

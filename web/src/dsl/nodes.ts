@@ -164,6 +164,11 @@ export function applyNodeOption(
     return;
   }
 
+  if (key === "sourceFrame" || key === "exclude") {
+    node.geometry[key] = value;
+    return;
+  }
+
   if (key === "d") {
     node.geometry.d = value;
     return;
@@ -192,7 +197,7 @@ export function propertyPath(property: string): string {
   if (["fill", "fillOpacity", "stroke", "strokeOpacity", "strokeWidth", "strokeLinecap", "strokeLinejoin"].includes(property))
     return `style.${property}`;
   if (
-    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "data", "dataRows", "sampling", "target", "direction", "buff", "sharpness", "curvature", "tip", "label", "labelSize", "labelColor", "labelOffset", "labelAlignment", "labelRenderer", "labelW", "labelH", "fillRule", "clip", "clipTarget", "clipX", "clipY", "clipW", "clipH", "fixedInFrame"].includes(property)
+    ["r", "w", "h", "fontSize", "x1", "y1", "x2", "y2", "d", "data", "dataRows", "sampling", "target", "direction", "buff", "sharpness", "curvature", "tip", "label", "labelSize", "labelColor", "labelOffset", "labelAlignment", "labelRenderer", "labelW", "labelH", "fillRule", "clip", "clipTarget", "clipX", "clipY", "clipW", "clipH", "fixedInFrame", "sourceFrame", "exclude"].includes(property)
   )
     return `geometry.${property}`;
   if (property === "renderer") return "renderer";
@@ -215,5 +220,6 @@ function defaultGeometry(type: NodeType): Record<string, number | string> {
   if (type === "brace")
     return { target: "", direction: "down", buff: 8, sharpness: 2, label: "", labelSize: 24, labelColor: "#ffffff", labelRenderer: "text" };
   if (type === "image") return { w: 100, h: 100, data: "", dataRows: 0, sampling: "nearest" };
+  if (type === "cameraView") return { w: 100, h: 80, sourceFrame: "", exclude: "" };
   return {};
 }

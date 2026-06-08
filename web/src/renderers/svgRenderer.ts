@@ -53,6 +53,7 @@ export class SvgRenderer {
   private readonly nodeById = new Map<string, SceneNode>();
   private readonly baselineCache = new Map<string, number>();
   private currentDefs: SVGDefsElement | null = null;
+  private currentSceneNodes: SceneNode[] = [];
   private gradientIndex = 0;
   private clipIndex = 0;
 
@@ -74,6 +75,7 @@ export class SvgRenderer {
     this.gradientIndex = 0;
     this.clipIndex = 0;
     this.currentDefs = document.createElementNS(SVG_NS, "defs");
+    this.currentSceneNodes = nodes;
     for (const node of nodes) this.indexNode(node);
     const root = document.createElementNS(SVG_NS, "g");
     const fixedRoot = document.createElementNS(SVG_NS, "g");
@@ -88,6 +90,7 @@ export class SvgRenderer {
     if (this.currentDefs.childNodes.length > 0) this.svg.replaceChildren(this.currentDefs, ...children);
     else this.svg.replaceChildren(...children);
     this.currentDefs = null;
+    this.currentSceneNodes = [];
   }
 
   private renderNode(node: SceneNode): SVGElement {
@@ -221,6 +224,9 @@ export class SvgRenderer {
     if (node.type === "image") {
       return this.createImageElement(node);
     }
+    if (node.type === "cameraView") {
+      return this.createCameraViewElement(node);
+    }
     if (node.type === "triangle") {
       const el = document.createElementNS(SVG_NS, "path");
       const w = Number(node.geometry.w ?? 100);
@@ -307,6 +313,52 @@ export class SvgRenderer {
         group.append(rect);
       }
     });
+    return group;
+  }
+
+  private createCameraViewElement(node: SceneNode): SVGElement {
+    const group = document.createElementNS(SVG_NS, "g");
+    if (!this.currentDefs) return group;
+
+    const displayW = Math.max(0.0001, Number(node.geometry.w ?? 100));
+    const displayH = Math.max(0.0001, Number(node.geometry.h ?? 80));
+    const sourceFrameId = String(node.geometry.sourceFrame ?? "");
+    const sourceFrame = this.nodeById.get(sourceFrameId);
+    const sourceBounds = sourceFrame ? this.nodeClipBounds(sourceFrame) : null;
+    if (!sourceBounds) return group;
+
+    const clipPath = document.createElementNS(SVG_NS, "clipPath");
+    const clipId = `fluxion-camera-view-${this.clipIndex++}`;
+    clipPath.setAttribute("id", clipId);
+    const clipRect = document.createElementNS(SVG_NS, "rect");
+    clipRect.setAttribute("x", String(-displayW / 2));
+    clipRect.setAttribute("y", String(-displayH / 2));
+    clipRect.setAttribute("width", String(displayW));
+    clipRect.setAttribute("height", String(displayH));
+    clipPath.append(clipRect);
+    this.currentDefs.append(clipPath);
+    group.setAttribute("clip-path", `url(#${clipId})`);
+
+    const excludeIds = new Set(
+      String(node.geometry.exclude ?? "")
+        .split(",")
+        .map((id) => id.trim())
+        .filter((id) => id.length > 0),
+    );
+    excludeIds.add(node.id);
+
+    const inner = document.createElementNS(SVG_NS, "g");
+    const sx = displayW / sourceBounds.w;
+    const sy = displayH / sourceBounds.h;
+    inner.setAttribute("transform", `scale(${sx} ${sy}) translate(${-sourceBounds.x} ${-sourceBounds.y})`);
+    inner.replaceChildren(
+      ...this.currentSceneNodes
+        .filter((candidate) => !this.isFixedInFrame(candidate))
+        .filter((candidate) => candidate.type !== "cameraView")
+        .filter((candidate) => !excludeIds.has(candidate.id))
+        .map((candidate) => this.renderNode(candidate)),
+    );
+    group.append(inner);
     return group;
   }
 
