@@ -1720,7 +1720,7 @@ function checkGallerySpecificStructure(label, documentData) {
       ['px_13', '#212121', 354.375, 118.125],
     ];
     assertGalleryCondition(label, approximatelyEqual(frame?.geometry?.w ?? 0, 121.5) && approximatelyEqual(frame?.geometry?.h ?? 0, 20.25), 'expected zoomed camera frame to match zoom_factor=0.3 and 6x1 display ratio.');
-    assertGalleryCondition(label, frame?.style?.stroke === '#9A72AC' && approximatelyEqual(frame?.style?.strokeWidth ?? 0, 3), 'expected purple zoomed camera frame with official stroke width 3.');
+    assertGalleryCondition(label, frame?.style?.stroke === '#9A72AC' && approximatelyEqual(frame?.style?.strokeWidth ?? 0, 1.5), 'expected purple zoomed camera frame with 540p-scaled official stroke width 3.');
     assertGalleryCondition(label, approximatelyEqual(zoomDisplay?.geometry?.w ?? 0, 121.5) && approximatelyEqual(zoomDisplay?.geometry?.h ?? 0, 20.25), 'expected zoom display to pop out from the camera frame geometry.');
     assertGalleryCondition(label, zoomCapture?.type === 'cameraView' && zoomCapture.geometry?.sourceFrame === 'frame', 'expected zoomed display content to be rendered by a sub-camera bound to the source frame.');
     assertGalleryCondition(label, String(zoomCapture?.geometry?.exclude ?? '').includes('zoom_display_frame'), 'expected zoomed camera view to exclude display chrome from the camera feed.');
