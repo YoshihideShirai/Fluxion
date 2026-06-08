@@ -3,7 +3,7 @@ title: MovingZoomedSceneAround
 description: "Manim Example: `MovingZoomedSceneAround` (`#movingzoomedscenearound`) の Fluxion 移植版。"
 source_manim_url: https://docs.manim.community/en/stable/examples.html#movingzoomedscenearound
 source_example_path: examples/gallery/moving-zoomed-scene-around.fluxion.txt
-porting_strategy: runtime_camera
+porting_strategy: visual_approximation
 fidelity: faithful
 known_gaps:
   - symptom: "ZoomedScene の副カメラは runtime の `cameraView` と source frame の再描画で表現しているため、Manim の Cairo camera object と完全に同一の内部表現ではない。"
