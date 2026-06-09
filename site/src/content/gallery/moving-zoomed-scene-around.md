@@ -30,7 +30,7 @@ rect px_12 w=236.25 h=236.25 at 118.125,118.125 fill="#050505" stroke="none"
 rect px_13 w=236.25 h=236.25 at 354.375,118.125 fill="#212121" stroke="none"
 
 circle dot r=5.4 at -135,-135 fill="#FFFFFF" stroke="none"
-rect frame w=121.5 h=20.25 at -135,-135 fill="none" stroke="#9A72AC" strokeWidth=3 opacity=0
+rect frame w=121.5 h=20.25 at -135,-135 fill="none" stroke="#9A72AC" strokeWidth=1.5 opacity=0
 text frame_text "Frame" at -135,-84 size=67 fill="#9A72AC" opacity=0
 
 rect zoom_bg w=155.25 h=54 at -135,-135 fill="none" stroke="none" strokeWidth=0 opacity=0
