@@ -134,6 +134,50 @@
       #time-readout { color: var(--muted); font: 13px/1.3 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: right; }
       #status { min-height: 22px; color: var(--muted); font-size: 14px; }
       #status.error { color: var(--danger); }
+      .diagnostics {
+        display: none;
+        margin-top: 10px;
+        border: 1px solid rgba(252, 165, 165, 0.45);
+        border-radius: 10px;
+        background: rgba(127, 29, 29, 0.18);
+        overflow: hidden;
+      }
+      .diagnostics.active { display: block; }
+      .diagnostic-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(252, 165, 165, 0.22);
+      }
+      .diagnostic-title { color: var(--danger); font-size: 13px; font-weight: 800; }
+      .diagnostic-location {
+        color: var(--muted);
+        font: 12px/1.3 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      .diagnostic-body { padding: 10px 12px 12px; }
+      .diagnostic-message { margin: 0; color: #fee2e2; font-size: 13px; line-height: 1.5; }
+      .diagnostic-context {
+        margin-top: 8px;
+        padding: 8px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.56);
+        color: var(--muted);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .diagnostic-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+      .diagnostic-actions button {
+        padding: 7px 10px;
+        border-radius: 8px;
+        background: rgba(252, 165, 165, 0.16);
+        color: #fee2e2;
+        box-shadow: none;
+      }
+      .suggestions { margin-top: 10px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+      .suggestions code { color: #e0f2fe; }
       details { margin-top: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--code); }
       summary { cursor: pointer; padding: 10px 12px; color: var(--muted); font-size: 14px; font-weight: 700; }
       pre, code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
@@ -294,6 +338,20 @@ at 8s:
   animate spark.scale from 0.8 to 1.45 duration=1s easing=easeOut
   animate spark.opacity from 1 to 0.35 start=8.4s duration=0.6s easing=easeOut
   play FadeIn(caption) duration=0.8s easing=easeOut</textarea>
+            <div id="diagnostics" class="diagnostics" aria-live="polite" aria-hidden="true">
+              <div class="diagnostic-header">
+                <span class="diagnostic-title" data-i18n="diagnosticTitle">Compile diagnostic</span>
+                <span id="diagnostic-location" class="diagnostic-location"></span>
+              </div>
+              <div class="diagnostic-body">
+                <p id="diagnostic-message" class="diagnostic-message"></p>
+                <pre id="diagnostic-context" class="diagnostic-context"></pre>
+                <div class="diagnostic-actions">
+                  <button id="diagnostic-jump" type="button" class="secondary" data-i18n="diagnosticJump">Jump to line</button>
+                </div>
+                <div id="diagnostic-suggestions" class="suggestions"></div>
+              </div>
+            </div>
             <div class="controls">
               <button id="compile" data-i18n="compileButton">Compile</button>
               <button id="load-example" class="secondary" data-i18n="loadExampleButton">Load JSON Example</button>
@@ -359,7 +417,7 @@ at 8s:
     </main>
     <script type="module">
       import { mountFluxion, mountFluxionDocument } from "./dist/index.js";
-      import { compileTextDsl } from "./dist/dsl/compiler.js";
+      import { compileTextDsl, DslCompileError } from "./dist/dsl/compiler.js";
 
 
       const translations = {
@@ -397,6 +455,10 @@ at 8s:
           stopButton: "Stop",
           resetButton: "Reset",
           generatedJson: "Generated .fluxion.json",
+          diagnosticTitle: "Compile diagnostic",
+          diagnosticJump: "該当行へ移動",
+          diagnosticLocation: (line, column) => `Line ${line}, column ${column}`,
+          diagnosticSuggestions: "候補",
           referenceTitle: "クイックリファレンス",
           referenceIntro: 'Text DSL は現在サポートしている小さな構文に絞っています。より詳しい仕様は正本の <code>site/src/content/docs/reference/text-dsl.md</code> を参照してください。',
           refAt: '<code>at 1.5s:</code> で block 内の開始時刻を指定',
@@ -439,6 +501,10 @@ at 8s:
           stopButton: "Stop",
           resetButton: "Reset",
           generatedJson: "Generated .fluxion.json",
+          diagnosticTitle: "Compile diagnostic",
+          diagnosticJump: "Jump to line",
+          diagnosticLocation: (line, column) => `Line ${line}, column ${column}`,
+          diagnosticSuggestions: "Suggestions",
           referenceTitle: "Quick reference",
           referenceIntro: 'Text DSL currently focuses on a small supported syntax. See the canonical <code>site/src/content/docs/reference/text-dsl.md</code> for the full specification.',
           refAt: '<code>at 1.5s:</code> sets the start time for commands inside the block',
@@ -474,6 +540,9 @@ at 8s:
         langButtons.forEach((button) => {
           button.setAttribute("aria-pressed", String(button.dataset.langButton === currentLang));
         });
+        if (currentDiagnostic) {
+          diagnosticLocation.textContent = t("diagnosticLocation", currentDiagnostic.line, currentDiagnostic.column);
+        }
       }
 
       langButtons.forEach((button) => {
@@ -484,6 +553,12 @@ at 8s:
       const input = document.querySelector("#dsl");
       const status = document.querySelector("#status");
       const liveCompile = document.querySelector("#live-compile");
+      const diagnostics = document.querySelector("#diagnostics");
+      const diagnosticLocation = document.querySelector("#diagnostic-location");
+      const diagnosticMessage = document.querySelector("#diagnostic-message");
+      const diagnosticContext = document.querySelector("#diagnostic-context");
+      const diagnosticJump = document.querySelector("#diagnostic-jump");
+      const diagnosticSuggestions = document.querySelector("#diagnostic-suggestions");
       const playButton = document.querySelector("#play");
       const stopButton = document.querySelector("#stop");
       const resetButton = document.querySelector("#reset");
@@ -498,6 +573,26 @@ at 8s:
       let player = mountFluxionDocument(stage, documentData);
       let compileTimer = 0;
       let isPlaying = false;
+      let currentDiagnostic = null;
+
+      const supportedStatements = [
+        "scene", "camera", "cameraFrame", "value", "show", "hide", "set", "always", "wait",
+        "play", "animate", "animateFrame", "followCamera", "circle", "rect", "triangle",
+        "line", "path", "text", "math", "brace", "image", "cameraView", "group",
+        "surroundingRect", "axes", "axisLabels", "numberPlane", "plot", "graphLabel",
+        "dataPolygon", "dataLineGraph", "dataRect", "dataDot", "dataLine", "dynamicLine",
+        "dataArea", "dataRiemannRects", "gaussianSurface", "sphereSurface", "threeDAxes",
+        "projectedCircle", "rotatingLine", "rotateUpdater", "arrow", "angle", "tracedPath",
+        "arrange", "nextTo",
+      ];
+      const supportedOptions = [
+        "width", "height", "fps", "at", "target", "scale", "scaleX", "scaleY", "rotation",
+        "opacity", "fill", "fillOpacity", "stroke", "strokeOpacity", "strokeWidth",
+        "strokeLinecap", "strokeLinejoin", "size", "fontSize", "renderer", "expandTokens",
+        "fixedInFrame", "w", "h", "r", "x1", "y1", "x2", "y2", "d", "duration", "start",
+        "easing", "color", "lagRatio", "xRange", "yRange", "range", "samples", "fn",
+        "axes", "x", "y", "from", "to", "buff", "direction", "gap", "mode", "padding",
+      ];
 
       function setStatus(message, isError = false) {
         status.textContent = message;
@@ -522,6 +617,144 @@ at 8s:
         jsonOutput.textContent = data ? JSON.stringify(data, null, 2) : "";
       }
 
+      function clearDiagnostics() {
+        currentDiagnostic = null;
+        diagnostics.classList.remove("active");
+        diagnostics.setAttribute("aria-hidden", "true");
+        diagnosticLocation.textContent = "";
+        diagnosticMessage.textContent = "";
+        diagnosticContext.textContent = "";
+        diagnosticSuggestions.innerHTML = "";
+      }
+
+      function lineStartOffset(source, line) {
+        if (line <= 1) return 0;
+        let offset = 0;
+        for (let index = 1; index < line; index += 1) {
+          const next = source.indexOf("\n", offset);
+          if (next === -1) return source.length;
+          offset = next + 1;
+        }
+        return offset;
+      }
+
+      function selectDiagnosticLocation() {
+        if (!currentDiagnostic) return;
+        input.focus();
+        const start = lineStartOffset(input.value, currentDiagnostic.line);
+        const lineEnd = input.value.indexOf("\n", start);
+        const end = lineEnd === -1 ? input.value.length : lineEnd;
+        const caret = Math.min(start + Math.max(currentDiagnostic.column - 1, 0), end);
+        input.setSelectionRange(caret, end);
+        const lineCount = input.value.slice(0, start).split("\n").length;
+        const approxLineHeight = 21;
+        input.scrollTop = Math.max(0, (lineCount - 3) * approxLineHeight);
+      }
+
+      function editDistance(left, right) {
+        const a = left.toLowerCase();
+        const b = right.toLowerCase();
+        const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+        for (let i = 1; i <= a.length; i += 1) {
+          const current = [i];
+          for (let j = 1; j <= b.length; j += 1) {
+            const substitution = previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1);
+            current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, substitution);
+          }
+          previous.splice(0, previous.length, ...current);
+        }
+        return previous[b.length];
+      }
+
+      function closestMatches(value, candidates) {
+        const normalized = String(value ?? "").trim();
+        if (!normalized) return [];
+        return [...new Set(candidates)]
+          .map((candidate) => ({ candidate, score: editDistance(normalized, candidate) }))
+          .filter(({ candidate, score }) => {
+            const limit = Math.max(2, Math.ceil(Math.max(normalized.length, candidate.length) * 0.45));
+            return score <= limit || candidate.toLowerCase().startsWith(normalized.toLowerCase());
+          })
+          .sort((left, right) => left.score - right.score || left.candidate.localeCompare(right.candidate))
+          .slice(0, 3)
+          .map(({ candidate }) => candidate);
+      }
+
+      function stripDslComment(line) {
+        let inQuote = false;
+        let escaped = false;
+        for (let index = 0; index < line.length; index += 1) {
+          const char = line[index];
+          if (escaped) {
+            escaped = false;
+            continue;
+          }
+          if (char === "\\") {
+            escaped = true;
+            continue;
+          }
+          if (char === '"') {
+            inQuote = !inQuote;
+            continue;
+          }
+          if (char === "#" && !inQuote) return line.slice(0, index);
+        }
+        return line;
+      }
+
+      function declaredIds(source) {
+        const ids = [];
+        const declarationStatements = new Set([
+          "value", "circle", "rect", "triangle", "line", "path", "text", "math", "brace",
+          "image", "cameraView", "group", "surroundingRect", "axes", "axisLabels",
+          "numberPlane", "plot", "graphLabel", "dataPolygon", "dataLineGraph", "dataRect",
+          "dataDot", "dataLine", "dynamicLine", "dataArea", "dataRiemannRects",
+          "gaussianSurface", "sphereSurface", "threeDAxes", "projectedCircle",
+          "rotatingLine", "arrow", "angle", "tracedPath",
+        ]);
+        for (const line of source.split(/\r?\n/)) {
+          const match = /^\s*([A-Za-z]\w*)\s+([_A-Za-z]\w*)\b/u.exec(stripDslComment(line));
+          if (match && declarationStatements.has(match[1])) ids.push(match[2]);
+        }
+        return ids;
+      }
+
+      function diagnosticSuggestionsFor(error, source) {
+        const message = error instanceof Error ? error.message : String(error);
+        const unknownNode = /Unknown (?:node|followCamera target|followCamera frame) '([^']+)'/u.exec(message);
+        if (unknownNode?.[1]) return closestMatches(unknownNode[1], declaredIds(source));
+        const unknownStatement = /Unknown statement '([^']+)'/u.exec(message);
+        if (unknownStatement?.[1]) return closestMatches(unknownStatement[1], supportedStatements);
+        const unknownOption = /Unknown [^']*option '([^']+)'/u.exec(message);
+        if (unknownOption?.[1]) return closestMatches(unknownOption[1], supportedOptions);
+        const unknownEasing = /Unknown easing '([^']+)'/u.exec(message);
+        if (unknownEasing?.[1]) return closestMatches(unknownEasing[1], ["linear", "smooth", "easeInOut", "easeIn", "easeOut"]);
+        return [];
+      }
+
+      function showDiagnostic(error) {
+        const isDslError = error instanceof DslCompileError;
+        const line = isDslError ? error.line : 1;
+        const column = isDslError ? error.column : 1;
+        const lines = input.value.split(/\r?\n/);
+        const contextLine = lines[line - 1] ?? "";
+        const rawMessage = error instanceof Error ? error.message : String(error);
+        const message = isDslError
+          ? rawMessage.replace(/^Line \d+, column \d+:\s*/u, "")
+          : rawMessage;
+        const suggestions = isDslError ? diagnosticSuggestionsFor(error, input.value) : [];
+
+        currentDiagnostic = { line, column };
+        diagnostics.classList.add("active");
+        diagnostics.setAttribute("aria-hidden", "false");
+        diagnosticLocation.textContent = t("diagnosticLocation", line, column);
+        diagnosticMessage.textContent = message;
+        diagnosticContext.textContent = contextLine ? `${String(line).padStart(3, " ")} | ${contextLine}` : "";
+        diagnosticSuggestions.innerHTML = suggestions.length
+          ? `${t("diagnosticSuggestions")}: ${suggestions.map((item) => `<code>${item}</code>`).join(", ")}`
+          : "";
+      }
+
       function compileCurrentInput() {
         try {
           player.stop();
@@ -531,8 +764,10 @@ at 8s:
           updateTransport(0);
           updateJsonOutput(documentData);
           setStatus(t("compiled", documentData.nodes.length, documentData.timeline.length));
+          clearDiagnostics();
         } catch (error) {
           setStatus(error instanceof Error ? error.message : String(error), true);
+          showDiagnostic(error);
         }
       }
 
@@ -555,6 +790,7 @@ at 8s:
       }
 
       document.querySelector("#compile").addEventListener("click", compileCurrentInput);
+      diagnosticJump.addEventListener("click", selectDiagnosticLocation);
 
       document.querySelector("#load-example").addEventListener("click", async () => {
         try {
@@ -569,8 +805,10 @@ at 8s:
           updateTransport(0);
           updateJsonOutput(null);
           setStatus(t("loadedJson"));
+          clearDiagnostics();
         } catch (error) {
           setStatus(error instanceof Error ? error.message : String(error), true);
+          showDiagnostic(error);
         }
       });
 
