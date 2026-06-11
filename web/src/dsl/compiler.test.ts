@@ -171,6 +171,49 @@ at 3s:
   assert.equal(documentData.duration, 6);
 });
 
+test("applies Text DSL themes to default declaration colors", () => {
+  const documentData = compileTextDsl(`theme light
+text label "Light theme" at 0,120
+circle dot r=20 at 0,0
+line axis x1=-40 y1=0 x2=40 y2=0
+axes ax width=100 height=80 xNumbers=-1,1
+plot curve fn=sin(t) range=-1,1
+theme accent="#db2777" foreground="#111827" grid="#d8b4fe"
+numberPlane plane xRange=-2,2 yRange=-2,2 unit=40`);
+
+  const nodes = flattenNodes(documentData.nodes);
+  const label = nodes.find((node) => node.id === "label");
+  const dot = nodes.find((node) => node.id === "dot");
+  const axis = nodes.find((node) => node.id === "axis");
+  const axesLine = nodes.find((node) => node.id === "ax_x");
+  const plot = nodes.find((node) => node.id === "curve");
+  const planeLine = nodes.find((node) => node.id === "plane:h:m1");
+
+  assert.equal(label?.style.fill, "#0f172a");
+  assert.equal(dot?.style.fill, "#2563eb");
+  assert.equal(axis?.style.fill, "none");
+  assert.equal(axis?.style.stroke, "#0f172a");
+  assert.equal(axesLine?.style.stroke, "#0f172a");
+  assert.equal(plot?.style.stroke, "#2563eb");
+  assert.equal(planeLine?.style.stroke, "#d8b4fe");
+});
+
+test("explicit colors override Text DSL theme defaults", () => {
+  const documentData = compileTextDsl(`theme light
+text label "Custom" fill="#dc2626"
+line axis x1=0 y1=0 x2=1 y2=0 stroke="#16a34a"
+plot curve fn=sin(t) range=-1,1 stroke="#7c3aed"`);
+
+  const nodes = flattenNodes(documentData.nodes);
+  assert.equal(nodes.find((node) => node.id === "label")?.style.fill, "#dc2626");
+  assert.equal(nodes.find((node) => node.id === "axis")?.style.stroke, "#16a34a");
+  assert.equal(nodes.find((node) => node.id === "curve")?.style.stroke, "#7c3aed");
+});
+
+test("rejects unknown Text DSL theme names", () => {
+  messageMatches("theme neon", /Theme name must be one of/);
+});
+
 test("compiles scene camera and camera animations", () => {
   const documentData = compileTextDsl(`camera at 10,20 scale=1.5 rotation=5
 animate camera.x from 10 to 110 duration=2s easing=linear

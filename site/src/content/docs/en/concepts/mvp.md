@@ -84,8 +84,8 @@ See the [Web Runtime reference](../../reference/runtime/) for details.
 
 The following are not part of the current MVP scope and remain future candidates:
 
-- Text DSL `include`, `theme`, `component`, loops, conditionals, and nested blocks
-- CSS color validation and stronger compiler-side schema validation
+- Text DSL `include`, `component`, loops, conditionals, and nested blocks
+- CSS color validation and broader compiler-side schema validation
 - Expanded Manim compatibility syntax
 - Exact glyph alignment for complex TeX layout
 - Richer editor diagnostics and code actions

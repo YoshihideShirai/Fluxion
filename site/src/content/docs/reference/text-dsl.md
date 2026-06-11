@@ -13,6 +13,7 @@ Fluxion Text DSL は、ブラウザ上で短い宣言的なアニメーション
 | Command | Purpose | Minimal example |
 |---|---|---|
 | `scene` | Canvas size and fps | `scene width=1280 height=720 fps=60` |
+| `theme` | Default color theme | `theme light accent="#2563eb"` |
 | `circle` | Circle node declaration | `circle dot r=34 at -380,-20 fill="#38bdf8"` |
 | `rect` | Rectangle node declaration | `rect target w=120 h=88 at 180,-20 fill="#f97316"` |
 | `triangle` | Triangle node declaration | `triangle t1 w=120 h=104 at 0,0 fill="#ef4444"` |
@@ -133,6 +134,24 @@ Supported options:
 - `width`: number
 - `height`: number
 - `fps`: number
+
+### theme
+
+```text
+theme light
+theme slate accent="#38bdf8" foreground="#e2e8f0"
+theme accent="#db2777" grid="#d8b4fe"
+```
+
+`theme` は、それ以降に宣言する node / helper の既定色を切り替えます。すでに作成済みの node は変更しません。`fill`, `stroke`, `lineColor`, `axisStroke`, `numberColor` などを明示した場合は、theme よりもそちらを優先します。
+
+名前付き theme は `manim` / `dark`, `light`, `slate` です。`manim` は既定 theme で、従来どおり white-on-dark 向けの helper 色を使います。override できる option は以下です。
+
+- `foreground` / `fg`: text、math、line、axes、marker の既定色
+- `accent`: shape、plot、angle、line graph の既定色
+- `accent2`: trace、polygon の既定色
+- `grid`: NumberPlane grid の既定色
+- `muted`: filled area の既定色
 
 ### node declarations
 
@@ -455,9 +474,8 @@ Compiler は `DslCompileError` を投げます。message は `Line <line>, colum
 
 - nested blocks
 - loops, conditionals, variables
-- `include`, `theme`, `component`
+- `include`, `component`
 - CSS color validation
-- schema validation inside the compiler
 - full Manim compatibility syntax beyond the supported `play` primitives
 - nested groups declared before their children
 - live mutation of compiler node declarations after `set`

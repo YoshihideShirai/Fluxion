@@ -60,7 +60,7 @@ play Transform(c1, box) duration=1s easing=easeInOut
 hide c1 at 3.5s
 ```
 
-Text DSL currently supports scene metadata, simple shapes, paths, text/math nodes, groups, target-bounds rectangles, camera settings, value trackers, timeline operations, and Manim-style animation primitives through `scene`, `circle`, `rect`, `line`, `path`, `text`, `math`, `group`, `surroundingRect`, `camera`, `value`, `set`, `show`, `hide`, `wait`, `play`, and `animate` statements. It compiles in the browser and never runs arbitrary Python or JavaScript from the input; expressions are parsed as a small allowlisted arithmetic language. See the [canonical Text DSL reference](site/src/content/docs/reference/text-dsl.md) for the full syntax, defaults, current support boundaries, and future out-of-scope features.
+Text DSL currently supports scene metadata, default color themes, simple shapes, paths, text/math nodes, groups, target-bounds rectangles, camera settings, value trackers, timeline operations, and Manim-style animation primitives through `scene`, `theme`, `circle`, `rect`, `line`, `path`, `text`, `math`, `group`, `surroundingRect`, `camera`, `value`, `set`, `show`, `hide`, `wait`, `play`, and `animate` statements. It compiles in the browser and never runs arbitrary Python or JavaScript from the input; expressions are parsed as a small allowlisted arithmetic language. See the [canonical Text DSL reference](site/src/content/docs/reference/text-dsl.md) for the full syntax, defaults, current support boundaries, and future out-of-scope features.
 
 ## Python DSL example
 

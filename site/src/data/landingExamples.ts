@@ -100,6 +100,20 @@ export const textDslCommandExamples: TextDslCommandExample[] = [
     source: 'scene width=960 height=540 fps=30\ntext label "960x540 / 30fps" at 480,270 size=42 fill="#e2e8f0"',
   },
   {
+    key: 'theme',
+    command: 'theme',
+    description: {
+      ja: '以降の node / helper の既定色をまとめて切り替えます。',
+      en: 'Switch default colors for following nodes and helpers.',
+    },
+    referencePurpose: {
+      ja: 'Default color theme',
+      en: 'Default color theme',
+    },
+    minimalExample: 'theme light accent="#2563eb"',
+    source: 'scene width=640 height=360 fps=60\ntheme light accent="#2563eb"\ntext label "Light theme" at 320,130 size=40\ncircle dot r=52 at 320,230',
+  },
+  {
     key: 'circle',
     command: 'circle',
     description: {
