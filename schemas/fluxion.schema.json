@@ -239,7 +239,8 @@
             "text",
             "math",
             "brace",
-            "image"
+            "image",
+            "cameraView"
           ]
         },
         "transform": {

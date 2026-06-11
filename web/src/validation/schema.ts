@@ -29,6 +29,7 @@ const nodeTypes = new Set([
   "math",
   "brace",
   "image",
+  "cameraView",
 ]);
 
 const cameraModes = new Set(["center", "target", "frame-fit"]);
