@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as fs from "node:fs";
-import { compileTextDsl, DslCompileError } from "./compiler.js";
+import { compileTextDsl, DslCompileError, FluxionSchemaValidationError } from "./compiler.js";
 import type { AnimateOperation, CreateOperation, SceneNode, SetOperation } from "../types.js";
 
 function mustFail(source: string): DslCompileError {
@@ -12,6 +12,16 @@ function mustFail(source: string): DslCompileError {
     throw error;
   }
   throw new Error("Expected DSL compilation to fail.");
+}
+
+function mustFailSchema(source: string): FluxionSchemaValidationError {
+  try {
+    compileTextDsl(source);
+  } catch (error) {
+    if (error instanceof FluxionSchemaValidationError) return error;
+    throw error;
+  }
+  throw new Error("Expected DSL compilation to fail schema validation.");
 }
 
 function equalJson(actual: unknown, expected: unknown): void {
@@ -2553,6 +2563,16 @@ test("reports representative compile errors with line and column details", () =>
   messageMatches(
     "circle c1\nanimate c1.x from 0 duration=1s",
     /Line 2, column 1: Expected animate syntax/,
+  );
+});
+
+test("validates generated documents against Fluxion schema constraints", () => {
+  const error = mustFailSchema("scene width=0 height=450 fps=30");
+
+  assert.equal(error.path, "$.width");
+  assert.equal(
+    error.message,
+    "Invalid Fluxion document at $.width: must be an integer greater than or equal to 1.",
   );
 });
 

@@ -43,8 +43,10 @@ import {
   tokenize,
 } from "./syntax.js";
 import { arcToSvgPath, curvesToClosedAreaPath, pointsToSvgPath, sampleSmoothPathPoints } from "../pathUtils.js";
+import { validateFluxionDocument } from "../validation/schema.js";
 
 export { DslCompileError } from "./errors.js";
+export { FluxionSchemaValidationError } from "../validation/schema.js";
 
 interface CompileState {
   width: number;
@@ -354,7 +356,7 @@ export function compileTextDsl(source: string): FluxionDocument {
     ...state.timeline.map((op) => op.t + ("duration" in op ? op.duration : 0)),
   );
 
-  return {
+  const documentData: FluxionDocument = {
     version: "0.1",
     width: state.width,
     height: state.height,
@@ -369,6 +371,8 @@ export function compileTextDsl(source: string): FluxionDocument {
       : {}),
     timeline: state.timeline,
   };
+  validateFluxionDocument(documentData);
+  return documentData;
 }
 
 function validateDeferredReferences(state: CompileState): void {
