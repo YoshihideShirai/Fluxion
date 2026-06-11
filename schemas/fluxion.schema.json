@@ -45,7 +45,7 @@
     },
     "nodes": {
       "type": "array",
-      "description": "Top-level scene nodes. Every node id in this array and in any nested children array must be unique across the entire document because timeline operations resolve ids globally.",
+      "description": "Top-level scene nodes. Group children may duplicate top-level node ids as nested snapshots; timeline operations resolve the first matching id in scene graph traversal.",
       "items": {
         "$ref": "#/$defs/node"
       }
@@ -134,6 +134,12 @@
         "scale": {
           "type": "number"
         },
+        "scaleX": {
+          "type": "number"
+        },
+        "scaleY": {
+          "type": "number"
+        },
         "rotation": {
           "type": "number"
         },
@@ -199,6 +205,9 @@
           "type": "string"
         },
         {
+          "type": "boolean"
+        },
+        {
           "$ref": "#/$defs/numberArray"
         }
       ]
@@ -217,19 +226,21 @@
         "id": {
           "type": "string",
           "minLength": 1,
-          "description": "Unique node id. The id must be unique across the entire document, including children nested under group nodes, so timeline operations can target any node unambiguously."
+          "description": "Node id. Top-level ids should be unique; group children may duplicate ids as nested snapshots."
         },
         "type": {
           "enum": [
             "group",
             "circle",
             "rect",
+            "triangle",
             "line",
             "path",
             "text",
             "math",
             "brace",
-            "image"
+            "image",
+            "cameraView"
           ]
         },
         "transform": {
@@ -503,6 +514,9 @@
           "$ref": "#/$defs/setExpressionOperation"
         },
         {
+          "$ref": "#/$defs/bindExpressionOperation"
+        },
+        {
           "$ref": "#/$defs/bindPathOperation"
         },
         {
@@ -516,6 +530,9 @@
         },
         {
           "$ref": "#/$defs/effectOperation"
+        },
+        {
+          "$ref": "#/$defs/followCameraOperation"
         }
       ]
     },
@@ -544,7 +561,7 @@
       "properties": {
         "t": {
           "type": "number",
-          "minimum": 0
+          "description": "Operation start time in seconds. Some compiler-generated materialization operations may be slightly negative so hidden sources exist before t=0."
         },
         "op": {
           "type": "string"
@@ -650,6 +667,46 @@
         }
       ]
     },
+    "bindExpressionOperation": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/baseOperation"
+        },
+        {
+          "type": "object",
+          "required": [
+            "id",
+            "path",
+            "expr"
+          ],
+          "properties": {
+            "op": {
+              "const": "bindExpr"
+            },
+            "id": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "expr": {
+              "type": "string",
+              "minLength": 1
+            },
+            "duration": {
+              "type": "number",
+              "minimum": 0
+            },
+            "deps": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
     "setValueOperation": {
       "allOf": [
         {
@@ -735,6 +792,13 @@
             "smoothing": {
               "type": "string",
               "enum": ["linear", "smooth"]
+            },
+            "sampling": {
+              "type": "string",
+              "enum": ["fixed", "frame"]
+            },
+            "sampleStep": {
+              "type": "number"
             },
             "deps": {
               "type": "array",
@@ -855,14 +919,8 @@
               "type": "string"
             },
             "effect": {
-              "enum": [
-                "fadeIn",
-                "fadeOut",
-                "create",
-                "write",
-                "transform",
-                "replacementTransform"
-              ]
+              "type": "string",
+              "minLength": 1
             },
             "duration": {
               "type": "number",
@@ -881,11 +939,42 @@
         }
       ]
     },
+    "followCameraOperation": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/baseOperation"
+        },
+        {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "op": {
+              "const": "followCamera"
+            },
+            "id": {
+              "type": "string"
+            },
+            "frameId": {
+              "type": "string"
+            },
+            "duration": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    },
     "nodeMetadata": {
       "type": "object",
       "properties": {
         "plot": {
           "$ref": "#/$defs/plotMetadata"
+        },
+        "surfaceFace": {
+          "$ref": "#/$defs/surfaceFaceMetadata"
         }
       }
     },
@@ -903,6 +992,31 @@
         "samples": {
           "type": "integer",
           "minimum": 2
+        }
+      }
+    },
+    "surfaceFaceMetadata": {
+      "type": "object",
+      "required": [
+        "row",
+        "col",
+        "depth"
+      ],
+      "properties": {
+        "row": {
+          "type": "integer"
+        },
+        "col": {
+          "type": "integer"
+        },
+        "depth": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "shade": {
+          "type": "number"
         }
       }
     }
