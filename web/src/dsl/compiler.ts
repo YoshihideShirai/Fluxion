@@ -52,6 +52,8 @@ interface CompileState {
   width: number;
   height: number;
   fps: number;
+  theme: TextDslTheme;
+  themeExplicit: boolean;
   camera: Camera;
   cameraFrameCursor: CameraFrameCursor;
   nodes: Map<string, SceneNode>;
@@ -73,11 +75,55 @@ interface CameraFrameCursor {
   rotation: number;
 }
 
+interface TextDslTheme {
+  name: "manim" | "dark" | "light" | "slate" | "custom";
+  foreground: string;
+  accent: string;
+  accent2: string;
+  grid: string;
+  muted: string;
+}
+
 interface TexTokenEntry {
   node: SceneNode;
   parentTransform: Transform;
   absoluteNode: SceneNode;
 }
+
+const namedThemes: Record<Exclude<TextDslTheme["name"], "custom">, TextDslTheme> = {
+  manim: {
+    name: "manim",
+    foreground: "#ffffff",
+    accent: "#38bdf8",
+    accent2: "#22d3ee",
+    grid: "#29ABCA",
+    muted: "#94a3b8",
+  },
+  dark: {
+    name: "dark",
+    foreground: "#ffffff",
+    accent: "#38bdf8",
+    accent2: "#22d3ee",
+    grid: "#29ABCA",
+    muted: "#94a3b8",
+  },
+  light: {
+    name: "light",
+    foreground: "#0f172a",
+    accent: "#2563eb",
+    accent2: "#0891b2",
+    grid: "#93c5fd",
+    muted: "#64748b",
+  },
+  slate: {
+    name: "slate",
+    foreground: "#e2e8f0",
+    accent: "#38bdf8",
+    accent2: "#22d3ee",
+    grid: "#334155",
+    muted: "#94a3b8",
+  },
+};
 
 export function compileTextDsl(source: string): FluxionDocument {
   const camera = defaultCamera();
@@ -85,6 +131,8 @@ export function compileTextDsl(source: string): FluxionDocument {
     width: 1280,
     height: 720,
     fps: 60,
+    theme: { ...namedThemes.manim },
+    themeExplicit: false,
     camera,
     cameraFrameCursor: cameraFrameCursorFromCamera(camera),
     nodes: new Map(),
@@ -114,6 +162,11 @@ export function compileTextDsl(source: string): FluxionDocument {
 
     if (keyword === "scene") {
       parseScene(tokens, state, lineNumber);
+      return;
+    }
+
+    if (keyword === "theme") {
+      parseTheme(tokens, state, lineNumber);
       return;
     }
 
@@ -407,6 +460,108 @@ function parseScene(
   }
 }
 
+function parseTheme(
+  tokens: string[],
+  state: CompileState,
+  lineNumber: number,
+): void {
+  const maybeName = tokens[1];
+  const hasName = maybeName !== undefined && !maybeName.includes("=");
+  let theme: TextDslTheme = { ...state.theme };
+
+  if (hasName) {
+    if (!isThemeName(maybeName))
+      throw new DslCompileError(
+        "Theme name must be one of manim, dark, light, or slate.",
+        lineNumber,
+      );
+    theme = { ...namedThemes[maybeName] };
+  }
+
+  const assignments = readAssignments(tokens.slice(hasName ? 2 : 1), lineNumber);
+  const nameAssignment = assignments.find(([key]) => key === "name")?.[1];
+  if (nameAssignment !== undefined) {
+    if (!isThemeName(nameAssignment))
+      throw new DslCompileError(
+        "Theme name must be one of manim, dark, light, or slate.",
+        lineNumber,
+      );
+    theme = { ...namedThemes[nameAssignment] };
+  }
+  if (assignments.some(([key]) => key !== "name") && !hasName && nameAssignment === undefined)
+    theme = { ...theme, name: "custom" };
+  for (const [key, value] of assignments) {
+    if (key === "name") {
+      continue;
+    }
+
+    if (key === "foreground" || key === "fg") {
+      theme.foreground = value;
+      theme.name = hasName ? theme.name : "custom";
+      continue;
+    }
+    if (key === "accent") {
+      theme.accent = value;
+      theme.name = hasName ? theme.name : "custom";
+      continue;
+    }
+    if (key === "accent2") {
+      theme.accent2 = value;
+      theme.name = hasName ? theme.name : "custom";
+      continue;
+    }
+    if (key === "grid") {
+      theme.grid = value;
+      theme.name = hasName ? theme.name : "custom";
+      continue;
+    }
+    if (key === "muted") {
+      theme.muted = value;
+      theme.name = hasName ? theme.name : "custom";
+      continue;
+    }
+
+    throw new DslCompileError(`Unknown theme option '${key}'.`, lineNumber);
+  }
+
+  state.theme = theme;
+  state.themeExplicit = true;
+}
+
+function isThemeName(value: string | undefined): value is Exclude<TextDslTheme["name"], "custom"> {
+  return value === "manim" || value === "dark" || value === "light" || value === "slate";
+}
+
+function themedColor(
+  state: CompileState,
+  key: keyof Pick<TextDslTheme, "foreground" | "accent" | "accent2" | "grid" | "muted">,
+  fallback: string,
+): string {
+  return state.themeExplicit ? state.theme[key] : fallback;
+}
+
+function applyThemedDeclarationDefaults(node: SceneNode, state: CompileState): void {
+  if (!state.themeExplicit) return;
+
+  if (node.type === "text" || node.type === "math" || node.type === "brace") {
+    node.style.fill = state.theme.foreground;
+    if (node.type === "brace" && node.geometry.labelColor === "#ffffff")
+      node.geometry.labelColor = state.theme.foreground;
+    return;
+  }
+
+  if (node.type === "line" || node.type === "path") {
+    node.style.fill = "none";
+    node.style.stroke = state.theme.foreground;
+    node.style.strokeWidth = node.type === "path" ? 4 : 2;
+    return;
+  }
+
+  if (node.type === "circle" || node.type === "rect" || node.type === "triangle") {
+    node.style.fill = state.theme.accent;
+  }
+}
+
 function parseCamera(
   tokens: string[],
   state: CompileState,
@@ -575,6 +730,7 @@ function parseNode(
   }
 
   const node = createBaseNode(id, type);
+  applyThemedDeclarationDefaults(node, state);
   if (type === "text" && content !== undefined) node.text = content;
   if (type === "math" && content !== undefined) {
     node.latex = content;
@@ -652,7 +808,7 @@ function parseSurroundingRect(
   node.geometry.w = Math.max(1, bounds.maxX - bounds.minX + buff * 2);
   node.geometry.h = Math.max(1, bounds.maxY - bounds.minY + buff * 2);
   node.style.fill = "none";
-  node.style.stroke = "#ffffff";
+  node.style.stroke = themedColor(state, "foreground", "#ffffff");
   node.style.strokeWidth = 2;
   node.geometry.shapeMatcher = "surroundingRect";
 
@@ -677,7 +833,7 @@ function parseAxes(tokens: string[], state: CompileState, lineNumber: number): v
   const yRange = (options.get("yRange") ?? "-4,4").split(",").map((v) => parseNumber(v, lineNumber));
   const width = parseNumber(options.get("width") ?? "810", lineNumber);
   const height = parseNumber(options.get("height") ?? "405", lineNumber);
-  const stroke = options.get("stroke") ?? "#FFFFFF";
+  const stroke = options.get("stroke") ?? themedColor(state, "foreground", "#FFFFFF");
   const strokeWidth = parseNumber(options.get("strokeWidth") ?? "2", lineNumber);
   const axesGeometryValue = { xMin: xRange[0]!, xMax: xRange[1]!, yMin: yRange[0]!, yMax: yRange[1]!, width, height };
   const origin = axesDataToPoint({ x: 0, y: 0 }, axesGeometryValue);
@@ -696,7 +852,7 @@ function parseAxes(tokens: string[], state: CompileState, lineNumber: number): v
   group.children = [
     xAxis,
     yAxis,
-    ...buildAxesNumberChildren(id, options, axesGeometryValue, origin, cx!, cy!, lineNumber),
+    ...buildAxesNumberChildren(id, options, axesGeometryValue, origin, cx!, cy!, state, lineNumber),
   ];
   group.metadata = { plot: { range: [xRange[0]!, xRange[1]!] } };
   group.geometry.xMin = xRange[0]!;
@@ -724,7 +880,7 @@ function parseAxisLabels(tokens: string[], state: CompileState, lineNumber: numb
   const fontSize = parseNumber(options.get("size") ?? options.get("fontSize") ?? "28", lineNumber);
   const xFontSize = parseNumber(options.get("xSize") ?? String(fontSize), lineNumber);
   const yFontSize = parseNumber(options.get("ySize") ?? String(fontSize), lineNumber);
-  const fill = options.get("fill") ?? "#FFFFFF";
+  const fill = options.get("fill") ?? themedColor(state, "foreground", "#FFFFFF");
   const renderer = options.get("renderer") ?? "katex";
   const buff = parseNumber(options.get("buff") ?? "20", lineNumber);
   const xBuff = parseNumber(options.get("xBuff") ?? String(buff), lineNumber);
@@ -801,8 +957,8 @@ function parseNumberPlane(tokens: string[], state: CompileState, lineNumber: num
     options.get("backgroundStroke") ??
     options.get("backgroundLineStroke") ??
     options.get("backgroundLineColor") ??
-    "#29ABCA";
-  const axisColor = options.get("axisStroke") ?? options.get("axisColor") ?? "#FFFFFF";
+    themedColor(state, "grid", "#29ABCA");
+  const axisColor = options.get("axisStroke") ?? options.get("axisColor") ?? themedColor(state, "foreground", "#FFFFFF");
   const xAxisColor = options.get("xAxisStroke") ?? options.get("xAxisColor") ?? axisColor;
   const yAxisColor = options.get("yAxisStroke") ?? options.get("yAxisColor") ?? axisColor;
   const strokeWidth = parseNumber(
@@ -1114,12 +1270,13 @@ function buildAxesNumberChildren(
   origin: { x: number; y: number },
   centerX: number,
   centerY: number,
+  state: CompileState,
   lineNumber: number,
 ): SceneNode[] {
   const tickLength = parseNumber(options.get("tickLength") ?? "14", lineNumber);
   const tickStrokeWidth = parseNumber(options.get("tickStrokeWidth") ?? "2", lineNumber);
   const labelSize = parseNumber(options.get("numberSize") ?? "18", lineNumber);
-  const color = options.get("numberColor") ?? options.get("stroke") ?? "#ffffff";
+  const color = options.get("numberColor") ?? options.get("stroke") ?? themedColor(state, "foreground", "#ffffff");
   const xLabelOffset = parseNumber(options.get("xNumberOffset") ?? "36", lineNumber);
   const yLabelOffset = parseNumber(options.get("yNumberOffset") ?? "-38", lineNumber);
   const children: SceneNode[] = [];
@@ -1209,8 +1366,8 @@ function parseDataPolygon(tokens: string[], state: CompileState, lineNumber: num
     .join(" ");
   node.geometry.dataPolygon = true;
   node.geometry.axes = axesId;
-  node.style.fill = "#22d3ee";
-  node.style.stroke = "#22d3ee";
+  node.style.fill = themedColor(state, "accent2", "#22d3ee");
+  node.style.stroke = themedColor(state, "accent2", "#22d3ee");
   node.style.strokeWidth = 3;
   for (const [key, value] of options) {
     if (key === "axes" || key === "points") continue;
@@ -1237,7 +1394,7 @@ function parseDataLineGraph(tokens: string[], state: CompileState, lineNumber: n
   const centerX = Number(axes.geometry.centerX ?? axes.transform.x);
   const centerY = Number(axes.geometry.centerY ?? axes.transform.y);
   const points = parseDataPointList(pointsRaw, lineNumber, 2).map(([x, y]) => axesDataToPoint({ x, y }, axesGeometry(axes)));
-  const lineColor = options.get("lineColor") ?? options.get("stroke") ?? "#FFFF00";
+  const lineColor = options.get("lineColor") ?? options.get("stroke") ?? themedColor(state, "accent", "#FFFF00");
   const vertexColor = options.get("vertexColor") ?? lineColor;
   const strokeWidth = parseNumber(options.get("strokeWidth") ?? "4", lineNumber);
   const vertexRadius = parseNumber(options.get("vertexRadius") ?? "5.4", lineNumber);
@@ -1351,8 +1508,8 @@ function parseDataDot(tokens: string[], state: CompileState, lineNumber: number)
   node.geometry.dataDot = true;
   node.geometry.axes = axesId;
   node.geometry.point = `${point.x},${point.y}`;
-  node.style.fill = "#ffffff";
-  node.style.stroke = "#ffffff";
+  node.style.fill = themedColor(state, "foreground", "#ffffff");
+  node.style.stroke = themedColor(state, "foreground", "#ffffff");
   node.style.strokeWidth = 0;
   for (const [key, value] of options) {
     if (["axes", "point", "r"].includes(key)) continue;
@@ -1395,7 +1552,7 @@ function parseDataLine(tokens: string[], state: CompileState, lineNumber: number
   node.geometry.from = `${from.x},${from.y}`;
   node.geometry.to = `${to.x},${to.y}`;
   node.style.fill = "none";
-  node.style.stroke = "#ffffff";
+  node.style.stroke = themedColor(state, "foreground", "#ffffff");
   node.style.strokeWidth = 4;
   for (const [key, value] of options) {
     if (["axes", "from", "to"].includes(key)) continue;
@@ -1429,7 +1586,7 @@ function parseDynamicLine(tokens: string[], state: CompileState, lineNumber: num
   node.geometry.y2 = evaluateDslExpression(expressions.y2, state, lineNumber);
   node.geometry.dynamicLine = true;
   node.style.fill = "none";
-  node.style.stroke = "#ffffff";
+  node.style.stroke = themedColor(state, "foreground", "#ffffff");
   node.style.strokeWidth = 4;
   node.style.strokeLinecap = "round";
   node.style.strokeLinejoin = "round";
@@ -1472,7 +1629,7 @@ function parseDataArea(tokens: string[], state: CompileState, lineNumber: number
   node.geometry.axes = axesId;
   node.geometry.lower = lower;
   node.geometry.upper = upper;
-  node.style.fill = "#888888";
+  node.style.fill = themedColor(state, "muted", "#888888");
   node.style.fillOpacity = 0.5;
   node.style.stroke = "none";
   node.style.strokeWidth = 0;
@@ -1501,8 +1658,8 @@ function parseDataRiemannRects(tokens: string[], state: CompileState, lineNumber
   const centerX = Number(axes.geometry.centerX ?? axes.transform.x);
   const centerY = Number(axes.geometry.centerY ?? axes.transform.y);
   const geometry = axesGeometry(axes);
-  const fill = options.get("fill") ?? options.get("color") ?? "#0000FF";
-  const stroke = options.get("stroke") ?? options.get("strokeColor") ?? "#000000";
+  const fill = options.get("fill") ?? options.get("color") ?? themedColor(state, "accent", "#0000FF");
+  const stroke = options.get("stroke") ?? options.get("strokeColor") ?? themedColor(state, "foreground", "#000000");
   const strokeWidth = parseNumber(options.get("strokeWidth") ?? "0.5", lineNumber);
   const fillOpacity = parseNumber(options.get("fillOpacity") ?? "0.5", lineNumber);
   const children: SceneNode[] = [];
@@ -1918,7 +2075,7 @@ function parseThreeDAxes(tokens: string[], state: CompileState, lineNumber: numb
   const [xBasisX, xBasisY] = parsePointOption(options.get("xBasis") ?? "43.333333,21.333333", "xBasis", lineNumber);
   const [yBasisX, yBasisY] = parsePointOption(options.get("yBasis") ?? "-47.6,23.6", "yBasis", lineNumber);
   const [zBasisX, zBasisY] = parsePointOption(options.get("zBasis") ?? "0,-60", "zBasis", lineNumber);
-  const stroke = options.get("stroke") ?? "#FFFFFF";
+  const stroke = options.get("stroke") ?? themedColor(state, "foreground", "#FFFFFF");
   const strokeWidth = parseNumber(options.get("strokeWidth") ?? "2", lineNumber);
   const tickSize = parseNumber(options.get("tickSize") ?? "10", lineNumber);
   const tickStrokeWidth = parseNumber(options.get("tickStrokeWidth") ?? "2", lineNumber);
@@ -2101,7 +2258,7 @@ function parseProjectedCircle(tokens: string[], state: CompileState, lineNumber:
     path.geometry.theta = parseNumber(options.get("theta") ?? "30", lineNumber);
   }
   path.style.fill = options.get("fill") ?? "none";
-  path.style.stroke = options.get("stroke") ?? "#FFFFFF";
+  path.style.stroke = options.get("stroke") ?? themedColor(state, "foreground", "#FFFFFF");
   path.style.strokeWidth = parseNumber(options.get("strokeWidth") ?? "4", lineNumber);
 
   for (const [key, value] of options) {
@@ -2462,7 +2619,7 @@ function parseRotatingLine(tokens: string[], state: CompileState, lineNumber: nu
   node.geometry.rotationAboutX = aboutX;
   node.geometry.rotationAboutY = aboutY;
   node.geometry.rotationAngle = angle;
-  node.style.stroke = "#ffffff";
+  node.style.stroke = themedColor(state, "foreground", "#ffffff");
   node.style.strokeWidth = 4;
   for (const [key, value] of options) {
     if (["x1", "y1", "x2", "y2", "about", "angle"].includes(key)) continue;
@@ -2751,7 +2908,7 @@ function parseArrow(tokens: string[], state: CompileState, lineNumber: number): 
   const y1 = parseNumber(options.get("y1") ?? "0", lineNumber);
   const x2 = parseNumber(options.get("x2") ?? "100", lineNumber);
   const y2 = parseNumber(options.get("y2") ?? "0", lineNumber);
-  const stroke = options.get("stroke") ?? "#FFFFFF";
+  const stroke = options.get("stroke") ?? themedColor(state, "foreground", "#FFFFFF");
   const fill = options.get("fill") ?? stroke;
   const requestedStrokeWidth = parseNumber(options.get("strokeWidth") ?? "6", lineNumber);
   const dx = x2 - x1;
@@ -2996,7 +3153,7 @@ function parsePlot(tokens: string[], state: CompileState, lineNumber: number): v
   const node = createBaseNode(id, "path");
   node.transform.x = cx!; node.transform.y = cy!;
   node.style.fill = "none";
-  node.style.stroke = "#38bdf8";
+  node.style.stroke = themedColor(state, "accent", "#38bdf8");
   node.style.strokeWidth = 4;
   node.style.strokeLinecap = "round";
   node.style.strokeLinejoin = "round";
@@ -3044,7 +3201,7 @@ function parseGraphLabel(tokens: string[], state: CompileState, lineNumber: numb
   const size = parseNumber(options.get("size") ?? options.get("fontSize") ?? "28", lineNumber);
   const label = options.get("label") ?? "f(x)";
   const renderer = options.get("renderer") ?? "katex";
-  const fill = options.get("fill") ?? String(plot.style.stroke ?? "#FFFFFF");
+  const fill = options.get("fill") ?? String(plot.style.stroke ?? themedColor(state, "foreground", "#FFFFFF"));
   const buff = parseNumber(options.get("buff") ?? "16.875", lineNumber);
   const labelW = parseNumber(options.get("w") ?? String(Math.max(size * 2, label.length * size * 0.35)), lineNumber);
   const labelH = parseNumber(options.get("h") ?? String(size * 1.55), lineNumber);
@@ -3130,7 +3287,7 @@ function parseAngle(tokens: string[], state: CompileState, lineNumber: number): 
 
   const node = createBaseNode(id, "path");
   node.style.fill = "none";
-  node.style.stroke = "#f59e0b";
+  node.style.stroke = themedColor(state, "accent", "#f59e0b");
   node.style.strokeWidth = 4;
   node.style.strokeLinecap = "round";
   node.style.strokeLinejoin = "round";
@@ -3158,7 +3315,7 @@ function parseTracedPath(tokens: string[], state: CompileState, lineNumber: numb
       throw new DslCompileError(`Unknown tracedPath target '${target}'.`, lineNumber);
     const node = createBaseNode(id, "path");
     node.style.fill = "none";
-    node.style.stroke = "#22d3ee";
+    node.style.stroke = themedColor(state, "accent2", "#22d3ee");
     node.style.strokeWidth = 4;
     node.style.strokeLinecap = "round";
     node.style.strokeLinejoin = "round";
@@ -3204,7 +3361,7 @@ function parseTracedPath(tokens: string[], state: CompileState, lineNumber: numb
 
   const node = createBaseNode(id, "path");
   node.style.fill = "none";
-  node.style.stroke = "#22d3ee";
+  node.style.stroke = themedColor(state, "accent2", "#22d3ee");
   node.style.strokeWidth = 4;
   node.style.strokeLinecap = "round";
   node.style.strokeLinejoin = "round";

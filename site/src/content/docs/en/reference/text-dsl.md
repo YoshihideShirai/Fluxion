@@ -13,6 +13,7 @@ The current Text DSL scope is intentionally small: place shapes, math, paths, an
 | Command | Purpose | Minimal example |
 |---|---|---|
 | `scene` | Canvas size and fps | `scene width=1280 height=720 fps=60` |
+| `theme` | Default color theme | `theme light accent="#2563eb"` |
 | `circle` | Circle node declaration | `circle dot r=34 at -380,-20 fill="#38bdf8"` |
 | `rect` | Rectangle node declaration | `rect target w=120 h=88 at 180,-20 fill="#f97316"` |
 | `triangle` | Triangle node declaration | `triangle t1 w=120 h=104 at 0,0 fill="#ef4444"` |
@@ -134,6 +135,24 @@ Supported options:
 - `width`: number
 - `height`: number
 - `fps`: number
+
+### theme
+
+```text
+theme light
+theme slate accent="#38bdf8" foreground="#e2e8f0"
+theme accent="#db2777" grid="#d8b4fe"
+```
+
+`theme` changes default colors for declarations that follow it. Existing nodes are not mutated, and explicit options such as `fill`, `stroke`, `lineColor`, `axisStroke`, and `numberColor` override the theme.
+
+Named themes are `manim` / `dark`, `light`, and `slate`. `manim` is the default and keeps the previous white-on-dark helper colors. Supported overrides are:
+
+- `foreground` / `fg`: default text, math, line, axes, and marker color
+- `accent`: default shape, plot, angle, and line-graph color
+- `accent2`: default trace and polygon color
+- `grid`: default NumberPlane grid color
+- `muted`: default filled area color
 
 ### node declarations
 

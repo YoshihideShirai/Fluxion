@@ -84,8 +84,8 @@ Runtime は `.fluxion.json` の `nodes` と `timeline` から Scene Graph を再
 
 現在の MVP Scope には含めず、将来の候補として扱うものは以下です。
 
-- Text DSL の `include`, `theme`, `component`, loop, conditional, nested block
-- CSS color validation と compiler 内 schema validation の強化
+- Text DSL の `include`, `component`, loop, conditional, nested block
+- CSS color validation と compiler 内 schema validation のさらなる強化
 - Manim 互換 syntax の拡張
 - complex TeX layout の厳密な glyph 位置合わせ
 - richer editor diagnostics と code action
